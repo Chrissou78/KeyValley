@@ -1,7 +1,7 @@
 // src/minter.js
 import { ethers } from 'ethers';
 import { getNetworkConfig } from './config/networks.js';
-import TOKEN_ABI from './abi/token.json' assert { type: 'json' };
+import TOKEN_ABI from './abi/token.json' with { type: 'json' };
 import dotenv from 'dotenv';
 
 dotenv.config();
