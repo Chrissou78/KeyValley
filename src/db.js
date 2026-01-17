@@ -11,22 +11,27 @@ async function initDb() {
     const SQL = await initSqlJs();
     
     if (isVercel) {
-        // Vercel: in-memory only (no filesystem write access)
+        // Vercel: in-memory only (read-only filesystem)
         console.log('📦 Using in-memory database (Vercel serverless)');
         db = new SQL.Database();
     } else {
         // Local: persist to file
-        if (!fs.existsSync(dataDir)) {
-            fs.mkdirSync(dataDir, { recursive: true });
-        }
-        
-        if (fs.existsSync(dbPath)) {
-            const buffer = fs.readFileSync(dbPath);
-            db = new SQL.Database(buffer);
-            console.log('📦 Loaded existing database');
-        } else {
+        try {
+            if (!fs.existsSync(dataDir)) {
+                fs.mkdirSync(dataDir, { recursive: true });
+            }
+            
+            if (fs.existsSync(dbPath)) {
+                const buffer = fs.readFileSync(dbPath);
+                db = new SQL.Database(buffer);
+                console.log('📦 Loaded existing database');
+            } else {
+                db = new SQL.Database();
+                console.log('📦 Created new database');
+            }
+        } catch (error) {
+            console.log('📦 Filesystem not available, using in-memory database');
             db = new SQL.Database();
-            console.log('📦 Created new database');
         }
     }
     
@@ -55,9 +60,13 @@ async function initDb() {
 
 function saveDb() {
     if (db && !isVercel) {
-        const data = db.export();
-        const buffer = Buffer.from(data);
-        fs.writeFileSync(dbPath, buffer);
+        try {
+            const data = db.export();
+            const buffer = Buffer.from(data);
+            fs.writeFileSync(dbPath, buffer);
+        } catch (error) {
+            console.log('Warning: Could not save database to disk');
+        }
     }
 }
 
