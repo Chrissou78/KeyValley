@@ -28,8 +28,26 @@ async function main() {
     await startServer();
 }
 
+// For Vercel serverless - initialize DB on cold start
+let dbInitialized = false;
+
+async function initForVercel() {
+    if (!dbInitialized) {
+        console.log('🔄 Initializing for Vercel...');
+        await initDb();
+        auth.initCredentials();
+        dbInitialized = true;
+        console.log('✅ Vercel initialization complete');
+    }
+}
+
+// Initialize immediately for Vercel
+if (process.env.VERCEL === '1') {
+    initForVercel();
+}
+
 // For local development
-if (process.env.VERCEL !== '1') {
+if (process.env.VERCEL !== '1' && require.main === module) {
     main().catch(console.error);
 }
 

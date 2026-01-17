@@ -23,6 +23,18 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Ensure DB is initialized for each request (Vercel serverless)
+app.use(async (req, res, next) => {
+    try {
+        const { initDb } = require('./db');
+        await initDb();
+        next();
+    } catch (error) {
+        console.error('DB initialization error:', error);
+        next();
+    }
+});
+
 // ===========================================
 // Authentication Middleware
 // ===========================================
