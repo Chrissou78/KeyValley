@@ -1,13 +1,8 @@
 // src/minter.js
-import { ethers } from 'ethers';
-import { getNetworkConfig } from './config/networks.js';
-import { createRequire } from 'module';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-const require = createRequire(import.meta.url);
+const { ethers } = require('ethers');
+const { getNetworkConfig } = require('./config/networks.js');
 const TOKEN_ABI = require('./abi/token.json');
+require('dotenv').config();
 
 class MinterService {
     constructor() {
@@ -122,4 +117,4 @@ class MinterService {
 }
 
 const minter = new MinterService();
-export default minter;
+module.exports = minter;

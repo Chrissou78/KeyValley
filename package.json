@@ -5,8 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "start:amoy": "set NETWORK=amoy&& node src/index.js",
-    "start:polygon": "set NETWORK=polygon&& node src/index.js"
+    "start:amoy": "NETWORK=amoy node src/index.js",
+    "start:polygon": "NETWORK=polygon node src/index.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.6",
