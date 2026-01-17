@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KEA VALLEY® | Mediterranean Luxury & Blockchain Innovation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #C9A962;
+            --gold-light: #D4B978;
+            --navy: #1a1f2e;
+            --navy-light: #252b3d;
+            --navy-dark: #141824;
+            --white: #ffffff;
+            --gray: #a0a5b5;
+            --success: #4ade80;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--navy);
+            color: var(--white);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            padding: 20px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            background: rgba(26, 31, 46, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(201, 169, 98, 0.2);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--gold);
+            text-decoration: none;
+        }
+
+        .logo span {
+            font-size: 0.7rem;
+            vertical-align: super;
+        }
+
+        nav {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--white);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: var(--gold);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 28px;
+            border-radius: 4px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+            color: var(--navy);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(201, 169, 98, 0.3);
+        }
+
+        .btn-outline {
+            border: 2px solid var(--gold);
+            color: var(--gold);
+            background: transparent;
+        }
+
+        .btn-outline:hover {
+            background: var(--gold);
+            color: var(--navy);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding-top: 80px;
+            background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 50%, var(--navy-light) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 70% 30%, rgba(201, 169, 98, 0.1) 0%, transparent 50%);
+        }
+
+        .hero-content {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--white);
+        }
+
+        .hero h1 span {
+            color: var(--gold);
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--gray);
+            max-width: 700px;
+            margin: 0 auto 40px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin-top: 60px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(201, 169, 98, 0.2);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+
+        .stat-card p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        /* Section Styles */
+        section {
+            padding: 100px 0;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .section-subtitle {
+            color: var(--gray);
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 60px;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+
+        .feature-card {
+            background: var(--navy-light);
+            border: 1px solid rgba(201, 169, 98, 0.2);
+            border-radius: 12px;
+            padding: 40px;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--gold);
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--gold);
+        }
+
+        .feature-card p {
+            color: var(--gray);
+        }
+
+        /* Pillars */
+        .pillars-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .pillar-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(201, 169, 98, 0.15);
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .pillar-card:hover {
+            background: rgba(201, 169, 98, 0.1);
+            border-color: var(--gold);
+        }
+
+        .pillar-card h4 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: var(--gold);
+        }
+
+        .pillar-card p {
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        /* Token Section */
+        .token-section {
+            background: linear-gradient(180deg, var(--navy) 0%, var(--navy-dark) 100%);
+        }
+
+        .token-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .token-card {
+            background: var(--navy-light);
+            border: 1px solid rgba(201, 169, 98, 0.2);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .token-card h4 {
+            color: var(--gray);
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .token-card .value {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: var(--gold);
+        }
+
+        .token-benefits {
+            background: var(--navy-light);
+            border: 1px solid rgba(201, 169, 98, 0.3);
+            border-radius: 16px;
+            padding: 50px;
+        }
+
+        .token-benefits h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .benefits-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .benefit-item .check {
+            width: 24px;
+            height: 24px;
+            background: var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--navy);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        /* Bonus Banner */
+        .bonus-banner {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+            color: var(--navy);
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .bonus-banner h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .bonus-banner p {
+            font-size: 1.1rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, rgba(201, 169, 98, 0.1) 0%, transparent 100%);
+            text-align: center;
+            padding: 120px 0;
+        }
+
+        .cta-section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .cta-section p {
+            color: var(--gray);
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--navy-dark);
+            padding: 40px 0;
+            text-align: center;
+            border-top: 1px solid rgba(201, 169, 98, 0.2);
+        }
+
+        footer p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: var(--gold);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .stats-grid,
+            .pillars-grid,
+            .token-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                display: none;
+            }
+
+            .stats-grid,
+            .pillars-grid,
+            .token-grid,
+            .benefits-list {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .section-title {
+                font-size: 1.8rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-content">
+            <a href="/" class="logo">KEA VALLEY<span>®</span></a>
+            <nav>
+                <a href="#about">About</a>
+                <a href="#token">Token</a>
+                <a href="#membership">Membership</a>
+                <a href="https://wallet.wallettwo.com/auth/login?action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://key-valley.vercel.app/claim" class="btn btn-primary">Get Free Tokens</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>The Mediterranean's Premier<br><span>Destination for Luxury Innovation</span></h1>
+                <p>Ultra-Premium Hospitality Meets Blockchain-Enabled Experiences on the Island of Kea, Greece</p>
+                <div class="hero-buttons">
+                    <a href="https://wallet.wallettwo.com/auth/login?action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://key-valley.vercel.app/claim" class="btn btn-primary">🎁 Claim Free KEA Tokens</a>
+                    <a href="#about" class="btn btn-outline">Learn More</a>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>€5M</h3>
+                        <p>Seed Round Target Through Utility Token Sale</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>€2.1M</h3>
+                        <p>Existing Real Estate Assets</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>35%</h3>
+                        <p>Annual Appreciation of Underlying Assets</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>€20M+</h3>
+                        <p>Year 5 Projected Valuation</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about">
+        <div class="container">
+            <h2 class="section-title">Redefining Luxury in the Mediterranean</h2>
+            <p class="section-subtitle">Located on the pristine island of Kea, Greece, Kea Valley® is a next-generation destination combining premium hospitality, digital infrastructure, and an asset-backed token ecosystem.</p>
+
+            <div class="pillars-grid">
+                <div class="pillar-card">
+                    <h4>🏝️ Mediterranean Exclusivity</h4>
+                    <p>Prime location on the island of Kea, just 1 hour from Athens</p>
+                </div>
+                <div class="pillar-card">
+                    <h4>🏛️ Premium Real Estate</h4>
+                    <p>Luxury villas with 30-50% annual appreciation potential</p>
+                </div>
+                <div class="pillar-card">
+                    <h4>⛓️ Blockchain Innovation</h4>
+                    <p>Asset-backed utility token ecosystem for seamless experiences</p>
+                </div>
+                <div class="pillar-card">
+                    <h4>👥 Exclusive Community</h4>
+                    <p>Curated membership connecting innovators and visionaries</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section style="background: var(--navy-dark);">
+        <div class="container">
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🏡</div>
+                    <h3>Real Estate Excellence</h3>
+                    <p>Premium villas designed with Cycladic architectural principles, offering unparalleled views and modern luxury. Projected 30-50% annual appreciation in one of the Mediterranean's most promising emerging markets.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">✨</div>
+                    <h3>Ultra-Luxury Hospitality</h3>
+                    <p>From premium villa accommodations to curated yachting experiences, every touchpoint delivers exceptional service. The intimacy of a private estate combined with world-class resort sophistication.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔗</div>
+                    <h3>Blockchain Technology</h3>
+                    <p>The KEA Token creates a frictionless payment and membership system, offering holders exclusive access, preferential treatment, and participation rights.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌱</div>
+                    <h3>Sustainable Innovation</h3>
+                    <p>A living laboratory for breakthrough technologies in smart homes, renewable energy, longevity science, and sustainable tourism. Real-world testing with access to high-net-worth decision makers.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Token Section -->
+    <section id="token" class="token-section">
+        <div class="container">
+            <h2 class="section-title">Asset-Backed Token Ecosystem</h2>
+            <p class="section-subtitle">The project launches with Villa Carpe Diem and €2.1 million in real estate assets, forming a solid foundation for scalable, high-value development.</p>
+
+            <div class="token-grid">
+                <div class="token-card">
+                    <h4>Token Base Price</h4>
+                    <div class="value">€1.00</div>
+                </div>
+                <div class="token-card">
+                    <h4>Pre-Sale Bonus</h4>
+                    <div class="value">100%</div>
+                </div>
+                <div class="token-card">
+                    <h4>Public Sale Bonus</h4>
+                    <div class="value">50%</div>
+                </div>
+                <div class="token-card">
+                    <h4>Initial Target</h4>
+                    <div class="value">€5M</div>
+                </div>
+            </div>
+
+            <div class="token-benefits">
+                <h3>Token Holder Benefits</h3>
+                <div class="benefits-list">
+                    <div class="benefit-item">
+                        <span class="check">✓</span>
+                        <span>Automatic membership in KEA Valley Private Members Club</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="check">✓</span>
+                        <span>Priority booking and preferential rates for villas & yachts</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="check">✓</span>
+                        <span>Exclusive access to quarterly events and gatherings</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="check">✓</span>
+                        <span>Eligibility for Series A investment round participation</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="check">✓</span>
+                        <span>Seamless payment utility across the entire ecosystem</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="check">✓</span>
+                        <span>Up to 50% discount on accommodations and experiences</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bonus-banner">
+                <h3>🎁 Limited Time: Claim Your Free KEA Tokens!</h3>
+                <p>Connect your wallet now and receive 2 KEA tokens absolutely free. No purchase required.</p>
+                <a href="https://wallet.wallettwo.com/auth/login?action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://key-valley.vercel.app/claim" class="btn" style="background: var(--navy); color: var(--gold); margin-top: 20px;">Claim Free Tokens →</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Membership Section -->
+    <section id="membership">
+        <div class="container">
+            <h2 class="section-title">Exclusive Membership</h2>
+            <p class="section-subtitle">Join a curated community of innovators, visionaries, and leaders.</p>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>Annual Membership — €25,000</h3>
+                    <p>Access to 4 curated quarterly events, exclusive Pitch & Putt golf area, innovation showcases, premium networking opportunities, preferential villa and yacht booking, concierge services, and priority Series A investment allocation.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Quarterly Events</h3>
+                    <p><strong>Q1:</strong> Innovation Summit — Emerging technologies<br>
+                    <strong>Q2:</strong> Sustainability Forum — Environmental excellence<br>
+                    <strong>Q3:</strong> Longevity & Wellness — Human performance<br>
+                    <strong>Q4:</strong> Strategic Networking — Deal flow & collaboration</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>Join the Future of<br>Luxury Innovation</h2>
+            <p>Secure your position in the Mediterranean's most exclusive destination where cutting-edge blockchain technology meets ultra-premium hospitality.</p>
+            <a href="https://wallet.wallettwo.com/auth/login?action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://key-valley.vercel.app/claim" class="btn btn-primary" style="font-size: 1.1rem; padding: 16px 40px;">🎁 Claim Your Free KEA Tokens</a>
+            <p style="margin-top: 20px; font-size: 0.9rem;">Limited Time Offer • No Purchase Required</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>KEA VALLEY® — Ultra-Premium Mediterranean Hospitality</p>
+            <p style="margin-top: 10px;">Questions? Visit <a href="https://keavalley-greece.com/" target="_blank">keavalley-greece.com</a></p>
+        </div>
+    </footer>
+</body>
+</html>

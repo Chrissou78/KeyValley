@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | KEA VALLEY® Auto-Minter</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #C9A962;
+            --gold-light: #D4B978;
+            --navy: #1a1f2e;
+            --navy-light: #252b3d;
+            --navy-dark: #141824;
+            --white: #ffffff;
+            --gray: #a0a5b5;
+            --success: #4ade80;
+            --error: #f87171;
+            --warning: #fbbf24;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--navy);
+            color: var(--white);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: var(--navy-dark);
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(201, 169, 98, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gold);
+            text-decoration: none;
+        }
+
+        .network-badge {
+            background: rgba(201, 169, 98, 0.2);
+            color: var(--gold);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-btn {
+            background: transparent;
+            border: 1px solid rgba(201, 169, 98, 0.3);
+            color: var(--gray);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .header-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        /* Main */
+        main {
+            padding: 30px 0;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--navy-light);
+            border: 1px solid rgba(201, 169, 98, 0.2);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .stat-card h4 {
+            color: var(--gray);
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .value {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--gold);
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        /* Panel */
+        .panel {
+            background: var(--navy-light);
+            border: 1px solid rgba(201, 169, 98, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(201, 169, 98, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-header h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: 1px solid rgba(201, 169, 98, 0.2);
+            color: var(--gray);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active,
+        .filter-btn:hover {
+            background: var(--gold);
+            color: var(--navy);
+            border-color: var(--gold);
+        }
+
+        /* Table */
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(201, 169, 98, 0.1);
+        }
+
+        th {
+            background: var(--navy-dark);
+            color: var(--gold);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .wallet-cell {
+            font-family: monospace;
+            color: var(--white);
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-minted {
+            background: rgba(74, 222, 128, 0.2);
+            color: var(--success);
+        }
+
+        .status-pending {
+            background: rgba(251, 191, 36, 0.2);
+            color: var(--warning);
+        }
+
+        .tx-link {
+            color: var(--gold);
+            text-decoration: none;
+            font-size: 0.8rem;
+        }
+
+        .tx-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--gray);
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid rgba(201, 169, 98, 0.2);
+            border-radius: 8px;
+            background: var(--navy-dark);
+            color: var(--white);
+            font-size: 0.95rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            font-size: 0.95rem;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+            color: var(--navy);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(201, 169, 98, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--navy-dark);
+            color: var(--gold);
+            border: 1px solid var(--gold);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gold);
+            color: var(--navy);
+        }
+
+        /* Wallet Info */
+        .wallet-info {
+            background: var(--navy-dark);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .wallet-info-label {
+            color: var(--gray);
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+
+        .wallet-info-value {
+            color: var(--white);
+            font-family: monospace;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: none;
+            color: var(--gold);
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 5px;
+        }
+
+        .copy-btn:hover {
+            color: var(--gold-light);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--navy-light);
+            border: 1px solid var(--gold);
+            color: var(--white);
+            padding: 15px 25px;
+            border-radius: 8px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(20, 24, 36, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--navy-light);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-right {
+                display: none;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="container header-content">
+            <div class="header-left">
+                <a href="/" class="logo">KEA VALLEY®</a>
+                <span class="network-badge" id="networkBadge">Loading...</span>
+            </div>
+            <div class="header-right">
+                <a href="/" class="header-btn">View Site</a>
+                <button class="header-btn" onclick="window.location.href='/change-password'">Change Password</button>
+                <button class="header-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main>
+        <div class="container">
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Total Registrants</h4>
+                    <div class="value" id="totalRegistrants">0</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Minted</h4>
+                    <div class="value" id="totalMinted">0</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Pending</h4>
+                    <div class="value" id="totalPending">0</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Wallet Balance</h4>
+                    <div class="value" id="walletBalance">0 POL</div>
+                </div>
+            </div>
+
+            <!-- Dashboard Grid -->
+            <div class="dashboard-grid">
+                <!-- Registrants Panel -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Registrants</h3>
+                        <div class="filters">
+                            <button class="filter-btn active" data-filter="all">All</button>
+                            <button class="filter-btn" data-filter="pending">Pending</button>
+                            <button class="filter-btn" data-filter="minted">Minted</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Wallet Address</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Transaction</th>
+                                </tr>
+                            </thead>
+                            <tbody id="registrantsTable">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: var(--gray);">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Actions Panel -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Actions</h3>
+                    </div>
+                    <div class="panel-body">
+                        <!-- Wallet Info -->
+                        <div class="wallet-info">
+                            <div class="wallet-info-label">Minter Wallet</div>
+                            <div class="wallet-info-value">
+                                <span id="minterWallet">Loading...</span>
+                                <button class="copy-btn" onclick="copyAddress()" title="Copy Address">📋</button>
+                            </div>
+                        </div>
+
+                        <div class="wallet-info">
+                            <div class="wallet-info-label">Token</div>
+                            <div class="wallet-info-value">
+                                <span id="tokenInfo">Loading...</span>
+                            </div>
+                        </div>
+
+                        <!-- Register Wallet -->
+                        <div class="form-group">
+                            <label>Register New Wallet</label>
+                            <input type="text" id="newWalletInput" placeholder="0x...">
+                        </div>
+                        <button class="btn btn-primary" onclick="registerWallet()" style="margin-bottom: 15px;">Register Wallet</button>
+
+                        <!-- Mint Now -->
+                        <button class="btn btn-secondary" onclick="mintNow()" style="margin-bottom: 15px;">⚡ Mint Pending Now</button>
+
+                        <!-- Sync -->
+                        <button class="btn btn-secondary" onclick="syncBlockchain()">🔄 Sync with Blockchain</button>
+
+                        <!-- Check Balance -->
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label>Check Wallet Balance</label>
+                            <input type="text" id="balanceCheckInput" placeholder="0x...">
+                        </div>
+                        <button class="btn btn-secondary" onclick="checkBalance()">Check Balance</button>
+                        <div id="balanceResult" style="margin-top: 10px; color: var(--gold); display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_BASE = '';
+        let explorerUrl = 'https://amoy.polygonscan.com';
+        let minterAddress = '';
+        let allRegistrants = [];
+        let currentFilter = 'all';
+
+        // Check authentication
+        async function checkAuth() {
+            try {
+                const response = await fetch(`${API_BASE}/api/auth-status`);
+                const data = await response.json();
+                
+                if (!data.authenticated) {
+                    window.location.href = '/login';
+                    return false;
+                }
+                
+                if (data.mustChangePassword) {
+                    window.location.href = '/change-password';
+                    return false;
+                }
+                
+                return true;
+            } catch (error) {
+                window.location.href = '/login';
+                return false;
+            }
+        }
+
+        // Logout
+        async function logout() {
+            try {
+                await fetch(`${API_BASE}/api/logout`, { method: 'POST' });
+            } catch (e) {}
+            window.location.href = '/login';
+        }
+
+        // Show toast
+        function showToast(message, duration = 3000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), duration);
+        }
+
+        // Copy minter address
+        function copyAddress() {
+            if (minterAddress) {
+                navigator.clipboard.writeText(minterAddress).then(() => {
+                    showToast('Address copied!');
+                }).catch(() => {
+                    // Fallback
+                    const input = document.createElement('input');
+                    input.value = minterAddress;
+                    document.body.appendChild(input);
+                    input.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(input);
+                    showToast('Address copied!');
+                });
+            }
+        }
+
+        // Shorten address
+        function shortenAddress(address) {
+            if (!address) return '';
+            return `${address.slice(0, 6)}...${address.slice(-4)}`;
+        }
+
+        // Load stats
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/api/stats`);
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                const data = await response.json();
+                
+                document.getElementById('totalRegistrants').textContent = data.total || 0;
+                document.getElementById('totalMinted').textContent = data.minted || 0;
+                document.getElementById('totalPending').textContent = data.pending || 0;
+                document.getElementById('networkBadge').textContent = data.network || 'amoy';
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load registrants
+        async function loadRegistrants() {
+            try {
+                const response = await fetch(`${API_BASE}/api/registrants`);
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                const data = await response.json();
+                allRegistrants = data.registrants || [];
+                renderRegistrants();
+            } catch (error) {
+                console.error('Error loading registrants:', error);
+            }
+        }
+
+        // Render registrants based on filter
+        function renderRegistrants() {
+            const tbody = document.getElementById('registrantsTable');
+            let filtered = allRegistrants;
+            
+            if (currentFilter === 'pending') {
+                filtered = allRegistrants.filter(r => !r.minted);
+            } else if (currentFilter === 'minted') {
+                filtered = allRegistrants.filter(r => r.minted);
+            }
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--gray);">No registrants found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = filtered.map((r, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td class="wallet-cell">${shortenAddress(r.wallet_address)}</td>
+                    <td>
+                        <span class="status-badge ${r.minted ? 'status-minted' : 'status-pending'}">
+                            ${r.minted ? 'Minted' : 'Pending'}
+                        </span>
+                    </td>
+                    <td>${new Date(r.registered_at).toLocaleDateString()}</td>
+                    <td>
+                        ${r.tx_hash ? `<a href="${explorerUrl}/tx/${r.tx_hash}" target="_blank" class="tx-link">View</a>` : '-'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Load wallet info
+        async function loadWalletInfo() {
+            try {
+                const response = await fetch(`${API_BASE}/api/wallet-info`);
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                const data = await response.json();
+                
+                minterAddress = data.address || '';
+                explorerUrl = data.explorer || explorerUrl;
+                
+                document.getElementById('minterWallet').textContent = shortenAddress(minterAddress);
+                document.getElementById('tokenInfo').textContent = `${data.token_name || 'KEA'} (${data.token_symbol || 'KEA'})`;
+                document.getElementById('walletBalance').textContent = `${parseFloat(data.balance || 0).toFixed(4)} ${data.currency || 'POL'}`;
+            } catch (error) {
+                console.error('Error loading wallet info:', error);
+            }
+        }
+
+        // Register wallet
+        async function registerWallet() {
+            const input = document.getElementById('newWalletInput');
+            const address = input.value.trim();
+            
+            if (!address) {
+                showToast('Please enter a wallet address');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ wallet_address: address })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('Wallet registered successfully!');
+                    input.value = '';
+                    loadData();
+                } else {
+                    showToast(data.error || 'Failed to register wallet');
+                }
+            } catch (error) {
+                showToast('Error registering wallet');
+            }
+        }
+
+        // Mint now
+        async function mintNow() {
+            if (!confirm('Process all pending registrants now?')) return;
+            
+            showToast('Processing...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/mint-now`, { method: 'POST' });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast(`Minted to ${data.minted || 0} wallets!`);
+                    loadData();
+                } else {
+                    showToast(data.error || 'Minting failed');
+                }
+            } catch (error) {
+                showToast('Error during minting');
+            }
+        }
+
+        // Sync blockchain
+        async function syncBlockchain() {
+            showToast('Syncing...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/sync`, { method: 'POST' });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast(`Synced: ${data.synced || 0} wallets updated`);
+                    loadData();
+                } else {
+                    showToast(data.error || 'Sync failed');
+                }
+            } catch (error) {
+                showToast('Error syncing');
+            }
+        }
+
+        // Check balance
+        async function checkBalance() {
+            const input = document.getElementById('balanceCheckInput');
+            const address = input.value.trim();
+            
+            if (!address) {
+                showToast('Please enter a wallet address');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/balance/${address}`);
+                const data = await response.json();
+                
+                const result = document.getElementById('balanceResult');
+                result.style.display = 'block';
+                result.textContent = `Balance: ${data.balance || 0} ${data.symbol || 'KEA'}`;
+            } catch (error) {
+                showToast('Error checking balance');
+            }
+        }
+
+        // Load all data
+        async function loadData() {
+            await Promise.all([loadStats(), loadRegistrants(), loadWalletInfo()]);
+        }
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderRegistrants();
+            });
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            const isAuth = await checkAuth();
+            if (isAuth) {
+                await loadData();
+                document.getElementById('loadingOverlay').style.display = 'none';
+                
+                // Auto-refresh every 30 seconds
+                setInterval(loadData, 30000);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claim Your KEA Tokens | KEA VALLEY®</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #C9A962;
+            --gold-light: #D4B978;
+            --navy: #1a1f2e;
+            --navy-light: #252b3d;
+            --navy-dark: #141824;
+            --white: #ffffff;
+            --gray: #a0a5b5;
+            --success: #4ade80;
+            --error: #f87171;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 50%, var(--navy-light) 100%);
+            color: var(--white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(201, 169, 98, 0.2);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--gold);
+            text-decoration: none;
+        }
+
+        .logo span {
+            font-size: 0.7rem;
+            vertical-align: super;
+        }
+
+        .back-link {
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .back-link:hover {
+            color: var(--gold);
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .claim-card {
+            background: var(--navy-light);
+            border: 1px solid rgba(201, 169, 98, 0.3);
+            border-radius: 20px;
+            padding: 50px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .claim-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .claim-card h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--white);
+        }
+
+        .claim-card p {
+            color: var(--gray);
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 16px 40px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+            color: var(--navy);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(201, 169, 98, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Status States */
+        .status-message {
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .status-success {
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .status-error {
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+        }
+
+        .status-pending {
+            background: rgba(201, 169, 98, 0.1);
+            border: 1px solid rgba(201, 169, 98, 0.3);
+        }
+
+        /* Wallet Display */
+        .wallet-display {
+            background: var(--navy-dark);
+            border: 1px solid rgba(201, 169, 98, 0.2);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+            color: var(--gold);
+        }
+
+        /* Token Amount */
+        .token-amount {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            color: var(--gold);
+            margin: 20px 0;
+        }
+
+        .token-symbol {
+            font-size: 1.2rem;
+            color: var(--gray);
+        }
+
+        /* Transaction Link */
+        .tx-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--gold);
+            text-decoration: none;
+            font-size: 0.9rem;
+            padding: 10px 20px;
+            border: 1px solid var(--gold);
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+
+        .tx-link:hover {
+            background: var(--gold);
+            color: var(--navy);
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--navy-light);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Footer */
+        footer {
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid rgba(201, 169, 98, 0.2);
+        }
+
+        footer p {
+            color: var(--gray);
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: var(--gold);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .claim-card {
+                padding: 30px 20px;
+            }
+
+            .claim-card h1 {
+                font-size: 1.5rem;
+            }
+
+            .token-amount {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-content">
+            <a href="/" class="logo">KEA VALLEY<span>®</span></a>
+            <a href="/" class="back-link">← Back to Home</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <div class="claim-card" id="claimCard">
+            <!-- Loading State -->
+            <div id="loadingState" style="display: none;">
+                <div class="spinner"></div>
+                <h1>Processing Your Claim</h1>
+                <p>Please wait while we mint your KEA tokens...</p>
+            </div>
+
+            <!-- Connect State (No wallet) -->
+            <div id="connectState">
+                <div class="claim-icon">🎁</div>
+                <h1>Claim Your Free KEA Tokens</h1>
+                <p>Connect your wallet to receive 2 KEA tokens absolutely free. Ownership verification is handled securely through WalletTwo.</p>
+                <a href="https://wallet.wallettwo.com/auth/login?action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://key-valley.vercel.app/claim" class="btn btn-primary">
+                    Connect Wallet & Claim
+                </a>
+            </div>
+
+            <!-- Claiming State (Has wallet, processing) -->
+            <div id="claimingState" style="display: none;">
+                <div class="claim-icon">⏳</div>
+                <h1>Verifying & Minting</h1>
+                <p>We're verifying your wallet and minting your tokens...</p>
+                <div class="wallet-display" id="walletAddressClaiming"></div>
+                <div class="spinner"></div>
+            </div>
+
+            <!-- Success State -->
+            <div id="successState" style="display: none;">
+                <div class="claim-icon">🎉</div>
+                <h1>Congratulations!</h1>
+                <p>Your KEA tokens have been successfully minted to your wallet!</p>
+                <div class="token-amount">
+                    <span id="tokenAmount">2</span>
+                    <span class="token-symbol">KEA</span>
+                </div>
+                <div class="wallet-display" id="walletAddressSuccess"></div>
+                <a href="#" id="txLink" class="tx-link" target="_blank">View Transaction →</a>
+                <div style="margin-top: 30px;">
+                    <a href="/" class="btn btn-primary">Return to Homepage</a>
+                </div>
+            </div>
+
+            <!-- Already Claimed State -->
+            <div id="alreadyClaimedState" style="display: none;">
+                <div class="claim-icon">✅</div>
+                <h1>Already Claimed!</h1>
+                <p>This wallet has already received KEA tokens.</p>
+                <div class="wallet-display" id="walletAddressAlready"></div>
+                <div class="token-amount">
+                    <span id="existingBalance">2</span>
+                    <span class="token-symbol">KEA</span>
+                </div>
+                <p style="color: var(--gray); font-size: 0.9rem;">Your current balance</p>
+                <a href="#" id="txLinkAlready" class="tx-link" target="_blank" style="display: none;">View Original Transaction →</a>
+                <div style="margin-top: 30px;">
+                    <a href="/" class="btn btn-primary">Return to Homepage</a>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" style="display: none;">
+                <div class="claim-icon">❌</div>
+                <h1>Claim Failed</h1>
+                <p id="errorMessage">An error occurred while processing your claim. Please try again.</p>
+                <div style="margin-top: 30px;">
+                    <a href="https://wallet.wallettwo.com/auth/login?action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://key-valley.vercel.app/claim" class="btn btn-primary">
+                        Try Again
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>KEA VALLEY® — <a href="https://keavalley-greece.com/" target="_blank">keavalley-greece.com</a></p>
+    </footer>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            apiBase: '',
+            walletAuthUrl: 'https://wallet.wallettwo.com/auth/login',
+            message: 'FREE_BONUS_TOKENS_KEA_VALLEY',
+            redirectUri: window.location.origin + '/claim',
+            explorerUrl: 'https://amoy.polygonscan.com'
+        };
+
+        // DOM Elements
+        const states = {
+            loading: document.getElementById('loadingState'),
+            connect: document.getElementById('connectState'),
+            claiming: document.getElementById('claimingState'),
+            success: document.getElementById('successState'),
+            alreadyClaimed: document.getElementById('alreadyClaimedState'),
+            error: document.getElementById('errorState')
+        };
+
+        // Show specific state, hide others
+        function showState(stateName) {
+            Object.keys(states).forEach(key => {
+                states[key].style.display = key === stateName ? 'block' : 'none';
+            });
+        }
+
+        // Parse URL parameters
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                wallet: params.get('wlt'),
+                signature: params.get('signature'),
+                user: params.get('usr')
+            };
+        }
+
+        // Shorten wallet address for display
+        function shortenAddress(address) {
+            if (!address) return '';
+            return `${address.slice(0, 6)}...${address.slice(-4)}`;
+        }
+
+        // Claim tokens via API
+        async function claimTokens(walletAddress, signature) {
+            showState('claiming');
+            document.getElementById('walletAddressClaiming').textContent = walletAddress;
+
+            try {
+                const response = await fetch(`${CONFIG.apiBase}/api/claim/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        wallet_address: walletAddress,
+                        signature: signature,
+                        message: CONFIG.message
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (data.status === 'minted' || data.status === 'registered') {
+                        // Success - tokens minted
+                        showState('success');
+                        document.getElementById('walletAddressSuccess').textContent = walletAddress;
+                        document.getElementById('tokenAmount').textContent = data.amount || 2;
+                        
+                        if (data.tx_hash) {
+                            const explorerUrl = data.explorer_url || `${CONFIG.explorerUrl}/tx/${data.tx_hash}`;
+                            document.getElementById('txLink').href = explorerUrl;
+                            document.getElementById('txLink').style.display = 'inline-block';
+                        } else {
+                            document.getElementById('txLink').style.display = 'none';
+                        }
+                    }
+                } else if (response.status === 409 || data.status === 'already_claimed') {
+                    // Already claimed
+                    showState('alreadyClaimed');
+                    document.getElementById('walletAddressAlready').textContent = walletAddress;
+                    document.getElementById('existingBalance').textContent = data.balance || 2;
+                    
+                    if (data.tx_hash) {
+                        const explorerUrl = data.explorer_url || `${CONFIG.explorerUrl}/tx/${data.tx_hash}`;
+                        document.getElementById('txLinkAlready').href = explorerUrl;
+                        document.getElementById('txLinkAlready').style.display = 'inline-block';
+                    }
+                } else {
+                    // Error
+                    showState('error');
+                    document.getElementById('errorMessage').textContent = data.error || 'Failed to process claim. Please try again.';
+                }
+            } catch (error) {
+                console.error('Claim error:', error);
+                showState('error');
+                document.getElementById('errorMessage').textContent = 'Network error. Please check your connection and try again.';
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = getUrlParams();
+
+            if (params.wallet) {
+                // User came back from WalletTwo with wallet address
+                // Clean the URL without reloading
+                window.history.replaceState({}, document.title, '/claim');
+                
+                // Claim tokens
+                claimTokens(params.wallet, params.signature);
+            } else {
+                // No wallet - show connect state
+                showState('connect');
+            }
+        });
+    </script>
+</body>
+</html>
