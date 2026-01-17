@@ -555,21 +555,68 @@ app.get('/api/registrants/:address', requireAuth, checkPasswordChange, (req, res
     }
 });
 
+app.get('/api/holders', requireAuth, checkPasswordChange, async (req, res) => {
+    console.log('📊 Fetching token holders from blockchain...');
+    
+    try {
+        await minter.initialize();
+        const holders = await minter.getTokenHolders();
+        const networkConfig = getNetworkConfig();
+        
+        // Format holders with explorer URLs
+        const formattedHolders = holders.map((holder, index) => ({
+            id: index + 1,
+            wallet_address: holder.wallet_address,
+            balance: holder.balance,
+            minted: 1,
+            registered_at: holder.minted_at || new Date().toISOString(),
+            minted_at: holder.minted_at,
+            tx_hash: holder.tx_hash,
+            explorer_url: holder.tx_hash ? `${networkConfig.explorer}/tx/${holder.tx_hash}` : null,
+            network: holder.network
+        }));
+        
+        res.json({ 
+            registrants: formattedHolders,
+            source: 'blockchain',
+            total: formattedHolders.length
+        });
+        
+    } catch (error) {
+        console.error('Error fetching holders:', error);
+        res.status(500).json({ error: 'Failed to fetch token holders', details: error.message });
+    }
+});
+
 app.get('/api/stats', requireAuth, checkPasswordChange, async (req, res) => {
     try {
-        const stats = db.getStats();
         let networkName = process.env.NETWORK || 'amoy';
+        let totalHolders = 0;
+        let totalSupply = '0';
         
         try {
             await minter.initialize();
             networkName = minter.getNetworkName();
+            
+            // Get on-chain stats
+            const holders = await minter.getTokenHolders();
+            totalHolders = holders.length;
+            totalSupply = await minter.getTotalSupply();
+            
         } catch (e) {
-            console.error('Error getting network name:', e.message);
+            console.error('Error getting on-chain stats:', e.message);
         }
         
+        // Also get in-memory stats for pending (not yet minted)
+        const dbStats = db.getStats();
+        
         res.json({
-            ...stats,
-            network: networkName
+            total: totalHolders,
+            minted: totalHolders,
+            pending: dbStats.pending || 0,
+            totalSupply: totalSupply,
+            network: networkName,
+            source: 'blockchain'
         });
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch stats' });

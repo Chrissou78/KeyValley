@@ -604,8 +604,8 @@
                         <!-- Mint Now -->
                         <button class="btn btn-secondary" onclick="mintNow()" style="margin-bottom: 15px;">⚡ Mint Pending Now</button>
 
-                        <!-- Sync -->
-                        <button class="btn btn-secondary" onclick="syncBlockchain()">🔄 Sync Blockchain</button>
+                        <!-- Refresh from Blockchain -->
+                        <button class="btn btn-secondary" onclick="refreshFromBlockchain()" style="margin-bottom: 15px;">🔄 Refresh from Blockchain</button>
 
                         <!-- Check Balance -->
                         <div class="form-group" style="margin-top: 25px;">
@@ -623,7 +623,7 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
-    <script>
+   <script>
         const API_BASE = '';
         let explorerUrl = 'https://amoy.polygonscan.com';
         let minterAddress = '';
@@ -686,7 +686,7 @@
             return `${address.slice(0, 6)}...${address.slice(-4)}`;
         }
 
-        // Load stats
+        // Load stats from blockchain
         async function loadStats() {
             try {
                 const response = await fetch(`${API_BASE}/api/stats`);
@@ -700,24 +700,34 @@
                 document.getElementById('totalMinted').textContent = data.minted || 0;
                 document.getElementById('totalPending').textContent = data.pending || 0;
                 document.getElementById('networkBadge').textContent = data.network || 'amoy';
+                
+                // Show source indicator
+                if (data.source === 'blockchain') {
+                    document.getElementById('networkBadge').title = 'Data from blockchain';
+                }
             } catch (error) {
                 console.error('Error loading stats:', error);
             }
         }
 
-        // Load registrants
+        // Load token holders from blockchain
         async function loadRegistrants() {
             try {
-                const response = await fetch(`${API_BASE}/api/registrants`);
+                showToast('Loading from blockchain...');
+                
+                const response = await fetch(`${API_BASE}/api/holders`);
                 if (response.status === 401) {
                     window.location.href = '/login';
                     return;
                 }
                 const data = await response.json();
                 allRegistrants = data.registrants || [];
+                
+                showToast(`Loaded ${allRegistrants.length} holders from blockchain`);
                 renderRegistrants();
             } catch (error) {
                 console.error('Error loading registrants:', error);
+                showToast('Error loading blockchain data');
             }
         }
 
@@ -733,20 +743,20 @@
             }
             
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--gray-text); padding: 40px;">No registrants found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--gray-text); padding: 40px;">No token holders found</td></tr>';
                 return;
             }
             
             tbody.innerHTML = filtered.map((r, i) => `
                 <tr>
                     <td>${i + 1}</td>
-                    <td class="wallet-cell">${shortenAddress(r.wallet_address)}</td>
+                    <td class="wallet-cell" title="${r.wallet_address}">${shortenAddress(r.wallet_address)}</td>
                     <td>
-                        <span class="status-badge ${r.minted ? 'status-minted' : 'status-pending'}">
-                            ${r.minted ? 'Minted' : 'Pending'}
+                        <span class="status-badge status-minted">
+                            ${r.balance || '2'} VIP
                         </span>
                     </td>
-                    <td>${new Date(r.registered_at).toLocaleDateString()}</td>
+                    <td>${r.minted_at ? new Date(r.minted_at).toLocaleDateString() : '-'}</td>
                     <td>
                         ${r.tx_hash && r.tx_hash !== 'ALREADY_HAD_TOKENS' ? `<a href="${explorerUrl}/tx/${r.tx_hash}" target="_blank" class="tx-link">View →</a>` : '-'}
                     </td>
@@ -768,7 +778,7 @@
                 explorerUrl = data.explorer || explorerUrl;
                 
                 document.getElementById('minterWallet').textContent = shortenAddress(minterAddress);
-                document.getElementById('tokenInfo').textContent = `${data.token_name || 'Token'} (${data.token_symbol || '???'})`;
+                document.getElementById('tokenInfo').textContent = `${data.token_name || 'Token'} (${data.token_symbol || 'VIP'})`;
                 document.getElementById('walletBalance').textContent = `${parseFloat(data.balance || 0).toFixed(4)} ${data.currency || 'POL'}`;
             } catch (error) {
                 console.error('Error loading wallet info:', error);
@@ -827,23 +837,11 @@
             }
         }
 
-        // Sync blockchain
-        async function syncBlockchain() {
-            showToast('Syncing...');
-            
-            try {
-                const response = await fetch(`${API_BASE}/api/sync`, { method: 'POST' });
-                const data = await response.json();
-                
-                if (response.ok) {
-                    showToast(`Synced: ${data.synced || 0} wallets updated`);
-                    loadData();
-                } else {
-                    showToast(data.error || 'Sync failed');
-                }
-            } catch (error) {
-                showToast('Error syncing');
-            }
+        // Refresh from blockchain
+        async function refreshFromBlockchain() {
+            showToast('Refreshing from blockchain...');
+            await loadData();
+            showToast('Data refreshed from blockchain!');
         }
 
         // Check balance
@@ -890,8 +888,8 @@
                 await loadData();
                 document.getElementById('loadingOverlay').style.display = 'none';
                 
-                // Auto-refresh every 30 seconds
-                setInterval(loadData, 30000);
+                // Auto-refresh every 60 seconds (blockchain queries are slower)
+                setInterval(loadData, 60000);
             }
         });
     </script>

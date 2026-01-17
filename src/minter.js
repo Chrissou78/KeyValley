@@ -148,6 +148,69 @@ class MinterService {
         return checksummed;
     }
 
+    // Get all token holders by reading Transfer events
+    async getTokenHolders() {
+        await this.initialize();
+        
+        console.log('📊 Fetching token holders from blockchain...');
+        
+        try {
+            // Get all Transfer events where from is zero address (mints)
+            const mintFilter = this.contract.filters.Transfer(ethers.ZeroAddress, null);
+            
+            // Query from block 0 to latest (might need to adjust for large contracts)
+            const mintEvents = await this.contract.queryFilter(mintFilter, 0, 'latest');
+            
+            console.log(`   Found ${mintEvents.length} mint events`);
+            
+            // Get unique addresses
+            const addressSet = new Set();
+            mintEvents.forEach(event => {
+                addressSet.add(event.args[1].toLowerCase()); // 'to' address
+            });
+            
+            const uniqueAddresses = Array.from(addressSet);
+            console.log(`   Found ${uniqueAddresses.length} unique addresses`);
+            
+            // Get current balances for each address
+            const holders = [];
+            for (const address of uniqueAddresses) {
+                try {
+                    const balance = await this.contract.balanceOf(address);
+                    if (balance > 0n) {
+                        // Get the mint event for this address to find the tx hash
+                        const mintEvent = mintEvents.find(e => e.args[1].toLowerCase() === address);
+                        
+                        holders.push({
+                            wallet_address: address,
+                            balance: ethers.formatUnits(balance, this.decimals),
+                            minted: 1,
+                            minted_at: mintEvent ? new Date().toISOString() : null,
+                            tx_hash: mintEvent ? mintEvent.transactionHash : null,
+                            network: this.networkConfig.name
+                        });
+                    }
+                } catch (err) {
+                    console.error(`   Error checking balance for ${address}:`, err.message);
+                }
+            }
+            
+            console.log(`   ${holders.length} addresses currently hold tokens`);
+            
+            return holders;
+            
+        } catch (error) {
+            console.error('Error fetching token holders:', error.message);
+            return [];
+        }
+    }
+
+    // Get total number of holders
+    async getHolderCount() {
+        const holders = await this.getTokenHolders();
+        return holders.length;
+    }
+
     // Mint to a single address
     async mintToAddress(recipientAddress, amount, skipBalanceCheck = false) {
         await this.initialize();
