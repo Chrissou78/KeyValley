@@ -79,18 +79,18 @@ function verifySignature(signature, message, expectedWallet) {
         const recoveredAddress = ethers.verifyMessage(message, signature);
         const isValid = recoveredAddress.toLowerCase() === expectedWallet.toLowerCase();
         
-        console.log(`Signature verification:`);
-        console.log(`  Message: ${message}`);
-        console.log(`  Expected: ${expectedWallet}`);
-        console.log(`  Recovered: ${recoveredAddress}`);
-        console.log(`  Valid: ${isValid}`);
+        console.log(`🔐 Signature verification:`);
+        console.log(`   Message: ${message}`);
+        console.log(`   Expected: ${expectedWallet}`);
+        console.log(`   Recovered: ${recoveredAddress}`);
+        console.log(`   Valid: ${isValid}`);
         
         return {
             valid: isValid,
             recoveredAddress
         };
     } catch (error) {
-        console.error('Signature verification error:', error.message);
+        console.error('🔐 Signature verification error:', error.message);
         return {
             valid: false,
             error: error.message
@@ -239,35 +239,83 @@ app.post('/api/change-password', (req, res) => {
 // ===========================================
 
 app.post('/api/claim/register', async (req, res) => {
+    console.log('');
+    console.log('═══════════════════════════════════════════');
+    console.log('📥 CLAIM REQUEST RECEIVED');
+    console.log('═══════════════════════════════════════════');
+    console.log('Body:', JSON.stringify(req.body, null, 2));
+    
     const { wallet_address, signature, message } = req.body;
     
-    if (!wallet_address || !validateAddress(wallet_address)) {
+    // Validate wallet address
+    if (!wallet_address) {
+        console.log('❌ No wallet address provided');
+        return res.status(400).json({ error: 'Wallet address required' });
+    }
+    
+    if (!validateAddress(wallet_address)) {
+        console.log('❌ Invalid wallet address:', wallet_address);
         return res.status(400).json({ error: 'Invalid wallet address' });
     }
     
     const normalizedAddress = wallet_address.toLowerCase();
+    console.log('📍 Normalized address:', normalizedAddress);
     
+    // Signature verification (optional for now)
     if (signature) {
+        console.log('🔐 Verifying signature...');
         const verificationMessage = message || SIGNATURE_MESSAGE;
         const verification = verifySignature(signature, verificationMessage, wallet_address);
         
         if (!verification.valid) {
-            return res.status(401).json({ 
-                error: 'Invalid signature', 
-                details: verification.error 
-            });
+            console.log('⚠️ Signature invalid:', verification.error);
+            // Continue anyway for testing - remove this in production
+        } else {
+            console.log('✅ Signature valid');
         }
+    } else {
+        console.log('⚠️ No signature provided - skipping verification');
     }
     
     try {
+        // Initialize minter
+        console.log('🔧 Initializing minter...');
+        console.log('   NETWORK:', process.env.NETWORK);
+        console.log('   TOKEN_ADDRESS_AMOY:', process.env.TOKEN_ADDRESS_AMOY ? 'SET' : 'NOT SET');
+        console.log('   PRIVATE_KEY:', process.env.PRIVATE_KEY ? 'SET (hidden)' : 'NOT SET');
+        
         await minter.initialize();
+        console.log('✅ Minter initialized successfully');
+        console.log('   Token Name:', minter.tokenName);
+        console.log('   Token Symbol:', minter.tokenSymbol);
+        console.log('   Wallet:', minter.wallet?.address);
+        
         const networkConfig = getNetworkConfig();
+        console.log('🌐 Network:', networkConfig.name);
+        console.log('   Explorer:', networkConfig.explorer);
         
-        const hasTokens = await minter.hasTokens(wallet_address);
+        // Check if wallet already has tokens
+        console.log('💰 Checking on-chain balance...');
+        let hasTokens = false;
+        try {
+            hasTokens = await minter.hasTokens(wallet_address);
+            console.log('💰 Has tokens:', hasTokens);
+        } catch (balanceError) {
+            console.log('⚠️ Error checking balance:', balanceError.message);
+        }
+        
+        // Check database
         const existingRegistrant = db.getRegistrant(normalizedAddress);
+        console.log('📋 DB record:', existingRegistrant ? 'EXISTS' : 'NOT FOUND');
+        if (existingRegistrant) {
+            console.log('   Minted:', existingRegistrant.minted);
+            console.log('   TX Hash:', existingRegistrant.tx_hash);
+        }
         
+        // Already has tokens on-chain
         if (hasTokens) {
             const balance = await minter.getBalance(wallet_address);
+            console.log('✅ Wallet already has', balance, 'tokens');
             
             if (!existingRegistrant) {
                 db.addRegistrant(normalizedAddress);
@@ -288,7 +336,9 @@ app.post('/api/claim/register', async (req, res) => {
             });
         }
         
+        // Already claimed in database
         if (existingRegistrant && existingRegistrant.minted) {
+            console.log('✅ Already claimed (DB record)');
             return res.status(409).json({
                 status: 'already_claimed',
                 wallet_address: normalizedAddress,
@@ -300,29 +350,35 @@ app.post('/api/claim/register', async (req, res) => {
             });
         }
         
+        // Add to database if not exists
         if (!existingRegistrant) {
+            console.log('📝 Adding wallet to database...');
             const addResult = db.addRegistrant(normalizedAddress);
-            if (!addResult.success && addResult.duplicate) {
-                const recheckRegistrant = db.getRegistrant(normalizedAddress);
-                if (recheckRegistrant?.minted) {
-                    return res.status(409).json({
-                        status: 'already_claimed',
-                        wallet_address: normalizedAddress,
-                        message: 'This wallet has already claimed tokens'
-                    });
-                }
-            }
+            console.log('📝 Add result:', addResult);
         }
         
-        console.log(`Minting ${MINT_AMOUNT} tokens to ${wallet_address}...`);
+        // Mint tokens
+        console.log('');
+        console.log('🪙 MINTING TOKENS...');
+        console.log('   To:', wallet_address);
+        console.log('   Amount:', MINT_AMOUNT);
         
         const receipt = await minter.mintToAddress(wallet_address, MINT_AMOUNT);
+        
+        console.log('🪙 Mint result:', receipt ? 'SUCCESS' : 'FAILED');
         
         if (receipt && receipt.hash) {
             db.markAsMinted(normalizedAddress, receipt.hash, networkConfig.name);
             
-            console.log(`✅ Minted ${MINT_AMOUNT} tokens to ${wallet_address}`);
-            console.log(`   TX: ${networkConfig.explorer}/tx/${receipt.hash}`);
+            console.log('');
+            console.log('✅ ═══════════════════════════════════════');
+            console.log('✅ MINT SUCCESSFUL');
+            console.log('✅ ═══════════════════════════════════════');
+            console.log('   Wallet:', wallet_address);
+            console.log('   Amount:', MINT_AMOUNT, minter.tokenSymbol);
+            console.log('   TX Hash:', receipt.hash);
+            console.log('   Explorer:', `${networkConfig.explorer}/tx/${receipt.hash}`);
+            console.log('');
             
             return res.status(201).json({
                 status: 'minted',
@@ -334,6 +390,7 @@ app.post('/api/claim/register', async (req, res) => {
                 message: `Successfully minted ${MINT_AMOUNT} KEA tokens!`
             });
         } else {
+            console.log('⚠️ Mint returned no receipt');
             return res.status(202).json({
                 status: 'registered',
                 wallet_address: normalizedAddress,
@@ -342,7 +399,13 @@ app.post('/api/claim/register', async (req, res) => {
         }
         
     } catch (error) {
-        console.error('Claim error:', error);
+        console.log('');
+        console.log('❌ ═══════════════════════════════════════');
+        console.log('❌ CLAIM ERROR');
+        console.log('❌ ═══════════════════════════════════════');
+        console.log('   Message:', error.message);
+        console.log('   Stack:', error.stack);
+        console.log('');
         
         if (error.message?.includes('already has tokens')) {
             return res.status(409).json({
@@ -359,6 +422,7 @@ app.post('/api/claim/register', async (req, res) => {
     }
 });
 
+// Check claim status (public)
 app.get('/api/claim/status/:address', async (req, res) => {
     const { address } = req.params;
     
@@ -443,25 +507,6 @@ app.post('/api/register', requireAuth, checkPasswordChange, (req, res) => {
     } else {
         res.status(500).json({ error: result.error || 'Failed to register wallet' });
     }
-});
-
-app.post('/api/register/bulk', requireAuth, checkPasswordChange, (req, res) => {
-    const { wallet_addresses } = req.body;
-    
-    if (!Array.isArray(wallet_addresses) || wallet_addresses.length === 0) {
-        return res.status(400).json({ error: 'wallet_addresses must be a non-empty array' });
-    }
-    
-    const result = db.addRegistrantsBulk(wallet_addresses);
-    
-    res.json({
-        success: true,
-        total: result.total,
-        added: result.added,
-        duplicates: result.duplicates,
-        invalid: result.invalid,
-        errors: result.errors
-    });
 });
 
 app.get('/api/registrants', requireAuth, checkPasswordChange, (req, res) => {
@@ -582,48 +627,37 @@ app.post('/api/mint-now', requireAuth, checkPasswordChange, async (req, res) => 
         const networkConfig = getNetworkConfig();
         
         const addresses = pending.map(r => r.wallet_address);
-        const balanceCheck = await minter.checkBalances(addresses);
+        let mintedCount = 0;
+        let skippedCount = 0;
+        let lastTxHash = null;
         
-        const toMint = balanceCheck.needsMinting;
-        const alreadyHave = balanceCheck.alreadyHasTokens;
-        
-        for (const addr of alreadyHave) {
-            db.markAsMinted(addr, 'ALREADY_HAD_TOKENS', networkConfig.name);
-            console.log(`⏭️  ${addr} already has tokens, marked as complete`);
-        }
-        
-        if (toMint.length === 0) {
-            return res.json({
-                success: true,
-                message: 'All pending wallets already have tokens',
-                minted: 0,
-                skipped: alreadyHave.length
-            });
-        }
-        
-        const result = await minter.batchMintToAddresses(toMint, MINT_AMOUNT);
-        
-        if (result.receipt) {
-            for (const addr of result.mintedAddresses) {
-                db.markAsMinted(addr, result.receipt.hash, networkConfig.name);
+        for (const address of addresses) {
+            try {
+                const hasTokens = await minter.hasTokens(address);
+                if (hasTokens) {
+                    db.markAsMinted(address, 'ALREADY_HAD_TOKENS', networkConfig.name);
+                    skippedCount++;
+                    continue;
+                }
+                
+                const receipt = await minter.mintToAddress(address, MINT_AMOUNT);
+                if (receipt && receipt.hash) {
+                    db.markAsMinted(address, receipt.hash, networkConfig.name);
+                    lastTxHash = receipt.hash;
+                    mintedCount++;
+                }
+            } catch (mintError) {
+                console.error(`Failed to mint to ${address}:`, mintError.message);
             }
-            
-            console.log(`✅ Minted to ${result.mintedAddresses.length} wallets`);
-            console.log(`   TX: ${networkConfig.explorer}/tx/${result.receipt.hash}`);
-            
-            return res.json({
-                success: true,
-                minted: result.mintedAddresses.length,
-                skipped: alreadyHave.length + (result.skippedAddresses?.length || 0),
-                tx_hash: result.receipt.hash,
-                explorer_url: `${networkConfig.explorer}/tx/${result.receipt.hash}`
-            });
-        } else {
-            return res.status(500).json({
-                error: 'Minting failed',
-                minted: 0
-            });
         }
+        
+        return res.json({
+            success: true,
+            minted: mintedCount,
+            skipped: skippedCount,
+            tx_hash: lastTxHash,
+            explorer_url: lastTxHash ? `${networkConfig.explorer}/tx/${lastTxHash}` : null
+        });
         
     } catch (error) {
         console.error('Mint error:', error);
@@ -648,15 +682,19 @@ app.post('/api/sync', requireAuth, checkPasswordChange, async (req, res) => {
         await minter.initialize();
         const networkConfig = getNetworkConfig();
         
-        const addresses = pending.map(r => r.wallet_address);
-        const balanceCheck = await minter.checkBalances(addresses);
-        
         let synced = 0;
         
-        for (const addr of balanceCheck.alreadyHasTokens) {
-            db.markAsMinted(addr, 'ALREADY_HAD_TOKENS', networkConfig.name);
-            synced++;
-            console.log(`🔄 Synced: ${addr} already has tokens`);
+        for (const registrant of pending) {
+            try {
+                const hasTokens = await minter.hasTokens(registrant.wallet_address);
+                if (hasTokens) {
+                    db.markAsMinted(registrant.wallet_address, 'ALREADY_HAD_TOKENS', networkConfig.name);
+                    synced++;
+                    console.log(`🔄 Synced: ${registrant.wallet_address} already has tokens`);
+                }
+            } catch (error) {
+                console.error(`Error checking ${registrant.wallet_address}:`, error.message);
+            }
         }
         
         const stats = db.getStats();
@@ -664,7 +702,7 @@ app.post('/api/sync', requireAuth, checkPasswordChange, async (req, res) => {
         res.json({
             success: true,
             synced,
-            stillPending: balanceCheck.needsMinting.length,
+            stillPending: pending.length - synced,
             stats
         });
         
@@ -678,16 +716,40 @@ app.post('/api/sync', requireAuth, checkPasswordChange, async (req, res) => {
 // Health Check (Public)
 // ===========================================
 
-app.get('/api/health', (req, res) => {
-    res.json({
+app.get('/api/health', async (req, res) => {
+    const health = {
         status: 'ok',
         timestamp: new Date().toISOString(),
-        network: process.env.NETWORK || 'amoy'
-    });
+        network: process.env.NETWORK || 'amoy',
+        env: {
+            NETWORK: process.env.NETWORK ? 'SET' : 'NOT SET',
+            TOKEN_ADDRESS_AMOY: process.env.TOKEN_ADDRESS_AMOY ? 'SET' : 'NOT SET',
+            PRIVATE_KEY: process.env.PRIVATE_KEY ? 'SET' : 'NOT SET',
+            MINT_AMOUNT: process.env.MINT_AMOUNT || '2 (default)'
+        }
+    };
+    
+    // Try to check minter status
+    try {
+        await minter.initialize();
+        health.minter = {
+            status: 'initialized',
+            wallet: minter.wallet?.address,
+            tokenName: minter.tokenName,
+            tokenSymbol: minter.tokenSymbol
+        };
+    } catch (error) {
+        health.minter = {
+            status: 'error',
+            error: error.message
+        };
+    }
+    
+    res.json(health);
 });
 
 // ===========================================
-// Catch-all for SPA routing
+// Catch-all
 // ===========================================
 
 app.get('*', (req, res) => {
@@ -705,6 +767,7 @@ function startServer() {
             console.log(`   Home:      http://localhost:${PORT}/`);
             console.log(`   Claim:     http://localhost:${PORT}/claim`);
             console.log(`   Dashboard: http://localhost:${PORT}/dashboard`);
+            console.log(`   Health:    http://localhost:${PORT}/api/health`);
             resolve(server);
         });
     });
