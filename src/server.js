@@ -26,8 +26,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Ensure DB is initialized for each request (Vercel serverless)
 app.use(async (req, res, next) => {
     try {
-        const { initDb } = require('./db');
-        await initDb();
+        await db.initDb();
         next();
     } catch (error) {
         console.error('DB initialization error:', error);
@@ -43,6 +42,7 @@ function requireAuth(req, res, next) {
     const sessionId = req.cookies?.session;
     
     if (!sessionId) {
+        console.log('No session cookie found');
         if (req.path.startsWith('/api/')) {
             return res.status(401).json({ error: 'Authentication required' });
         }
@@ -51,7 +51,8 @@ function requireAuth(req, res, next) {
     
     const session = auth.validateSession(sessionId);
     if (!session) {
-        res.clearCookie('session');
+        console.log('Invalid or expired session');
+        res.clearCookie('session', { path: '/' });
         if (req.path.startsWith('/api/')) {
             return res.status(401).json({ error: 'Session expired' });
         }
@@ -147,6 +148,7 @@ app.get('/dashboard', requireAuth, checkPasswordChange, (req, res) => {
 // ===========================================
 
 app.post('/api/login', (req, res) => {
+    console.log('Login attempt received');
     const { username, password } = req.body;
     
     if (!username || !password) {
@@ -154,18 +156,20 @@ app.post('/api/login', (req, res) => {
     }
     
     const result = auth.login(username, password);
+    console.log('Login result:', result.success ? 'SUCCESS' : 'FAILED');
     
     if (result.success) {
         res.cookie('session', result.sessionId, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 24 * 60 * 60 * 1000
+            secure: true,
+            sameSite: 'lax',
+            maxAge: 24 * 60 * 60 * 1000,
+            path: '/'
         });
         
         res.json({
             success: true,
-            mustChangePassword: result.mustChangePassword
+            mustChangePassword: result.mustChangePassword || false
         });
     } else {
         res.status(401).json({ error: result.error || 'Invalid credentials' });
@@ -177,7 +181,7 @@ app.post('/api/logout', (req, res) => {
     if (sessionId) {
         auth.logout(sessionId);
     }
-    res.clearCookie('session');
+    res.clearCookie('session', { path: '/' });
     res.json({ success: true });
 });
 
@@ -191,7 +195,7 @@ app.get('/api/auth-status', (req, res) => {
     const session = auth.validateSession(sessionId);
     
     if (!session) {
-        res.clearCookie('session');
+        res.clearCookie('session', { path: '/' });
         return res.json({ authenticated: false });
     }
     
@@ -211,7 +215,7 @@ app.post('/api/change-password', (req, res) => {
     
     const session = auth.validateSession(sessionId);
     if (!session) {
-        res.clearCookie('session');
+        res.clearCookie('session', { path: '/' });
         return res.status(401).json({ error: 'Session expired' });
     }
     
@@ -228,15 +232,16 @@ app.post('/api/change-password', (req, res) => {
     const result = auth.changePassword(session.username, currentPassword, newPassword);
     
     if (result.success) {
-        auth.logout(sessionId);
+        // Re-login with new password
         const loginResult = auth.login(session.username, newPassword);
         
         if (loginResult.success) {
             res.cookie('session', loginResult.sessionId, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                maxAge: 24 * 60 * 60 * 1000
+                secure: true,
+                sameSite: 'lax',
+                maxAge: 24 * 60 * 60 * 1000,
+                path: '/'
             });
         }
         
@@ -281,7 +286,7 @@ app.post('/api/claim/register', async (req, res) => {
         
         if (!verification.valid) {
             console.log('⚠️ Signature invalid:', verification.error);
-            // Continue anyway for testing - remove this in production
+            // Continue anyway for testing
         } else {
             console.log('✅ Signature valid');
         }
@@ -292,19 +297,11 @@ app.post('/api/claim/register', async (req, res) => {
     try {
         // Initialize minter
         console.log('🔧 Initializing minter...');
-        console.log('   NETWORK:', process.env.NETWORK);
-        console.log('   TOKEN_ADDRESS_AMOY:', process.env.TOKEN_ADDRESS_AMOY ? 'SET' : 'NOT SET');
-        console.log('   PRIVATE_KEY:', process.env.PRIVATE_KEY ? 'SET (hidden)' : 'NOT SET');
-        
         await minter.initialize();
-        console.log('✅ Minter initialized successfully');
-        console.log('   Token Name:', minter.tokenName);
-        console.log('   Token Symbol:', minter.tokenSymbol);
-        console.log('   Wallet:', minter.wallet?.address);
+        console.log('✅ Minter initialized');
         
         const networkConfig = getNetworkConfig();
         console.log('🌐 Network:', networkConfig.name);
-        console.log('   Explorer:', networkConfig.explorer);
         
         // Check if wallet already has tokens
         console.log('💰 Checking on-chain balance...');
@@ -319,10 +316,6 @@ app.post('/api/claim/register', async (req, res) => {
         // Check database
         const existingRegistrant = db.getRegistrant(normalizedAddress);
         console.log('📋 DB record:', existingRegistrant ? 'EXISTS' : 'NOT FOUND');
-        if (existingRegistrant) {
-            console.log('   Minted:', existingRegistrant.minted);
-            console.log('   TX Hash:', existingRegistrant.tx_hash);
-        }
         
         // Already has tokens on-chain
         if (hasTokens) {
@@ -340,11 +333,12 @@ app.post('/api/claim/register', async (req, res) => {
                 status: 'already_claimed',
                 wallet_address: normalizedAddress,
                 balance: balance,
+                symbol: minter.tokenSymbol || 'VIP',
                 tx_hash: existingRegistrant?.tx_hash || null,
                 explorer_url: existingRegistrant?.tx_hash && existingRegistrant.tx_hash !== 'ALREADY_HAD_TOKENS' 
                     ? `${networkConfig.explorer}/tx/${existingRegistrant.tx_hash}` 
                     : null,
-                message: 'This wallet already has KEA tokens'
+                message: 'This wallet already has VIP tokens'
             });
         }
         
@@ -354,6 +348,7 @@ app.post('/api/claim/register', async (req, res) => {
             return res.status(409).json({
                 status: 'already_claimed',
                 wallet_address: normalizedAddress,
+                symbol: minter.tokenSymbol || 'VIP',
                 tx_hash: existingRegistrant.tx_hash,
                 explorer_url: existingRegistrant.tx_hash && existingRegistrant.tx_hash !== 'ALREADY_HAD_TOKENS'
                     ? `${networkConfig.explorer}/tx/${existingRegistrant.tx_hash}`
@@ -377,8 +372,6 @@ app.post('/api/claim/register', async (req, res) => {
         
         const receipt = await minter.mintToAddress(wallet_address, MINT_AMOUNT);
         
-        console.log('🪙 Mint result:', receipt ? 'SUCCESS' : 'FAILED');
-        
         if (receipt && receipt.hash) {
             db.markAsMinted(normalizedAddress, receipt.hash, networkConfig.name);
             
@@ -389,17 +382,24 @@ app.post('/api/claim/register', async (req, res) => {
             console.log('   Wallet:', wallet_address);
             console.log('   Amount:', MINT_AMOUNT, minter.tokenSymbol);
             console.log('   TX Hash:', receipt.hash);
-            console.log('   Explorer:', `${networkConfig.explorer}/tx/${receipt.hash}`);
             console.log('');
             
             return res.status(201).json({
                 status: 'minted',
                 wallet_address: normalizedAddress,
                 amount: MINT_AMOUNT,
-                symbol: minter.tokenSymbol || 'KEA',
+                symbol: minter.tokenSymbol || 'VIP',
                 tx_hash: receipt.hash,
                 explorer_url: `${networkConfig.explorer}/tx/${receipt.hash}`,
-                message: `Successfully minted ${MINT_AMOUNT} KEA tokens!`
+                message: `Successfully minted ${MINT_AMOUNT} VIP tokens!`
+            });
+        } else if (receipt && receipt.skipped) {
+            console.log('⏭️ Mint skipped - wallet already has tokens');
+            return res.status(409).json({
+                status: 'already_claimed',
+                wallet_address: normalizedAddress,
+                symbol: minter.tokenSymbol || 'VIP',
+                message: 'This wallet already has tokens'
             });
         } else {
             console.log('⚠️ Mint returned no receipt');
@@ -614,7 +614,7 @@ app.get('/api/balance/:address', requireAuth, checkPasswordChange, async (req, r
         res.json({
             address,
             balance,
-            symbol: minter.tokenSymbol || 'KEA'
+            symbol: minter.tokenSymbol || 'VIP'
         });
     } catch (error) {
         res.status(500).json({ error: 'Failed to check balance' });
@@ -638,28 +638,27 @@ app.post('/api/mint-now', requireAuth, checkPasswordChange, async (req, res) => 
         await minter.initialize();
         const networkConfig = getNetworkConfig();
         
-        const addresses = pending.map(r => r.wallet_address);
         let mintedCount = 0;
         let skippedCount = 0;
         let lastTxHash = null;
         
-        for (const address of addresses) {
+        for (const registrant of pending) {
             try {
-                const hasTokens = await minter.hasTokens(address);
+                const hasTokens = await minter.hasTokens(registrant.wallet_address);
                 if (hasTokens) {
-                    db.markAsMinted(address, 'ALREADY_HAD_TOKENS', networkConfig.name);
+                    db.markAsMinted(registrant.wallet_address, 'ALREADY_HAD_TOKENS', networkConfig.name);
                     skippedCount++;
                     continue;
                 }
                 
-                const receipt = await minter.mintToAddress(address, MINT_AMOUNT);
+                const receipt = await minter.mintToAddress(registrant.wallet_address, MINT_AMOUNT);
                 if (receipt && receipt.hash) {
-                    db.markAsMinted(address, receipt.hash, networkConfig.name);
+                    db.markAsMinted(registrant.wallet_address, receipt.hash, networkConfig.name);
                     lastTxHash = receipt.hash;
                     mintedCount++;
                 }
             } catch (mintError) {
-                console.error(`Failed to mint to ${address}:`, mintError.message);
+                console.error(`Failed to mint to ${registrant.wallet_address}:`, mintError.message);
             }
         }
         
@@ -737,7 +736,9 @@ app.get('/api/health', async (req, res) => {
             NETWORK: process.env.NETWORK ? 'SET' : 'NOT SET',
             TOKEN_ADDRESS_AMOY: process.env.TOKEN_ADDRESS_AMOY ? 'SET' : 'NOT SET',
             PRIVATE_KEY: process.env.PRIVATE_KEY ? 'SET' : 'NOT SET',
-            MINT_AMOUNT: process.env.MINT_AMOUNT || '2 (default)'
+            MINT_AMOUNT: process.env.MINT_AMOUNT || '2 (default)',
+            ADMIN_USERNAME: process.env.ADMIN_USERNAME ? 'SET' : 'NOT SET',
+            ADMIN_PASSWORD: process.env.ADMIN_PASSWORD ? 'SET' : 'NOT SET'
         }
     };
     
