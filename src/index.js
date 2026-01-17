@@ -1,36 +1,37 @@
 require('dotenv').config();
+
 const { initDb } = require('./db');
-const { initializeCredentials } = require('./auth');
-const { startServer } = require('./server');
-const { startScheduler } = require('./scheduler');
+const { startServer, app } = require('./server');
+const auth = require('./auth');
 
-const pollInterval = process.env.POLL_INTERVAL_MINUTES || 30;
+const NETWORK = process.env.NETWORK || 'amoy';
+const MINT_AMOUNT = process.env.MINT_AMOUNT || 2;
 
-console.log('═══════════════════════════════════════════════════════════');
-console.log('                  AUTO-MINTER SERVICE');
-console.log('═══════════════════════════════════════════════════════════');
-console.log(`  Network:       ${process.env.NETWORK || 'amoy'}`);
-console.log(`  Mint amount:   ${process.env.MINT_AMOUNT || 2} tokens`);
-console.log(`  Poll interval: ${pollInterval} minutes`);
-console.log('═══════════════════════════════════════════════════════════');
-
-// Initialize everything
 async function main() {
-  // Initialize credentials (generates password on first run)
-  initializeCredentials();
+    console.log('');
+    console.log('╔════════════════════════════════════════╗');
+    console.log('║       KEA VALLEY® AUTO-MINTER          ║');
+    console.log('╚════════════════════════════════════════╝');
+    console.log('');
+    console.log(`  Network:       ${NETWORK.toUpperCase()}`);
+    console.log(`  Mint Amount:   ${MINT_AMOUNT} tokens`);
+    console.log('');
 
-  // Initialize database
-  await initDb();
-  console.log('✅ Database initialized');
+    // Initialize database
+    await initDb();
+    console.log('✅ Database initialized');
 
-  // Start API server
-  startServer();
+    // Print first-run credentials if applicable
+    auth.printFirstRunBanner();
 
-  // Start scheduler
-  await startScheduler();
+    // Start API server
+    await startServer();
 }
 
-main().catch((error) => {
-  console.error('\n❌ Failed to start:', error.message);
-  process.exit(1);
-});
+// For local development
+if (process.env.VERCEL !== '1') {
+    main().catch(console.error);
+}
+
+// Export for Vercel serverless
+module.exports = app;

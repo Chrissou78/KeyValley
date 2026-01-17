@@ -8,8 +8,28 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/api/(.*)",
       "dest": "src/index.js"
+    },
+    {
+      "src": "/claim",
+      "dest": "src/index.js"
+    },
+    {
+      "src": "/dashboard",
+      "dest": "src/index.js"
+    },
+    {
+      "src": "/login",
+      "dest": "src/index.js"
+    },
+    {
+      "src": "/change-password",
+      "dest": "src/index.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "src/public/$1"
     }
   ]
 }
