@@ -19,11 +19,7 @@
             --danger: #dc3545;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Montserrat', sans-serif;
@@ -48,21 +44,10 @@
             font-weight: 600;
         }
 
-        .logo span {
-            color: var(--white);
-            font-weight: 400;
-        }
+        .logo span { color: var(--white); font-weight: 400; }
 
-        .header-actions {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .header-actions span {
-            color: var(--gold-light);
-            font-size: 0.9rem;
-        }
+        .header-actions { display: flex; gap: 15px; align-items: center; }
+        .header-actions span { color: var(--gold-light); font-size: 0.9rem; }
 
         .btn {
             padding: 10px 20px;
@@ -78,37 +63,13 @@
             gap: 8px;
         }
 
-        .btn-primary {
-            background: var(--gold);
-            color: var(--deep-blue);
-        }
+        .btn-primary { background: var(--gold); color: var(--deep-blue); }
+        .btn-primary:hover { background: var(--gold-light); transform: translateY(-2px); }
+        .btn-secondary { background: transparent; color: var(--white); border: 1px solid var(--gold); }
+        .btn-secondary:hover { background: var(--gold); color: var(--deep-blue); }
+        .btn-danger { background: var(--danger); color: white; }
 
-        .btn-primary:hover {
-            background: var(--gold-light);
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: var(--white);
-            border: 1px solid var(--gold);
-        }
-
-        .btn-secondary:hover {
-            background: var(--gold);
-            color: var(--deep-blue);
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 30px;
-        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px; }
 
         .page-title {
             font-family: 'Playfair Display', serif;
@@ -140,12 +101,7 @@
             font-weight: 600;
         }
 
-        .stat-label {
-            color: var(--text-gray);
-            font-size: 0.9rem;
-            margin-top: 5px;
-        }
-
+        .stat-label { color: var(--text-gray); font-size: 0.9rem; margin-top: 5px; }
         .stat-card.success .stat-value { color: var(--success); }
         .stat-card.warning .stat-value { color: var(--warning); }
         .stat-card.gold .stat-value { color: var(--gold); }
@@ -159,11 +115,7 @@
             text-align: center;
         }
 
-        .notice-card p {
-            margin: 0;
-            color: var(--deep-blue);
-            font-size: 0.95rem;
-        }
+        .notice-card p { margin: 0; color: var(--deep-blue); font-size: 0.95rem; }
 
         .card {
             background: var(--white);
@@ -183,23 +135,10 @@
             border-bottom: 1px solid var(--light-gray);
         }
 
-        .card-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.3rem;
-            color: var(--deep-blue);
-        }
+        .card-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--deep-blue); }
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
-        .actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .filters {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+        .filters { display: flex; gap: 10px; margin-bottom: 20px; }
 
         .filter-btn {
             padding: 8px 16px;
@@ -212,40 +151,14 @@
             font-size: 0.85rem;
         }
 
-        .filter-btn.active, .filter-btn:hover {
-            background: var(--gold);
-            color: var(--deep-blue);
-        }
+        .filter-btn.active, .filter-btn:hover { background: var(--gold); color: var(--deep-blue); }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--light-gray); }
+        th { font-weight: 600; color: var(--deep-blue); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { color: var(--text-gray); font-size: 0.9rem; }
 
-        th, td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid var(--light-gray);
-        }
-
-        th {
-            font-weight: 600;
-            color: var(--deep-blue);
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        td {
-            color: var(--text-gray);
-            font-size: 0.9rem;
-        }
-
-        .wallet-address {
-            font-family: monospace;
-            font-size: 0.85rem;
-            color: var(--deep-blue);
-        }
+        .wallet-address { font-family: monospace; font-size: 0.85rem; color: var(--deep-blue); }
 
         .status-badge {
             padding: 5px 12px;
@@ -255,53 +168,27 @@
             text-transform: uppercase;
         }
 
-        .status-minted {
-            background: rgba(40, 167, 69, 0.1);
-            color: var(--success);
-        }
+        .status-minted { background: rgba(40, 167, 69, 0.1); color: var(--success); }
+        .status-pending { background: rgba(255, 193, 7, 0.1); color: #856404; }
 
-        .status-pending {
-            background: rgba(255, 193, 7, 0.1);
-            color: #856404;
-        }
+        .tx-link { color: var(--gold); text-decoration: none; }
+        .tx-link:hover { text-decoration: underline; }
 
-        .tx-link {
-            color: var(--gold);
-            text-decoration: none;
-        }
-
-        .tx-link:hover {
-            text-decoration: underline;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-gray);
-        }
-
-        .empty-state h3 {
-            font-family: 'Playfair Display', serif;
-            color: var(--deep-blue);
-            margin-bottom: 10px;
-        }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-gray); }
+        .empty-state h3 { font-family: 'Playfair Display', serif; color: var(--deep-blue); margin-bottom: 10px; }
 
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: rgba(0,0,0,0.5);
             justify-content: center;
             align-items: center;
             z-index: 1000;
         }
 
-        .modal.active {
-            display: flex;
-        }
+        .modal.active { display: flex; }
 
         .modal-content {
             background: var(--white);
@@ -312,24 +199,9 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
 
-        .modal-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem;
-            color: var(--deep-blue);
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--deep-blue);
-            font-weight: 500;
-        }
-
+        .modal-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--deep-blue); margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: var(--deep-blue); font-weight: 500; }
         .form-group input {
             width: 100%;
             padding: 12px 15px;
@@ -338,37 +210,23 @@
             font-size: 1rem;
             font-family: 'Montserrat', sans-serif;
         }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--gold);
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
-        }
+        .form-group input:focus { outline: none; border-color: var(--gold); }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 
         .loading {
             display: inline-block;
-            width: 20px;
-            height: 20px;
+            width: 20px; height: 20px;
             border: 2px solid var(--gold-light);
             border-top-color: var(--gold);
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .toast {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: 20px; right: 20px;
             padding: 15px 25px;
             border-radius: 8px;
             color: white;
@@ -379,49 +237,18 @@
             z-index: 1001;
         }
 
-        .toast.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
+        .toast.show { transform: translateY(0); opacity: 1; }
         .toast.success { background: var(--success); }
         .toast.error { background: var(--danger); }
         .toast.info { background: var(--deep-blue); }
 
-        .refresh-info {
-            font-size: 0.8rem;
-            color: var(--text-gray);
-            margin-left: 10px;
-        }
-
         @media (max-width: 768px) {
-            .header {
-                padding: 15px 20px;
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .container {
-                padding: 20px;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            table {
-                font-size: 0.8rem;
-            }
-
-            th, td {
-                padding: 10px;
-            }
-
-            .wallet-address {
-                max-width: 120px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
+            .header { padding: 15px 20px; flex-direction: column; gap: 15px; }
+            .container { padding: 20px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            table { font-size: 0.8rem; }
+            th, td { padding: 10px; }
+            .wallet-address { max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
         }
     </style>
 </head>
@@ -438,18 +265,17 @@
     <div class="container">
         <h1 class="page-title">Admin Dashboard</h1>
 
-        <!-- Stats -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-value" id="totalRegistrants">-</div>
-                <div class="stat-label">Total Holders</div>
+                <div class="stat-value" id="totalRegistrants">0</div>
+                <div class="stat-label">Total Registrants</div>
             </div>
             <div class="stat-card success">
-                <div class="stat-value" id="totalMinted">-</div>
+                <div class="stat-value" id="totalMinted">0</div>
                 <div class="stat-label">Minted</div>
             </div>
             <div class="stat-card warning">
-                <div class="stat-value" id="totalPending">-</div>
+                <div class="stat-value" id="totalPending">0</div>
                 <div class="stat-label">Pending</div>
             </div>
             <div class="stat-card gold">
@@ -458,24 +284,19 @@
             </div>
         </div>
 
-        <!-- Notice -->
         <div class="notice-card">
             <p>
-                <strong>📡 Blockchain Data:</strong> This dashboard reads token holder data directly from the blockchain. 
-                Data is always accurate and reflects on-chain state.
-                <span class="refresh-info">Auto-refresh: 60 seconds</span>
+                <strong>⚠️ Note:</strong> Dashboard data resets on server restart (serverless limitation). 
+                The <strong>blockchain is the source of truth</strong> — all minted tokens are permanently recorded on-chain.
             </p>
         </div>
 
-        <!-- Registrants Table -->
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title">Token Holders</h2>
+                <h2 class="card-title">Registrants</h2>
                 <div class="actions">
                     <button onclick="showRegisterModal()" class="btn btn-primary">+ Register Wallet</button>
-                    <button onclick="refreshFromBlockchain()" class="btn btn-secondary" id="refreshBtn">
-                        🔄 Refresh from Blockchain
-                    </button>
+                    <button onclick="loadRegistrants()" class="btn btn-secondary">🔄 Refresh</button>
                 </div>
             </div>
 
@@ -485,32 +306,23 @@
                 <button class="filter-btn" onclick="filterTable('pending')">Pending</button>
             </div>
 
-            <div id="tableContainer">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Wallet Address</th>
-                            <th>Balance</th>
-                            <th>Status</th>
-                            <th>Minted At</th>
-                            <th>TX Hash</th>
-                        </tr>
-                    </thead>
-                    <tbody id="registrantsTable">
-                        <tr>
-                            <td colspan="6" class="empty-state">
-                                <div class="loading"></div>
-                                <p style="margin-top: 10px;">Loading from blockchain...</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Wallet Address</th>
+                        <th>Status</th>
+                        <th>Registered</th>
+                        <th>TX Hash</th>
+                    </tr>
+                </thead>
+                <tbody id="registrantsTable">
+                    <tr><td colspan="5" class="empty-state"><h3>No registrants yet</h3><p>Registrants will appear here after claiming tokens.</p></td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <!-- Register Modal -->
     <div class="modal" id="registerModal">
         <div class="modal-content">
             <h3 class="modal-title">Register New Wallet</h3>
@@ -527,251 +339,105 @@
         </div>
     </div>
 
-    <!-- Toast -->
     <div class="toast" id="toast"></div>
 
     <script>
         let registrants = [];
         let currentFilter = 'all';
-        let autoRefreshInterval;
 
-        // Check auth on load
         async function checkAuth() {
             try {
-                const response = await fetch('/api/auth-status');
-                const data = await response.json();
-                
-                if (!data.authenticated) {
-                    window.location.href = '/login';
-                    return false;
-                }
+                const res = await fetch('/api/auth-status');
+                const data = await res.json();
+                if (!data.authenticated) { window.location.href = '/login'; return false; }
                 return true;
-            } catch (error) {
-                console.error('Auth check failed:', error);
-                window.location.href = '/login';
-                return false;
-            }
+            } catch { window.location.href = '/login'; return false; }
         }
 
-        // Load dashboard data
         async function loadDashboard() {
-            const isAuth = await checkAuth();
-            if (!isAuth) return;
-
+            if (!await checkAuth()) return;
             await loadStats();
-            await loadHolders();
-            
-            // Auto-refresh every 60 seconds
-            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-            autoRefreshInterval = setInterval(() => {
-                loadStats();
-                loadHolders();
-            }, 60000);
+            await loadRegistrants();
         }
 
-        // Load stats
         async function loadStats() {
             try {
-                const response = await fetch('/api/stats');
-                const data = await response.json();
-                
+                const res = await fetch('/api/stats');
+                const data = await res.json();
                 document.getElementById('totalRegistrants').textContent = data.total || 0;
                 document.getElementById('totalMinted').textContent = data.minted || 0;
                 document.getElementById('totalPending').textContent = data.pending || 0;
-                
-                if (data.network) {
-                    document.getElementById('networkName').textContent = data.network;
-                }
+                if (data.network) document.getElementById('networkName').textContent = data.network;
 
-                // Load wallet balance
-                const walletResponse = await fetch('/api/wallet-info');
-                const walletData = await walletResponse.json();
+                const walletRes = await fetch('/api/wallet-info');
+                const walletData = await walletRes.json();
                 if (walletData.balance) {
                     document.getElementById('walletBalance').textContent = 
                         parseFloat(walletData.balance).toFixed(4) + ' ' + (walletData.currency || 'POL');
                 }
-            } catch (error) {
-                console.error('Failed to load stats:', error);
-            }
+            } catch (e) { console.error('Stats error:', e); }
         }
 
-        // Load holders from blockchain
-        async function loadHolders() {
+        async function loadRegistrants() {
             try {
-                const response = await fetch('/api/holders');
-                const data = await response.json();
-                
-                if (data.success && data.registrants) {
-                    registrants = data.registrants;
-                    renderTable();
-                    
-                    if (data.network) {
-                        document.getElementById('networkName').textContent = data.network;
-                    }
-                }
-            } catch (error) {
-                console.error('Failed to load holders:', error);
-                showToast('Failed to load holders from blockchain', 'error');
-            }
+                const res = await fetch('/api/registrants');
+                const data = await res.json();
+                registrants = data.registrants || [];
+                renderTable();
+            } catch (e) { console.error('Load error:', e); }
         }
 
-        // Refresh from blockchain
-        async function refreshFromBlockchain() {
-            const btn = document.getElementById('refreshBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> Loading...';
-            
-            try {
-                await loadStats();
-                await loadHolders();
-                showToast('Data refreshed from blockchain', 'success');
-            } catch (error) {
-                showToast('Failed to refresh: ' + error.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '🔄 Refresh from Blockchain';
-            }
-        }
-
-        // Render table
         function renderTable() {
             const tbody = document.getElementById('registrantsTable');
-            
             let filtered = registrants;
-            if (currentFilter === 'minted') {
-                filtered = registrants.filter(r => r.minted);
-            } else if (currentFilter === 'pending') {
-                filtered = registrants.filter(r => !r.minted);
-            }
+            if (currentFilter === 'minted') filtered = registrants.filter(r => r.minted);
+            else if (currentFilter === 'pending') filtered = registrants.filter(r => !r.minted);
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="empty-state">
-                            <h3>No ${currentFilter === 'all' ? '' : currentFilter} token holders</h3>
-                            <p>Token holders will appear here once tokens are minted.</p>
-                        </td>
-                    </tr>
-                `;
+                tbody.innerHTML = `<tr><td colspan="5" class="empty-state"><h3>No ${currentFilter === 'all' ? '' : currentFilter} registrants</h3></td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = filtered.map((r, index) => `
+            tbody.innerHTML = filtered.map((r, i) => `
                 <tr>
-                    <td>${index + 1}</td>
-                    <td class="wallet-address" title="${r.wallet_address}">${truncateAddress(r.wallet_address)}</td>
-                    <td>${parseFloat(r.balance || 0).toFixed(2)} VIP</td>
-                    <td>
-                        <span class="status-badge ${r.minted ? 'status-minted' : 'status-pending'}">
-                            ${r.minted ? 'Minted' : 'Pending'}
-                        </span>
-                    </td>
-                    <td>${r.minted_at ? formatDate(r.minted_at) : '-'}</td>
-                    <td>
-                        ${r.tx_hash ? `<a href="${r.explorer_url || 'https://amoy.polygonscan.com/tx/' + r.tx_hash}" target="_blank" class="tx-link">${truncateTx(r.tx_hash)}</a>` : '-'}
-                    </td>
+                    <td>${i + 1}</td>
+                    <td class="wallet-address" title="${r.wallet_address}">${r.wallet_address.slice(0,6)}...${r.wallet_address.slice(-4)}</td>
+                    <td><span class="status-badge ${r.minted ? 'status-minted' : 'status-pending'}">${r.minted ? 'Minted' : 'Pending'}</span></td>
+                    <td>${r.registered_at ? new Date(r.registered_at).toLocaleString() : '-'}</td>
+                    <td>${r.tx_hash ? `<a href="https://amoy.polygonscan.com/tx/${r.tx_hash}" target="_blank" class="tx-link">${r.tx_hash.slice(0,10)}...</a>` : '-'}</td>
                 </tr>
             `).join('');
         }
 
-        // Filter table
         function filterTable(filter) {
             currentFilter = filter;
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.textContent.toLowerCase().includes(filter));
-            });
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.toggle('active', btn.textContent.toLowerCase().includes(filter)));
             renderTable();
         }
 
-        // Register wallet
         async function registerWallet(e) {
             e.preventDefault();
             const address = document.getElementById('walletAddress').value.trim();
-            
-            if (!address.startsWith('0x') || address.length !== 42) {
-                showToast('Invalid wallet address', 'error');
-                return;
-            }
+            if (!address.startsWith('0x') || address.length !== 42) { showToast('Invalid address', 'error'); return; }
 
             try {
-                const response = await fetch('/api/claim/register', {
+                const res = await fetch('/api/claim/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        wallet_address: address,
-                        message: 'FREE_BONUS_TOKENS_KEA_VALLEY'
-                    })
+                    body: JSON.stringify({ wallet_address: address, message: 'FREE_BONUS_TOKENS_KEA_VALLEY' })
                 });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    showToast('Tokens minted successfully!', 'success');
-                    closeModal();
-                    await loadHolders();
-                    await loadStats();
-                } else {
-                    showToast(data.message || data.error || 'Failed to register', 'error');
-                }
-            } catch (error) {
-                showToast('Error: ' + error.message, 'error');
-            }
+                const data = await res.json();
+                if (res.ok) { showToast('Tokens minted!', 'success'); closeModal(); loadRegistrants(); loadStats(); }
+                else showToast(data.message || 'Failed', 'error');
+            } catch (e) { showToast('Error: ' + e.message, 'error'); }
         }
 
-        // Show register modal
-        function showRegisterModal() {
-            document.getElementById('registerModal').classList.add('active');
-            document.getElementById('walletAddress').value = '';
-        }
+        function showRegisterModal() { document.getElementById('registerModal').classList.add('active'); document.getElementById('walletAddress').value = ''; }
+        function closeModal() { document.getElementById('registerModal').classList.remove('active'); }
+        async function logout() { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login'; }
+        function showToast(msg, type = 'info') { const t = document.getElementById('toast'); t.textContent = msg; t.className = `toast ${type} show`; setTimeout(() => t.classList.remove('show'), 3000); }
 
-        // Close modal
-        function closeModal() {
-            document.getElementById('registerModal').classList.remove('active');
-        }
-
-        // Logout
-        async function logout() {
-            try {
-                await fetch('/api/logout', { method: 'POST' });
-                window.location.href = '/login';
-            } catch (error) {
-                window.location.href = '/login';
-            }
-        }
-
-        // Show toast
-        function showToast(message, type = 'info') {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.className = `toast ${type} show`;
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
-
-        // Utility functions
-        function truncateAddress(addr) {
-            if (!addr) return '-';
-            return addr.slice(0, 6) + '...' + addr.slice(-4);
-        }
-
-        function truncateTx(tx) {
-            if (!tx) return '-';
-            return tx.slice(0, 10) + '...';
-        }
-
-        function formatDate(dateStr) {
-            if (!dateStr) return '-';
-            const date = new Date(dateStr);
-            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-        }
-
-        // Close modal on outside click
-        document.getElementById('registerModal').addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) {
-                closeModal();
-            }
-        });
-
-        // Initialize
+        document.getElementById('registerModal').addEventListener('click', e => { if (e.target.classList.contains('modal')) closeModal(); });
         loadDashboard();
     </script>
 </body>
