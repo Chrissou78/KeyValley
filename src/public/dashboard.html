@@ -61,6 +61,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            font-size: 0.9rem;
         }
 
         .btn-primary { background: var(--gold); color: var(--deep-blue); }
@@ -68,6 +69,8 @@
         .btn-secondary { background: transparent; color: var(--white); border: 1px solid var(--gold); }
         .btn-secondary:hover { background: var(--gold); color: var(--deep-blue); }
         .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
 
         .container { max-width: 1400px; margin: 0 auto; padding: 30px; }
 
@@ -133,12 +136,14 @@
             margin-bottom: 20px;
             padding-bottom: 15px;
             border-bottom: 1px solid var(--light-gray);
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .card-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--deep-blue); }
         .actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
-        .filters { display: flex; gap: 10px; margin-bottom: 20px; }
+        .filters { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
 
         .filter-btn {
             padding: 8px 16px;
@@ -244,11 +249,13 @@
 
         @media (max-width: 768px) {
             .header { padding: 15px 20px; flex-direction: column; gap: 15px; }
+            .header-actions { flex-wrap: wrap; justify-content: center; }
             .container { padding: 20px; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             table { font-size: 0.8rem; }
             th, td { padding: 10px; }
-            .wallet-address { max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+            .wallet-address { max-width: 100px; overflow: hidden; text-overflow: ellipsis; display: inline-block; }
+            .btn { padding: 8px 12px; font-size: 0.8rem; }
         }
     </style>
 </head>
@@ -258,6 +265,7 @@
         <div class="header-actions">
             <span id="networkName">Loading...</span>
             <a href="/" class="btn btn-secondary">Home</a>
+            <a href="/change-password" class="btn btn-secondary">Change Password</a>
             <button onclick="logout()" class="btn btn-danger">Logout</button>
         </div>
     </header>
@@ -323,6 +331,7 @@
         </div>
     </div>
 
+    <!-- Register Modal -->
     <div class="modal" id="registerModal">
         <div class="modal-content">
             <h3 class="modal-title">Register New Wallet</h3>
@@ -333,111 +342,219 @@
                 </div>
                 <div class="modal-actions">
                     <button type="button" onclick="closeModal()" class="btn btn-secondary">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Register & Mint</button>
+                    <button type="submit" class="btn btn-primary" id="registerBtn">Register & Mint</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Toast -->
     <div class="toast" id="toast"></div>
 
     <script>
         let registrants = [];
         let currentFilter = 'all';
 
+        // Check authentication
         async function checkAuth() {
             try {
                 const res = await fetch('/api/auth-status');
                 const data = await res.json();
-                if (!data.authenticated) { window.location.href = '/login'; return false; }
+                if (!data.authenticated) {
+                    window.location.href = '/login';
+                    return false;
+                }
                 return true;
-            } catch { window.location.href = '/login'; return false; }
+            } catch (e) {
+                console.error('Auth check failed:', e);
+                window.location.href = '/login';
+                return false;
+            }
         }
 
+        // Load dashboard
         async function loadDashboard() {
             if (!await checkAuth()) return;
             await loadStats();
             await loadRegistrants();
         }
 
+        // Load stats
         async function loadStats() {
             try {
                 const res = await fetch('/api/stats');
                 const data = await res.json();
+                
                 document.getElementById('totalRegistrants').textContent = data.total || 0;
                 document.getElementById('totalMinted').textContent = data.minted || 0;
                 document.getElementById('totalPending').textContent = data.pending || 0;
-                if (data.network) document.getElementById('networkName').textContent = data.network;
+                
+                if (data.network) {
+                    document.getElementById('networkName').textContent = data.network;
+                }
 
+                // Load wallet balance
                 const walletRes = await fetch('/api/wallet-info');
                 const walletData = await walletRes.json();
                 if (walletData.balance) {
                     document.getElementById('walletBalance').textContent = 
                         parseFloat(walletData.balance).toFixed(4) + ' ' + (walletData.currency || 'POL');
                 }
-            } catch (e) { console.error('Stats error:', e); }
+            } catch (e) {
+                console.error('Stats error:', e);
+            }
         }
 
+        // Load registrants
         async function loadRegistrants() {
             try {
                 const res = await fetch('/api/registrants');
                 const data = await res.json();
                 registrants = data.registrants || [];
                 renderTable();
-            } catch (e) { console.error('Load error:', e); }
+            } catch (e) {
+                console.error('Load registrants error:', e);
+                showToast('Failed to load registrants', 'error');
+            }
         }
 
+        // Render table
         function renderTable() {
             const tbody = document.getElementById('registrantsTable');
             let filtered = registrants;
-            if (currentFilter === 'minted') filtered = registrants.filter(r => r.minted);
-            else if (currentFilter === 'pending') filtered = registrants.filter(r => !r.minted);
+            
+            if (currentFilter === 'minted') {
+                filtered = registrants.filter(r => r.minted);
+            } else if (currentFilter === 'pending') {
+                filtered = registrants.filter(r => !r.minted);
+            }
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="empty-state"><h3>No ${currentFilter === 'all' ? '' : currentFilter} registrants</h3></td></tr>`;
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <h3>No ${currentFilter === 'all' ? '' : currentFilter} registrants</h3>
+                            <p>Registrants will appear here after claiming tokens.</p>
+                        </td>
+                    </tr>
+                `;
                 return;
             }
 
             tbody.innerHTML = filtered.map((r, i) => `
                 <tr>
                     <td>${i + 1}</td>
-                    <td class="wallet-address" title="${r.wallet_address}">${r.wallet_address.slice(0,6)}...${r.wallet_address.slice(-4)}</td>
-                    <td><span class="status-badge ${r.minted ? 'status-minted' : 'status-pending'}">${r.minted ? 'Minted' : 'Pending'}</span></td>
+                    <td class="wallet-address" title="${r.wallet_address}">
+                        ${r.wallet_address.slice(0, 6)}...${r.wallet_address.slice(-4)}
+                    </td>
+                    <td>
+                        <span class="status-badge ${r.minted ? 'status-minted' : 'status-pending'}">
+                            ${r.minted ? 'Minted' : 'Pending'}
+                        </span>
+                    </td>
                     <td>${r.registered_at ? new Date(r.registered_at).toLocaleString() : '-'}</td>
-                    <td>${r.tx_hash ? `<a href="https://amoy.polygonscan.com/tx/${r.tx_hash}" target="_blank" class="tx-link">${r.tx_hash.slice(0,10)}...</a>` : '-'}</td>
+                    <td>
+                        ${r.tx_hash && r.tx_hash !== 'pre-existing' && r.tx_hash !== 'skipped'
+                            ? `<a href="https://amoy.polygonscan.com/tx/${r.tx_hash}" target="_blank" class="tx-link">${r.tx_hash.slice(0, 10)}...</a>`
+                            : r.tx_hash || '-'
+                        }
+                    </td>
                 </tr>
             `).join('');
         }
 
+        // Filter table
         function filterTable(filter) {
             currentFilter = filter;
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.toggle('active', btn.textContent.toLowerCase().includes(filter)));
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.toLowerCase().includes(filter));
+            });
             renderTable();
         }
 
+        // Register wallet
         async function registerWallet(e) {
             e.preventDefault();
             const address = document.getElementById('walletAddress').value.trim();
-            if (!address.startsWith('0x') || address.length !== 42) { showToast('Invalid address', 'error'); return; }
+            const btn = document.getElementById('registerBtn');
+            
+            if (!address.startsWith('0x') || address.length !== 42) {
+                showToast('Invalid wallet address', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Minting...';
 
             try {
                 const res = await fetch('/api/claim/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ wallet_address: address, message: 'FREE_BONUS_TOKENS_KEA_VALLEY' })
+                    body: JSON.stringify({
+                        wallet_address: address,
+                        message: 'FREE_BONUS_TOKENS_KEA_VALLEY'
+                    })
                 });
+                
                 const data = await res.json();
-                if (res.ok) { showToast('Tokens minted!', 'success'); closeModal(); loadRegistrants(); loadStats(); }
-                else showToast(data.message || 'Failed', 'error');
-            } catch (e) { showToast('Error: ' + e.message, 'error'); }
+                
+                if (res.ok) {
+                    showToast('Tokens minted successfully!', 'success');
+                    closeModal();
+                    await loadRegistrants();
+                    await loadStats();
+                } else {
+                    showToast(data.message || data.error || 'Failed to register', 'error');
+                }
+            } catch (e) {
+                showToast('Error: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Register & Mint';
+            }
         }
 
-        function showRegisterModal() { document.getElementById('registerModal').classList.add('active'); document.getElementById('walletAddress').value = ''; }
-        function closeModal() { document.getElementById('registerModal').classList.remove('active'); }
-        async function logout() { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login'; }
-        function showToast(msg, type = 'info') { const t = document.getElementById('toast'); t.textContent = msg; t.className = `toast ${type} show`; setTimeout(() => t.classList.remove('show'), 3000); }
+        // Show register modal
+        function showRegisterModal() {
+            document.getElementById('registerModal').classList.add('active');
+            document.getElementById('walletAddress').value = '';
+            document.getElementById('walletAddress').focus();
+        }
 
-        document.getElementById('registerModal').addEventListener('click', e => { if (e.target.classList.contains('modal')) closeModal(); });
+        // Close modal
+        function closeModal() {
+            document.getElementById('registerModal').classList.remove('active');
+        }
+
+        // Logout
+        async function logout() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+            } catch (e) {
+                console.error('Logout error:', e);
+            }
+            window.location.href = '/login';
+        }
+
+        // Show toast
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Close modal on outside click
+        document.getElementById('registerModal').addEventListener('click', e => {
+            if (e.target.classList.contains('modal')) closeModal();
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // Initialize
         loadDashboard();
     </script>
 </body>
