@@ -275,7 +275,7 @@ app.post('/api/claim/register', async (req, res) => {
             try {
                 const recoveredAddress = ethers.verifyMessage(message, signature);
                 const isValid = recoveredAddress.toLowerCase() === normalizedAddress.toLowerCase();
-                console.log('🔐 Signature verified:', isValid ? 'Valid' : 'Invalid', '| Recovered:', recoveredAddress);
+                console.log('🔐 Signature verified:', isValid ? 'Valid' : 'Invalid');
             } catch (sigError) {
                 console.log('⚠️ Signature verification failed:', sigError.message);
             }
@@ -285,23 +285,19 @@ app.post('/api/claim/register', async (req, res) => {
         await minter.initialize();
         const networkConfig = getNetworkConfig();
         
-        // Check if already in our DB
-        const existingRegistrant = db.getRegistrant(normalizedAddress);
+        // Check if already in our in-memory DB
+        let existingRegistrant = db.getRegistrant(normalizedAddress);
         
-        if (existingRegistrant) {
-            console.log('📋 Found in DB:', existingRegistrant);
-            
-            if (existingRegistrant.minted) {
-                // Already minted according to our records
-                return res.status(409).json({
-                    status: 'already_claimed',
-                    message: 'This wallet has already claimed tokens',
-                    tx_hash: existingRegistrant.tx_hash,
-                    explorer_url: existingRegistrant.tx_hash 
-                        ? `${networkConfig.explorer}/tx/${existingRegistrant.tx_hash}` 
-                        : null
-                });
-            }
+        if (existingRegistrant && existingRegistrant.minted) {
+            console.log('📋 Already in DB and minted');
+            return res.status(409).json({
+                status: 'already_claimed',
+                message: 'This wallet has already claimed tokens',
+                tx_hash: existingRegistrant.tx_hash,
+                explorer_url: existingRegistrant.tx_hash 
+                    ? `${networkConfig.explorer}/tx/${existingRegistrant.tx_hash}` 
+                    : null
+            });
         }
 
         // Check on-chain balance
@@ -312,15 +308,13 @@ app.post('/api/claim/register', async (req, res) => {
 
         if (hasTokensOnChain) {
             // Wallet already has tokens on-chain
-            // Add to DB if not already there (so it shows in dashboard)
+            // ADD TO MEMORY DB if not already there
             if (!existingRegistrant) {
                 db.addRegistrant(normalizedAddress);
-                db.markAsMinted(normalizedAddress, 'pre-existing', networkConfig.name);
-                console.log('📝 Added pre-existing holder to DB');
-            } else if (!existingRegistrant.minted) {
-                db.markAsMinted(normalizedAddress, 'pre-existing', networkConfig.name);
-                console.log('📝 Marked as minted (pre-existing)');
+                console.log('📝 Added to in-memory DB (pre-existing holder)');
             }
+            db.markAsMinted(normalizedAddress, 'pre-existing', networkConfig.name);
+            console.log('✅ Marked as minted in DB');
 
             return res.status(409).json({
                 status: 'already_claimed',
@@ -330,10 +324,10 @@ app.post('/api/claim/register', async (req, res) => {
             });
         }
 
-        // New wallet - add to DB and mint
+        // New wallet without tokens - add to DB if not there
         if (!existingRegistrant) {
             db.addRegistrant(normalizedAddress);
-            console.log('📝 Added new registrant to DB');
+            console.log('📝 Added new wallet to DB');
         }
 
         // Mint tokens
@@ -344,7 +338,6 @@ app.post('/api/claim/register', async (req, res) => {
             const result = await minter.mintToAddress(normalizedAddress, MINT_AMOUNT);
             
             if (result.skipped) {
-                // Shouldn't happen since we checked, but handle it
                 db.markAsMinted(normalizedAddress, 'skipped', networkConfig.name);
                 return res.status(409).json({
                     status: 'already_claimed',
@@ -370,8 +363,6 @@ app.post('/api/claim/register', async (req, res) => {
 
         } catch (mintError) {
             console.error('❌ Mint error:', mintError.message);
-            
-            // Still registered, just not minted yet
             return res.status(500).json({
                 status: 'error',
                 message: 'Failed to mint tokens. Please try again later.',
@@ -387,6 +378,26 @@ app.post('/api/claim/register', async (req, res) => {
             error: error.message
         });
     }
+});
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/claim', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'claim.html'));
+});
+
+app.get('/profile', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'profile.html'));
+});
+
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/change-password', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'change-password.html'));
 });
 
 // Check claim status (public)

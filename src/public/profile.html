@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | KEA VALLEY®</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --deep-blue: #1a3a5c;
+            --gold: #d4af55;
+            --gold-light: #e8d5a3;
+            --white: #ffffff;
+            --light-gray: #f8f9fa;
+            --text-gray: #6c757d;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            min-height: 100vh;
+            color: var(--deep-blue);
+        }
+
+        .header {
+            background: var(--deep-blue);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--gold);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .logo span { color: var(--white); font-weight: 400; }
+
+        .header-actions { display: flex; gap: 15px; align-items: center; }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary { background: var(--gold); color: var(--deep-blue); }
+        .btn-primary:hover { background: var(--gold-light); transform: translateY(-2px); }
+        .btn-secondary { background: transparent; color: var(--white); border: 1px solid var(--gold); }
+        .btn-secondary:hover { background: var(--gold); color: var(--deep-blue); }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            color: var(--deep-blue);
+            margin-bottom: 10px;
+        }
+
+        .page-subtitle {
+            color: var(--text-gray);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid rgba(212, 175, 85, 0.2);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: var(--deep-blue);
+            color: var(--white);
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            color: var(--gold);
+        }
+
+        .iframe-container {
+            width: 100%;
+            height: 700px;
+            background: var(--light-gray);
+            position: relative;
+        }
+
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .iframe-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: var(--text-gray);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--gold-light);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .info-banner {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid var(--gold);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .info-banner p {
+            margin: 0;
+            color: var(--deep-blue);
+            font-size: 0.95rem;
+        }
+
+        .info-banner a {
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .quick-links {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-gray);
+            font-size: 0.85rem;
+        }
+
+        .footer a {
+            color: var(--gold);
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .container { padding: 20px; }
+
+            .page-title { font-size: 2rem; }
+
+            .iframe-container { height: 500px; }
+
+            .btn { padding: 8px 16px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="/" class="logo">KEA <span>VALLEY®</span></a>
+        <div class="header-actions">
+            <a href="/" class="btn btn-secondary">Home</a>
+            <a href="/claim" class="btn btn-primary">Claim Tokens</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">My Profile</h1>
+            <p class="page-subtitle">View your WalletTwo balance and manage your VIP tokens</p>
+        </div>
+
+        <div class="info-banner">
+            <p>
+                <strong>💡 Tip:</strong> If you're not logged in, you'll be prompted to sign in to WalletTwo. 
+                Don't have a wallet? <a href="https://wallet.wallettwo.com/auth/register" target="_blank">Create one here</a>.
+            </p>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">WalletTwo Dashboard</h2>
+                <a href="https://wallet.wallettwo.com/wallet/dashboard?tab=Tokens" target="_blank" class="btn btn-primary btn-sm">
+                    Open in New Tab ↗
+                </a>
+            </div>
+            <div class="iframe-container">
+                <div class="iframe-loading" id="loadingIndicator">
+                    <div class="loading-spinner"></div>
+                    <p>Loading WalletTwo...</p>
+                </div>
+                <iframe 
+                    src="https://wallet.wallettwo.com/wallet/dashboard?tab=Tokens"
+                    title="WalletTwo Dashboard"
+                    id="walletFrame"
+                    onload="hideLoading()"
+                    allow="clipboard-write"
+                ></iframe>
+            </div>
+        </div>
+
+        <div class="quick-links">
+            <a href="/" class="btn btn-secondary" style="color: var(--deep-blue); border-color: var(--gold);">← Back to Home</a>
+            <a href="/claim" class="btn btn-primary">Claim Free Tokens</a>
+            <a href="https://wallet.wallettwo.com/wallet/dashboard?tab=Tokens" target="_blank" class="btn btn-secondary" style="color: var(--deep-blue); border-color: var(--gold);">
+                Full WalletTwo ↗
+            </a>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2025 KEA VALLEY®. All rights reserved. | <a href="https://keavalley-greece.com" target="_blank">keavalley-greece.com</a></p>
+    </footer>
+
+    <script>
+        function hideLoading() {
+            const loader = document.getElementById('loadingIndicator');
+            if (loader) {
+                loader.style.display = 'none';
+            }
+        }
+
+        // Fallback: hide loading after 5 seconds even if iframe doesn't trigger onload
+        setTimeout(hideLoading, 5000);
+    </script>
+</body>
+</html>

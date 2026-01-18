@@ -1,47 +1,18 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "src/index.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "src/public/**",
-      "use": "@vercel/static"
-    }
+    { "src": "src/index.js", "use": "@vercel/node" },
+    { "src": "src/public/**", "use": "@vercel/static" }
   ],
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "src/index.js"
-    },
-    {
-      "src": "/claim",
-      "dest": "src/index.js"
-    },
-    {
-      "src": "/dashboard",
-      "dest": "src/index.js"
-    },
-    {
-      "src": "/login",
-      "dest": "src/index.js"
-    },
-    {
-      "src": "/change-password",
-      "dest": "src/index.js"
-    },
-    {
-      "src": "/",
-      "dest": "src/public/index.html"
-    },
-    {
-      "src": "/(.*\\.(html|css|js|png|jpg|ico|svg))",
-      "dest": "src/public/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "src/index.js"
-    }
+    { "src": "/api/(.*)", "dest": "src/index.js" },
+    { "src": "/claim", "dest": "src/index.js" },
+    { "src": "/profile", "dest": "src/index.js" },
+    { "src": "/dashboard", "dest": "src/index.js" },
+    { "src": "/login", "dest": "src/index.js" },
+    { "src": "/change-password", "dest": "src/index.js" },
+    { "src": "/", "dest": "src/public/index.html" },
+    { "src": "/(.*\\.(html|css|js|png|jpg|ico|svg))", "dest": "src/public/$1" },
+    { "src": "/(.*)", "dest": "src/index.js" }
   ]
 }
