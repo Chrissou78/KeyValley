@@ -256,180 +256,135 @@ app.post('/api/change-password', (req, res) => {
 // ===========================================
 
 app.post('/api/claim/register', async (req, res) => {
-    console.log('');
-    console.log('═══════════════════════════════════════════');
-    console.log('📥 CLAIM REQUEST RECEIVED');
-    console.log('═══════════════════════════════════════════');
-    console.log('Body:', JSON.stringify(req.body, null, 2));
-    
-    const { wallet_address, signature, message } = req.body;
-    
-    // Validate wallet address
-    if (!wallet_address) {
-        console.log('❌ No wallet address provided');
-        return res.status(400).json({ error: 'Wallet address required' });
-    }
-    
-    if (!validateAddress(wallet_address)) {
-        console.log('❌ Invalid wallet address:', wallet_address);
-        return res.status(400).json({ error: 'Invalid wallet address' });
-    }
-    
-    const normalizedAddress = wallet_address.toLowerCase();
-    console.log('📍 Normalized address:', normalizedAddress);
-    
-    // Signature verification (optional for now)
-    if (signature) {
-        console.log('🔐 Verifying signature...');
-        const verificationMessage = message || SIGNATURE_MESSAGE;
-        const verification = verifySignature(signature, verificationMessage, wallet_address);
-        
-        if (!verification.valid) {
-            console.log('⚠️ Signature invalid:', verification.error);
-            // Continue anyway for testing
-        } else {
-            console.log('✅ Signature valid');
-        }
-    } else {
-        console.log('⚠️ No signature provided - skipping verification');
-    }
-    
     try {
-        // Initialize minter
-        console.log('🔧 Initializing minter...');
-        await minter.initialize();
-        console.log('✅ Minter initialized');
+        const { wallet_address, signature, message } = req.body;
         
-        const networkConfig = getNetworkConfig();
-        console.log('🌐 Network:', networkConfig.name);
-        
-        // Check if wallet already has tokens
-        console.log('💰 Checking on-chain balance...');
-        let hasTokens = false;
-        try {
-            hasTokens = await minter.hasTokens(wallet_address);
-            console.log('💰 Has tokens:', hasTokens);
-        } catch (balanceError) {
-            console.log('⚠️ Error checking balance:', balanceError.message);
+        console.log('\n📥 CLAIM REQUEST:', { wallet_address, signature: signature ? 'provided' : 'none', message });
+
+        // Validate wallet address
+        if (!wallet_address || !ethers.isAddress(wallet_address)) {
+            console.log('❌ Invalid wallet address');
+            return res.status(400).json({ error: 'Invalid wallet address' });
         }
+
+        const normalizedAddress = ethers.getAddress(wallet_address);
+        console.log('📍 Normalized address:', normalizedAddress);
+
+        // Optional signature verification
+        if (signature && message) {
+            try {
+                const recoveredAddress = ethers.verifyMessage(message, signature);
+                const isValid = recoveredAddress.toLowerCase() === normalizedAddress.toLowerCase();
+                console.log('🔐 Signature verified:', isValid ? 'Valid' : 'Invalid', '| Recovered:', recoveredAddress);
+            } catch (sigError) {
+                console.log('⚠️ Signature verification failed:', sigError.message);
+            }
+        }
+
+        // Initialize minter
+        await minter.initialize();
+        const networkConfig = getNetworkConfig();
         
-        // Check database
+        // Check if already in our DB
         const existingRegistrant = db.getRegistrant(normalizedAddress);
-        console.log('📋 DB record:', existingRegistrant ? 'EXISTS' : 'NOT FOUND');
         
-        // Already has tokens on-chain
-        if (hasTokens) {
-            const balance = await minter.getBalance(wallet_address);
-            console.log('✅ Wallet already has', balance, 'tokens');
+        if (existingRegistrant) {
+            console.log('📋 Found in DB:', existingRegistrant);
             
+            if (existingRegistrant.minted) {
+                // Already minted according to our records
+                return res.status(409).json({
+                    status: 'already_claimed',
+                    message: 'This wallet has already claimed tokens',
+                    tx_hash: existingRegistrant.tx_hash,
+                    explorer_url: existingRegistrant.tx_hash 
+                        ? `${networkConfig.explorer}/tx/${existingRegistrant.tx_hash}` 
+                        : null
+                });
+            }
+        }
+
+        // Check on-chain balance
+        const hasTokensOnChain = await minter.hasTokens(normalizedAddress);
+        const currentBalance = await minter.getBalance(normalizedAddress);
+        
+        console.log('💰 On-chain balance:', currentBalance, '| Has tokens:', hasTokensOnChain);
+
+        if (hasTokensOnChain) {
+            // Wallet already has tokens on-chain
+            // Add to DB if not already there (so it shows in dashboard)
             if (!existingRegistrant) {
                 db.addRegistrant(normalizedAddress);
-                db.markAsMinted(normalizedAddress, 'ALREADY_HAD_TOKENS', networkConfig.name);
+                db.markAsMinted(normalizedAddress, 'pre-existing', networkConfig.name);
+                console.log('📝 Added pre-existing holder to DB');
             } else if (!existingRegistrant.minted) {
-                db.markAsMinted(normalizedAddress, 'ALREADY_HAD_TOKENS', networkConfig.name);
+                db.markAsMinted(normalizedAddress, 'pre-existing', networkConfig.name);
+                console.log('📝 Marked as minted (pre-existing)');
             }
-            
+
             return res.status(409).json({
                 status: 'already_claimed',
-                wallet_address: normalizedAddress,
-                balance: balance,
-                symbol: minter.tokenSymbol || 'VIP',
-                tx_hash: existingRegistrant?.tx_hash || null,
-                explorer_url: existingRegistrant?.tx_hash && existingRegistrant.tx_hash !== 'ALREADY_HAD_TOKENS' 
-                    ? `${networkConfig.explorer}/tx/${existingRegistrant.tx_hash}` 
-                    : null,
-                message: 'This wallet already has VIP tokens'
+                message: 'This wallet already has tokens',
+                balance: currentBalance,
+                explorer_url: `${networkConfig.explorer}/address/${normalizedAddress}`
             });
         }
-        
-        // Already claimed in database
-        if (existingRegistrant && existingRegistrant.minted) {
-            console.log('✅ Already claimed (DB record)');
-            return res.status(409).json({
-                status: 'already_claimed',
-                wallet_address: normalizedAddress,
-                symbol: minter.tokenSymbol || 'VIP',
-                tx_hash: existingRegistrant.tx_hash,
-                explorer_url: existingRegistrant.tx_hash && existingRegistrant.tx_hash !== 'ALREADY_HAD_TOKENS'
-                    ? `${networkConfig.explorer}/tx/${existingRegistrant.tx_hash}`
-                    : null,
-                message: 'This wallet has already claimed tokens'
-            });
-        }
-        
-        // Add to database if not exists
+
+        // New wallet - add to DB and mint
         if (!existingRegistrant) {
-            console.log('📝 Adding wallet to database...');
-            const addResult = db.addRegistrant(normalizedAddress);
-            console.log('📝 Add result:', addResult);
+            db.addRegistrant(normalizedAddress);
+            console.log('📝 Added new registrant to DB');
         }
-        
+
         // Mint tokens
-        console.log('');
-        console.log('🪙 MINTING TOKENS...');
-        console.log('   To:', wallet_address);
-        console.log('   Amount:', MINT_AMOUNT);
-        
-        const receipt = await minter.mintToAddress(wallet_address, MINT_AMOUNT);
-        
-        if (receipt && receipt.hash) {
-            db.markAsMinted(normalizedAddress, receipt.hash, networkConfig.name);
+        const MINT_AMOUNT = parseInt(process.env.MINT_AMOUNT) || 2;
+        console.log(`🎯 Minting ${MINT_AMOUNT} tokens...`);
+
+        try {
+            const result = await minter.mintToAddress(normalizedAddress, MINT_AMOUNT);
             
-            console.log('');
-            console.log('✅ ═══════════════════════════════════════');
-            console.log('✅ MINT SUCCESSFUL');
-            console.log('✅ ═══════════════════════════════════════');
-            console.log('   Wallet:', wallet_address);
-            console.log('   Amount:', MINT_AMOUNT, minter.tokenSymbol);
-            console.log('   TX Hash:', receipt.hash);
-            console.log('');
+            if (result.skipped) {
+                // Shouldn't happen since we checked, but handle it
+                db.markAsMinted(normalizedAddress, 'skipped', networkConfig.name);
+                return res.status(409).json({
+                    status: 'already_claimed',
+                    message: 'Wallet already has tokens',
+                    balance: result.balance
+                });
+            }
+
+            // Success!
+            const txHash = result.receipt.hash;
+            db.markAsMinted(normalizedAddress, txHash, networkConfig.name);
             
+            console.log('✅ Mint successful! TX:', txHash);
+
             return res.status(201).json({
                 status: 'minted',
-                wallet_address: normalizedAddress,
+                message: `Successfully minted ${MINT_AMOUNT} VIP tokens!`,
+                tx_hash: txHash,
+                explorer_url: `${networkConfig.explorer}/tx/${txHash}`,
                 amount: MINT_AMOUNT,
-                symbol: minter.tokenSymbol || 'VIP',
-                tx_hash: receipt.hash,
-                explorer_url: `${networkConfig.explorer}/tx/${receipt.hash}`,
-                message: `Successfully minted ${MINT_AMOUNT} VIP tokens!`
+                symbol: 'VIP'
             });
-        } else if (receipt && receipt.skipped) {
-            console.log('⏭️ Mint skipped - wallet already has tokens');
-            return res.status(409).json({
-                status: 'already_claimed',
-                wallet_address: normalizedAddress,
-                symbol: minter.tokenSymbol || 'VIP',
-                message: 'This wallet already has tokens'
-            });
-        } else {
-            console.log('⚠️ Mint returned no receipt');
-            return res.status(202).json({
-                status: 'registered',
-                wallet_address: normalizedAddress,
-                message: 'Wallet registered. Tokens will be minted shortly.'
+
+        } catch (mintError) {
+            console.error('❌ Mint error:', mintError.message);
+            
+            // Still registered, just not minted yet
+            return res.status(500).json({
+                status: 'error',
+                message: 'Failed to mint tokens. Please try again later.',
+                error: mintError.message
             });
         }
-        
+
     } catch (error) {
-        console.log('');
-        console.log('❌ ═══════════════════════════════════════');
-        console.log('❌ CLAIM ERROR');
-        console.log('❌ ═══════════════════════════════════════');
-        console.log('   Message:', error.message);
-        console.log('   Stack:', error.stack);
-        console.log('');
-        
-        if (error.message?.includes('already has tokens')) {
-            return res.status(409).json({
-                status: 'already_claimed',
-                wallet_address: normalizedAddress,
-                message: 'This wallet already has tokens'
-            });
-        }
-        
-        return res.status(500).json({ 
-            error: 'Failed to process claim',
-            details: error.message 
+        console.error('❌ CLAIM ERROR:', error.message);
+        return res.status(500).json({
+            status: 'error',
+            message: 'Server error',
+            error: error.message
         });
     }
 });
@@ -521,12 +476,17 @@ app.post('/api/register', requireAuth, checkPasswordChange, (req, res) => {
     }
 });
 
-app.get('/api/registrants', requireAuth, checkPasswordChange, (req, res) => {
+app.get('/api/registrants', requireAuth, (req, res) => {
     try {
         const registrants = db.getAllRegistrants();
-        res.json({ registrants });
+        res.json({ 
+            success: true,
+            registrants: registrants,
+            count: registrants.length
+        });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch registrants' });
+        console.error('Error getting registrants:', error);
+        res.status(500).json({ error: 'Failed to get registrants' });
     }
 });
 
@@ -555,71 +515,20 @@ app.get('/api/registrants/:address', requireAuth, checkPasswordChange, (req, res
     }
 });
 
-app.get('/api/holders', requireAuth, checkPasswordChange, async (req, res) => {
-    console.log('📊 Fetching token holders from blockchain...');
-    
+app.get('/api/stats', requireAuth, (req, res) => {
     try {
-        await minter.initialize();
-        const holders = await minter.getTokenHolders();
+        const stats = db.getStats();
         const networkConfig = getNetworkConfig();
         
-        // Format holders with explorer URLs
-        const formattedHolders = holders.map((holder, index) => ({
-            id: index + 1,
-            wallet_address: holder.wallet_address,
-            balance: holder.balance,
-            minted: 1,
-            registered_at: holder.minted_at || new Date().toISOString(),
-            minted_at: holder.minted_at,
-            tx_hash: holder.tx_hash,
-            explorer_url: holder.tx_hash ? `${networkConfig.explorer}/tx/${holder.tx_hash}` : null,
-            network: holder.network
-        }));
-        
-        res.json({ 
-            registrants: formattedHolders,
-            source: 'blockchain',
-            total: formattedHolders.length
-        });
-        
-    } catch (error) {
-        console.error('Error fetching holders:', error);
-        res.status(500).json({ error: 'Failed to fetch token holders', details: error.message });
-    }
-});
-
-app.get('/api/stats', requireAuth, checkPasswordChange, async (req, res) => {
-    try {
-        let networkName = process.env.NETWORK || 'amoy';
-        let totalHolders = 0;
-        let totalSupply = '0';
-        
-        try {
-            await minter.initialize();
-            networkName = minter.getNetworkName();
-            
-            // Get on-chain stats
-            const holders = await minter.getTokenHolders();
-            totalHolders = holders.length;
-            totalSupply = await minter.getTotalSupply();
-            
-        } catch (e) {
-            console.error('Error getting on-chain stats:', e.message);
-        }
-        
-        // Also get in-memory stats for pending (not yet minted)
-        const dbStats = db.getStats();
-        
         res.json({
-            total: totalHolders,
-            minted: totalHolders,
-            pending: dbStats.pending || 0,
-            totalSupply: totalSupply,
-            network: networkName,
-            source: 'blockchain'
+            total: stats.total || 0,
+            minted: stats.minted || 0,
+            pending: stats.pending || 0,
+            network: networkConfig.name
         });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch stats' });
+        console.error('Stats error:', error);
+        res.status(500).json({ error: 'Failed to get stats' });
     }
 });
 
