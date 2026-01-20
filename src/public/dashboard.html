@@ -344,6 +344,7 @@
     <script>
         let registrants = [];
         let currentFilter = 'all';
+        let explorerUrl = 'https://polygonscan.com'; // Default to mainnet
 
         async function checkAuth() {
             try {
@@ -364,20 +365,31 @@
             try {
                 const res = await fetch('/api/stats');
                 const data = await res.json();
+                
                 document.getElementById('totalRegistrants').textContent = data.total || 0;
                 document.getElementById('totalMinted').textContent = data.minted || 0;
                 document.getElementById('totalPending').textContent = data.pending || 0;
-                if (data.network) document.getElementById('networkName').textContent = data.network;
+                
+                if (data.network) {
+                    document.getElementById('networkName').textContent = data.network;
+                }
+                
+                if (data.explorer) {
+                    explorerUrl = data.explorer;
+                }
 
+                // Load wallet balance
                 const walletRes = await fetch('/api/wallet-info');
                 const walletData = await walletRes.json();
                 if (walletData.balance) {
                     document.getElementById('walletBalance').textContent = 
                         parseFloat(walletData.balance).toFixed(4) + ' ' + (walletData.currency || 'POL');
                 }
-            } catch (e) { console.error('Stats error:', e); }
+            } catch (e) {
+                console.error('Stats error:', e);
+            }
         }
-
+        
         async function loadRegistrants() {
             try {
                 const res = await fetch('/api/registrants');
@@ -390,21 +402,43 @@
         function renderTable() {
             const tbody = document.getElementById('registrantsTable');
             let filtered = registrants;
-            if (currentFilter === 'minted') filtered = registrants.filter(r => r.minted);
-            else if (currentFilter === 'pending') filtered = registrants.filter(r => !r.minted);
+            
+            if (currentFilter === 'minted') {
+                filtered = registrants.filter(r => r.minted);
+            } else if (currentFilter === 'pending') {
+                filtered = registrants.filter(r => !r.minted);
+            }
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="empty-state"><h3>No ${currentFilter === 'all' ? '' : currentFilter} registrants</h3></td></tr>`;
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <h3>No ${currentFilter === 'all' ? '' : currentFilter} registrants</h3>
+                            <p>Registrants will appear here after claiming tokens.</p>
+                        </td>
+                    </tr>
+                `;
                 return;
             }
 
             tbody.innerHTML = filtered.map((r, i) => `
                 <tr>
                     <td>${i + 1}</td>
-                    <td class="wallet-address" title="${r.wallet_address}">${r.wallet_address.slice(0,6)}...${r.wallet_address.slice(-4)}</td>
-                    <td><span class="status-badge ${r.minted ? 'status-minted' : 'status-pending'}">${r.minted ? 'Minted' : 'Pending'}</span></td>
+                    <td class="wallet-address" title="${r.wallet_address}">
+                        ${r.wallet_address.slice(0, 6)}...${r.wallet_address.slice(-4)}
+                    </td>
+                    <td>
+                        <span class="status-badge ${r.minted ? 'status-minted' : 'status-pending'}">
+                            ${r.minted ? 'Minted' : 'Pending'}
+                        </span>
+                    </td>
                     <td>${r.registered_at ? new Date(r.registered_at).toLocaleString() : '-'}</td>
-                    <td>${r.tx_hash ? `<a href="https://amoy.polygonscan.com/tx/${r.tx_hash}" target="_blank" class="tx-link">${r.tx_hash.slice(0,10)}...</a>` : '-'}</td>
+                    <td>
+                        ${r.tx_hash && r.tx_hash !== 'pre-existing' && r.tx_hash !== 'skipped'
+                            ? `<a href="${explorerUrl}/tx/${r.tx_hash}" target="_blank" class="tx-link">${r.tx_hash.slice(0, 10)}...</a>`
+                            : r.tx_hash || '-'
+                        }
+                    </td>
                 </tr>
             `).join('');
         }

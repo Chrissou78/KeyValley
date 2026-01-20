@@ -535,7 +535,8 @@ app.get('/api/stats', requireAuth, (req, res) => {
             total: stats.total || 0,
             minted: stats.minted || 0,
             pending: stats.pending || 0,
-            network: networkConfig.name
+            network: networkConfig.name,
+            explorer: networkConfig.explorer
         });
     } catch (error) {
         console.error('Stats error:', error);
