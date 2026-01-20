@@ -10,7 +10,7 @@ const networks = {
   polygon: {
     name: 'Polygon Mainnet',
     chainId: 137,
-    rpcUrl: 'https://rpc.ankr.com/polygon',
+    rpcUrl: 'https://polygon-bor-rpc.publicnode.com',
     explorer: 'https://polygonscan.com',
     currency: 'POL',
     tokenAddressEnvKey: 'TOKEN_ADDRESS_POLYGON',
