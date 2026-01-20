@@ -695,37 +695,42 @@ app.post('/api/sync', requireAuth, checkPasswordChange, async (req, res) => {
 // ===========================================
 
 app.get('/api/health', async (req, res) => {
-    const health = {
+    const healthData = {
         status: 'ok',
         timestamp: new Date().toISOString(),
-        network: process.env.NETWORK || 'amoy',
+        network: process.env.NETWORK || 'not set',
         env: {
             NETWORK: process.env.NETWORK ? 'SET' : 'NOT SET',
             TOKEN_ADDRESS_AMOY: process.env.TOKEN_ADDRESS_AMOY ? 'SET' : 'NOT SET',
+            TOKEN_ADDRESS_POLYGON: process.env.TOKEN_ADDRESS_POLYGON ? 'SET' : 'NOT SET',
             PRIVATE_KEY: process.env.PRIVATE_KEY ? 'SET' : 'NOT SET',
             MINT_AMOUNT: process.env.MINT_AMOUNT || '2 (default)',
             ADMIN_USERNAME: process.env.ADMIN_USERNAME ? 'SET' : 'NOT SET',
             ADMIN_PASSWORD: process.env.ADMIN_PASSWORD ? 'SET' : 'NOT SET'
         }
     };
-    
-    // Try to check minter status
+
     try {
         await minter.initialize();
-        health.minter = {
+        const networkConfig = getNetworkConfig();
+        
+        healthData.minter = {
             status: 'initialized',
-            wallet: minter.wallet?.address,
+            wallet: minter.wallet.address,
+            tokenAddress: networkConfig.tokenAddress,
             tokenName: minter.tokenName,
-            tokenSymbol: minter.tokenSymbol
+            tokenSymbol: minter.tokenSymbol,
+            network: networkConfig.name,
+            explorer: networkConfig.explorer
         };
     } catch (error) {
-        health.minter = {
+        healthData.minter = {
             status: 'error',
             error: error.message
         };
     }
-    
-    res.json(health);
+
+    res.json(healthData);
 });
 
 // ===========================================
