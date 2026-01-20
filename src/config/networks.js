@@ -2,7 +2,7 @@ const networks = {
   amoy: {
     name: 'Polygon Amoy Testnet',
     chainId: 80002,
-    rpcUrl: 'https://rpc-amoy.polygon.technology',
+    rpcUrl: 'https://polygon-amoy.g.alchemy.com/v2/IoufBRdGO6MKWC6pxqbZW',
     explorer: 'https://amoy.polygonscan.com',
     currency: 'POL',
     tokenAddressEnvKey: 'TOKEN_ADDRESS_AMOY',
@@ -10,7 +10,7 @@ const networks = {
   polygon: {
     name: 'Polygon Mainnet',
     chainId: 137,
-    rpcUrl: 'https://polygon-bor-rpc.publicnode.com',
+    rpcUrl: 'https://polygon-mainnet.g.alchemy.com/v2/IoufBRdGO6MKWC6pxqbZW',
     explorer: 'https://polygonscan.com',
     currency: 'POL',
     tokenAddressEnvKey: 'TOKEN_ADDRESS_POLYGON',
