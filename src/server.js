@@ -123,6 +123,10 @@ app.get('/claim', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'claim.html'));
 });
 
+app.get('/profile', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'profile', 'index.html'));
+});
+
 app.get('/login', (req, res) => {
     const sessionId = req.cookies?.session;
     if (sessionId && auth.validateSession(sessionId)) {
@@ -232,7 +236,6 @@ app.post('/api/change-password', (req, res) => {
     const result = auth.changePassword(session.username, currentPassword, newPassword);
     
     if (result.success) {
-        // Re-login with new password
         const loginResult = auth.login(session.username, newPassword);
         
         if (loginResult.success) {
@@ -261,7 +264,6 @@ app.post('/api/claim/register', async (req, res) => {
         
         console.log('\n📥 CLAIM REQUEST:', { wallet_address, signature: signature ? 'provided' : 'none', message });
 
-        // Validate wallet address
         if (!wallet_address || !ethers.isAddress(wallet_address)) {
             console.log('❌ Invalid wallet address');
             return res.status(400).json({ error: 'Invalid wallet address' });
@@ -270,7 +272,6 @@ app.post('/api/claim/register', async (req, res) => {
         const normalizedAddress = ethers.getAddress(wallet_address);
         console.log('📍 Normalized address:', normalizedAddress);
 
-        // Optional signature verification
         if (signature && message) {
             try {
                 const recoveredAddress = ethers.verifyMessage(message, signature);
@@ -281,11 +282,9 @@ app.post('/api/claim/register', async (req, res) => {
             }
         }
 
-        // Initialize minter
         await minter.initialize();
         const networkConfig = getNetworkConfig();
         
-        // Check if already in our in-memory DB
         let existingRegistrant = db.getRegistrant(normalizedAddress);
         
         if (existingRegistrant && existingRegistrant.minted) {
@@ -300,15 +299,12 @@ app.post('/api/claim/register', async (req, res) => {
             });
         }
 
-        // Check on-chain balance
         const hasTokensOnChain = await minter.hasTokens(normalizedAddress);
         const currentBalance = await minter.getBalance(normalizedAddress);
         
         console.log('💰 On-chain balance:', currentBalance, '| Has tokens:', hasTokensOnChain);
 
         if (hasTokensOnChain) {
-            // Wallet already has tokens on-chain
-            // ADD TO MEMORY DB if not already there
             if (!existingRegistrant) {
                 db.addRegistrant(normalizedAddress);
                 console.log('📝 Added to in-memory DB (pre-existing holder)');
@@ -324,18 +320,16 @@ app.post('/api/claim/register', async (req, res) => {
             });
         }
 
-        // New wallet without tokens - add to DB if not there
         if (!existingRegistrant) {
             db.addRegistrant(normalizedAddress);
             console.log('📝 Added new wallet to DB');
         }
 
-        // Mint tokens
-        const MINT_AMOUNT = parseInt(process.env.MINT_AMOUNT) || 2;
-        console.log(`🎯 Minting ${MINT_AMOUNT} tokens...`);
+        const mintAmount = parseInt(process.env.MINT_AMOUNT) || 2;
+        console.log(`🎯 Minting ${mintAmount} tokens...`);
 
         try {
-            const result = await minter.mintToAddress(normalizedAddress, MINT_AMOUNT);
+            const result = await minter.mintToAddress(normalizedAddress, mintAmount);
             
             if (result.skipped) {
                 db.markAsMinted(normalizedAddress, 'skipped', networkConfig.name);
@@ -346,7 +340,6 @@ app.post('/api/claim/register', async (req, res) => {
                 });
             }
 
-            // Success!
             const txHash = result.receipt.hash;
             db.markAsMinted(normalizedAddress, txHash, networkConfig.name);
             
@@ -354,10 +347,10 @@ app.post('/api/claim/register', async (req, res) => {
 
             return res.status(201).json({
                 status: 'minted',
-                message: `Successfully minted ${MINT_AMOUNT} VIP tokens!`,
+                message: `Successfully minted ${mintAmount} VIP tokens!`,
                 tx_hash: txHash,
                 explorer_url: `${networkConfig.explorer}/tx/${txHash}`,
-                amount: MINT_AMOUNT,
+                amount: mintAmount,
                 symbol: 'VIP'
             });
 
@@ -380,27 +373,6 @@ app.post('/api/claim/register', async (req, res) => {
     }
 });
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.get('/claim', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'claim.html'));
-});
-
-app.get('/profile', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'profile.html'));
-});
-
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
-
-app.get('/change-password', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'change-password.html'));
-});
-
-// Check claim status (public)
 app.get('/api/claim/status/:address', async (req, res) => {
     const { address } = req.params;
     
@@ -549,7 +521,6 @@ app.get('/api/wallet-info', requireAuth, async (req, res) => {
         await minter.initialize();
         const networkConfig = getNetworkConfig();
         
-        // Get wallet POL balance
         const balance = await minter.provider.getBalance(minter.wallet.address);
         const balanceFormatted = ethers.formatEther(balance);
         
@@ -755,6 +726,7 @@ function startServer() {
             console.log(`🌐 Server running on http://localhost:${PORT}`);
             console.log(`   Home:      http://localhost:${PORT}/`);
             console.log(`   Claim:     http://localhost:${PORT}/claim`);
+            console.log(`   Profile:   http://localhost:${PORT}/profile`);
             console.log(`   Dashboard: http://localhost:${PORT}/dashboard`);
             console.log(`   Health:    http://localhost:${PORT}/api/health`);
             resolve(server);
