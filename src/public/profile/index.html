@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Profile - KEA VALLEY</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -39,7 +40,7 @@
         }
         .nav-links a:hover { background: rgba(212, 175, 55, 0.2); color: #d4af37; }
         .container {
-            max-width: 600px;
+            max-width: 500px;
             margin: 2rem auto;
             padding: 0 1rem;
         }
@@ -53,28 +54,187 @@
             background: rgba(212, 175, 55, 0.1);
             padding: 1rem 1.5rem;
             border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            text-align: center;
         }
         .card-header h2 {
             font-family: 'Playfair Display', serif;
             color: #d4af37;
             font-size: 1.3rem;
         }
-        .iframe-container { padding: 0; }
-        .wallettwo-iframe {
+        .card-content {
+            padding: 2rem;
+        }
+
+        /* Login State */
+        .login-container {
+            text-align: center;
+        }
+        .login-container p {
+            margin-bottom: 1.5rem;
+            color: #a0aec0;
+        }
+        .login-iframe {
             width: 100%;
-            height: 750px;
+            height: 400px;
             border: none;
+            border-radius: 8px;
             background: #fff;
         }
+
+        /* Profile State */
+        .profile-container { display: none; }
+        .profile-container.active { display: block; }
+        .login-container.hidden { display: none; }
+
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #d4af37, #1a365d);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #fff;
+            font-family: 'Playfair Display', serif;
+            margin: 0 auto 1rem;
+        }
+        .user-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .user-email {
+            color: #a0aec0;
+            text-align: center;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .info-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .info-label {
+            font-size: 0.75rem;
+            color: #a0aec0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        .info-value {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            word-break: break-all;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .info-value span { flex: 1; }
+        .copy-btn {
+            background: rgba(212, 175, 55, 0.2);
+            border: none;
+            padding: 0.4rem 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #d4af37;
+            font-size: 0.8rem;
+        }
+        .copy-btn:hover { background: rgba(212, 175, 55, 0.4); }
+
+        .balance-card {
+            background: linear-gradient(135deg, #1a365d 0%, #2d4a6f 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        .balance-label {
+            color: #d4af37;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+        .balance-amount {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            color: #fff;
+        }
+        .balance-symbol {
+            color: #d4af37;
+            font-size: 1.2rem;
+            margin-left: 0.5rem;
+        }
+        .balance-loading {
+            color: #a0aec0;
+            font-size: 1rem;
+        }
+        .explorer-link {
+            display: block;
+            color: #d4af37;
+            font-size: 0.8rem;
+            margin-top: 0.75rem;
+            text-decoration: none;
+        }
+        .explorer-link:hover { text-decoration: underline; }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            border-radius: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: #d4af37;
+            color: #1a365d;
+        }
+        .btn-primary:hover { background: #e8c547; }
+        .btn-secondary {
+            background: transparent;
+            color: #e2e8f0;
+            border: 1px solid rgba(212, 175, 55, 0.5);
+        }
+        .btn-secondary:hover {
+            background: rgba(212, 175, 55, 0.1);
+            border-color: #d4af37;
+        }
+        .btn-danger {
+            background: rgba(220, 53, 69, 0.2);
+            color: #ff6b7a;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+        .btn-danger:hover {
+            background: rgba(220, 53, 69, 0.3);
+        }
+
         @media (max-width: 768px) {
             .header { padding: 1rem; flex-direction: column; gap: 1rem; }
-            .wallettwo-iframe { height: 650px; }
+            .balance-amount { font-size: 2rem; }
         }
     </style>
 </head>
 <body>
     <header class="header">
-        <a href="/" class="logo">KEA <span>VALLEY</span></a>
+        <a href="/" class="logo">KEA <span>VALLEY®</span></a>
         <nav class="nav-links">
             <a href="/">Home</a>
             <a href="/claim">Claim Tokens</a>
@@ -84,17 +244,212 @@
     <div class="container">
         <div class="card">
             <div class="card-header">
-                <h2>My WalletTwo</h2>
+                <h2>My Profile</h2>
             </div>
-            <div class="iframe-container">
-                <iframe 
-                    class="wallettwo-iframe"
-                    src="https://wallet.wallettwo.com/wallet/dashboard?tab=Tokens"
-                    title="WalletTwo Dashboard"
-                    allow="clipboard-write"
-                ></iframe>
+            <div class="card-content">
+                
+                <!-- Login State -->
+                <div id="loginContainer" class="login-container">
+                    <p>Connect with WalletTwo to view your profile and VIP token balance.</p>
+                    <iframe 
+                        id="walletTwoFrame"
+                        class="login-iframe"
+                        src="https://wallet.wallettwo.com/auth/login?embed=true"
+                        title="WalletTwo Login"
+                        allow="clipboard-write"
+                    ></iframe>
+                </div>
+
+                <!-- Profile State -->
+                <div id="profileContainer" class="profile-container">
+                    <div id="userAvatar" class="user-avatar">?</div>
+                    <div id="userName" class="user-name">Loading...</div>
+                    <div id="userEmail" class="user-email"></div>
+
+                    <div class="info-section">
+                        <div class="info-label">Wallet Address</div>
+                        <div class="info-value">
+                            <span id="walletAddress">-</span>
+                            <button class="copy-btn" onclick="copyAddress()">Copy</button>
+                        </div>
+                    </div>
+
+                    <div class="balance-card">
+                        <div class="balance-label">VIP Token Balance</div>
+                        <div id="balanceDisplay">
+                            <span class="balance-loading">Loading...</span>
+                        </div>
+                        <a id="explorerLink" href="#" target="_blank" class="explorer-link">
+                            View on Polygonscan ↗
+                        </a>
+                    </div>
+
+                    <div class="actions">
+                        <a href="/claim" class="btn btn-primary">🎁 Claim Free Tokens</a>
+                        <a href="https://wallet.wallettwo.com/wallet/dashboard" target="_blank" class="btn btn-secondary">
+                            💼 Open WalletTwo
+                        </a>
+                        <button onclick="logout()" class="btn btn-danger">Disconnect</button>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
+
+    <script>
+        // Config
+        const CONFIG = {
+            VIP_TOKEN_ADDRESS: '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F',
+            POLYGON_RPC: 'https://polygon-bor-rpc.publicnode.com',
+            POLYGON_EXPLORER: 'https://polygonscan.com',
+            WALLETTWO_ORIGIN: 'https://wallet.wallettwo.com',
+            STORAGE_KEY: 'keavalley_profile'
+        };
+
+        const ERC20_ABI = ['function balanceOf(address owner) view returns (uint256)'];
+
+        // State
+        let currentUser = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for stored session
+            const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
+            if (stored) {
+                try {
+                    const data = JSON.parse(stored);
+                    // Check if session is less than 24 hours old
+                    if (data.timestamp && (Date.now() - data.timestamp) < 24 * 60 * 60 * 1000) {
+                        showProfile(data);
+                    } else {
+                        localStorage.removeItem(CONFIG.STORAGE_KEY);
+                    }
+                } catch (e) {
+                    localStorage.removeItem(CONFIG.STORAGE_KEY);
+                }
+            }
+
+            // Listen for messages from WalletTwo iframe
+            window.addEventListener('message', handleWalletTwoMessage);
+        });
+
+        // Handle messages from WalletTwo
+        function handleWalletTwoMessage(event) {
+            // Verify origin
+            if (event.origin !== CONFIG.WALLETTWO_ORIGIN) {
+                return;
+            }
+
+            console.log('📨 Message from WalletTwo:', event.data);
+
+            const data = event.data;
+
+            // Handle different message types
+            if (data.type === 'WALLETTWO_AUTH_SUCCESS' || data.type === 'AUTH_SUCCESS') {
+                handleAuthSuccess(data);
+            } else if (data.user || data.address || data.wallet) {
+                handleAuthSuccess(data);
+            } else if (data.type === 'WALLETTWO_LOGOUT') {
+                logout();
+            }
+        }
+
+        // Handle successful authentication
+        function handleAuthSuccess(data) {
+            console.log('✅ Auth success:', data);
+
+            const user = {
+                address: data.address || data.wallet || data.user?.address || data.user?.wallet,
+                email: data.email || data.user?.email,
+                name: data.name || data.user?.name,
+                timestamp: Date.now()
+            };
+
+            if (!user.address) {
+                console.error('No wallet address in auth data');
+                return;
+            }
+
+            // Store session
+            localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(user));
+
+            // Show profile
+            showProfile(user);
+        }
+
+        // Show profile UI
+        function showProfile(user) {
+            currentUser = user;
+
+            // Hide login, show profile
+            document.getElementById('loginContainer').classList.add('hidden');
+            document.getElementById('profileContainer').classList.add('active');
+
+            // Set user info
+            const initial = user.email 
+                ? user.email.charAt(0).toUpperCase() 
+                : user.address.slice(2, 4).toUpperCase();
+            
+            document.getElementById('userAvatar').textContent = initial;
+            document.getElementById('userName').textContent = user.name || user.email || 'WalletTwo User';
+            document.getElementById('userEmail').textContent = user.email || '';
+            document.getElementById('walletAddress').textContent = user.address;
+
+            // Set explorer link
+            document.getElementById('explorerLink').href = 
+                `${CONFIG.POLYGON_EXPLORER}/token/${CONFIG.VIP_TOKEN_ADDRESS}?a=${user.address}`;
+
+            // Fetch balance
+            fetchBalance(user.address);
+        }
+
+        // Fetch VIP token balance
+        async function fetchBalance(address) {
+            const display = document.getElementById('balanceDisplay');
+            
+            try {
+                const provider = new ethers.JsonRpcProvider(CONFIG.POLYGON_RPC);
+                const contract = new ethers.Contract(CONFIG.VIP_TOKEN_ADDRESS, ERC20_ABI, provider);
+                const balance = await contract.balanceOf(address);
+                const formatted = parseFloat(ethers.formatUnits(balance, 18)).toFixed(2);
+
+                display.innerHTML = `
+                    <span class="balance-amount">${formatted}</span>
+                    <span class="balance-symbol">VIP</span>
+                `;
+            } catch (error) {
+                console.error('Error fetching balance:', error);
+                display.innerHTML = `
+                    <span class="balance-amount">0</span>
+                    <span class="balance-symbol">VIP</span>
+                `;
+            }
+        }
+
+        // Copy address to clipboard
+        function copyAddress() {
+            if (currentUser?.address) {
+                navigator.clipboard.writeText(currentUser.address);
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 2000);
+            }
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem(CONFIG.STORAGE_KEY);
+            currentUser = null;
+
+            // Show login, hide profile
+            document.getElementById('loginContainer').classList.remove('hidden');
+            document.getElementById('profileContainer').classList.remove('active');
+
+            // Reload iframe to reset
+            const iframe = document.getElementById('walletTwoFrame');
+            iframe.src = iframe.src;
+        }
+    </script>
 </body>
 </html>
