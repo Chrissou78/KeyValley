@@ -395,7 +395,7 @@
                             balance.toFixed(4) + ' ' + (walletData.currency || 'POL');
                         
                         // Calculate estimated mints remaining (0.04 POL per mint)
-                        const gasPerMint = 0.04;
+                        const gasPerMint = 0.004;
                         const mintsRemaining = Math.floor(balance / gasPerMint);
                         document.getElementById('mintsRemaining').textContent = mintsRemaining.toLocaleString();
                     } else if (walletData.error) {
@@ -412,7 +412,7 @@
                 console.error('Stats error:', e);
             }
         }    
-        
+
         async function loadRegistrants() {
             try {
                 const res = await fetch('/api/registrants');
