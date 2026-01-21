@@ -679,13 +679,31 @@
             localStorage.removeItem(CONFIG.STORAGE_KEY);
             currentUser = null;
 
+            // Remove the message listener temporarily to prevent auto-relogin
+            window.removeEventListener('message', handleWalletTwoMessage);
+
             // Show login, hide profile
             document.getElementById('loginContainer').classList.remove('hidden');
             document.getElementById('profileContainer').classList.remove('active');
 
-            // Reload iframe to reset
-            const iframe = document.getElementById('walletTwoFrame');
-            iframe.src = iframe.src;
+            // Clear the iframe and create a logout iframe to clear WalletTwo session
+            const logoutIframe = document.createElement('iframe');
+            logoutIframe.style.display = 'none';
+            logoutIframe.src = 'https://wallet.wallettwo.com/action/logout?iframe=true';
+            document.body.appendChild(logoutIframe);
+
+            // After logout completes, reset the login iframe
+            setTimeout(() => {
+                document.body.removeChild(logoutIframe);
+                const iframe = document.getElementById('walletTwoFrame');
+                iframe.src = 'about:blank';
+                
+                // Re-add listener and reload iframe after a delay
+                setTimeout(() => {
+                    window.addEventListener('message', handleWalletTwoMessage);
+                    iframe.src = 'https://wallet.wallettwo.com/auth/login?action=auth&iframe=true';
+                }, 500);
+            }, 1000);
         }
     </script>
 </body>
