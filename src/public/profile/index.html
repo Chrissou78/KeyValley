@@ -106,10 +106,10 @@
             text-align: center;
             margin-bottom: 0.5rem;
         }
-        .user-email {
+        .user-id {
             color: #a0aec0;
             text-align: center;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             margin-bottom: 1.5rem;
         }
 
@@ -226,31 +226,6 @@
             background: rgba(220, 53, 69, 0.3);
         }
 
-        .loading-state {
-            text-align: center;
-            padding: 2rem;
-        }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(212, 175, 55, 0.3);
-            border-top-color: #d4af37;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .error-msg {
-            background: rgba(220, 53, 69, 0.1);
-            border: 1px solid rgba(220, 53, 69, 0.3);
-            color: #ff6b7a;
-            padding: 1rem;
-            border-radius: 8px;
-            text-align: center;
-            margin-bottom: 1rem;
-        }
-
         @media (max-width: 768px) {
             .header { padding: 1rem; flex-direction: column; gap: 1rem; }
             .balance-amount { font-size: 2rem; }
@@ -273,15 +248,6 @@
             </div>
             <div class="card-content">
                 
-                <!-- Loading State -->
-                <div id="loadingContainer" class="loading-state" style="display: none;">
-                    <div class="spinner"></div>
-                    <p>Authenticating...</p>
-                </div>
-
-                <!-- Error State -->
-                <div id="errorContainer" class="error-msg" style="display: none;"></div>
-
                 <!-- Login State -->
                 <div id="loginContainer" class="login-container">
                     <p>Connect with WalletTwo to view your profile and VIP token balance.</p>
@@ -297,8 +263,8 @@
                 <!-- Profile State -->
                 <div id="profileContainer" class="profile-container">
                     <div id="userAvatar" class="user-avatar">?</div>
-                    <div id="userName" class="user-name">Loading...</div>
-                    <div id="userEmail" class="user-email"></div>
+                    <div id="userName" class="user-name">WalletTwo User</div>
+                    <div id="userId" class="user-id"></div>
 
                     <div class="info-section">
                         <div class="info-label">Wallet Address</div>
@@ -338,9 +304,7 @@
             POLYGON_RPC: 'https://polygon-bor-rpc.publicnode.com',
             POLYGON_EXPLORER: 'https://polygonscan.com',
             WALLETTWO_ORIGIN: 'https://wallet.wallettwo.com',
-            WALLETTWO_API: 'https://wallet.wallettwo.com/api',
-            STORAGE_KEY: 'keavalley_profile',
-            TOKEN_KEY: 'keavalley_token'
+            STORAGE_KEY: 'keavalley_profile'
         };
 
         const ERC20_ABI = ['function balanceOf(address owner) view returns (uint256)'];
@@ -351,20 +315,19 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             // Check for stored session
-            const storedToken = localStorage.getItem(CONFIG.TOKEN_KEY);
-            const storedUser = localStorage.getItem(CONFIG.STORAGE_KEY);
+            const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
             
-            if (storedToken && storedUser) {
+            if (stored) {
                 try {
-                    const user = JSON.parse(storedUser);
+                    const user = JSON.parse(stored);
                     // Check if session is less than 24 hours old
                     if (user.timestamp && (Date.now() - user.timestamp) < 24 * 60 * 60 * 1000) {
                         showProfile(user);
                     } else {
-                        clearSession();
+                        localStorage.removeItem(CONFIG.STORAGE_KEY);
                     }
                 } catch (e) {
-                    clearSession();
+                    localStorage.removeItem(CONFIG.STORAGE_KEY);
                 }
             }
 
@@ -386,94 +349,30 @@
 
             console.log('📨 Message from WalletTwo:', event.data);
 
-            const { code, type } = event.data;
+            const data = event.data;
 
-            // Only handle wallet_login type
-            if (type !== 'wallet_login' || !code) {
-                console.log('Ignoring message - not wallet_login or no code');
-                return;
-            }
-
-            // Exchange code for token
-            exchangeCodeForToken(code);
-        }
-
-        // Exchange consent code for access token
-        async function exchangeCodeForToken(code) {
-            showLoading(true);
-            hideError();
-
-            try {
-                console.log('🔄 Exchanging code for token...');
-                
-                const response = await fetch(`${CONFIG.WALLETTWO_API}/auth/exchange`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ code })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Exchange failed: ${response.status}`);
-                }
-
-                const data = await response.json();
-                console.log('✅ Token received');
-
-                if (data.access_token) {
-                    localStorage.setItem(CONFIG.TOKEN_KEY, data.access_token);
-                    await loadUserFromToken(data.access_token);
-                } else {
-                    throw new Error('No access token in response');
-                }
-
-            } catch (error) {
-                console.error('❌ Token exchange error:', error);
-                showError('Authentication failed. Please try again.');
-                showLoading(false);
+            // Check for wallet_login type with wallet address
+            if (data.type === 'wallet_login' && data.wallet) {
+                handleAuthSuccess(data);
             }
         }
 
-        // Load user info from token
-        async function loadUserFromToken(token) {
-            try {
-                console.log('🔄 Loading user from token...');
+        // Handle successful authentication
+        function handleAuthSuccess(data) {
+            console.log('✅ Auth success:', data);
 
-                const response = await fetch(`${CONFIG.WALLETTWO_API}/user/me`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+            const user = {
+                wallet: data.wallet,
+                userId: data.user,
+                code: data.code,
+                timestamp: Date.now()
+            };
 
-                if (!response.ok) {
-                    throw new Error(`Failed to load user: ${response.status}`);
-                }
+            // Store session
+            localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(user));
 
-                const userData = await response.json();
-                console.log('✅ User loaded:', userData);
-
-                const user = {
-                    address: userData.address || userData.wallet || userData.walletAddress,
-                    email: userData.email,
-                    name: userData.name || userData.displayName,
-                    timestamp: Date.now()
-                };
-
-                if (!user.address) {
-                    throw new Error('No wallet address in user data');
-                }
-
-                localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(user));
-                showProfile(user);
-
-            } catch (error) {
-                console.error('❌ Load user error:', error);
-                showError('Failed to load profile. Please try again.');
-                clearSession();
-            } finally {
-                showLoading(false);
-            }
+            // Show profile
+            showProfile(user);
         }
 
         // Show profile UI
@@ -483,24 +382,21 @@
             // Hide login, show profile
             document.getElementById('loginContainer').classList.add('hidden');
             document.getElementById('profileContainer').classList.add('active');
-            hideError();
 
             // Set user info
-            const initial = user.email 
-                ? user.email.charAt(0).toUpperCase() 
-                : user.address.slice(2, 4).toUpperCase();
+            const initial = user.wallet.slice(2, 4).toUpperCase();
             
             document.getElementById('userAvatar').textContent = initial;
-            document.getElementById('userName').textContent = user.name || user.email || 'WalletTwo User';
-            document.getElementById('userEmail').textContent = user.email || '';
-            document.getElementById('walletAddress').textContent = user.address;
+            document.getElementById('userName').textContent = 'WalletTwo User';
+            document.getElementById('userId').textContent = user.userId ? `ID: ${user.userId}` : '';
+            document.getElementById('walletAddress').textContent = user.wallet;
 
             // Set explorer link
             document.getElementById('explorerLink').href = 
-                `${CONFIG.POLYGON_EXPLORER}/token/${CONFIG.VIP_TOKEN_ADDRESS}?a=${user.address}`;
+                `${CONFIG.POLYGON_EXPLORER}/token/${CONFIG.VIP_TOKEN_ADDRESS}?a=${user.wallet}`;
 
             // Fetch balance
-            fetchBalance(user.address);
+            fetchBalance(user.wallet);
         }
 
         // Fetch VIP token balance
@@ -528,8 +424,8 @@
 
         // Copy address to clipboard
         function copyAddress() {
-            if (currentUser?.address) {
-                navigator.clipboard.writeText(currentUser.address);
+            if (currentUser?.wallet) {
+                navigator.clipboard.writeText(currentUser.wallet);
                 const btn = document.querySelector('.copy-btn');
                 btn.textContent = 'Copied!';
                 setTimeout(() => btn.textContent = 'Copy', 2000);
@@ -538,7 +434,8 @@
 
         // Logout
         function logout() {
-            clearSession();
+            localStorage.removeItem(CONFIG.STORAGE_KEY);
+            currentUser = null;
 
             // Show login, hide profile
             document.getElementById('loginContainer').classList.remove('hidden');
@@ -547,31 +444,6 @@
             // Reload iframe to reset
             const iframe = document.getElementById('walletTwoFrame');
             iframe.src = iframe.src;
-        }
-
-        // Clear session
-        function clearSession() {
-            localStorage.removeItem(CONFIG.STORAGE_KEY);
-            localStorage.removeItem(CONFIG.TOKEN_KEY);
-            currentUser = null;
-        }
-
-        // Show/hide loading
-        function showLoading(show) {
-            document.getElementById('loadingContainer').style.display = show ? 'block' : 'none';
-            document.getElementById('loginContainer').style.display = show ? 'none' : 'block';
-        }
-
-        // Show error
-        function showError(message) {
-            const el = document.getElementById('errorContainer');
-            el.textContent = message;
-            el.style.display = 'block';
-        }
-
-        // Hide error
-        function hideError() {
-            document.getElementById('errorContainer').style.display = 'none';
         }
     </script>
 </body>
