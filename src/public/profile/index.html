@@ -3,439 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile | KEA VALLEY®</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>My Profile - KEA VALLEY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --deep-blue: #1a3a5c;
-            --gold: #d4af55;
-            --gold-light: #e8d5a3;
-            --white: #ffffff;
-            --light-gray: #f8f9fa;
-            --text-gray: #6c757d;
-            --success: #28a745;
-        }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: 'Montserrat', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            background: linear-gradient(135deg, #0a1628 0%, #1a365d 50%, #0a1628 100%);
             min-height: 100vh;
-            color: var(--deep-blue);
+            color: #e2e8f0;
         }
-
         .header {
-            background: var(--deep-blue);
-            padding: 20px 40px;
+            background: rgba(10, 22, 40, 0.95);
+            padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
         }
-
         .logo {
             font-family: 'Playfair Display', serif;
             font-size: 1.5rem;
-            color: var(--gold);
-            font-weight: 600;
+            color: #d4af37;
             text-decoration: none;
         }
-
-        .logo span { color: var(--white); font-weight: 400; }
-
-        .header-actions { display: flex; gap: 15px; align-items: center; }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .logo span { color: #fff; font-size: 0.9rem; }
+        .nav-links { display: flex; gap: 1rem; }
+        .nav-links a {
+            color: #e2e8f0;
             text-decoration: none;
-            font-size: 0.9rem;
-        }
-
-        .btn-secondary { 
-            background: transparent; 
-            color: var(--white); 
-            border: 1px solid var(--gold); 
-        }
-        .btn-secondary:hover { 
-            background: var(--gold); 
-            color: var(--deep-blue); 
-        }
-
-        .btn-primary { 
-            background: var(--gold); 
-            color: var(--deep-blue); 
-        }
-        .btn-primary:hover { 
-            background: var(--gold-light); 
-        }
-
-        .page-header {
-            text-align: center;
-            padding: 40px 20px 20px;
-        }
-
-        .page-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.5rem;
-            color: var(--deep-blue);
-            margin-bottom: 10px;
-        }
-
-        .page-subtitle {
-            color: var(--text-gray);
-            font-size: 1.1rem;
-        }
-
-        /* Profile Styles */
-        .profile-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            display: grid;
-            gap: 20px;
-        }
-
-        .profile-card {
-            background: var(--white);
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            border: 1px solid rgba(212, 175, 85, 0.2);
-        }
-
-        .profile-card h3 {
-            font-family: 'Playfair Display', serif;
-            color: var(--deep-blue);
-            margin-bottom: 15px;
-            font-size: 1.2rem;
-        }
-
-        /* Login Card */
-        .login-card {
-            text-align: center;
-            padding: 60px 40px;
-        }
-
-        .card-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-        }
-
-        .login-card h2 {
-            font-family: 'Playfair Display', serif;
-            color: var(--deep-blue);
-            margin-bottom: 15px;
-        }
-
-        .login-card p {
-            color: var(--text-gray);
-            margin-bottom: 30px;
-        }
-
-        .login-footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid var(--light-gray);
-        }
-
-        .login-footer a {
-            color: var(--gold);
-            font-weight: 600;
-        }
-
-        /* Auth Button (from SDK) */
-        .auth-button, 
-        .profile-container button[class*="wallettwo"],
-        .profile-container [class*="AuthAction"] {
-            background: var(--gold) !important;
-            color: var(--deep-blue) !important;
-            padding: 15px 40px !important;
-            border-radius: 8px !important;
-            font-family: 'Montserrat', sans-serif !important;
-            font-weight: 600 !important;
-            font-size: 1rem !important;
-            border: none !important;
-            cursor: pointer !important;
-            transition: all 0.3s ease !important;
-        }
-
-        .auth-button:hover,
-        .profile-container button[class*="wallettwo"]:hover {
-            background: var(--gold-light) !important;
-            transform: translateY(-2px) !important;
-        }
-
-        /* User Card */
-        .user-card {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-
-        .user-header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .user-avatar {
-            width: 70px;
-            height: 70px;
-            background: linear-gradient(135deg, var(--deep-blue), var(--gold));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            color: var(--white);
-            font-family: 'Playfair Display', serif;
-            font-weight: 600;
-        }
-
-        .user-info h2 {
-            font-family: 'Playfair Display', serif;
-            color: var(--deep-blue);
-            margin-bottom: 5px;
-        }
-
-        .user-email {
-            color: var(--text-gray);
-            font-size: 0.95rem;
-        }
-
-        .logout-button,
-        .profile-container [class*="LogoutAction"] {
-            background: transparent !important;
-            color: var(--deep-blue) !important;
-            border: 1px solid var(--gold) !important;
-            padding: 10px 20px !important;
-            border-radius: 8px !important;
-            font-family: 'Montserrat', sans-serif !important;
-            font-weight: 500 !important;
-            cursor: pointer !important;
-            transition: all 0.3s ease !important;
-        }
-
-        .logout-button:hover,
-        .profile-container [class*="LogoutAction"]:hover {
-            background: var(--gold) !important;
-        }
-
-        /* Wallet Card */
-        .wallet-address-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--light-gray);
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        .wallet-address {
-            font-family: monospace;
-            font-size: 0.9rem;
-            color: var(--deep-blue);
-            word-break: break-all;
-            flex: 1;
-        }
-
-        .copy-button {
-            background: var(--gold);
-            border: none;
-            padding: 8px 12px;
+            padding: 0.5rem 1rem;
             border-radius: 6px;
-            cursor: pointer;
             transition: all 0.3s;
-        }
-
-        .copy-button:hover {
-            background: var(--gold-light);
-        }
-
-        .explorer-link {
-            color: var(--gold);
-            text-decoration: none;
-            font-weight: 500;
             font-size: 0.9rem;
         }
-
-        .explorer-link:hover {
-            text-decoration: underline;
+        .nav-links a:hover { background: rgba(212, 175, 55, 0.2); color: #d4af37; }
+        .container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 0 1rem;
         }
-
-        /* Balance Card */
-        .balance-card {
-            text-align: center;
-            background: linear-gradient(135deg, var(--deep-blue) 0%, #2a4a6c 100%);
-            color: var(--white);
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            overflow: hidden;
         }
-
-        .balance-card h3 {
-            color: var(--gold);
+        .card-header {
+            background: rgba(212, 175, 55, 0.1);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
         }
-
-        .balance-display {
-            margin: 20px 0;
-        }
-
-        .balance-amount {
+        .card-header h2 {
             font-family: 'Playfair Display', serif;
-            font-size: 3.5rem;
-            font-weight: 700;
-            color: var(--gold);
+            color: #d4af37;
+            font-size: 1.3rem;
         }
-
-        .balance-symbol {
-            font-size: 1.5rem;
-            margin-left: 10px;
-            color: var(--gold-light);
+        .iframe-container { padding: 0; }
+        .wallettwo-iframe {
+            width: 100%;
+            height: 750px;
+            border: none;
+            background: #fff;
         }
-
-        .token-name {
-            color: var(--gold-light);
-            margin-bottom: 20px;
-        }
-
-        .balance-card .explorer-link {
-            color: var(--gold-light);
-        }
-
-        /* Actions Card */
-        .action-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .action-button {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 15px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .action-button.primary {
-            background: var(--gold);
-            color: var(--deep-blue);
-        }
-
-        .action-button.primary:hover {
-            background: var(--gold-light);
-            transform: translateY(-2px);
-        }
-
-        .action-button.secondary {
-            background: transparent;
-            color: var(--deep-blue);
-            border: 1px solid var(--gold);
-        }
-
-        .action-button.secondary:hover {
-            background: var(--gold);
-        }
-
-        /* Loading */
-        .loading-card {
-            text-align: center;
-            padding: 60px;
-        }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid var(--gold-light);
-            border-top-color: var(--gold);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Footer */
-        .footer {
-            text-align: center;
-            padding: 30px;
-            color: var(--text-gray);
-            font-size: 0.85rem;
-        }
-
-        .footer a {
-            color: var(--gold);
-            text-decoration: none;
-        }
-
-        /* Responsive */
         @media (max-width: 768px) {
-            .header {
-                padding: 15px 20px;
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .page-title { font-size: 2rem; }
-
-            .profile-card { padding: 20px; }
-
-            .user-card {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .user-header {
-                flex-direction: column;
-            }
-
-            .balance-amount { font-size: 2.5rem; }
-
-            .wallet-address { font-size: 0.75rem; }
+            .header { padding: 1rem; flex-direction: column; gap: 1rem; }
+            .wallettwo-iframe { height: 650px; }
         }
     </style>
 </head>
 <body>
     <header class="header">
-        <a href="/" class="logo">KEA <span>VALLEY®</span></a>
-        <div class="header-actions">
-            <a href="/" class="btn btn-secondary">Home</a>
-            <a href="/claim" class="btn btn-primary">Claim Tokens</a>
-        </div>
+        <a href="/" class="logo">KEA <span>VALLEY</span></a>
+        <nav class="nav-links">
+            <a href="/">Home</a>
+            <a href="/claim">Claim Tokens</a>
+        </nav>
     </header>
 
-    <div class="page-header">
-        <h1 class="page-title">My Profile</h1>
-        <p class="page-subtitle">View your wallet and VIP token balance</p>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2>My WalletTwo</h2>
+            </div>
+            <div class="iframe-container">
+                <iframe 
+                    class="wallettwo-iframe"
+                    src="https://wallet.wallettwo.com/wallet/dashboard?tab=Tokens"
+                    title="WalletTwo Dashboard"
+                    allow="clipboard-write"
+                ></iframe>
+            </div>
+        </div>
     </div>
-
-    <!-- React App Mount Point -->
-    <div id="profile-root"></div>
-
-    <footer class="footer">
-        <p>© 2025 KEA VALLEY®. All rights reserved. | <a href="https://keavalley-greece.com" target="_blank">keavalley-greece.com</a></p>
-    </footer>
-
-    <!-- React & Dependencies -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/ethers@6/dist/ethers.umd.min.js"></script>
-    <script src="https://unpkg.com/@oc-labs/wallettwo-sdk@latest/dist/index.umd.js"></script>
-    <script src="bundle.js"></script>
 </body>
 </html>
