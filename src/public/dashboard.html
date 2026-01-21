@@ -386,8 +386,14 @@
                 const walletRes = await fetch('/api/wallet-info');
                 const walletData = await walletRes.json();
                 if (walletData.balance) {
+                    const balance = parseFloat(walletData.balance);
                     document.getElementById('walletBalance').textContent = 
-                        parseFloat(walletData.balance).toFixed(4) + ' ' + (walletData.currency || 'POL');
+                        balance.toFixed(4) + ' ' + (walletData.currency || 'POL');
+                    
+                    // Calculate estimated mints remaining (0.04 POL per mint)
+                    const gasPerMint = 0.04;
+                    const mintsRemaining = Math.floor(balance / gasPerMint);
+                    document.getElementById('mintsRemaining').textContent = mintsRemaining.toLocaleString();
                 }
             } catch (e) {
                 console.error('Stats error:', e);

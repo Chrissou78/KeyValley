@@ -544,27 +544,30 @@ app.get('/api/stats', requireAuth, (req, res) => {
     }
 });
 
-app.get('/api/wallet-info', requireAuth, checkPasswordChange, async (req, res) => {
+app.get('/api/wallet-info', requireAuth, async (req, res) => {
     try {
         await minter.initialize();
         const networkConfig = getNetworkConfig();
         
-        const walletAddress = minter.wallet.address;
-        const balance = await minter.provider.getBalance(walletAddress);
+        // Get wallet POL balance
+        const balance = await minter.provider.getBalance(minter.wallet.address);
+        const balanceFormatted = ethers.formatEther(balance);
         
         res.json({
-            address: walletAddress,
-            balance: ethers.formatEther(balance),
-            currency: networkConfig.currency || 'POL',
-            token_name: minter.tokenName,
-            token_symbol: minter.tokenSymbol,
-            token_address: networkConfig.tokenAddress,
-            explorer: networkConfig.explorer,
-            network: networkConfig.name
+            address: minter.wallet.address,
+            balance: balanceFormatted,
+            currency: networkConfig.currency,
+            network: networkConfig.name,
+            tokenAddress: networkConfig.tokenAddress,
+            tokenName: minter.tokenName,
+            tokenSymbol: minter.tokenSymbol
         });
     } catch (error) {
-        console.error('Error getting wallet info:', error);
-        res.status(500).json({ error: 'Failed to get wallet info' });
+        console.error('Wallet info error:', error);
+        res.status(500).json({ 
+            error: 'Failed to get wallet info',
+            details: error.message 
+        });
     }
 });
 
