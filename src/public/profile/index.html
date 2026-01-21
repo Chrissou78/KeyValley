@@ -690,13 +690,6 @@
             // Clear local storage
             localStorage.removeItem(CONFIG.STORAGE_KEY);
             currentUser = null;
-            
-            // Keep messages blocked until page reload
-            acceptMessages = false;
-
-            // Show login, hide profile
-            document.getElementById('loginContainer').classList.remove('hidden');
-            document.getElementById('profileContainer').classList.remove('active');
 
             // Create logout iframe to clear WalletTwo session
             const logoutIframe = document.createElement('iframe');
@@ -705,14 +698,10 @@
             logoutIframe.id = 'wallettwo-logout-iframe';
             document.body.appendChild(logoutIframe);
 
-            // Replace the login iframe with a message
-            const container = document.getElementById('loginContainer');
-            container.innerHTML = `
-                <p>You have been disconnected.</p>
-                <button onclick="window.location.reload()" class="btn btn-primary" style="margin-top: 1rem;">
-                    Login Again
-                </button>
-            `;
+            // Redirect to home page after a short delay
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 500);
         }
     </script>
 </body>
