@@ -541,6 +541,7 @@
 
         // State
         let currentUser = null;
+        let acceptMessages = true;  // Flag to control message handling
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -552,6 +553,7 @@
                     const user = JSON.parse(stored);
                     // Check if session is less than 24 hours old
                     if (user.timestamp && (Date.now() - user.timestamp) < 24 * 60 * 60 * 1000) {
+                        acceptMessages = false; // Don't accept new messages, we're already logged in
                         showProfile(user);
                     } else {
                         localStorage.removeItem(CONFIG.STORAGE_KEY);
@@ -569,6 +571,12 @@
         function handleWalletTwoMessage(event) {
             // Verify origin
             if (event.origin !== CONFIG.WALLETTWO_ORIGIN) {
+                return;
+            }
+
+            // Ignore messages if we're not accepting them (logged out state waiting for explicit login)
+            if (!acceptMessages) {
+                console.log('🚫 Ignoring message (acceptMessages = false)');
                 return;
             }
 
@@ -590,6 +598,9 @@
         // Handle successful authentication
         function handleAuthSuccess(data) {
             console.log('✅ Auth success:', data);
+
+            // Stop accepting more messages
+            acceptMessages = false;
 
             const user = {
                 wallet: data.wallet,
@@ -676,34 +687,32 @@
 
         // Logout
         function logout() {
+            // Clear local storage
             localStorage.removeItem(CONFIG.STORAGE_KEY);
             currentUser = null;
-
-            // Remove the message listener temporarily to prevent auto-relogin
-            window.removeEventListener('message', handleWalletTwoMessage);
+            
+            // Keep messages blocked until page reload
+            acceptMessages = false;
 
             // Show login, hide profile
             document.getElementById('loginContainer').classList.remove('hidden');
             document.getElementById('profileContainer').classList.remove('active');
 
-            // Clear the iframe and create a logout iframe to clear WalletTwo session
+            // Create logout iframe to clear WalletTwo session
             const logoutIframe = document.createElement('iframe');
             logoutIframe.style.display = 'none';
             logoutIframe.src = 'https://wallet.wallettwo.com/action/logout?iframe=true';
+            logoutIframe.id = 'wallettwo-logout-iframe';
             document.body.appendChild(logoutIframe);
 
-            // After logout completes, reset the login iframe
-            setTimeout(() => {
-                document.body.removeChild(logoutIframe);
-                const iframe = document.getElementById('walletTwoFrame');
-                iframe.src = 'about:blank';
-                
-                // Re-add listener and reload iframe after a delay
-                setTimeout(() => {
-                    window.addEventListener('message', handleWalletTwoMessage);
-                    iframe.src = 'https://wallet.wallettwo.com/auth/login?action=auth&iframe=true';
-                }, 500);
-            }, 1000);
+            // Replace the login iframe with a message
+            const container = document.getElementById('loginContainer');
+            container.innerHTML = `
+                <p>You have been disconnected.</p>
+                <button onclick="window.location.reload()" class="btn btn-primary" style="margin-top: 1rem;">
+                    Login Again
+                </button>
+            `;
         }
     </script>
 </body>
