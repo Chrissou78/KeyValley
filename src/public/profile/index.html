@@ -43,7 +43,6 @@
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
         
-        /* WalletTwo iframe container - clean white background */
         .wallet-iframe-container {
             background: #ffffff;
             border-radius: 8px;
@@ -52,14 +51,9 @@
         }
         .wallet-iframe {
             width: 100%;
-            height: 550px;
+            height: 600px;
             border: none;
             display: block;
-        }
-        @media (max-width: 640px) {
-            .wallet-iframe {
-                height: 550px;
-            }
         }
         
         .copy-btn:active {
@@ -120,9 +114,16 @@
                                 id="walletIframe"
                                 src="https://wallet.wallettwo.com/auth/login?action=auth&iframe=true"
                                 class="wallet-iframe"
+                                style="height: 600px !important; min-height: 600px;"
                                 allow="clipboard-write"
                             ></iframe>
                         </div>
+                    </div>
+
+                    <!-- Loading Container (for exchanging code) -->
+                    <div id="loadingContainer" class="hidden text-center py-12">
+                        <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+                        <p class="text-slate-400 text-sm">Loading your profile...</p>
                     </div>
 
                     <!-- Profile Container (hidden by default) -->
@@ -236,6 +237,7 @@
         // DOM Elements
         // ============================================
         const loginContainer = document.getElementById('loginContainer');
+        const loadingContainer = document.getElementById('loadingContainer');
         const profileContainer = document.getElementById('profileContainer');
         const disconnectingContainer = document.getElementById('disconnectingContainer');
         const cardTitle = document.getElementById('cardTitle');
@@ -263,12 +265,13 @@
         // ============================================
         // URL Parameter Handling
         // ============================================
-        function getWalletFromURL() {
+        function getDataFromURL() {
             const params = new URLSearchParams(window.location.search);
             return {
                 wallet: params.get('wlt') || params.get('wallet') || params.get('address'),
                 signature: params.get('signature') || params.get('sig'),
-                userId: params.get('usr') || params.get('user')
+                userId: params.get('usr') || params.get('user'),
+                code: params.get('code')
             };
         }
 
@@ -284,7 +287,6 @@
                     if (data.wallet && age < CONFIG.SESSION_DURATION) {
                         return data;
                     }
-                    // Session expired, clear it
                     localStorage.removeItem(CONFIG.STORAGE_KEY);
                 }
             } catch (e) {
@@ -319,6 +321,7 @@
         // ============================================
         function showLogin() {
             loginContainer.classList.remove('hidden');
+            loadingContainer.classList.add('hidden');
             profileContainer.classList.add('hidden');
             disconnectingContainer.classList.add('hidden');
             cardTitle.textContent = 'Connect Wallet';
@@ -326,17 +329,38 @@
             isDisconnecting = false;
         }
 
+        function showLoading() {
+            loginContainer.classList.add('hidden');
+            loadingContainer.classList.remove('hidden');
+            profileContainer.classList.add('hidden');
+            disconnectingContainer.classList.add('hidden');
+            cardTitle.textContent = 'Loading';
+        }
+
         function showProfile(user) {
             currentUser = user;
             acceptMessages = false;
             
             loginContainer.classList.add('hidden');
+            loadingContainer.classList.add('hidden');
             profileContainer.classList.remove('hidden');
             disconnectingContainer.classList.add('hidden');
             cardTitle.textContent = 'Profile';
 
-            // Set avatar initials from wallet
-            const initials = user.wallet ? user.wallet.slice(2, 4).toUpperCase() : '??';
+            // Set avatar initials
+            let initials = '??';
+            if (user.name) {
+                const nameParts = user.name.split(' ');
+                if (nameParts.length >= 2) {
+                    initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+                } else {
+                    initials = user.name.slice(0, 2).toUpperCase();
+                }
+            } else if (user.email) {
+                initials = user.email.slice(0, 2).toUpperCase();
+            } else if (user.wallet) {
+                initials = user.wallet.slice(2, 4).toUpperCase();
+            }
             avatarInitials.textContent = initials;
 
             // Set display name
@@ -368,6 +392,7 @@
 
         function showDisconnecting() {
             loginContainer.classList.add('hidden');
+            loadingContainer.classList.add('hidden');
             profileContainer.classList.add('hidden');
             disconnectingContainer.classList.remove('hidden');
             cardTitle.textContent = 'Disconnecting';
@@ -382,7 +407,6 @@
             claimButtonContainer.classList.add('hidden');
 
             try {
-                // Try WalletTwo API first
                 const apiUrl = `https://api.wallettwo.com/blockchain/balance/137/${address}/${CONFIG.VIP_TOKEN_ADDRESS}`;
                 console.log('Fetching balance from WalletTwo API...');
                 
@@ -410,7 +434,6 @@
                 console.log('WalletTwo API failed, trying RPC:', error.message);
             }
 
-            // Fallback to direct RPC
             await fetchBalanceFromRPC(address);
         }
 
@@ -465,18 +488,14 @@
             
             console.log('Disconnecting...');
             
-            // Clear local session immediately
             clearSession();
             currentUser = null;
             acceptMessages = false;
 
-            // Show disconnecting UI
             showDisconnecting();
 
-            // Trigger WalletTwo logout via hidden iframe
             logoutIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true`;
             
-            // Listen for logout completion or timeout
             let logoutHandled = false;
             
             const handleLogoutMessage = (event) => {
@@ -492,7 +511,6 @@
             
             window.addEventListener('message', handleLogoutMessage);
             
-            // Timeout fallback - redirect after 2 seconds regardless
             setTimeout(() => {
                 if (!logoutHandled) {
                     console.log('Logout timeout, redirecting anyway');
@@ -511,7 +529,6 @@
         // WalletTwo Message Handler
         // ============================================
         function handleWalletTwoMessage(event) {
-            // Verify origin
             if (!event.origin.includes('wallettwo.com')) {
                 return;
             }
@@ -519,25 +536,21 @@
             const data = event.data;
             console.log('Message from WalletTwo:', data);
 
-            // Ignore if not accepting messages or disconnecting
             if (!acceptMessages || isDisconnecting) {
                 console.log('Ignoring message - acceptMessages:', acceptMessages, 'isDisconnecting:', isDisconnecting);
                 return;
             }
 
-            // Handle wallet_login event
             if (data && (data.type === 'wallet_login' || data.event === 'wallet_login')) {
                 const wallet = data.wallet || data.wlt || data.address;
                 
                 if (wallet) {
                     console.log('Wallet login received:', wallet);
-                    acceptMessages = false; // Stop accepting messages immediately
+                    acceptMessages = false;
                     
-                    // If we have a code, try to exchange it for user info
                     if (data.code) {
                         exchangeCodeForUserInfo(data.code, wallet, data.user);
                     } else {
-                        // Just use the wallet address
                         const userData = {
                             wallet: wallet,
                             userId: data.user || data.usr,
@@ -554,6 +567,8 @@
         // Exchange Code for User Info
         // ============================================
         async function exchangeCodeForUserInfo(code, wallet, userId) {
+            showLoading();
+            
             try {
                 console.log('Exchanging code for user info...');
                 
@@ -566,12 +581,13 @@
                 const data = await response.json();
                 console.log('Exchange response:', data);
 
-                // Build user object
                 const userData = {
                     wallet: wallet,
                     userId: userId || data.user?.sub || data.user?.id,
                     email: data.user?.email,
-                    name: data.user?.name || data.user?.given_name,
+                    name: data.user?.name || data.user?.given_name || 
+                          (data.user?.given_name && data.user?.family_name ? 
+                           `${data.user.given_name} ${data.user.family_name}` : null),
                     accessToken: data.access_token,
                     timestamp: Date.now()
                 };
@@ -580,7 +596,6 @@
                 showProfile(userData);
             } catch (error) {
                 console.error('Exchange failed:', error);
-                // Still show profile with basic wallet info
                 const userData = {
                     wallet: wallet,
                     userId: userId,
@@ -605,11 +620,32 @@
             console.log('Profile page initialized');
             console.log('URL:', window.location.href);
 
-            // 1. Check URL params first (coming from claim page)
-            const urlData = getWalletFromURL();
+            // 1. Check URL params (coming from claim page or redirect)
+            const urlData = getDataFromURL();
+            
+            // If we have a code, exchange it for user info
+            if (urlData.code && urlData.wallet) {
+                console.log('Have code and wallet from URL, exchanging...');
+                window.history.replaceState({}, document.title, '/profile');
+                exchangeCodeForUserInfo(urlData.code, urlData.wallet, urlData.userId);
+                return;
+            }
+            
+            // If we only have wallet from URL (no code), we need to show iframe to get full profile
+            // But first check if we have a stored session with full info
             if (urlData.wallet) {
                 console.log('Wallet from URL:', urlData.wallet);
+                window.history.replaceState({}, document.title, '/profile');
                 
+                // Check if stored session has more info (email, name)
+                const stored = getStoredSession();
+                if (stored && stored.wallet === urlData.wallet && (stored.email || stored.name)) {
+                    console.log('Found stored session with full info');
+                    showProfile(stored);
+                    return;
+                }
+                
+                // No full info - show profile with just wallet, but prompt for full login
                 const userData = {
                     wallet: urlData.wallet,
                     userId: urlData.userId,
@@ -617,10 +653,6 @@
                     timestamp: Date.now()
                 };
                 saveSession(userData);
-                
-                // Clean URL
-                window.history.replaceState({}, document.title, '/profile');
-                
                 showProfile(userData);
                 return;
             }
@@ -629,7 +661,7 @@
             const stored = getStoredSession();
             if (stored && stored.wallet) {
                 console.log('Using stored session:', stored.wallet);
-                acceptMessages = false; // Don't accept new logins if we have a session
+                acceptMessages = false;
                 showProfile(stored);
                 return;
             }
