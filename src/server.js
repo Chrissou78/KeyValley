@@ -49,6 +49,16 @@ app.use(async (req, res, next) => {
     }
 });
 
+async function initializeMinter() {
+    const networkConfig = getNetworkConfig();
+    await minter.initialize();
+    
+    return { 
+        minter, 
+        networkConfig 
+    };
+}
+
 // ===========================================
 // Authentication Middleware
 // ===========================================
@@ -767,12 +777,17 @@ app.post('/api/sync', requireAuth, checkPasswordChange, async (req, res) => {
 // ============================================
 app.post('/api/full-sync', requireAuth, checkPasswordChange, async (req, res) => {
     try {
-        const { minter, networkConfig } = await initializeMinter();
+        // Use the existing minter instance
+        await minter.initialize();
+        const networkConfig = getNetworkConfig();
         
         // Get Polygonscan API key from env (optional but recommended for higher rate limits)
         const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY || '';
         const POLYGONSCAN_API = 'https://api.polygonscan.com/api';
-        const VIP_TOKEN_ADDRESS = '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F';
+        const VIP_TOKEN_ADDRESS = networkConfig.tokenAddress || '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F';
+        
+        // Get minter wallet address
+        const minterAddress = minter.wallet?.address || process.env.MINTER_ADDRESS || '';
         
         // Get all registrants from DB
         const registrants = await db.getAllRegistrants();
@@ -785,6 +800,8 @@ app.post('/api/full-sync', requireAuth, checkPasswordChange, async (req, res) =>
             txHashesFound: 0,
             registrants: []
         };
+        
+        console.log(`🔄 Full sync starting for ${registrants.length} registrants...`);
         
         // Process each registrant
         for (const registrant of registrants) {
@@ -800,13 +817,19 @@ app.post('/api/full-sync', requireAuth, checkPasswordChange, async (req, res) =>
                 }
                 
                 let txHash = registrant.tx_hash;
+                let needsUpdate = false;
                 
-                // If has balance but no tx hash, try to find the mint transaction
-                if (hasBalance && !txHash) {
+                // If has balance but no valid tx hash, try to find the mint transaction
+                const hasValidTxHash = txHash && 
+                    txHash !== 'synced-from-chain' && 
+                    txHash !== 'ALREADY_HAD_TOKENS' && 
+                    txHash !== 'pre-existing' && 
+                    txHash !== 'skipped' &&
+                    txHash.startsWith('0x');
+                
+                if (hasBalance && !hasValidTxHash) {
                     try {
-                        // Query Polygonscan for token transfers TO this address FROM our minter wallet
-                        const minterAddress = networkConfig.minterAddress || process.env.MINTER_ADDRESS;
-                        
+                        // Query Polygonscan for token transfers TO this address
                         const apiUrl = `${POLYGONSCAN_API}?module=account&action=tokentx` +
                             `&contractaddress=${VIP_TOKEN_ADDRESS}` +
                             `&address=${registrant.address}` +
@@ -817,29 +840,49 @@ app.post('/api/full-sync', requireAuth, checkPasswordChange, async (req, res) =>
                         const data = await response.json();
                         
                         if (data.status === '1' && data.result && data.result.length > 0) {
-                            // Find transfers from the minter wallet to this address
-                            const mintTx = data.result.find(tx => 
-                                tx.from.toLowerCase() === minterAddress?.toLowerCase() ||
-                                tx.to.toLowerCase() === registrant.address.toLowerCase()
-                            );
+                            // Find transfers TO this address (preferably from minter)
+                            let mintTx = null;
                             
-                            if (mintTx) {
+                            // First try to find transfer from our minter
+                            if (minterAddress) {
+                                mintTx = data.result.find(tx => 
+                                    tx.from.toLowerCase() === minterAddress.toLowerCase() &&
+                                    tx.to.toLowerCase() === registrant.address.toLowerCase()
+                                );
+                            }
+                            
+                            // If not found, get any incoming transfer
+                            if (!mintTx) {
+                                mintTx = data.result.find(tx => 
+                                    tx.to.toLowerCase() === registrant.address.toLowerCase()
+                                );
+                            }
+                            
+                            if (mintTx && mintTx.hash) {
                                 txHash = mintTx.hash;
                                 results.txHashesFound++;
+                                needsUpdate = true;
+                                console.log(`  📝 Found TX for ${registrant.address.slice(0,10)}...: ${txHash.slice(0,10)}...`);
                             }
                         }
                     } catch (apiError) {
-                        console.error(`Error fetching tx for ${registrant.address}:`, apiError.message);
+                        console.error(`  ⚠️ Polygonscan API error for ${registrant.address}:`, apiError.message);
                     }
+                    
+                    // Rate limit delay (Polygonscan free tier: 5 req/sec)
+                    await new Promise(resolve => setTimeout(resolve, 250));
                 }
                 
                 // Update DB if needed
                 if (hasBalance && !registrant.minted) {
                     await db.markAsMinted(registrant.address, txHash || 'synced-from-chain');
                     results.updated++;
-                } else if (hasBalance && txHash && txHash !== registrant.tx_hash) {
+                    console.log(`  ✅ Marked as minted: ${registrant.address.slice(0,10)}...`);
+                } else if (needsUpdate && txHash) {
                     // Update tx hash if we found a new one
                     await db.markAsMinted(registrant.address, txHash);
+                    results.updated++;
+                    console.log(`  🔄 Updated TX hash for: ${registrant.address.slice(0,10)}...`);
                 }
                 
                 results.registrants.push({
@@ -851,26 +894,25 @@ app.post('/api/full-sync', requireAuth, checkPasswordChange, async (req, res) =>
                 });
                 
             } catch (regError) {
-                console.error(`Error processing ${registrant.address}:`, regError.message);
+                console.error(`  ❌ Error processing ${registrant.address}:`, regError.message);
                 results.registrants.push({
                     address: registrant.address,
-                    balance: '0',
+                    balance: 'error',
                     minted: registrant.minted,
                     txHash: registrant.tx_hash,
                     registeredAt: registrant.registered_at,
                     error: regError.message
                 });
             }
-            
-            // Small delay to avoid rate limiting
-            await new Promise(resolve => setTimeout(resolve, 200));
         }
         
         const stats = await db.getStats();
         
+        console.log(`✅ Full sync completed: ${results.updated} updated, ${results.txHashesFound} TX hashes found`);
+        
         res.json({
             success: true,
-            message: 'Full sync completed',
+            message: `Full sync completed. Updated ${results.updated} records, found ${results.txHashesFound} TX hashes.`,
             results,
             stats,
             network: networkConfig.name,
@@ -878,7 +920,7 @@ app.post('/api/full-sync', requireAuth, checkPasswordChange, async (req, res) =>
         });
         
     } catch (error) {
-        console.error('Full sync error:', error);
+        console.error('❌ Full sync error:', error);
         res.status(500).json({
             success: false,
             error: error.message
@@ -899,7 +941,6 @@ app.post('/api/mint-manual', requireAuth, checkPasswordChange, async (req, res) 
         }
         
         // Validate address
-        const { ethers } = require('ethers');
         if (!ethers.isAddress(address)) {
             return res.status(400).json({
                 success: false,
@@ -908,7 +949,10 @@ app.post('/api/mint-manual', requireAuth, checkPasswordChange, async (req, res) 
         }
         
         const normalizedAddress = address.toLowerCase();
-        const { minter, networkConfig } = await initializeMinter();
+        
+        // Use existing minter instance
+        await minter.initialize();
+        const networkConfig = getNetworkConfig();
         const mintAmount = parseInt(process.env.MINT_AMOUNT) || 2;
         
         // Check current balance
@@ -923,7 +967,7 @@ app.post('/api/mint-manual', requireAuth, checkPasswordChange, async (req, res) 
         }
         
         // Mint tokens
-        console.log(`Manual minting ${mintAmount} tokens to ${normalizedAddress}`);
+        console.log(`🎯 Manual minting ${mintAmount} tokens to ${normalizedAddress}`);
         const result = await minter.mintToAddress(normalizedAddress, mintAmount);
         
         if (result.skipped) {
@@ -939,9 +983,11 @@ app.post('/api/mint-manual', requireAuth, checkPasswordChange, async (req, res) 
         // Ensure registrant exists in DB and mark as minted
         let registrant = await db.getRegistrant(normalizedAddress);
         if (!registrant) {
-            await db.addRegistrant(normalizedAddress, null, 'manual-mint');
+            await db.addRegistrant(normalizedAddress, null, { source: 'manual-mint' });
         }
         await db.markAsMinted(normalizedAddress, txHash);
+        
+        console.log(`✅ Manual mint successful: ${txHash}`);
         
         res.json({
             success: true,
@@ -953,7 +999,7 @@ app.post('/api/mint-manual', requireAuth, checkPasswordChange, async (req, res) 
         });
         
     } catch (error) {
-        console.error('Manual mint error:', error);
+        console.error('❌ Manual mint error:', error);
         res.status(500).json({
             success: false,
             error: error.message
