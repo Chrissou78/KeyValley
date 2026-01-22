@@ -271,7 +271,7 @@
             <!-- Full Sync Modal -->
             <div id="fullSyncModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6">
                 <div class="absolute inset-0 bg-black/70" onclick="closeFullSyncModal()"></div>
-                <div class="relative bg-surface border border-white/10 rounded-sm w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+                <div class="relative bg-surface border border-white/10 rounded-sm w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
                     <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
                         <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Full Sync Results</h3>
                         <button onclick="closeFullSyncModal()" class="text-slate-500 hover:text-white transition-colors">
@@ -288,7 +288,7 @@
                         <!-- Sync Results -->
                         <div id="fullSyncResults" class="hidden">
                             <!-- Summary -->
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                                 <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
                                     <p class="text-slate-500 text-xs mb-1">Total</p>
                                     <p id="syncTotal" class="text-2xl font-serif text-white">0</p>
@@ -305,6 +305,10 @@
                                     <p class="text-slate-500 text-xs mb-1">Updated</p>
                                     <p id="syncUpdated" class="text-2xl font-serif text-primary">0</p>
                                 </div>
+                                <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
+                                    <p class="text-slate-500 text-xs mb-1">TX Found</p>
+                                    <p id="syncTxFound" class="text-2xl font-serif text-blue-400">0</p>
+                                </div>
                             </div>
                             <!-- Holders List -->
                             <div class="border border-white/5 rounded-sm overflow-hidden">
@@ -314,6 +318,7 @@
                                             <th class="text-left py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">Address</th>
                                             <th class="text-right py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">Balance</th>
                                             <th class="text-center py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">Status</th>
+                                            <th class="text-left py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">TX Hash</th>
                                         </tr>
                                     </thead>
                                     <tbody id="syncHoldersTable">
@@ -346,13 +351,14 @@
                             <tr class="border-b border-white/5">
                                 <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Address</th>
                                 <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Status</th>
+                                <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">TX Hash</th>
                                 <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Registered</th>
                                 <th class="text-right py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="registrantsTable">
                             <tr>
-                                <td colspan="4" class="text-center py-12 text-slate-500">Loading...</td>
+                                <td colspan="5" class="text-center py-12 text-slate-500">Loading...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -520,7 +526,7 @@
             } catch (e) {
                 console.error('Failed to fetch registrants:', e);
                 elements.registrantsTable.innerHTML = `
-                    <tr><td colspan="4" class="text-center py-12 text-red-400">Failed to load registrants</td></tr>
+                    <tr><td colspan="5" class="text-center py-12 text-red-400">Failed to load registrants</td></tr>
                 `;
             }
         }
@@ -538,23 +544,39 @@
 
             if (filtered.length === 0) {
                 elements.registrantsTable.innerHTML = `
-                    <tr><td colspan="4" class="text-center py-12 text-slate-500">No registrants found</td></tr>
+                    <tr><td colspan="5" class="text-center py-12 text-slate-500">No registrants found</td></tr>
                 `;
                 return;
             }
 
-            elements.registrantsTable.innerHTML = filtered.map(r => `
+            elements.registrantsTable.innerHTML = filtered.map(r => {
+                // Get tx hash - check multiple possible field names
+                const txHash = r.tx_hash || r.txHash || null;
+                const hasTxHash = txHash && txHash !== 'synced-from-chain' && txHash.startsWith('0x');
+                
+                return `
                 <tr class="table-row border-b border-white/5">
                     <td class="py-4 px-6">
-                        <span class="font-mono text-sm text-white">${r.address.slice(0, 10)}...${r.address.slice(-8)}</span>
+                        <a href="${explorerUrl}/address/${r.address}" target="_blank" class="font-mono text-sm text-white hover:text-primary transition-colors">
+                            ${r.address.slice(0, 10)}...${r.address.slice(-8)}
+                        </a>
                     </td>
                     <td class="py-4 px-6">
                         <span class="badge ${r.minted ? 'badge-success' : 'badge-pending'}">
                             ${r.minted ? 'Minted' : 'Pending'}
                         </span>
                     </td>
+                    <td class="py-4 px-6">
+                        ${hasTxHash ? `
+                            <a href="${explorerUrl}/tx/${txHash}" target="_blank" class="font-mono text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                                ${txHash.slice(0, 10)}...${txHash.slice(-6)}
+                            </a>
+                        ` : `
+                            <span class="text-slate-600 text-xs">--</span>
+                        `}
+                    </td>
                     <td class="py-4 px-6 text-slate-500 text-sm">
-                        ${r.registeredAt ? new Date(r.registeredAt).toLocaleDateString() : '--'}
+                        ${r.registeredAt || r.registered_at ? new Date(r.registeredAt || r.registered_at).toLocaleDateString() : '--'}
                     </td>
                     <td class="py-4 px-6 text-right">
                         <a href="${explorerUrl}/address/${r.address}" target="_blank" 
@@ -563,7 +585,7 @@
                         </a>
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
         // ============================================
@@ -707,30 +729,44 @@
                     document.getElementById('syncWithBalance').textContent = data.results.withBalance;
                     document.getElementById('syncWithoutBalance').textContent = data.results.withoutBalance;
                     document.getElementById('syncUpdated').textContent = data.results.updated;
+                    document.getElementById('syncTxFound').textContent = data.results.txHashesFound || 0;
 
                     // Populate holders table
                     const tbody = document.getElementById('syncHoldersTable');
+                    const syncExplorer = data.explorer || explorerUrl;
+                    
                     if (data.results.registrants && data.results.registrants.length > 0) {
-                        tbody.innerHTML = data.results.registrants.map(r => `
+                        tbody.innerHTML = data.results.registrants.map(r => {
+                            const txHash = r.txHash || r.tx_hash || null;
+                            const hasTxHash = txHash && txHash !== 'synced-from-chain' && txHash.startsWith('0x');
+                            
+                            return `
                             <tr class="border-b border-white/5">
                                 <td class="py-3 px-4">
-                                    <a href="${explorerUrl}/address/${r.address}" target="_blank" class="font-mono text-xs text-white hover:text-primary">
+                                    <a href="${syncExplorer}/address/${r.address}" target="_blank" class="font-mono text-xs text-white hover:text-primary">
                                         ${r.address.slice(0, 10)}...${r.address.slice(-8)}
                                     </a>
                                 </td>
                                 <td class="py-3 px-4 text-right font-mono text-sm ${parseFloat(r.balance) > 0 ? 'text-green-400' : 'text-slate-500'}">
-                                    ${r.balance === 'error' ? '<span class="text-red-400">Error</span>' : r.balance + ' VIP'}
+                                    ${r.balance === 'error' ? '<span class="text-red-400">Error</span>' : parseFloat(r.balance).toFixed(2) + ' VIP'}
                                 </td>
                                 <td class="py-3 px-4 text-center">
                                     <span class="badge ${r.minted ? 'badge-success' : 'badge-pending'}">${r.minted ? 'Minted' : 'Pending'}</span>
                                 </td>
+                                <td class="py-3 px-4">
+                                    ${hasTxHash ? `
+                                        <a href="${syncExplorer}/tx/${txHash}" target="_blank" class="font-mono text-xs text-blue-400 hover:text-blue-300">
+                                            ${txHash.slice(0, 8)}...${txHash.slice(-4)}
+                                        </a>
+                                    ` : `<span class="text-slate-600 text-xs">--</span>`}
+                                </td>
                             </tr>
-                        `).join('');
+                        `}).join('');
                     } else {
-                        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-slate-500">No registrants found</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-500">No registrants found</td></tr>';
                     }
 
-                    showToast('Full sync completed', 'success');
+                    showToast(`Full sync completed - ${data.results.txHashesFound || 0} TX hashes found`, 'success');
                     refreshAll();
                 } else {
                     throw new Error(data.error || 'Sync failed');
