@@ -1,88 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - KEA VALLEY</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Admin Dashboard | Kea Valley</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <script>
         tailwind.config = {
+            darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        primary: '#ee9d2b',
-                        'primary-dark': '#d4891f',
-                        'background-dark': '#221a10',
+                        "primary": "#ee9d2b",
+                        "primary-light": "#fbdea6",
+                        "background-dark": "#0a0a0a",
+                        "surface": "#121212",
                     },
                     fontFamily: {
-                        'display': ['Playfair Display', 'serif'],
-                        'body': ['Manrope', 'sans-serif'],
-                    }
-                }
-            }
+                        "sans": ["Manrope", "sans-serif"],
+                        "serif": ["Playfair Display", "serif"],
+                    },
+                },
+            },
         }
     </script>
     <style>
-        body {
-            font-family: 'Manrope', sans-serif;
-            background: linear-gradient(135deg, #221a10 0%, #3d2e1a 50%, #221a10 100%);
-            min-height: 100vh;
+        body { font-family: 'Manrope', sans-serif; }
+        h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
+        .gold-glow:hover {
+            box-shadow: 0 0 25px rgba(238, 157, 43, 0.3);
+            border-color: #ee9d2b;
         }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(238, 157, 43, 0.2);
+        .glass-nav {
+            backdrop-filter: blur(12px);
+            background-color: rgba(10, 10, 10, 0.7);
         }
         .stat-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(238, 157, 43, 0.15);
             transition: all 0.3s ease;
         }
         .stat-card:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(238, 157, 43, 0.4);
+            border-color: rgba(238, 157, 43, 0.3);
             transform: translateY(-2px);
         }
-        .btn-primary {
-            background: linear-gradient(135deg, #ee9d2b 0%, #d4891f 100%);
-            transition: all 0.3s ease;
-        }
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(238, 157, 43, 0.3);
-        }
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(238, 157, 43, 0.3);
-            transition: all 0.3s ease;
-        }
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(238, 157, 43, 0.5);
-        }
-        .table-row {
-            transition: all 0.2s ease;
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
         .table-row:hover {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.02);
         }
         .badge {
-            font-size: 0.75rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
         }
-        .badge-success { background: rgba(34, 197, 94, 0.2); color: #86efac; }
-        .badge-pending { background: rgba(234, 179, 8, 0.2); color: #fde047; }
-        .badge-error { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
-        .animate-pulse-slow { animation: pulse 3s infinite; }
+        .badge-success { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .badge-pending { background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
         @keyframes slideIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -90,190 +68,201 @@
         .slide-in { animation: slideIn 0.3s ease-out; }
     </style>
 </head>
-<body>
+<body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen">
+
     <!-- Header -->
-    <header class="glass-card sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+    <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-16">
             <div class="flex items-center gap-4">
-                <a href="/" class="font-display text-2xl text-primary tracking-wider">KEA VALLEY</a>
-                <span class="text-white/40">|</span>
-                <span class="text-white/60">Admin Dashboard</span>
+                <a href="/" class="flex items-center gap-3 group cursor-pointer">
+                    <div class="size-8 text-primary transition-transform duration-500 group-hover:rotate-180">
+                        <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
+                        </svg>
+                    </div>
+                    <span class="text-lg font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
+                </a>
+                <span class="text-white/20">|</span>
+                <span class="text-xs font-bold uppercase tracking-widest text-primary">Admin</span>
             </div>
-            <div class="flex items-center gap-4">
-                <span id="userInfo" class="text-white/60 text-sm"></span>
-                <button id="changePasswordBtn" class="text-white/60 hover:text-primary transition-colors text-sm flex items-center gap-1">
-                    <span class="material-symbols-outlined text-base">key</span>
-                    Change Password
+            <div class="flex items-center gap-6">
+                <span id="userInfo" class="text-slate-500 text-xs hidden md:block"></span>
+                <button id="changePasswordBtn" class="text-slate-500 hover:text-primary transition-colors text-xs flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">key</span>
+                    <span class="hidden md:inline">Password</span>
                 </button>
-                <button id="logoutBtn" class="btn-secondary px-4 py-2 rounded-lg text-white/80 text-sm flex items-center gap-2">
-                    <span class="material-symbols-outlined text-base">logout</span>
-                    Logout
+                <button id="logoutBtn" class="text-slate-500 hover:text-red-400 transition-colors text-xs flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">logout</span>
+                    <span class="hidden md:inline">Logout</span>
                 </button>
             </div>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div class="stat-card rounded-xl p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-white/60 text-sm">Total Registrants</p>
-                        <p id="statTotal" class="text-3xl font-bold text-white mt-1">-</p>
-                    </div>
-                    <span class="material-symbols-outlined text-primary text-4xl opacity-50">group</span>
-                </div>
-            </div>
-            <div class="stat-card rounded-xl p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-white/60 text-sm">Minted</p>
-                        <p id="statMinted" class="text-3xl font-bold text-green-400 mt-1">-</p>
-                    </div>
-                    <span class="material-symbols-outlined text-green-400 text-4xl opacity-50">check_circle</span>
-                </div>
-            </div>
-            <div class="stat-card rounded-xl p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-white/60 text-sm">Pending</p>
-                        <p id="statPending" class="text-3xl font-bold text-yellow-400 mt-1">-</p>
-                    </div>
-                    <span class="material-symbols-outlined text-yellow-400 text-4xl opacity-50">schedule</span>
-                </div>
-            </div>
-            <div class="stat-card rounded-xl p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-white/60 text-sm">Network</p>
-                        <p id="statNetwork" class="text-xl font-bold text-primary mt-1">-</p>
-                    </div>
-                    <span class="material-symbols-outlined text-primary text-4xl opacity-50">hub</span>
-                </div>
-            </div>
-        </div>
+    <main class="pt-24 pb-12 px-6">
+        <div class="max-w-7xl mx-auto">
 
-        <!-- Wallet Info Card -->
-        <div class="glass-card rounded-xl p-6 mb-8">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-semibold text-white flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary">account_balance_wallet</span>
-                    Minter Wallet
-                </h2>
-                <button id="refreshWalletBtn" class="btn-secondary px-3 py-1.5 rounded-lg text-white/60 text-sm flex items-center gap-1">
-                    <span class="material-symbols-outlined text-base">refresh</span>
-                    Refresh
-                </button>
+            <!-- Page Title -->
+            <div class="mb-8">
+                <div class="flex items-center gap-4 mb-2">
+                    <div class="h-[1px] w-8 bg-primary"></div>
+                    <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Dashboard</span>
+                </div>
+                <h1 class="text-3xl font-serif italic font-medium text-white">Admin Overview</h1>
             </div>
-            <div id="walletInfo" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <p class="text-white/40 text-sm">Address</p>
-                    <p id="walletAddress" class="text-white font-mono text-sm mt-1 break-all">Loading...</p>
-                </div>
-                <div>
-                    <p class="text-white/40 text-sm">Native Balance</p>
-                    <p id="walletBalance" class="text-white text-lg mt-1">-</p>
-                </div>
-                <div>
-                    <p class="text-white/40 text-sm">Token Balance</p>
-                    <p id="tokenBalance" class="text-primary text-lg mt-1">-</p>
-                </div>
-            </div>
-        </div>
 
-        <!-- Actions & Registrants -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Actions Panel -->
-            <div class="glass-card rounded-xl p-6">
-                <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary">bolt</span>
-                    Quick Actions
-                </h2>
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Registrants</p>
+                            <p id="statTotal" class="text-3xl font-serif text-white mt-2">--</p>
+                        </div>
+                        <span class="material-symbols-outlined text-primary/30 text-3xl">group</span>
+                    </div>
+                </div>
+                <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Minted</p>
+                            <p id="statMinted" class="text-3xl font-serif text-green-400 mt-2">--</p>
+                        </div>
+                        <span class="material-symbols-outlined text-green-400/30 text-3xl">check_circle</span>
+                    </div>
+                </div>
+                <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Pending</p>
+                            <p id="statPending" class="text-3xl font-serif text-yellow-400 mt-2">--</p>
+                        </div>
+                        <span class="material-symbols-outlined text-yellow-400/30 text-3xl">schedule</span>
+                    </div>
+                </div>
+                <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Network</p>
+                            <p id="statNetwork" class="text-xl font-serif text-primary mt-2">--</p>
+                        </div>
+                        <span class="material-symbols-outlined text-primary/30 text-3xl">hub</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wallet Info & Actions Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                 
-                <div class="space-y-4">
-                    <button id="mintNowBtn" class="btn-primary w-full py-3 rounded-lg text-white font-semibold flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined">token</span>
-                        Mint All Pending
-                    </button>
-                    
-                    <button id="syncBtn" class="btn-secondary w-full py-3 rounded-lg text-white/80 flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined">sync</span>
-                        Sync On-Chain Status
-                    </button>
-                    
-                    <button id="refreshBtn" class="btn-secondary w-full py-3 rounded-lg text-white/80 flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined">refresh</span>
-                        Refresh Data
-                    </button>
-                </div>
-
-                <!-- Action Result -->
-                <div id="actionResult" class="mt-6 hidden">
-                    <div id="actionResultContent" class="p-4 rounded-lg"></div>
-                </div>
-
-                <!-- Auto-refresh indicator -->
-                <div class="mt-6 pt-4 border-t border-white/10">
-                    <p class="text-white/40 text-xs flex items-center gap-2">
-                        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse-slow"></span>
-                        Auto-refresh every 60 seconds
-                    </p>
-                    <p id="lastUpdated" class="text-white/30 text-xs mt-1">Last updated: -</p>
-                </div>
-            </div>
-
-            <!-- Registrants List -->
-            <div class="lg:col-span-2 glass-card rounded-xl p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-xl font-semibold text-white flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary">list</span>
-                        Registrants
-                    </h2>
-                    <div class="flex items-center gap-2">
-                        <button id="filterAll" class="filter-btn px-3 py-1 rounded-lg text-sm bg-primary/20 text-primary">All</button>
-                        <button id="filterPending" class="filter-btn px-3 py-1 rounded-lg text-sm text-white/60 hover:bg-white/10">Pending</button>
-                        <button id="filterMinted" class="filter-btn px-3 py-1 rounded-lg text-sm text-white/60 hover:bg-white/10">Minted</button>
+                <!-- Minter Wallet Card -->
+                <div class="lg:col-span-2 bg-surface border border-white/5 rounded-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Minter Wallet</h3>
+                        <button id="refreshWalletBtn" class="text-slate-500 hover:text-primary transition-colors">
+                            <span class="material-symbols-outlined text-lg">refresh</span>
+                        </button>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <p class="text-slate-500 text-xs mb-2">Address</p>
+                                <p id="walletAddress" class="text-white font-mono text-sm truncate">Loading...</p>
+                            </div>
+                            <div>
+                                <p class="text-slate-500 text-xs mb-2">Native Balance</p>
+                                <p id="walletBalance" class="text-white text-xl font-semibold">--</p>
+                            </div>
+                            <div>
+                                <p class="text-slate-500 text-xs mb-2">Token Balance</p>
+                                <p id="tokenBalance" class="text-primary text-xl font-semibold">--</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Quick Actions Card -->
+                <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-white/5">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Quick Actions</h3>
+                    </div>
+                    <div class="p-6 space-y-3">
+                        <button id="mintNowBtn" class="w-full bg-primary text-background-dark px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-1px] transition-all flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-lg">token</span>
+                            Mint Pending
+                        </button>
+                        <button id="syncBtn" class="w-full border border-white/10 text-white px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-primary/30 hover:text-primary transition-all flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-lg">sync</span>
+                            Sync Chain
+                        </button>
+                        <button id="refreshBtn" class="w-full border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-lg">refresh</span>
+                            Refresh
+                        </button>
+                    </div>
+                    <!-- Action Result -->
+                    <div id="actionResult" class="hidden px-6 pb-6">
+                        <div id="actionResultContent" class="p-4 rounded-sm text-sm"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registrants Table -->
+            <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between flex-wrap gap-4">
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Registrants</h3>
+                    <div class="flex items-center gap-2">
+                        <button id="filterAll" class="filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30">All</button>
+                        <button id="filterPending" class="filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Pending</button>
+                        <button id="filterMinted" class="filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Minted</button>
+                    </div>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead>
-                            <tr class="text-white/40 text-sm border-b border-white/10">
-                                <th class="text-left py-3 px-2">Address</th>
-                                <th class="text-left py-3 px-2">Status</th>
-                                <th class="text-left py-3 px-2">Registered</th>
-                                <th class="text-right py-3 px-2">Actions</th>
+                            <tr class="border-b border-white/5">
+                                <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Address</th>
+                                <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Status</th>
+                                <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Registered</th>
+                                <th class="text-right py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="registrantsTable">
                             <tr>
-                                <td colspan="4" class="text-center py-8 text-white/40">Loading...</td>
+                                <td colspan="4" class="text-center py-12 text-slate-500">Loading...</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-
-                <!-- Pagination / Load More -->
-                <div id="loadMore" class="mt-4 text-center hidden">
-                    <button class="text-primary hover:text-primary-dark text-sm">Load more...</button>
-                </div>
             </div>
+
+            <!-- Footer Info -->
+            <div class="mt-6 flex items-center justify-between text-xs text-slate-600">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <span>Auto-refresh every 60s</span>
+                </div>
+                <p id="lastUpdated">Last updated: --</p>
+            </div>
+
         </div>
     </main>
 
     <!-- Toast Container -->
-    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 space-y-2"></div>
 
     <script>
+        // ============================================
         // State
+        // ============================================
         let currentFilter = 'all';
         let registrants = [];
         let autoRefreshInterval;
+        let explorerUrl = 'https://polygonscan.com';
 
+        // ============================================
         // DOM Elements
+        // ============================================
         const elements = {
             userInfo: document.getElementById('userInfo'),
             statTotal: document.getElementById('statTotal'),
@@ -298,7 +287,9 @@
             filterMinted: document.getElementById('filterMinted'),
         };
 
-        // Check auth
+        // ============================================
+        // Auth Check
+        // ============================================
         async function checkAuth() {
             try {
                 const res = await fetch('/api/auth-status');
@@ -311,7 +302,7 @@
                     window.location.href = '/change-password';
                     return false;
                 }
-                elements.userInfo.textContent = `Logged in as ${data.username}`;
+                elements.userInfo.textContent = `${data.username}`;
                 return true;
             } catch (e) {
                 window.location.href = '/login';
@@ -319,38 +310,38 @@
             }
         }
 
-        // Show toast
+        // ============================================
+        // Toast Notifications
+        // ============================================
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
-            toast.className = `slide-in px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 ${
-                type === 'success' ? 'bg-green-500/90' :
-                type === 'error' ? 'bg-red-500/90' :
-                'bg-primary/90'
-            } text-white`;
+            const bgColor = type === 'success' ? 'bg-green-500/90' : type === 'error' ? 'bg-red-500/90' : 'bg-primary/90';
+            const icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
+            
+            toast.className = `slide-in px-4 py-3 rounded-sm shadow-lg flex items-center gap-2 ${bgColor} text-white text-sm`;
             toast.innerHTML = `
-                <span class="material-symbols-outlined text-lg">${
-                    type === 'success' ? 'check_circle' :
-                    type === 'error' ? 'error' :
-                    'info'
-                }</span>
+                <span class="material-symbols-outlined text-lg">${icon}</span>
                 <span>${message}</span>
             `;
             document.getElementById('toastContainer').appendChild(toast);
             setTimeout(() => toast.remove(), 5000);
         }
 
-        // Show action result
+        // ============================================
+        // Action Result Display
+        // ============================================
         function showActionResult(message, type = 'info') {
             elements.actionResult.classList.remove('hidden');
-            elements.actionResultContent.className = `p-4 rounded-lg ${
-                type === 'success' ? 'bg-green-500/20 text-green-300' :
-                type === 'error' ? 'bg-red-500/20 text-red-300' :
-                'bg-primary/20 text-primary'
-            }`;
+            const bgColor = type === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 
+                           type === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 
+                           'bg-primary/10 text-primary border border-primary/20';
+            elements.actionResultContent.className = `p-4 rounded-sm text-sm ${bgColor}`;
             elements.actionResultContent.innerHTML = message;
         }
 
-        // Fetch stats
+        // ============================================
+        // Fetch Stats
+        // ============================================
         async function fetchStats() {
             try {
                 const res = await fetch('/api/stats');
@@ -359,26 +350,28 @@
                 elements.statMinted.textContent = data.minted || 0;
                 elements.statPending.textContent = data.pending || 0;
                 elements.statNetwork.textContent = (data.network || 'Unknown').toUpperCase();
+                if (data.explorer) explorerUrl = data.explorer;
             } catch (e) {
                 console.error('Failed to fetch stats:', e);
             }
         }
 
-        // Fetch wallet info
+        // ============================================
+        // Fetch Wallet Info
+        // ============================================
         async function fetchWalletInfo() {
             try {
                 const res = await fetch('/api/wallet-info');
                 const data = await res.json();
-                console.log('Wallet info:', data); // Debug
+                console.log('Wallet info:', data);
                 
                 if (data.address) {
-                    const explorerUrl = data.explorer || 'https://polygonscan.com';
+                    const explorer = data.explorer || explorerUrl;
                     elements.walletAddress.innerHTML = `
-                        <a href="${explorerUrl}/address/${data.address}" target="_blank" class="hover:text-primary transition-colors">
+                        <a href="${explorer}/address/${data.address}" target="_blank" class="hover:text-primary transition-colors">
                             ${data.address.slice(0, 10)}...${data.address.slice(-8)}
                         </a>
                     `;
-                    // API returns 'balance' and 'currency', not 'nativeBalance' and 'nativeSymbol'
                     elements.walletBalance.textContent = `${parseFloat(data.balance || 0).toFixed(4)} ${data.currency || 'POL'}`;
                     elements.tokenBalance.textContent = `${parseFloat(data.tokenBalance || 0).toLocaleString()} ${data.tokenSymbol || 'VIP'}`;
                 } else {
@@ -390,7 +383,9 @@
             }
         }
 
-        // Fetch registrants
+        // ============================================
+        // Fetch Registrants
+        // ============================================
         async function fetchRegistrants() {
             try {
                 const endpoint = currentFilter === 'pending' ? '/api/registrants/pending' : '/api/registrants';
@@ -401,12 +396,14 @@
             } catch (e) {
                 console.error('Failed to fetch registrants:', e);
                 elements.registrantsTable.innerHTML = `
-                    <tr><td colspan="4" class="text-center py-8 text-red-400">Failed to load registrants</td></tr>
+                    <tr><td colspan="4" class="text-center py-12 text-red-400">Failed to load registrants</td></tr>
                 `;
             }
         }
 
-        // Render registrants
+        // ============================================
+        // Render Registrants Table
+        // ============================================
         function renderRegistrants() {
             let filtered = registrants;
             if (currentFilter === 'pending') {
@@ -417,27 +414,27 @@
 
             if (filtered.length === 0) {
                 elements.registrantsTable.innerHTML = `
-                    <tr><td colspan="4" class="text-center py-8 text-white/40">No registrants found</td></tr>
+                    <tr><td colspan="4" class="text-center py-12 text-slate-500">No registrants found</td></tr>
                 `;
                 return;
             }
 
             elements.registrantsTable.innerHTML = filtered.map(r => `
                 <tr class="table-row border-b border-white/5">
-                    <td class="py-3 px-2">
-                        <span class="font-mono text-sm text-white/80">${r.address.slice(0, 8)}...${r.address.slice(-6)}</span>
+                    <td class="py-4 px-6">
+                        <span class="font-mono text-sm text-white">${r.address.slice(0, 10)}...${r.address.slice(-8)}</span>
                     </td>
-                    <td class="py-3 px-2">
+                    <td class="py-4 px-6">
                         <span class="badge ${r.minted ? 'badge-success' : 'badge-pending'}">
                             ${r.minted ? 'Minted' : 'Pending'}
                         </span>
                     </td>
-                    <td class="py-3 px-2 text-white/60 text-sm">
-                        ${r.registeredAt ? new Date(r.registeredAt).toLocaleDateString() : '-'}
+                    <td class="py-4 px-6 text-slate-500 text-sm">
+                        ${r.registeredAt ? new Date(r.registeredAt).toLocaleDateString() : '--'}
                     </td>
-                    <td class="py-3 px-2 text-right">
-                        <a href="https://polygonscan.com/address/${r.address}" target="_blank" 
-                           class="text-primary hover:text-primary-dark text-sm">
+                    <td class="py-4 px-6 text-right">
+                        <a href="${explorerUrl}/address/${r.address}" target="_blank" 
+                           class="text-primary hover:underline text-xs font-bold uppercase tracking-widest">
                             View
                         </a>
                     </td>
@@ -445,11 +442,13 @@
             `).join('');
         }
 
-        // Mint now
+        // ============================================
+        // Mint Now Action
+        // ============================================
         async function mintNow() {
             elements.mintNowBtn.disabled = true;
             elements.mintNowBtn.innerHTML = `
-                <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -463,10 +462,10 @@
                 if (data.success) {
                     showActionResult(`
                         <p class="font-semibold">Minting Complete!</p>
-                        <p class="mt-1">Minted: ${data.minted || 0} | Skipped: ${data.skipped || 0}</p>
-                        ${data.txHash ? `<a href="https://polygonscan.com/tx/${data.txHash}" target="_blank" class="text-primary underline">View Transaction</a>` : ''}
+                        <p class="mt-1 text-xs opacity-80">Minted: ${data.minted || 0} | Skipped: ${data.skipped || 0}</p>
+                        ${data.tx_hash ? `<a href="${explorerUrl}/tx/${data.tx_hash}" target="_blank" class="text-primary underline text-xs mt-2 inline-block">View Transaction</a>` : ''}
                     `, 'success');
-                    showToast('Minting completed successfully', 'success');
+                    showToast('Minting completed', 'success');
                     refreshAll();
                 } else {
                     showActionResult(`<p>Minting failed: ${data.error || 'Unknown error'}</p>`, 'error');
@@ -478,17 +477,19 @@
             } finally {
                 elements.mintNowBtn.disabled = false;
                 elements.mintNowBtn.innerHTML = `
-                    <span class="material-symbols-outlined">token</span>
-                    Mint All Pending
+                    <span class="material-symbols-outlined text-lg">token</span>
+                    Mint Pending
                 `;
             }
         }
 
-        // Sync
+        // ============================================
+        // Sync Action
+        // ============================================
         async function sync() {
             elements.syncBtn.disabled = true;
             elements.syncBtn.innerHTML = `
-                <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -501,7 +502,7 @@
                 
                 showActionResult(`
                     <p class="font-semibold">Sync Complete!</p>
-                    <p class="mt-1">Synced: ${data.synced || 0} | Still Pending: ${data.stillPending || 0}</p>
+                    <p class="mt-1 text-xs opacity-80">Synced: ${data.synced || 0} | Still Pending: ${data.stillPending || 0}</p>
                 `, 'success');
                 showToast('Sync completed', 'success');
                 refreshAll();
@@ -511,30 +512,40 @@
             } finally {
                 elements.syncBtn.disabled = false;
                 elements.syncBtn.innerHTML = `
-                    <span class="material-symbols-outlined">sync</span>
-                    Sync On-Chain Status
+                    <span class="material-symbols-outlined text-lg">sync</span>
+                    Sync Chain
                 `;
             }
         }
 
-        // Refresh all data
+        // ============================================
+        // Refresh All Data
+        // ============================================
         async function refreshAll() {
             await Promise.all([fetchStats(), fetchWalletInfo(), fetchRegistrants()]);
             elements.lastUpdated.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
         }
 
-        // Set filter
+        // ============================================
+        // Filter Functions
+        // ============================================
         function setFilter(filter) {
             currentFilter = filter;
+            
+            // Update button styles
             document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.className = 'filter-btn px-3 py-1 rounded-lg text-sm text-white/60 hover:bg-white/10';
+                btn.className = 'filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors';
             });
-            document.getElementById(`filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`).className = 
-                'filter-btn px-3 py-1 rounded-lg text-sm bg-primary/20 text-primary';
+            
+            const activeBtn = document.getElementById(`filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`);
+            activeBtn.className = 'filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30';
+            
             renderRegistrants();
         }
 
+        // ============================================
         // Logout
+        // ============================================
         async function logout() {
             try {
                 await fetch('/api/logout', { method: 'POST' });
@@ -542,23 +553,25 @@
             window.location.href = '/login';
         }
 
-        // Event listeners
+        // ============================================
+        // Event Listeners
+        // ============================================
         elements.mintNowBtn.addEventListener('click', mintNow);
         elements.syncBtn.addEventListener('click', sync);
         elements.refreshBtn.addEventListener('click', () => {
-            showToast('Refreshing data...', 'info');
+            showToast('Refreshing...', 'info');
             refreshAll();
         });
         elements.refreshWalletBtn.addEventListener('click', fetchWalletInfo);
         elements.logoutBtn.addEventListener('click', logout);
-        elements.changePasswordBtn.addEventListener('click', () => {
-            window.location.href = '/change-password';
-        });
+        elements.changePasswordBtn.addEventListener('click', () => window.location.href = '/change-password');
         elements.filterAll.addEventListener('click', () => setFilter('all'));
         elements.filterPending.addEventListener('click', () => setFilter('pending'));
         elements.filterMinted.addEventListener('click', () => setFilter('minted'));
 
+        // ============================================
         // Initialize
+        // ============================================
         async function init() {
             const isAuthed = await checkAuth();
             if (!isAuthed) return;
