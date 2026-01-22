@@ -176,14 +176,15 @@ app.post('/api/wallettwo/exchange', async (req, res) => {
     try {
         console.log('🔄 Exchanging WalletTwo code for token...');
         
-        // Exchange code for access token
-        const exchangeResponse = await fetch('https://api.wallettwo.com/auth/exchange', {
-            method: 'POST',
+        // Exchange code for access token (GET request with code as query param)
+        const exchangeResponse = await fetch(`https://api.wallettwo.com/auth/consent?code=${code}`, {
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ code })
+            }
         });
+        
+        console.log('📡 Exchange response status:', exchangeResponse.status);
         
         if (!exchangeResponse.ok) {
             const errorText = await exchangeResponse.text();
@@ -192,19 +193,22 @@ app.post('/api/wallettwo/exchange', async (req, res) => {
         }
         
         const tokenData = await exchangeResponse.json();
-        console.log('✅ Token received');
+        console.log('✅ Token received:', Object.keys(tokenData));
         
         // Now fetch user info with the token
         if (tokenData.access_token) {
-            const userResponse = await fetch('https://api.wallettwo.com/user/me', {
+            const userResponse = await fetch('https://api.wallettwo.com/auth/userinfo', {
+                method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${tokenData.access_token}`
                 }
             });
             
+            console.log('📡 User info response status:', userResponse.status);
+            
             if (userResponse.ok) {
                 const userData = await userResponse.json();
-                console.log('✅ User data received');
+                console.log('✅ User data received:', Object.keys(userData));
                 return res.json({
                     access_token: tokenData.access_token,
                     user: userData
