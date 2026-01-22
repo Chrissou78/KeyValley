@@ -41,11 +41,6 @@
         ::-webkit-scrollbar-track { background: #0a0a0a; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
-        .wallet-iframe {
-            border: 1px solid rgba(238, 157, 43, 0.2);
-            border-radius: 4px;
-            background: rgba(255, 255, 255, 0.02);
-        }
     </style>
 </head>
 <body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
@@ -93,13 +88,10 @@
                     <span class="material-symbols-outlined text-primary/50">redeem</span>
                 </div>
                 <div class="p-8">
-                    
-                    <!-- Status Display -->
                     <div id="claimStatus" class="text-center py-8">
                         <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-                        <p class="text-slate-400 text-sm">Processing your claim...</p>
+                        <p class="text-slate-400 text-sm">Initializing...</p>
                     </div>
-
                 </div>
             </div>
 
@@ -126,7 +118,9 @@
     </footer>
 
     <script>
+        // ============================================
         // Configuration
+        // ============================================
         const CONFIG = {
             STORAGE_KEY: 'keavalley_profile',
             WALLETTWO_LOGIN_URL: 'https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=' + encodeURIComponent(window.location.origin + '/claim')
@@ -134,57 +128,65 @@
 
         const statusEl = document.getElementById('claimStatus');
         const cardTitle = document.getElementById('cardTitle');
+        
+        // Store current wallet globally for use in UI functions
+        let currentWallet = null;
+        let currentSignature = null;
+        let currentUserId = null;
 
-        // Parse URL parameters - WalletTwo uses: wlt (wallet), usr (user), signature
+        // ============================================
+        // Parse URL Parameters
+        // ============================================
         function getWalletFromURL() {
             const params = new URLSearchParams(window.location.search);
-            
-            // WalletTwo returns: wlt=wallet, usr=userId, signature=sig
-            const wallet = params.get('wlt') || params.get('wallet') || params.get('address') || params.get('wallet_address');
-            const signature = params.get('signature') || params.get('sig');
-            const userId = params.get('usr') || params.get('user') || params.get('userId');
-            
-            console.log('🔍 URL Params:', { wallet, signature, userId });
-            
-            return { wallet, signature, userId };
+            return {
+                wallet: params.get('wlt') || params.get('wallet') || params.get('address'),
+                signature: params.get('signature') || params.get('sig'),
+                userId: params.get('usr') || params.get('user')
+            };
         }
 
-        // Check localStorage for existing session
+        // ============================================
+        // LocalStorage Functions
+        // ============================================
         function getWalletFromStorage() {
             try {
                 const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
                 if (stored) {
                     const data = JSON.parse(stored);
                     const age = Date.now() - (data.timestamp || 0);
-                    // Valid for 24 hours
                     if (data.wallet && age < 24 * 60 * 60 * 1000) {
-                        console.log('📦 Wallet from storage:', data.wallet);
-                        return data.wallet;
+                        return data;
                     }
                 }
-            } catch (e) {
-                console.log('Could not read storage');
-            }
+            } catch (e) {}
             return null;
         }
 
-        // Save wallet to storage
-        function saveWalletToStorage(wallet, userId, signature) {
+        function saveToStorage(wallet, userId, signature) {
             try {
-                const data = {
-                    wallet: wallet,
-                    userId: userId,
-                    signature: signature,
+                localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify({
+                    wallet,
+                    userId,
+                    signature,
                     timestamp: Date.now()
-                };
-                localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(data));
-                console.log('💾 Saved to storage:', data);
-            } catch (e) {
-                console.log('Could not save to storage');
-            }
+                }));
+            } catch (e) {}
         }
 
-        // Show connect wallet UI
+        // ============================================
+        // Get Profile URL with wallet
+        // ============================================
+        function getProfileURL() {
+            if (currentWallet) {
+                return `/profile?wlt=${encodeURIComponent(currentWallet)}${currentSignature ? '&signature=' + encodeURIComponent(currentSignature) : ''}${currentUserId ? '&usr=' + encodeURIComponent(currentUserId) : ''}`;
+            }
+            return '/profile';
+        }
+
+        // ============================================
+        // UI Functions
+        // ============================================
         function showConnectWallet() {
             cardTitle.textContent = 'Connect Wallet';
             statusEl.innerHTML = `
@@ -199,7 +201,6 @@
             `;
         }
 
-        // Show processing
         function showProcessing(wallet) {
             cardTitle.textContent = 'Processing';
             statusEl.innerHTML = `
@@ -209,10 +210,67 @@
             `;
         }
 
-        // Process the claim
-        async function processClaim(wallet, signature) {
-            console.log('🚀 Processing claim for:', wallet);
+        function showSuccess(data) {
+            cardTitle.textContent = 'Success';
+            statusEl.innerHTML = `
+                <div class="size-16 mx-auto rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-green-400 text-3xl">check_circle</span>
+                </div>
+                <h3 class="text-xl font-serif text-white mb-2">Tokens Claimed!</h3>
+                <p class="text-slate-400 text-sm mb-4">${data.message || 'Your VIP tokens have been minted successfully.'}</p>
+                ${data.tx_hash && data.explorer_url ? `
+                    <a href="${data.explorer_url}" target="_blank" class="inline-flex items-center gap-2 text-primary text-xs hover:underline mb-6">
+                        View Transaction <span class="material-symbols-outlined text-sm">open_in_new</span>
+                    </a>
+                ` : '<div class="mb-6"></div>'}
+                <div>
+                    <a href="${getProfileURL()}" class="inline-block bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-transform">
+                        View My Profile
+                    </a>
+                </div>
+            `;
+        }
+
+        function showAlreadyClaimed(data) {
+            cardTitle.textContent = 'Already Claimed';
+            statusEl.innerHTML = `
+                <div class="size-16 mx-auto rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-primary text-3xl">info</span>
+                </div>
+                <h3 class="text-xl font-serif text-white mb-2">Already Claimed</h3>
+                <p class="text-slate-400 text-sm mb-2">${data.message || 'This wallet has already claimed tokens.'}</p>
+                ${data.balance ? `<p class="text-primary text-lg font-semibold mb-6">Balance: ${parseFloat(data.balance).toFixed(2)} VIP</p>` : '<div class="mb-6"></div>'}
+                <a href="${getProfileURL()}" class="inline-block bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-transform">
+                    View My Profile
+                </a>
+            `;
+        }
+
+        function showError(message) {
+            cardTitle.textContent = 'Error';
+            statusEl.innerHTML = `
+                <div class="size-16 mx-auto rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-red-400 text-3xl">error</span>
+                </div>
+                <h3 class="text-xl font-serif text-white mb-2">Claim Failed</h3>
+                <p class="text-slate-500 text-sm mb-8">${message}</p>
+                <a href="${CONFIG.WALLETTWO_LOGIN_URL}" class="inline-block border border-primary/30 text-primary px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-background-dark transition-all">
+                    Try Again
+                </a>
+            `;
+        }
+
+        // ============================================
+        // Claim Processing
+        // ============================================
+        async function processClaim(wallet, signature, userId) {
+            // Store globally
+            currentWallet = wallet;
+            currentSignature = signature;
+            currentUserId = userId;
+            
             showProcessing(wallet);
+            saveToStorage(wallet, userId, signature);
 
             try {
                 const response = await fetch('/api/claim/register', {
@@ -226,103 +284,40 @@
                 });
 
                 const data = await response.json();
-                console.log('📡 Claim response:', response.status, data);
 
                 if (response.status === 201) {
-                    // Success - minted
-                    cardTitle.textContent = 'Success';
-                    statusEl.innerHTML = `
-                        <div class="size-16 mx-auto rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-6">
-                            <span class="material-symbols-outlined text-green-400 text-3xl">check_circle</span>
-                        </div>
-                        <h3 class="text-xl font-serif text-white mb-2">Tokens Claimed!</h3>
-                        <p class="text-slate-400 text-sm mb-4">${data.message || 'Your VIP tokens have been minted successfully.'}</p>
-                        ${data.tx_hash && data.explorer_url ? `
-                            <a href="${data.explorer_url}" target="_blank" class="inline-flex items-center gap-2 text-primary text-xs hover:underline mb-6">
-                                View Transaction <span class="material-symbols-outlined text-sm">open_in_new</span>
-                            </a>
-                        ` : '<div class="mb-6"></div>'}
-                        <div>
-                            <a href="/profile" class="inline-block bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-transform">
-                                View My Profile
-                            </a>
-                        </div>
-                    `;
+                    showSuccess(data);
                 } else if (response.status === 409) {
-                    // Already claimed
-                    cardTitle.textContent = 'Already Claimed';
-                    statusEl.innerHTML = `
-                        <div class="size-16 mx-auto rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-6">
-                            <span class="material-symbols-outlined text-primary text-3xl">info</span>
-                        </div>
-                        <h3 class="text-xl font-serif text-white mb-2">Already Claimed</h3>
-                        <p class="text-slate-400 text-sm mb-2">${data.message || 'This wallet has already claimed tokens.'}</p>
-                        ${data.balance ? `<p class="text-primary text-lg font-semibold mb-6">Balance: ${parseFloat(data.balance).toFixed(2)} VIP</p>` : '<div class="mb-6"></div>'}
-                        <a href="/profile" class="inline-block bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-transform">
-                            View My Profile
-                        </a>
-                    `;
+                    showAlreadyClaimed(data);
                 } else {
-                    // Error
-                    cardTitle.textContent = 'Error';
-                    statusEl.innerHTML = `
-                        <div class="size-16 mx-auto rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-6">
-                            <span class="material-symbols-outlined text-red-400 text-3xl">error</span>
-                        </div>
-                        <h3 class="text-xl font-serif text-white mb-2">Claim Failed</h3>
-                        <p class="text-slate-500 text-sm mb-8">${data.message || data.error || 'An error occurred. Please try again.'}</p>
-                        <a href="${CONFIG.WALLETTWO_LOGIN_URL}" class="inline-block border border-primary/30 text-primary px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-background-dark transition-all">
-                            Try Again
-                        </a>
-                    `;
+                    showError(data.message || data.error || 'An error occurred. Please try again.');
                 }
             } catch (error) {
-                console.error('❌ Claim error:', error);
-                cardTitle.textContent = 'Error';
-                statusEl.innerHTML = `
-                    <div class="size-16 mx-auto rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-6">
-                        <span class="material-symbols-outlined text-red-400 text-3xl">error</span>
-                    </div>
-                    <h3 class="text-xl font-serif text-white mb-2">Connection Error</h3>
-                    <p class="text-slate-500 text-sm mb-8">Unable to connect to the server. Please try again.</p>
-                    <button onclick="location.reload()" class="inline-block border border-primary/30 text-primary px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-background-dark transition-all">
-                        Try Again
-                    </button>
-                `;
+                console.error('Claim error:', error);
+                showError('Connection error. Please try again.');
             }
         }
 
+        // ============================================
         // Initialize
+        // ============================================
         function init() {
-            console.log('🚀 Claim page loaded');
-            console.log('📍 URL:', window.location.href);
-
-            // First check URL params (returning from WalletTwo)
             const { wallet, signature, userId } = getWalletFromURL();
             
             if (wallet) {
-                console.log('✅ Wallet from URL:', wallet);
-                // Save to storage for profile page
-                saveWalletToStorage(wallet, userId, signature);
-                // Process the claim
-                processClaim(wallet, signature);
+                processClaim(wallet, signature, userId);
                 return;
             }
 
-            // Check storage for existing session
-            const storedWallet = getWalletFromStorage();
-            if (storedWallet) {
-                console.log('✅ Wallet from storage:', storedWallet);
-                processClaim(storedWallet, null);
+            const stored = getWalletFromStorage();
+            if (stored && stored.wallet) {
+                processClaim(stored.wallet, stored.signature, stored.userId);
                 return;
             }
 
-            // No wallet found - show connect button
-            console.log('❌ No wallet found');
             showConnectWallet();
         }
 
-        // Start
         init();
     </script>
 </body>

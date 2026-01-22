@@ -369,13 +369,17 @@
             try {
                 const res = await fetch('/api/wallet-info');
                 const data = await res.json();
+                console.log('Wallet info:', data); // Debug
+                
                 if (data.address) {
+                    const explorerUrl = data.explorer || 'https://polygonscan.com';
                     elements.walletAddress.innerHTML = `
-                        <a href="${data.explorer}/address/${data.address}" target="_blank" class="hover:text-primary transition-colors">
+                        <a href="${explorerUrl}/address/${data.address}" target="_blank" class="hover:text-primary transition-colors">
                             ${data.address.slice(0, 10)}...${data.address.slice(-8)}
                         </a>
                     `;
-                    elements.walletBalance.textContent = `${parseFloat(data.nativeBalance || 0).toFixed(4)} ${data.nativeSymbol || 'ETH'}`;
+                    // API returns 'balance' and 'currency', not 'nativeBalance' and 'nativeSymbol'
+                    elements.walletBalance.textContent = `${parseFloat(data.balance || 0).toFixed(4)} ${data.currency || 'POL'}`;
                     elements.tokenBalance.textContent = `${parseFloat(data.tokenBalance || 0).toLocaleString()} ${data.tokenSymbol || 'VIP'}`;
                 } else {
                     elements.walletAddress.textContent = 'Not configured';
