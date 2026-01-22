@@ -743,6 +743,13 @@
             localStorage.removeItem(CONFIG.STORAGE_KEY);
             currentUser = null;
 
+            // Show loading state
+            document.getElementById('profileContainer').innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <p>Logging out...</p>
+                </div>
+            `;
+
             // Create logout iframe to clear WalletTwo session
             const logoutIframe = document.createElement('iframe');
             logoutIframe.style.display = 'none';
@@ -750,11 +757,26 @@
             logoutIframe.id = 'wallettwo-logout-iframe';
             document.body.appendChild(logoutIframe);
 
-            // Redirect to home page after a short delay
+            // Listen for logout confirmation from WalletTwo
+            const logoutHandler = (event) => {
+                if (event.origin === CONFIG.WALLETTWO_ORIGIN) {
+                    console.log('📨 Logout message:', event.data);
+                    // Check if logout is confirmed
+                    if (event.data.type === 'logout' || event.data.type === 'logoutSuccess' || event.data.event === 'logout') {
+                        window.removeEventListener('message', logoutHandler);
+                        window.location.href = '/';
+                    }
+                }
+            };
+            window.addEventListener('message', logoutHandler);
+
+            // Fallback: redirect after 2 seconds if no message received
             setTimeout(() => {
+                window.removeEventListener('message', logoutHandler);
                 window.location.href = '/';
-            }, 500);
+            }, 2000);
         }
+
     </script>
 </body>
 </html>
