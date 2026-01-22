@@ -762,6 +762,154 @@ app.post('/api/sync', requireAuth, checkPasswordChange, async (req, res) => {
     }
 });
 
+// ============================================
+// Manual Mint to Specific Address
+// ============================================
+app.post('/api/mint-manual', requireAuth, checkPasswordChange, async (req, res) => {
+    const { address } = req.body;
+    
+    if (!address || !validateAddress(address)) {
+        return res.status(400).json({ error: 'Valid wallet address required' });
+    }
+    
+    const normalizedAddress = address.toLowerCase();
+    console.log('🔄 Manual mint requested for:', normalizedAddress);
+    
+    try {
+        await minter.initialize();
+        const networkConfig = getNetworkConfig();
+        const mintAmount = parseInt(process.env.MINT_AMOUNT) || 2;
+        
+        // Check current balance
+        const currentBalance = await minter.getBalance(normalizedAddress);
+        console.log('💰 Current balance:', currentBalance);
+        
+        // Mint tokens
+        const result = await minter.mintToAddress(normalizedAddress, mintAmount);
+        
+        if (result.skipped) {
+            return res.json({
+                success: false,
+                message: 'Wallet already has tokens',
+                balance: result.balance,
+                address: normalizedAddress
+            });
+        }
+        
+        const txHash = result.receipt?.hash || result.hash;
+        
+        // Add to DB if not exists and mark as minted
+        const existing = await db.getRegistrant(normalizedAddress);
+        if (!existing) {
+            await db.addRegistrant(normalizedAddress, null, { source: 'manual_mint' });
+        }
+        await db.markAsMinted(normalizedAddress, txHash);
+        
+        console.log('✅ Manual mint successful! TX:', txHash);
+        
+        res.json({
+            success: true,
+            message: `Successfully minted ${mintAmount} VIP tokens`,
+            address: normalizedAddress,
+            amount: mintAmount,
+            tx_hash: txHash,
+            explorer_url: `${networkConfig.explorer}/tx/${txHash}`
+        });
+        
+    } catch (error) {
+        console.error('❌ Manual mint error:', error);
+        res.status(500).json({ 
+            error: 'Minting failed', 
+            details: error.message 
+        });
+    }
+});
+
+// ============================================
+// Full Sync - Get all holders, balances, and transactions
+// ============================================
+app.post('/api/full-sync', requireAuth, checkPasswordChange, async (req, res) => {
+    console.log('🔄 Full sync requested...');
+    
+    try {
+        await minter.initialize();
+        const networkConfig = getNetworkConfig();
+        
+        // Get all registrants from DB
+        const allRegistrants = await db.getAllRegistrants();
+        console.log(`📊 Found ${allRegistrants.length} registrants in DB`);
+        
+        const results = {
+            total: allRegistrants.length,
+            updated: 0,
+            withBalance: 0,
+            withoutBalance: 0,
+            errors: 0,
+            registrants: []
+        };
+        
+        // Check each registrant's on-chain balance
+        for (const registrant of allRegistrants) {
+            try {
+                const balance = await minter.getBalance(registrant.address);
+                const balanceNum = parseFloat(balance);
+                const hasTokens = balanceNum > 0;
+                
+                // Update minted status based on on-chain balance
+                if (hasTokens && !registrant.minted) {
+                    await db.markAsMinted(registrant.address, 'synced-from-chain');
+                    results.updated++;
+                }
+                
+                if (hasTokens) {
+                    results.withBalance++;
+                } else {
+                    results.withoutBalance++;
+                }
+                
+                results.registrants.push({
+                    address: registrant.address,
+                    balance: balanceNum.toFixed(2),
+                    minted: hasTokens || registrant.minted,
+                    txHash: registrant.txHash,
+                    registeredAt: registrant.registeredAt
+                });
+                
+            } catch (error) {
+                console.error(`Error checking ${registrant.address}:`, error.message);
+                results.errors++;
+                results.registrants.push({
+                    address: registrant.address,
+                    balance: 'error',
+                    minted: registrant.minted,
+                    error: error.message
+                });
+            }
+        }
+        
+        // Get updated stats
+        const stats = await db.getStats();
+        
+        console.log(`✅ Full sync complete: ${results.updated} updated, ${results.withBalance} with balance, ${results.withoutBalance} without`);
+        
+        res.json({
+            success: true,
+            message: 'Full sync completed',
+            results,
+            stats,
+            network: networkConfig.name,
+            explorer: networkConfig.explorer
+        });
+        
+    } catch (error) {
+        console.error('❌ Full sync error:', error);
+        res.status(500).json({ 
+            error: 'Full sync failed', 
+            details: error.message 
+        });
+    }
+});
+
 // ===========================================
 // Health Check (Public)
 // ===========================================

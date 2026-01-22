@@ -66,6 +66,19 @@
             to { opacity: 1; transform: translateY(0); }
         }
         .slide-in { animation: slideIn 0.3s ease-out; }
+        .input-field {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: #ee9d2b;
+            outline: none;
+        }
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
     </style>
 </head>
 <body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen">
@@ -191,9 +204,13 @@
                             <span class="material-symbols-outlined text-lg">token</span>
                             Mint Pending
                         </button>
-                        <button id="syncBtn" class="w-full border border-white/10 text-white px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-primary/30 hover:text-primary transition-all flex items-center justify-center gap-2">
+                        <button id="manualMintBtn" class="w-full border border-primary/30 text-primary px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/10 transition-all flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-lg">edit</span>
+                            Manual Mint
+                        </button>
+                        <button id="fullSyncBtn" class="w-full border border-white/10 text-white px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-primary/30 hover:text-primary transition-all flex items-center justify-center gap-2">
                             <span class="material-symbols-outlined text-lg">sync</span>
-                            Sync Chain
+                            Full Sync
                         </button>
                         <button id="refreshBtn" class="w-full border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all flex items-center justify-center gap-2">
                             <span class="material-symbols-outlined text-lg">refresh</span>
@@ -203,6 +220,112 @@
                     <!-- Action Result -->
                     <div id="actionResult" class="hidden px-6 pb-6">
                         <div id="actionResultContent" class="p-4 rounded-sm text-sm"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Mint Modal -->
+            <div id="manualMintModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6">
+                <div class="absolute inset-0 bg-black/70" onclick="closeManualMintModal()"></div>
+                <div class="relative bg-surface border border-white/10 rounded-sm w-full max-w-md overflow-hidden">
+                    <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Manual Mint</h3>
+                        <button onclick="closeManualMintModal()" class="text-slate-500 hover:text-white transition-colors">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-slate-400 text-sm mb-6">Mint 2 VIP tokens to a specific wallet address.</p>
+                        <form id="manualMintForm">
+                            <div class="mb-6">
+                                <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Wallet Address</label>
+                                <input 
+                                    type="text" 
+                                    id="manualMintAddress" 
+                                    required
+                                    placeholder="0x..."
+                                    class="input-field w-full px-4 py-3 rounded-sm text-white font-mono text-sm"
+                                >
+                            </div>
+                            <div class="flex gap-3">
+                                <button type="button" onclick="closeManualMintModal()" class="flex-1 border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all">
+                                    Cancel
+                                </button>
+                                <button type="submit" id="manualMintSubmitBtn" class="flex-1 bg-primary text-background-dark px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-1px] transition-all flex items-center justify-center gap-2">
+                                    <span id="manualMintBtnText">Mint Tokens</span>
+                                    <span id="manualMintBtnLoader" class="hidden">
+                                        <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    </span>
+                                </button>
+                            </div>
+                        </form>
+                        <!-- Manual Mint Result -->
+                        <div id="manualMintResult" class="hidden mt-6 p-4 rounded-sm text-sm"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Full Sync Modal -->
+            <div id="fullSyncModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6">
+                <div class="absolute inset-0 bg-black/70" onclick="closeFullSyncModal()"></div>
+                <div class="relative bg-surface border border-white/10 rounded-sm w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+                    <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Full Sync Results</h3>
+                        <button onclick="closeFullSyncModal()" class="text-slate-500 hover:text-white transition-colors">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                    <div class="p-6 overflow-y-auto flex-1">
+                        <!-- Sync Loading -->
+                        <div id="fullSyncLoading" class="text-center py-12">
+                            <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+                            <p class="text-slate-400 text-sm">Syncing with blockchain...</p>
+                            <p class="text-slate-600 text-xs mt-2">This may take a moment</p>
+                        </div>
+                        <!-- Sync Results -->
+                        <div id="fullSyncResults" class="hidden">
+                            <!-- Summary -->
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
+                                    <p class="text-slate-500 text-xs mb-1">Total</p>
+                                    <p id="syncTotal" class="text-2xl font-serif text-white">0</p>
+                                </div>
+                                <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
+                                    <p class="text-slate-500 text-xs mb-1">With Balance</p>
+                                    <p id="syncWithBalance" class="text-2xl font-serif text-green-400">0</p>
+                                </div>
+                                <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
+                                    <p class="text-slate-500 text-xs mb-1">No Balance</p>
+                                    <p id="syncWithoutBalance" class="text-2xl font-serif text-yellow-400">0</p>
+                                </div>
+                                <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
+                                    <p class="text-slate-500 text-xs mb-1">Updated</p>
+                                    <p id="syncUpdated" class="text-2xl font-serif text-primary">0</p>
+                                </div>
+                            </div>
+                            <!-- Holders List -->
+                            <div class="border border-white/5 rounded-sm overflow-hidden">
+                                <table class="w-full">
+                                    <thead>
+                                        <tr class="border-b border-white/5 bg-background-dark">
+                                            <th class="text-left py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">Address</th>
+                                            <th class="text-right py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">Balance</th>
+                                            <th class="text-center py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="syncHoldersTable">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- Sync Error -->
+                        <div id="fullSyncError" class="hidden text-center py-12">
+                            <span class="material-symbols-outlined text-red-400 text-5xl mb-4">error</span>
+                            <p class="text-red-400 text-sm" id="fullSyncErrorText">An error occurred</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -277,7 +400,8 @@
             actionResultContent: document.getElementById('actionResultContent'),
             lastUpdated: document.getElementById('lastUpdated'),
             mintNowBtn: document.getElementById('mintNowBtn'),
-            syncBtn: document.getElementById('syncBtn'),
+            manualMintBtn: document.getElementById('manualMintBtn'),
+            fullSyncBtn: document.getElementById('fullSyncBtn'),
             refreshBtn: document.getElementById('refreshBtn'),
             refreshWalletBtn: document.getElementById('refreshWalletBtn'),
             logoutBtn: document.getElementById('logoutBtn'),
@@ -443,7 +567,7 @@
         }
 
         // ============================================
-        // Mint Now Action
+        // Mint Pending Action
         // ============================================
         async function mintNow() {
             elements.mintNowBtn.disabled = true;
@@ -484,37 +608,138 @@
         }
 
         // ============================================
-        // Sync Action
+        // Manual Mint Modal
         // ============================================
-        async function sync() {
-            elements.syncBtn.disabled = true;
-            elements.syncBtn.innerHTML = `
-                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Syncing...
-            `;
+        function openManualMintModal() {
+            document.getElementById('manualMintModal').classList.remove('hidden');
+            document.getElementById('manualMintAddress').value = '';
+            document.getElementById('manualMintResult').classList.add('hidden');
+        }
+
+        function closeManualMintModal() {
+            document.getElementById('manualMintModal').classList.add('hidden');
+        }
+
+        async function submitManualMint(e) {
+            e.preventDefault();
+            
+            const address = document.getElementById('manualMintAddress').value.trim();
+            const submitBtn = document.getElementById('manualMintSubmitBtn');
+            const btnText = document.getElementById('manualMintBtnText');
+            const btnLoader = document.getElementById('manualMintBtnLoader');
+            const resultDiv = document.getElementById('manualMintResult');
+
+            if (!address || !address.startsWith('0x') || address.length !== 42) {
+                resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
+                resultDiv.textContent = 'Please enter a valid Ethereum address';
+                resultDiv.classList.remove('hidden');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            btnText.textContent = 'Minting...';
+            btnLoader.classList.remove('hidden');
+            resultDiv.classList.add('hidden');
 
             try {
-                const res = await fetch('/api/sync', { method: 'POST' });
+                const res = await fetch('/api/mint-manual', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ address })
+                });
+
                 const data = await res.json();
-                
-                showActionResult(`
-                    <p class="font-semibold">Sync Complete!</p>
-                    <p class="mt-1 text-xs opacity-80">Synced: ${data.synced || 0} | Still Pending: ${data.stillPending || 0}</p>
-                `, 'success');
-                showToast('Sync completed', 'success');
-                refreshAll();
-            } catch (e) {
-                showActionResult(`<p>Sync error: ${e.message}</p>`, 'error');
-                showToast('Sync error', 'error');
+
+                if (data.success) {
+                    resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-green-500/10 text-green-400 border border-green-500/20';
+                    resultDiv.innerHTML = `
+                        <p class="font-semibold">Success!</p>
+                        <p class="mt-1 text-xs opacity-80">${data.message}</p>
+                        ${data.tx_hash ? `<a href="${data.explorer_url}" target="_blank" class="text-green-400 underline text-xs mt-2 inline-block">View Transaction</a>` : ''}
+                    `;
+                    showToast('Manual mint successful', 'success');
+                    refreshAll();
+                } else {
+                    resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
+                    resultDiv.innerHTML = `<p>${data.error || data.message || 'Minting failed'}</p>`;
+                    showToast('Manual mint failed', 'error');
+                }
+                resultDiv.classList.remove('hidden');
+            } catch (error) {
+                resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
+                resultDiv.textContent = `Error: ${error.message}`;
+                resultDiv.classList.remove('hidden');
+                showToast('Manual mint error', 'error');
             } finally {
-                elements.syncBtn.disabled = false;
-                elements.syncBtn.innerHTML = `
-                    <span class="material-symbols-outlined text-lg">sync</span>
-                    Sync Chain
-                `;
+                submitBtn.disabled = false;
+                btnText.textContent = 'Mint Tokens';
+                btnLoader.classList.add('hidden');
+            }
+        }
+
+        // ============================================
+        // Full Sync Modal
+        // ============================================
+        function openFullSyncModal() {
+            document.getElementById('fullSyncModal').classList.remove('hidden');
+            document.getElementById('fullSyncLoading').classList.remove('hidden');
+            document.getElementById('fullSyncResults').classList.add('hidden');
+            document.getElementById('fullSyncError').classList.add('hidden');
+            performFullSync();
+        }
+
+        function closeFullSyncModal() {
+            document.getElementById('fullSyncModal').classList.add('hidden');
+        }
+
+        async function performFullSync() {
+            try {
+                const res = await fetch('/api/full-sync', { method: 'POST' });
+                const data = await res.json();
+
+                document.getElementById('fullSyncLoading').classList.add('hidden');
+
+                if (data.success) {
+                    document.getElementById('fullSyncResults').classList.remove('hidden');
+                    
+                    // Update summary
+                    document.getElementById('syncTotal').textContent = data.results.total;
+                    document.getElementById('syncWithBalance').textContent = data.results.withBalance;
+                    document.getElementById('syncWithoutBalance').textContent = data.results.withoutBalance;
+                    document.getElementById('syncUpdated').textContent = data.results.updated;
+
+                    // Populate holders table
+                    const tbody = document.getElementById('syncHoldersTable');
+                    if (data.results.registrants && data.results.registrants.length > 0) {
+                        tbody.innerHTML = data.results.registrants.map(r => `
+                            <tr class="border-b border-white/5">
+                                <td class="py-3 px-4">
+                                    <a href="${explorerUrl}/address/${r.address}" target="_blank" class="font-mono text-xs text-white hover:text-primary">
+                                        ${r.address.slice(0, 10)}...${r.address.slice(-8)}
+                                    </a>
+                                </td>
+                                <td class="py-3 px-4 text-right font-mono text-sm ${parseFloat(r.balance) > 0 ? 'text-green-400' : 'text-slate-500'}">
+                                    ${r.balance === 'error' ? '<span class="text-red-400">Error</span>' : r.balance + ' VIP'}
+                                </td>
+                                <td class="py-3 px-4 text-center">
+                                    <span class="badge ${r.minted ? 'badge-success' : 'badge-pending'}">${r.minted ? 'Minted' : 'Pending'}</span>
+                                </td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-slate-500">No registrants found</td></tr>';
+                    }
+
+                    showToast('Full sync completed', 'success');
+                    refreshAll();
+                } else {
+                    throw new Error(data.error || 'Sync failed');
+                }
+            } catch (error) {
+                document.getElementById('fullSyncLoading').classList.add('hidden');
+                document.getElementById('fullSyncError').classList.remove('hidden');
+                document.getElementById('fullSyncErrorText').textContent = error.message;
+                showToast('Full sync failed', 'error');
             }
         }
 
@@ -532,7 +757,6 @@
         function setFilter(filter) {
             currentFilter = filter;
             
-            // Update button styles
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.className = 'filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors';
             });
@@ -557,7 +781,8 @@
         // Event Listeners
         // ============================================
         elements.mintNowBtn.addEventListener('click', mintNow);
-        elements.syncBtn.addEventListener('click', sync);
+        elements.manualMintBtn.addEventListener('click', openManualMintModal);
+        elements.fullSyncBtn.addEventListener('click', openFullSyncModal);
         elements.refreshBtn.addEventListener('click', () => {
             showToast('Refreshing...', 'info');
             refreshAll();
@@ -568,6 +793,9 @@
         elements.filterAll.addEventListener('click', () => setFilter('all'));
         elements.filterPending.addEventListener('click', () => setFilter('pending'));
         elements.filterMinted.addEventListener('click', () => setFilter('minted'));
+
+        // Manual mint form
+        document.getElementById('manualMintForm').addEventListener('submit', submitManualMint);
 
         // ============================================
         // Initialize
