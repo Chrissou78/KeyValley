@@ -596,24 +596,71 @@
         }
 
         // Handle successful authentication
-        function handleAuthSuccess(data) {
-            console.log('✅ Auth success:', data);
+        async function handleAuthSuccess(data) {
+            console.log('🔐 Auth message received:', data);
 
             // Stop accepting more messages
             acceptMessages = false;
 
-            const user = {
-                wallet: data.wallet,
-                userId: data.user,
-                code: data.code,
-                timestamp: Date.now()
-            };
+            // Show loading state
+            document.getElementById('loginContainer').innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <p>Loading your profile...</p>
+                </div>
+            `;
 
-            // Store session
-            localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(user));
+            try {
+                // Exchange code for token and user data via our server proxy
+                console.log('🔄 Exchanging code for token...');
+                const response = await fetch('/api/wallettwo/exchange', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ code: data.code })
+                });
 
-            // Show profile
-            showProfile(user);
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Exchange successful:', result);
+
+                    const user = {
+                        wallet: result.user?.address || result.user?.wallet || data.wallet,
+                        email: result.user?.email,
+                        name: result.user?.name || result.user?.displayName,
+                        userId: result.user?.id || data.user,
+                        accessToken: result.access_token,
+                        timestamp: Date.now()
+                    };
+
+                    // Store session
+                    localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(user));
+
+                    // Show profile
+                    showProfile(user);
+                } else {
+                    console.warn('⚠️ Exchange failed, using basic data');
+                    // Fallback to basic data from postMessage
+                    const user = {
+                        wallet: data.wallet,
+                        userId: data.user,
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(user));
+                    showProfile(user);
+                }
+
+            } catch (error) {
+                console.error('❌ Exchange error:', error);
+                // Fallback to basic data
+                const user = {
+                    wallet: data.wallet,
+                    userId: data.user,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(user));
+                showProfile(user);
+            }
         }
 
         // Show profile UI
@@ -624,12 +671,16 @@
             document.getElementById('loginContainer').classList.add('hidden');
             document.getElementById('profileContainer').classList.add('active');
 
-            // Set user info - get initials from wallet address
-            const initials = user.wallet.slice(2, 4).toUpperCase();
+            // Set user info - use name/email if available, otherwise wallet initials
+            const initials = user.name 
+                ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                : user.wallet.slice(2, 4).toUpperCase();
+            
+            const displayName = user.name || user.email || `User ${user.wallet.slice(2, 4).toUpperCase()}`;
             
             document.getElementById('userAvatar').textContent = initials;
-            document.getElementById('userName').textContent = `User ${initials}`;
-            document.getElementById('userId').textContent = user.userId ? `ID: ${user.userId}` : '';
+            document.getElementById('userName').textContent = displayName;
+            document.getElementById('userId').textContent = user.email || (user.userId ? `ID: ${user.userId}` : '');
             document.getElementById('walletAddress').textContent = user.wallet;
 
             // Set explorer link

@@ -163,6 +163,64 @@ app.get('/dashboard', requireAuth, checkPasswordChange, (req, res) => {
 });
 
 // ===========================================
+// WalletTwo Token Exchange Proxy
+// ===========================================
+
+app.post('/api/wallettwo/exchange', async (req, res) => {
+    const { code } = req.body;
+    
+    if (!code) {
+        return res.status(400).json({ error: 'Code is required' });
+    }
+    
+    try {
+        console.log('🔄 Exchanging WalletTwo code for token...');
+        
+        // Exchange code for access token
+        const exchangeResponse = await fetch('https://api.wallettwo.com/auth/exchange', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ code })
+        });
+        
+        if (!exchangeResponse.ok) {
+            const errorText = await exchangeResponse.text();
+            console.error('❌ Exchange failed:', exchangeResponse.status, errorText);
+            return res.status(exchangeResponse.status).json({ error: 'Exchange failed', details: errorText });
+        }
+        
+        const tokenData = await exchangeResponse.json();
+        console.log('✅ Token received');
+        
+        // Now fetch user info with the token
+        if (tokenData.access_token) {
+            const userResponse = await fetch('https://api.wallettwo.com/user/me', {
+                headers: {
+                    'Authorization': `Bearer ${tokenData.access_token}`
+                }
+            });
+            
+            if (userResponse.ok) {
+                const userData = await userResponse.json();
+                console.log('✅ User data received');
+                return res.json({
+                    access_token: tokenData.access_token,
+                    user: userData
+                });
+            }
+        }
+        
+        res.json(tokenData);
+        
+    } catch (error) {
+        console.error('❌ WalletTwo exchange error:', error);
+        res.status(500).json({ error: 'Exchange failed', details: error.message });
+    }
+});
+
+// ===========================================
 // Auth API Endpoints
 // ===========================================
 
