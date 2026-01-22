@@ -1,494 +1,222 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Claim Your Free VIP Tokens | KEA VALLEY®</title>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Claim Tokens | Kea Valley</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ee9d2b",
+                        "primary-light": "#fbdea6",
+                        "background-dark": "#0a0a0a",
+                        "surface": "#121212",
+                    },
+                    fontFamily: {
+                        "sans": ["Manrope", "sans-serif"],
+                        "serif": ["Playfair Display", "serif"],
+                    },
+                },
+            },
+        }
+    </script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        body { font-family: 'Manrope', sans-serif; }
+        h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
+        .gold-glow:hover {
+            box-shadow: 0 0 25px rgba(238, 157, 43, 0.3);
+            border-color: #ee9d2b;
         }
-
-        :root {
-            --deep-blue: #0A2E5C;
-            --medium-blue: #1E5A8E;
-            --light-blue: #3A7CB7;
-            --pure-white: #FFFFFF;
-            --gold: #D4AF37;
-            --light-gold: #F4E4C1;
-            --cream: #FAF7F2;
-            --dark-text: #1A1A1A;
-            --gray-text: #555555;
-            --success: #28a745;
-            --error: #dc3545;
-            --font-display: 'Playfair Display', serif;
-            --font-body: 'Montserrat', sans-serif;
+        .glass-nav {
+            backdrop-filter: blur(12px);
+            background-color: rgba(10, 10, 10, 0.7);
         }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: var(--font-body);
-            color: var(--dark-text);
-            background: linear-gradient(135deg, var(--deep-blue) 0%, var(--medium-blue) 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Header */
-        header {
-            padding: 20px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-family: var(--font-display);
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: var(--gold);
-            text-decoration: none;
-            letter-spacing: 2px;
-        }
-
-        .back-link {
-            color: var(--light-gold);
-            text-decoration: none;
-            font-size: 0.95rem;
-            font-weight: 500;
-            transition: color 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .back-link:hover {
-            color: var(--gold);
-        }
-
-        /* Main Content */
-        main {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
-        }
-
-        .claim-card {
-            background: var(--pure-white);
-            border-radius: 20px;
-            padding: 50px;
-            max-width: 520px;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .claim-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 5px;
-            background: linear-gradient(90deg, var(--gold), var(--light-gold));
-        }
-
-        .claim-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-        }
-
-        .claim-card h1 {
-            font-family: var(--font-display);
-            font-size: 2rem;
-            color: var(--deep-blue);
-            margin-bottom: 15px;
-        }
-
-        .claim-card p {
-            color: var(--gray-text);
-            margin-bottom: 25px;
-            line-height: 1.7;
-            font-size: 1.05rem;
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-block;
-            padding: 18px 45px;
-            font-family: var(--font-body);
-            font-size: 1rem;
-            font-weight: 600;
-            text-decoration: none;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            border-radius: 50px;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-            border: none;
-            width: 100%;
-            max-width: 350px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--gold) 0%, #B8941E 100%);
-            color: var(--pure-white);
-            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.5);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: var(--deep-blue);
-            border: 2px solid var(--deep-blue);
-        }
-
-        .btn-secondary:hover {
-            background: var(--deep-blue);
-            color: var(--pure-white);
-        }
-
-        /* Wallet Display */
-        .wallet-display {
-            background: var(--cream);
-            border: 2px solid var(--light-gold);
-            border-radius: 12px;
-            padding: 15px 20px;
-            margin: 25px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            word-break: break-all;
-            color: var(--deep-blue);
-        }
-
-        /* Token Amount */
-        .token-amount {
-            margin: 30px 0;
-        }
-
-        .token-amount .number {
-            font-family: var(--font-display);
-            font-size: 4rem;
-            font-weight: 800;
-            color: var(--gold);
-            line-height: 1;
-        }
-
-        .token-amount .symbol {
-            font-size: 1.5rem;
-            color: var(--gray-text);
-            font-weight: 600;
-            margin-top: 5px;
-        }
-
-        /* Transaction Link */
-        .tx-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 20px;
-            color: var(--medium-blue);
-            text-decoration: none;
-            font-size: 0.95rem;
-            font-weight: 500;
-            padding: 12px 25px;
-            border: 2px solid var(--medium-blue);
-            border-radius: 50px;
-            transition: all 0.3s;
-        }
-
-        .tx-link:hover {
-            background: var(--medium-blue);
-            color: var(--pure-white);
-        }
-
-        /* Loading Spinner */
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid var(--cream);
-            border-top-color: var(--gold);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 30px auto;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Status States */
-        .status-success .claim-icon { color: var(--success); }
-        .status-error .claim-icon { color: var(--error); }
-        .status-already .claim-icon { color: var(--gold); }
-
-        /* Footer */
-        footer {
-            padding: 20px;
-            text-align: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        footer p {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.9rem;
-        }
-
-        footer a {
-            color: var(--gold);
-            text-decoration: none;
-        }
-
-        footer a:hover {
-            text-decoration: underline;
-        }
-
-        /* Hide all states by default */
-        .state {
-            display: none;
-        }
-
-        .state.active {
-            display: block;
-        }
-
-        /* Responsive */
-        @media (max-width: 600px) {
-            .claim-card {
-                padding: 35px 25px;
-            }
-
-            .claim-card h1 {
-                font-size: 1.6rem;
-            }
-
-            .token-amount .number {
-                font-size: 3rem;
-            }
-
-            .btn {
-                padding: 15px 30px;
-                font-size: 0.9rem;
-            }
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
     </style>
 </head>
-<body>
+<body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
+
     <!-- Header -->
-    <header>
-        <div class="container header-content">
-            <a href="/" class="logo">KEA VALLEY®</a>
-            <a href="/" class="back-link">← Back to Home</a>
+    <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
+            <a href="/" class="flex items-center gap-4 group cursor-pointer">
+                <div class="size-10 text-primary transition-transform duration-500 group-hover:rotate-180">
+                    <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
+                    <p class="text-[0.6rem] text-primary uppercase tracking-[0.3em] font-sans">Estates</p>
+                </div>
+            </a>
+            <nav class="hidden md:flex items-center gap-8 lg:gap-12">
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/">Home</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/profile">My Profile</a>
+            </nav>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main>
-        <div class="claim-card">
-            <!-- Loading State -->
-            <div id="loadingState" class="state">
-                <div class="spinner"></div>
-                <h1>Processing Your Claim</h1>
-                <p>Please wait while we verify your wallet and mint your tokens...</p>
-            </div>
-
-            <!-- Connect State (No wallet) -->
-            <div id="connectState" class="state active">
-                <div class="claim-icon">🎁</div>
-                <h1>Claim Your Free VIP Tokens</h1>
-                <p>Connect your wallet to receive <strong>2 VIP tokens</strong> absolutely free. Ownership verification is handled securely through WalletTwo.</p>
-                <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://kea-valley.com//claim" class="btn btn-primary">
-                    Connect Wallet & Claim
-                </a>
-            </div>
-
-            <!-- Success State -->
-            <div id="successState" class="state status-success">
-                <div class="claim-icon">🎉</div>
-                <h1>Congratulations!</h1>
-                <p>Your VIP tokens have been successfully minted to your wallet!</p>
-                <div class="token-amount">
-                    <div class="number" id="tokenAmount">2</div>
-                    <div class="symbol" id="tokenSymbol">VIP Tokens</div>
+    <main class="flex-1 pt-32 pb-20 px-6 flex items-center justify-center">
+        <div class="max-w-lg mx-auto w-full">
+            
+            <!-- Page Title -->
+            <div class="text-center mb-12">
+                <div class="flex items-center justify-center gap-4 mb-6">
+                    <div class="h-[1px] w-8 bg-primary"></div>
+                    <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Token Claim</span>
+                    <div class="h-[1px] w-8 bg-primary"></div>
                 </div>
-                <div class="wallet-display" id="walletAddressSuccess"></div>
-                <a href="#" id="txLink" class="tx-link" target="_blank" style="display: none;">
-                    View Transaction →
-                </a>
-                <div style="margin-top: 30px;">
-                    <a href="/" class="btn btn-secondary">Return to Homepage</a>
+                <h1 class="text-4xl md:text-5xl font-serif italic font-medium text-white mb-4">Claim Your Tokens</h1>
+                <p class="text-slate-400 font-light">Receive your free VIP tokens to join the Kea Valley community.</p>
+            </div>
+
+            <!-- Card -->
+            <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
+                <div class="px-8 py-5 border-b border-white/5 flex items-center justify-between">
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Claim Status</h3>
+                    <span class="material-symbols-outlined text-primary/50">redeem</span>
+                </div>
+                <div class="p-8">
+                    
+                    <!-- Status Display -->
+                    <div id="claimStatus" class="text-center py-8">
+                        <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+                        <p class="text-slate-400 text-sm">Processing your claim...</p>
+                    </div>
+
                 </div>
             </div>
 
-            <!-- Already Claimed State -->
-            <div id="alreadyClaimedState" class="state status-already">
-                <div class="claim-icon">✅</div>
-                <h1>Already Claimed!</h1>
-                <p>This wallet has already received VIP tokens.</p>
-                <div class="token-amount">
-                    <div class="number" id="existingBalance">2</div>
-                    <div class="symbol" id="tokenSymbolAlready">VIP Tokens</div>
-                </div>
-                <div class="wallet-display" id="walletAddressAlready"></div>
-                <a href="#" id="txLinkAlready" class="tx-link" target="_blank" style="display: none;">
-                    View Original Transaction →
-                </a>
-                <div style="margin-top: 30px;">
-                    <a href="/" class="btn btn-secondary">Return to Homepage</a>
-                </div>
-            </div>
-
-            <!-- Error State -->
-            <div id="errorState" class="state status-error">
-                <div class="claim-icon">❌</div>
-                <h1>Claim Failed</h1>
-                <p id="errorMessage">An error occurred while processing your claim. Please try again.</p>
-                <div style="margin-top: 30px;">
-                    <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://kea-valley.com/claim" class="btn btn-primary">
-                        Try Again
-                    </a>
-                </div>
-                <div style="margin-top: 15px;">
-                    <a href="/" class="btn btn-secondary">Return to Homepage</a>
-                </div>
-            </div>
         </div>
     </main>
 
     <!-- Footer -->
-    <footer>
-        <p>KEA VALLEY® — <a href="https://keavalley-greece.com/" target="_blank">keavalley-greece.com</a></p>
+    <footer class="bg-background-dark py-8 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <a href="/" class="flex items-center gap-2">
+                    <div class="size-6 text-primary">
+                        <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
+                        </svg>
+                    </div>
+                    <span class="text-xs font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
+                </a>
+                <div class="text-slate-600 text-xs font-light">
+                    © 2026 Kea Valley
+                </div>
+            </div>
+        </div>
     </footer>
 
     <script>
-        // Configuration
-        const CONFIG = {
-            apiBase: '',
-            message: 'FREE_BONUS_TOKENS_KEA_VALLEY',
-            explorerUrl: 'https://amoy.polygonscan.com',
-            tokenSymbol: 'VIP'
-        };
-
-        // Show specific state
-        function showState(stateId) {
-            document.querySelectorAll('.state').forEach(el => el.classList.remove('active'));
-            document.getElementById(stateId).classList.add('active');
-        }
-
         // Parse URL parameters
-        function getUrlParams() {
-            const params = new URLSearchParams(window.location.search);
-            return {
-                wallet: params.get('wlt'),
-                signature: params.get('signature'),
-                user: params.get('usr')
-            };
-        }
+        const urlParams = new URLSearchParams(window.location.search);
+        const walletAddress = urlParams.get('wallet') || urlParams.get('address');
+        const signature = urlParams.get('signature');
+        const message = urlParams.get('message');
 
-        // Claim tokens
-        async function claimTokens(walletAddress, signature) {
-            showState('loadingState');
+        const statusEl = document.getElementById('claimStatus');
+
+        async function processClaim() {
+            if (!walletAddress) {
+                statusEl.innerHTML = `
+                    <div class="size-16 mx-auto rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-red-400 text-3xl">error</span>
+                    </div>
+                    <h3 class="text-xl font-serif text-white mb-2">No Wallet Detected</h3>
+                    <p class="text-slate-500 text-sm mb-8">Please connect your wallet to claim tokens.</p>
+                    <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://kea-valley.com/claim" class="inline-block bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-transform">
+                        Connect Wallet
+                    </a>
+                `;
+                return;
+            }
 
             try {
-                const response = await fetch(`${CONFIG.apiBase}/api/claim/register`, {
+                const response = await fetch('/api/claim/register', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         wallet_address: walletAddress,
                         signature: signature,
-                        message: CONFIG.message
+                        message: message
                     })
                 });
 
                 const data = await response.json();
-                console.log('Claim response:', data);
 
-                // Get token symbol from response or use default
-                const tokenSymbol = data.symbol || CONFIG.tokenSymbol;
-
-                if (response.ok) {
-                    // Success - tokens minted
-                    showState('successState');
-                    document.getElementById('walletAddressSuccess').textContent = walletAddress;
-                    document.getElementById('tokenAmount').textContent = data.amount || 2;
-                    document.getElementById('tokenSymbol').textContent = `${tokenSymbol} Tokens`;
-                    
-                    if (data.tx_hash) {
-                        const explorerUrl = data.explorer_url || `${CONFIG.explorerUrl}/tx/${data.tx_hash}`;
-                        document.getElementById('txLink').href = explorerUrl;
-                        document.getElementById('txLink').style.display = 'inline-flex';
-                    }
-                } else if (response.status === 409 || data.status === 'already_claimed') {
+                if (response.status === 201) {
+                    // Success
+                    statusEl.innerHTML = `
+                        <div class="size-16 mx-auto rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-6">
+                            <span class="material-symbols-outlined text-green-400 text-3xl">check_circle</span>
+                        </div>
+                        <h3 class="text-xl font-serif text-white mb-2">Tokens Claimed!</h3>
+                        <p class="text-slate-400 text-sm mb-4">${data.message || 'Your VIP tokens have been minted successfully.'}</p>
+                        ${data.tx_hash ? `
+                            <a href="${data.explorer_url}" target="_blank" class="inline-flex items-center gap-2 text-primary text-xs hover:underline mb-8">
+                                View Transaction <span class="material-symbols-outlined text-sm">open_in_new</span>
+                            </a>
+                        ` : ''}
+                        <div class="pt-4">
+                            <a href="/profile" class="inline-block bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-transform">
+                                View My Profile
+                            </a>
+                        </div>
+                    `;
+                } else if (response.status === 409) {
                     // Already claimed
-                    showState('alreadyClaimedState');
-                    document.getElementById('walletAddressAlready').textContent = walletAddress;
-                    document.getElementById('existingBalance').textContent = Math.floor(parseFloat(data.balance) || 2);
-                    document.getElementById('tokenSymbolAlready').textContent = `${tokenSymbol} Tokens`;
-                    
-                    if (data.tx_hash && data.tx_hash !== 'ALREADY_HAD_TOKENS') {
-                        const explorerUrl = data.explorer_url || `${CONFIG.explorerUrl}/tx/${data.tx_hash}`;
-                        document.getElementById('txLinkAlready').href = explorerUrl;
-                        document.getElementById('txLinkAlready').style.display = 'inline-flex';
-                    }
+                    statusEl.innerHTML = `
+                        <div class="size-16 mx-auto rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-6">
+                            <span class="material-symbols-outlined text-primary text-3xl">info</span>
+                        </div>
+                        <h3 class="text-xl font-serif text-white mb-2">Already Claimed</h3>
+                        <p class="text-slate-400 text-sm mb-8">${data.message || 'This wallet has already claimed tokens.'}</p>
+                        <a href="/profile" class="inline-block bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-transform">
+                            View My Profile
+                        </a>
+                    `;
                 } else {
                     // Error
-                    showState('errorState');
-                    document.getElementById('errorMessage').textContent = data.error || data.details || 'Failed to process claim. Please try again.';
+                    statusEl.innerHTML = `
+                        <div class="size-16 mx-auto rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-6">
+                            <span class="material-symbols-outlined text-red-400 text-3xl">error</span>
+                        </div>
+                        <h3 class="text-xl font-serif text-white mb-2">Claim Failed</h3>
+                        <p class="text-slate-500 text-sm mb-8">${data.message || data.error || 'An error occurred. Please try again.'}</p>
+                        <a href="/" class="inline-block border border-primary/30 text-primary px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-background-dark transition-all">
+                            Return Home
+                        </a>
+                    `;
                 }
             } catch (error) {
-                console.error('Claim error:', error);
-                showState('errorState');
-                document.getElementById('errorMessage').textContent = 'Network error. Please check your connection and try again.';
+                statusEl.innerHTML = `
+                    <div class="size-16 mx-auto rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-6">
+                        <span class="material-symbols-outlined text-red-400 text-3xl">error</span>
+                    </div>
+                    <h3 class="text-xl font-serif text-white mb-2">Connection Error</h3>
+                    <p class="text-slate-500 text-sm mb-8">Unable to connect to the server. Please try again.</p>
+                    <button onclick="location.reload()" class="inline-block border border-primary/30 text-primary px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-background-dark transition-all">
+                        Try Again
+                    </button>
+                `;
             }
         }
 
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            const params = getUrlParams();
-
-            if (params.wallet) {
-                // Clean the URL
-                window.history.replaceState({}, document.title, '/claim');
-                
-                // Claim tokens
-                claimTokens(params.wallet, params.signature);
-            } else {
-                // Show connect state
-                showState('connectState');
-            }
-        });
+        // Process claim on page load
+        processClaim();
     </script>
 </body>
 </html>

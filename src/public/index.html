@@ -1,1429 +1,369 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <meta name="description" content="KEA Valley® - The Mediterranean's Premier Destination for Luxury Innovation, Ultra-Premium Hospitality & Blockchain-Enabled Experiences">
-    <title>KEA Valley® | Luxury Innovation & Blockchain-Enabled Hospitality</title>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <title>Kea Valley | The Art of Living</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ee9d2b",
+                        "primary-light": "#fbdea6",
+                        "background-dark": "#0a0a0a",
+                        "surface": "#121212",
+                    },
+                    fontFamily: {
+                        "sans": ["Manrope", "sans-serif"],
+                        "serif": ["Playfair Display", "serif"],
+                    },
+                },
+            },
+        }
+    </script>
     <style>
-        /* ============================================
-           RESET & BASE STYLES
-           ============================================ */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            /* Color Palette */
-            --deep-blue: #0A2E5C;
-            --medium-blue: #1E5A8E;
-            --light-blue: #3A7CB7;
-            --pure-white: #FFFFFF;
-            --gold: #D4AF37;
-            --light-gold: #F4E4C1;
-            --cream: #FAF7F2;
-            --dark-text: #1A1A1A;
-            --gray-text: #555555;
-            
-            /* Typography */
-            --font-display: 'Playfair Display', serif;
-            --font-body: 'Montserrat', sans-serif;
-            
-            /* Spacing */
-            --section-padding: 120px;
-            --section-padding-mobile: 60px;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: var(--font-body);
-            color: var(--dark-text);
-            background: var(--pure-white);
-            overflow-x: hidden;
-            line-height: 1.6;
-        }
-
-        /* ============================================
-           TYPOGRAPHY
-           ============================================ */
-        h1, h2, h3, h4, h5, h6 {
-            font-family: var(--font-display);
-            font-weight: 700;
-            line-height: 1.2;
-        }
-
-        h1 {
-            font-size: clamp(2.5rem, 5vw, 4.5rem);
-            margin-bottom: 1.5rem;
-        }
-
-        h2 {
-            font-size: clamp(2rem, 4vw, 3.5rem);
-            margin-bottom: 1.2rem;
-        }
-
-        h3 {
-            font-size: clamp(1.5rem, 3vw, 2.5rem);
-            margin-bottom: 1rem;
-        }
-
-        p {
-            font-size: clamp(1rem, 1.5vw, 1.125rem);
-            line-height: 1.8;
-            margin-bottom: 1rem;
-        }
-
-        /* ============================================
-           BUTTONS
-           ============================================ */
-        .btn {
-            display: inline-block;
-            padding: 18px 45px;
-            font-family: var(--font-body);
-            font-size: 1.1rem;
-            font-weight: 600;
-            text-decoration: none;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            border-radius: 50px;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            border: none;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--gold) 0%, #B8941E 100%);
-            color: var(--pure-white);
-            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.5);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: var(--pure-white);
-            border: 2px solid var(--pure-white);
-        }
-
-        .btn-secondary:hover {
-            background: var(--pure-white);
-            color: var(--deep-blue);
-            transform: translateY(-3px);
-        }
-
-        /* ============================================
-           HERO SECTION
-           ============================================ */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            background: linear-gradient(135deg, var(--deep-blue) 0%, var(--medium-blue) 100%);
-            overflow: hidden;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23ffffff" fill-opacity="0.05" d="M0,96L48,112C96,128,192,160,288,186.7C384,213,480,235,576,213.3C672,192,768,128,864,128C960,128,1056,192,1152,208C1248,224,1344,192,1392,176L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') 
-                bottom center / cover no-repeat;
-            animation: waveAnimation 15s ease-in-out infinite;
-        }
-
-        @keyframes waveAnimation {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(-50px); }
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            padding: 2rem;
-            max-width: 1200px;
-            animation: fadeInUp 1s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .hero-logo {
-            font-size: clamp(2rem, 4vw, 3.5rem);
-            font-family: var(--font-display);
-            font-weight: 800;
-            color: var(--gold);
-            letter-spacing: 4px;
-            margin-bottom: 2rem;
-            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        .hero h1 {
-            color: var(--pure-white);
-            margin-bottom: 1.5rem;
-            text-shadow: 2px 2px 15px rgba(0, 0, 0, 0.4);
-        }
-
-        .hero-subtitle {
-            font-size: clamp(1.1rem, 2vw, 1.5rem);
-            color: var(--light-gold);
-            margin-bottom: 3rem;
-            font-weight: 400;
-            max-width: 900px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .hero-cta {
-            display: flex;
-            gap: 1.5rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 3rem;
-        }
-
-        /* Scroll indicator */
-        .scroll-indicator {
-            position: absolute;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 3;
-            animation: bounce 2s infinite;
-        }
-
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {
-                transform: translateX(-50%) translateY(0);
-            }
-            40% {
-                transform: translateX(-50%) translateY(-10px);
-            }
-            60% {
-                transform: translateX(-50%) translateY(-5px);
-            }
-        }
-
-        .scroll-indicator svg {
-            width: 30px;
-            height: 30px;
-            fill: var(--light-gold);
-        }
-
-        /* ============================================
-           EXECUTIVE SUMMARY
-           ============================================ */
-        .executive-summary {
-            padding: var(--section-padding) 2rem;
-            background: linear-gradient(180deg, var(--cream) 0%, var(--pure-white) 100%);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 4rem;
-        }
-
-        .section-header h2 {
-            color: var(--deep-blue);
-            position: relative;
-            display: inline-block;
-        }
-
-        .section-header h2::after {
-            content: '';
-            position: absolute;
-            bottom: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 4px;
-            background: var(--gold);
-            border-radius: 2px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 3rem;
-            margin-top: 4rem;
-        }
-
-        .stat-card {
-            text-align: center;
-            padding: 3rem 2rem;
-            background: var(--pure-white);
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-            transition: all 0.4s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 5px;
-            background: linear-gradient(90deg, var(--gold), var(--light-gold));
-            transform: scaleX(0);
-            transition: transform 0.4s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
-        }
-
-        .stat-card:hover::before {
-            transform: scaleX(1);
-        }
-
-        .stat-number {
-            font-size: clamp(2.5rem, 4vw, 3.5rem);
-            font-weight: 800;
-            color: var(--gold);
-            font-family: var(--font-display);
-            margin-bottom: 1rem;
-        }
-
-        .stat-label {
-            font-size: 1.1rem;
-            color: var(--gray-text);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
-
-        /* ============================================
-           ABOUT KEA VALLEY
-           ============================================ */
-        .about {
-            padding: var(--section-padding) 2rem;
-            background: var(--pure-white);
-        }
-
-        .about-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
-            align-items: center;
-            margin-top: 3rem;
-        }
-
-        .about-text h3 {
-            color: var(--deep-blue);
-            margin-bottom: 1.5rem;
-        }
-
-        .about-text p {
-            color: var(--gray-text);
-            margin-bottom: 1.5rem;
-        }
-
-        .about-highlights {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-
-        .highlight-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .highlight-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--gold), var(--light-gold));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .highlight-icon svg {
-            width: 24px;
-            height: 24px;
-            fill: var(--pure-white);
-        }
-
-        .about-image {
-            position: relative;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-        }
-
-        .about-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            min-height: 500px;
-        }
-
-        .about-image::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, var(--deep-blue) 0%, transparent 100%);
-            opacity: 0.3;
-            z-index: 1;
-        }
-
-        /* Placeholder for image */
-        .placeholder-image {
-            background: linear-gradient(135deg, var(--medium-blue), var(--light-blue));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--pure-white);
-            font-size: 1.2rem;
-            text-align: center;
-            padding: 2rem;
-        }
-
-        /* ============================================
-           KEY FEATURES / PILLARS
-           ============================================ */
-        .features {
-            padding: var(--section-padding) 2rem;
-            background: linear-gradient(180deg, var(--cream) 0%, var(--pure-white) 50%, var(--cream) 100%);
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 3rem;
-            margin-top: 4rem;
-        }
-
-        .feature-card {
-            background: var(--pure-white);
-            padding: 3rem 2rem;
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-            transition: all 0.4s ease;
-            position: relative;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-15px);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-        }
-
-        .feature-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 2rem;
-            background: linear-gradient(135deg, var(--deep-blue), var(--medium-blue));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            box-shadow: 0 10px 30px rgba(10, 46, 92, 0.2);
-        }
-
-        .feature-icon::before {
-            content: '';
-            position: absolute;
-            inset: -5px;
-            border-radius: 50%;
-            border: 2px solid var(--gold);
-            opacity: 0;
-            transition: opacity 0.4s ease;
-        }
-
-        .feature-card:hover .feature-icon::before {
-            opacity: 1;
-        }
-
-        .feature-icon svg {
-            width: 40px;
-            height: 40px;
-            fill: var(--gold);
-        }
-
-        .feature-card h3 {
-            color: var(--deep-blue);
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
-        }
-
-        .feature-card p {
-            color: var(--gray-text);
-            line-height: 1.8;
-        }
-
-        /* ============================================
-           INVESTMENT OPPORTUNITY
-           ============================================ */
-        .investment {
-            padding: var(--section-padding) 2rem;
-            background: var(--deep-blue);
-            color: var(--pure-white);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .investment::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -10%;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
-            border-radius: 50%;
-        }
-
-        .investment .container {
-            position: relative;
-            z-index: 2;
-        }
-
-        .investment h2 {
-            color: var(--pure-white);
-            text-align: center;
-        }
-
-        .investment-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
-            margin-top: 4rem;
-            align-items: center;
-        }
-
-        .investment-text {
-            padding-right: 2rem;
-        }
-
-        .investment-text h3 {
-            color: var(--light-gold);
-            margin-bottom: 1.5rem;
-        }
-
-        .investment-text p {
-            color: rgba(255, 255, 255, 0.9);
-            margin-bottom: 1.5rem;
-        }
-
-        .investment-details {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 3rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .investment-item {
-            margin-bottom: 2rem;
-            padding-bottom: 2rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .investment-item:last-child {
-            margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: none;
-        }
-
-        .investment-item h4 {
-            color: var(--gold);
-            margin-bottom: 0.8rem;
-            font-size: 1.2rem;
-        }
-
-        .investment-item p {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 1rem;
-        }
-
-        .token-benefits {
-            list-style: none;
-            margin-top: 2rem;
-        }
-
-        .token-benefits li {
-            padding: 1rem 0;
-            padding-left: 2.5rem;
-            position: relative;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .token-benefits li::before {
-            content: '✓';
-            position: absolute;
-            left: 0;
-            color: var(--gold);
-            font-weight: bold;
-            font-size: 1.4rem;
-        }
-
-        /* ============================================
-           MEMBERSHIP SECTION
-           ============================================ */
-        .membership {
-            padding: var(--section-padding) 2rem;
-            background: var(--pure-white);
-        }
-
-        .membership-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 3rem;
-            margin-top: 4rem;
-        }
-
-        .membership-card {
-            background: linear-gradient(135deg, var(--cream) 0%, var(--pure-white) 100%);
-            border-radius: 20px;
-            padding: 3rem 2.5rem;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-            transition: all 0.4s ease;
-            border: 2px solid transparent;
-        }
-
-        .membership-card:hover {
-            border-color: var(--gold);
-            transform: translateY(-10px);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-        }
-
-        .membership-card h3 {
-            color: var(--deep-blue);
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .membership-price {
-            text-align: center;
-            font-size: 3rem;
-            font-weight: 800;
-            color: var(--gold);
-            font-family: var(--font-display);
-            margin-bottom: 1rem;
-        }
-
-        .membership-period {
-            text-align: center;
-            color: var(--gray-text);
-            margin-bottom: 2rem;
-            text-transform: uppercase;
-            font-size: 0.9rem;
-            letter-spacing: 1px;
-        }
-
-        .membership-features {
-            list-style: none;
-            margin-bottom: 2rem;
-        }
-
-        .membership-features li {
-            padding: 0.8rem 0;
-            padding-left: 2rem;
-            position: relative;
-            color: var(--gray-text);
-        }
-
-        .membership-features li::before {
-            content: '★';
-            position: absolute;
-            left: 0;
-            color: var(--gold);
-            font-size: 1.2rem;
-        }
-
-        /* ============================================
-           FINAL CTA SECTION
-           ============================================ */
-        .final-cta {
-            padding: calc(var(--section-padding) * 0.8) 2rem;
-            background: linear-gradient(135deg, var(--medium-blue) 0%, var(--deep-blue) 100%);
-            color: var(--pure-white);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .final-cta::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 50%);
-        }
-
-        .final-cta .container {
-            position: relative;
-            z-index: 2;
-        }
-
-        .final-cta h2 {
-            color: var(--pure-white);
-            margin-bottom: 1.5rem;
-        }
-
-        .final-cta p {
-            font-size: 1.3rem;
-            color: var(--light-gold);
-            margin-bottom: 3rem;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .cta-highlight {
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 1rem 2rem;
-            border-radius: 10px;
-            margin-bottom: 2rem;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .cta-highlight strong {
-            color: var(--gold);
-            font-size: 1.2rem;
-        }
-
-        /* ============================================
-           FOOTER
-           ============================================ */
-        .footer {
-            background: var(--dark-text);
-            color: rgba(255, 255, 255, 0.7);
-            padding: 4rem 2rem 2rem;
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 3rem;
-            margin-bottom: 3rem;
-        }
-
-        .footer-section h4 {
-            color: var(--gold);
-            margin-bottom: 1.5rem;
-            font-size: 1.2rem;
-        }
-
-        .footer-section p,
-        .footer-section a {
-            color: rgba(255, 255, 255, 0.7);
-            text-decoration: none;
-            display: block;
-            margin-bottom: 0.8rem;
-            transition: color 0.3s ease;
-        }
-
-        .footer-section a:hover {
-            color: var(--gold);
-        }
-
-        .footer-logo {
-            font-family: var(--font-display);
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--gold);
-            letter-spacing: 2px;
-            margin-bottom: 1rem;
-        }
-
-        .social-links {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-
-        .social-links a {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .social-links a:hover {
-            background: var(--gold);
-            transform: translateY(-3px);
-        }
-
-        .footer-bottom {
-            text-align: center;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.9rem;
-        }
-
-        /* ============================================
-           ANIMATIONS
-           ============================================ */
-        .fade-in {
+        body { font-family: 'Manrope', sans-serif; }
+        h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
+        .gold-glow:hover {
+            box-shadow: 0 0 25px rgba(238, 157, 43, 0.3);
+            border-color: #ee9d2b;
+            transition: all 0.5s ease;
+        }
+        .glass-nav {
+            backdrop-filter: blur(12px);
+            background-color: rgba(10, 10, 10, 0.7);
+        }
+        .text-reveal {
             opacity: 0;
             transform: translateY(30px);
-            transition: opacity 0.8s ease, transform 0.8s ease;
+            animation: fadeIn 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
-
-        .fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
+        @keyframes fadeIn {
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        /* ============================================
-           RESPONSIVE DESIGN
-           ============================================ */
-        @media (max-width: 968px) {
-            :root {
-                --section-padding: 80px;
-            }
-
-            .about-content,
-            .investment-content {
-                grid-template-columns: 1fr;
-                gap: 3rem;
-            }
-
-            .investment-text {
-                padding-right: 0;
-            }
-
-            .hero-cta {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .btn {
-                width: 100%;
-                max-width: 300px;
-            }
-
-            .stats-grid,
-            .features-grid {
-                gap: 2rem;
-            }
-        }
-
-        @media (max-width: 640px) {
-            :root {
-                --section-padding: 60px;
-            }
-
-            .stat-card {
-                padding: 2rem 1.5rem;
-            }
-
-            .feature-card {
-                padding: 2rem 1.5rem;
-            }
-
-            .investment-details {
-                padding: 2rem;
-            }
-
-            .footer-content {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
     </style>
 </head>
-<body>
-    <!-- ============================================
-         HERO SECTION
-         ============================================ -->
-    <section class="hero">
-        <div class="hero-content">
-            <div class="hero-logo">KEA VALLEY®</div>
-            <h1>The Mediterranean's Premier Destination for Luxury Innovation</h1>
-            <p class="hero-subtitle">
-                Ultra-Premium Hospitality Meets Blockchain-Enabled Experiences on the Island of Kea, Greece
-            </p>
-            <div class="hero-cta">
-                <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://kea-valley.com/claim" class="btn btn-primary">
-                    Get Your Free Bonus
+<body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased">
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
+            <a href="/" class="flex items-center gap-4 group cursor-pointer">
+                <div class="size-10 text-primary transition-transform duration-500 group-hover:rotate-180">
+                    <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
+                    <p class="text-[0.6rem] text-primary uppercase tracking-[0.3em] font-sans">Estates</p>
+                </div>
+            </a>
+            <nav class="hidden lg:flex items-center gap-8 xl:gap-12">
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="#vision">The Vision</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="#residences">Residences</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="#lifestyle">Lifestyle</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/profile">My Profile</a>
+            </nav>
+            <div class="flex items-center gap-4">
+                <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://kea-valley.com/claim" class="hidden md:block bg-transparent border border-primary/30 text-primary px-6 lg:px-8 py-3 rounded-sm text-xs font-bold uppercase tracking-widest gold-glow transition-all hover:bg-primary hover:text-background-dark">
+                    Free Tokens
                 </a>
-                <a href="/profile" class="btn btn-secondary">My Profile</a>
-                <a href="#about" class="btn btn-secondary">Discover More</a>
+                <!-- Mobile menu button -->
+                <button class="lg:hidden text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
             </div>
         </div>
-        <div class="scroll-indicator">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
-            </svg>
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden lg:hidden bg-background-dark border-t border-white/5 px-6 py-4">
+            <nav class="flex flex-col gap-4">
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="#vision">The Vision</a>
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="#residences">Residences</a>
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="#lifestyle">Lifestyle</a>
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/profile">My Profile</a>
+                <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://kea-valley.com/claim" class="bg-primary text-background-dark px-6 py-3 rounded-sm text-xs font-bold uppercase tracking-widest text-center mt-2">
+                    Free Tokens
+                </a>
+            </nav>
         </div>
-    </section>
+    </header>
 
-    <!-- ============================================
-         EXECUTIVE SUMMARY
-         ============================================ -->
-    <section class="executive-summary">
-        <div class="container">
-            <div class="section-header fade-in">
-                <h2>Executive Summary</h2>
-                <p style="max-width: 800px; margin: 2rem auto 0; color: var(--gray-text); font-size: 1.2rem;">
-                    Kea Valley® represents a paradigm shift in luxury real estate development, merging Mediterranean exclusivity with cutting-edge blockchain technology and sustainable innovation.
-                </p>
-            </div>
-
-            <div class="stats-grid">
-                <div class="stat-card fade-in">
-                    <div class="stat-number">€5M</div>
-                    <div class="stat-label">Seed Round Target Through Utility Token Sale</div>
-                </div>
-                <div class="stat-card fade-in">
-                    <div class="stat-number">€2.1M</div>
-                    <div class="stat-label">Existing Real Estate Assets</div>
-                </div>
-                <div class="stat-card fade-in">
-                    <div class="stat-number">35%</div>
-                    <div class="stat-label">Annual Appreciation of Underlying Assets</div>
-                </div>
-                <div class="stat-card fade-in">
-                    <div class="stat-number">€20M+</div>
-                    <div class="stat-label">Year 5 Projected Valuation</div>
-                </div>
-            </div>
+    <!-- Hero Section -->
+    <section class="relative h-screen w-full overflow-hidden flex items-center justify-center">
+        <div class="absolute inset-0 z-0">
+            <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-background-dark z-10"></div>
+            <div class="w-full h-full bg-cover bg-center bg-no-repeat transform scale-105" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDb_ylzwt1JEbIeGZFhXrhxNxNambzL5Ne9LWo9j7DaH9Ryy8Hsd16PSX_ld9bfYoziEsrx0FwTVYv5bxWjjRTQYVS5xx1oH1PxgZjQo3xxVv7Ej10A8PnxrGcCLMlgvD5n6Ellk8WLmevdZW_nHaAm1klzDKw6d2Zs0urW-AxGMKuAFj34twQx6sSo5aZrFHVhKEvu8B9Fw7Pi9h-80foA99A8QZuqgwa25bo2RgA-Cy-DWo-tRyfmoyMqmVwzCmg49-_5-3MMAeA');"></div>
         </div>
-    </section>
-
-    <!-- ============================================
-         ABOUT KEA VALLEY
-         ============================================ -->
-    <section class="about" id="about">
-        <div class="container">
-            <div class="section-header fade-in">
-                <h2>About KEA Valley®</h2>
+        <div class="relative z-20 text-center px-6 max-w-6xl mx-auto flex flex-col items-center">
+            <div class="mb-8 flex items-center justify-center gap-4 text-reveal" style="animation-delay: 0.1s;">
+                <div class="h-[1px] w-12 bg-primary"></div>
+                <span class="text-primary tracking-[0.4em] uppercase text-xs font-bold">Sanctuary of the Senses</span>
+                <div class="h-[1px] w-12 bg-primary"></div>
             </div>
-
-            <div class="about-content">
-                <div class="about-text fade-in">
-                    <h3>Redefining Luxury in the Mediterranean</h3>
-                    <p>
-                        Located on the pristine island of Kea, Greece, Kea Valley® is a next-generation destination that combines premium hospitality, proprietary digital infrastructure, and an asset-backed token ecosystem to create an unparalleled experience.
-                    </p>
-                    <p>
-                        Our vision transcends traditional real estate development by integrating four powerful pillars that work in harmony to create extraordinary value for discerning travelers, visionary entrepreneurs, and strategic investors.
-                    </p>
-
-                    <div class="about-highlights">
-                        <div class="highlight-item">
-                            <div class="highlight-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <strong>Mediterranean Exclusivity</strong><br>
-                                Prime location on the island of Kea, just 1 hour from Athens
-                            </div>
-                        </div>
-
-                        <div class="highlight-item">
-                            <div class="highlight-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <strong>Premium Real Estate</strong><br>
-                                Luxury villas with 30-50% annual appreciation potential
-                            </div>
-                        </div>
-
-                        <div class="highlight-item">
-                            <div class="highlight-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <strong>Blockchain Innovation</strong><br>
-                                Asset-backed utility token ecosystem for seamless experiences
-                            </div>
-                        </div>
-
-                        <div class="highlight-item">
-                            <div class="highlight-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                    <path d="M12 2c-4.97 0-9 4.03-9 9 0 4.17 2.84 7.67 6.69 8.69L12 22l2.31-2.31C18.16 18.67 21 15.17 21 11c0-4.97-4.03-9-9-9zm0 2c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.3c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <strong>Exclusive Community</strong><br>
-                                Curated membership connecting innovators and visionaries
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="about-image fade-in">
-                    <div class="placeholder-image" style="min-height: 500px;">
-                        🏝️<br><br>
-                        <strong>Island of Kea, Greece</strong><br>
-                        Mediterranean Paradise<br>
-                        <small>Replace with: Aerial view of Kea coastline, luxury villa with sea view, or Greek island landscape</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================
-         KEY FEATURES / FOUR PILLARS
-         ============================================ -->
-    <section class="features">
-        <div class="container">
-            <div class="section-header fade-in">
-                <h2>Four Pillars of Excellence</h2>
-                <p style="max-width: 700px; margin: 2rem auto 0; color: var(--gray-text);">
-                    Our integrated ecosystem creates extraordinary value through four harmonious pillars
-                </p>
-            </div>
-
-            <div class="features-grid">
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/>
-                        </svg>
-                    </div>
-                    <h3>Real Estate Excellence</h3>
-                    <p>
-                        Premium villas designed with Cycladic architectural principles, offering unparalleled views and modern luxury. Projected 30-50% annual appreciation in one of the Mediterranean's most promising emerging markets.
-                    </p>
-                </div>
-
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M21 4H7V2H5v20h2v-8h14l-2-5 2-5zm-6 5c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2z"/>
-                        </svg>
-                    </div>
-                    <h3>Ultra-Luxury Hospitality</h3>
-                    <p>
-                        From premium villa accommodations to curated yachting experiences, every touchpoint delivers exceptional service. The intimacy of a private estate combined with world-class resort sophistication.
-                    </p>
-                </div>
-
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                        </svg>
-                    </div>
-                    <h3>Blockchain Technology</h3>
-                    <p>
-                        The KEA Token creates a frictionless payment and membership system, offering holders exclusive access, preferential treatment, and participation rights. Digital infrastructure at the forefront of hospitality.
-                    </p>
-                </div>
-
-                <div class="feature-card fade-in">
-                    <div class="feature-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.30C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z"/>
-                        </svg>
-                    </div>
-                    <h3>Sustainable Innovation</h3>
-                    <p>
-                        A living laboratory for breakthrough technologies in smart homes, renewable energy, longevity science, and sustainable tourism. Real-world testing with access to high-net-worth decision makers.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================
-         INVESTMENT OPPORTUNITY
-         ============================================ -->
-    <section class="investment">
-        <div class="container">
-            <div class="section-header fade-in">
-                <h2>Investment Opportunity</h2>
-            </div>
-
-            <div class="investment-content">
-                <div class="investment-text fade-in">
-                    <h3>Asset-Backed Token Ecosystem</h3>
-                    <p>
-                        The project launches with Villa Carpe Diem and €2.1 million in real estate assets, forming a solid foundation for scalable, high-value development.
-                    </p>
-                    <p>
-                        The seed round finances land acquisition, villa construction, yacht procurement, technology development, and activation of the exclusive Kea Valley membership community.
-                    </p>
-
-                    <ul class="token-benefits">
-                        <li>Automatic membership in KEA Valley Private Members Club</li>
-                        <li>Priority booking and preferential rates for villas & yachts</li>
-                        <li>Exclusive access to quarterly events and gatherings</li>
-                        <li>Eligibility for Series A investment round participation</li>
-                        <li>Seamless payment utility across the entire ecosystem</li>
-                        <li>Up to 50% discount on accommodations and experiences</li>
-                    </ul>
-                </div>
-
-                <div class="investment-details fade-in">
-                    <div class="investment-item">
-                        <h4>Token Base Price</h4>
-                        <p>€1.00 per KEA Token</p>
-                    </div>
-
-                    <div class="investment-item">
-                        <h4>Pre-Sale Bonus</h4>
-                        <p>100% Bonus (Ends December 31, 2025)</p>
-                    </div>
-
-                    <div class="investment-item">
-                        <h4>Public Sale Bonus</h4>
-                        <p>50% Bonus (Ends Q1 2026)</p>
-                    </div>
-
-                    <div class="investment-item">
-                        <h4>Initial Target</h4>
-                        <p>€5 Million Seed Round</p>
-                    </div>
-
-                    <div class="investment-item">
-                        <h4>Supply Model</h4>
-                        <p>Dynamic supply tied to 2-year bookable inventory, ensuring tokens correlate with real-world utility</p>
-                    </div>
-
-                    <div style="margin-top: 3rem; text-align: center;">
-                        <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://kea-valley.com/claim" class="btn btn-primary">
-                            Get Your Free Tokens
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================
-         MEMBERSHIP SECTION
-         ============================================ -->
-    <section class="membership">
-        <div class="container">
-            <div class="section-header fade-in">
-                <h2>KEA Valley Club Membership</h2>
-                <p style="max-width: 800px; margin: 2rem auto 0; color: var(--gray-text);">
-                    More than a membership program, a carefully curated community of innovators and visionaries who share common values and ambitions
-                </p>
-            </div>
-
-            <div class="membership-cards">
-                <div class="membership-card fade-in">
-                    <h3>Annual Membership</h3>
-                    <div class="membership-price">€25,000</div>
-                    <div class="membership-period">Per Year</div>
-                    
-                    <ul class="membership-features">
-                        <li>Access to 4 curated quarterly events</li>
-                        <li>Exclusive Pitch & Putt golf area access</li>
-                        <li>Innovation showcases and demonstrations</li>
-                        <li>Premium networking opportunities</li>
-                        <li>Preferential villa and yacht booking</li>
-                        <li>Concierge services</li>
-                        <li>Priority Series A investment allocation</li>
-                    </ul>
-
-                    <div style="text-align: center; margin-top: 2rem;">
-                        <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://kea-valley.com/claim" class="btn btn-primary">
-                            Join the Club
-                        </a>
-                    </div>
-                </div>
-
-                <div class="membership-card fade-in">
-                    <h3>Quarterly Events</h3>
-                    <div style="text-align: center; color: var(--deep-blue); margin: 2rem 0;">
-                        <strong style="font-size: 1.5rem;">4 Exclusive Gatherings</strong>
-                    </div>
-                    
-                    <ul class="membership-features">
-                        <li>Q1: Innovation Summit - Emerging technologies</li>
-                        <li>Q2: Sustainability Forum - Environmental excellence</li>
-                        <li>Q3: Longevity & Wellness - Human performance</li>
-                        <li>Q4: Strategic Networking - Deal flow & collaboration</li>
-                    </ul>
-
-                    <p style="text-align: center; color: var(--gray-text); margin-top: 2rem; font-size: 0.95rem;">
-                        Each gathering features prominent speakers, exclusive experiences, and unparalleled opportunities for meaningful connection
-                    </p>
-                </div>
-
-                <div class="membership-card fade-in">
-                    <h3>Target Members</h3>
-                    <div style="text-align: center; color: var(--deep-blue); margin: 2rem 0;">
-                        <strong style="font-size: 1.5rem;">100 Initial Members</strong>
-                    </div>
-                    
-                    <ul class="membership-features">
-                        <li>High-Net-Worth Individuals</li>
-                        <li>Family Offices</li>
-                        <li>Innovation Companies (Smart Homes, AI, Web3)</li>
-                        <li>Renewable Energy & Sustainability Leaders</li>
-                        <li>Longevity & Human Performance Experts</li>
-                        <li>Ultra-Luxury Travelers</li>
-                    </ul>
-
-                    <p style="text-align: center; color: var(--gray-text); margin-top: 2rem; font-size: 0.95rem;">
-                        A vetted community of like-minded peers sharing values and ambitions
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================
-         FINAL CTA
-         ============================================ -->
-    <section class="final-cta">
-        <div class="container fade-in">
-            <h2>Join the Future of Luxury Innovation</h2>
-            <p>
-                Secure your position in the Mediterranean's most exclusive destination where cutting-edge blockchain technology meets ultra-premium hospitality
+            <h1 class="text-5xl md:text-7xl lg:text-9xl font-serif italic font-medium tracking-tight text-white mb-8 leading-none text-reveal" style="animation-delay: 0.3s;">
+                The Art <br/><span class="not-italic font-normal">of Living</span>
+            </h1>
+            <p class="text-slate-300 text-lg md:text-xl max-w-xl mx-auto font-light leading-relaxed text-reveal font-sans" style="animation-delay: 0.5s;">
+                An architectural masterpiece carved into the valley's edge. Where silence is a luxury and nature is the only neighbor.
             </p>
-
-            <div class="cta-highlight">
-                <strong>🎁 Claim Your Free KEA Tokens Now!</strong><br>
-                <span style="color: rgba(255, 255, 255, 0.9);">Limited Time Offer - No Purchase Required</span>
-            </div>
-
-            <div style="margin-top: 3rem;">
-                <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://kea-valley.com/claim" class="btn btn-primary" style="font-size: 1.2rem; padding: 22px 50px;">
-                    Get Your Free Bonus Now
+            <div class="mt-12 flex flex-col sm:flex-row gap-4 text-reveal" style="animation-delay: 0.7s;">
+                <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://kea-valley.com/claim" class="px-10 py-4 bg-primary text-background-dark font-bold font-sans rounded-sm tracking-widest uppercase text-xs gold-glow hover:translate-y-[-2px] transition-transform">
+                    Claim Free Tokens
+                </a>
+                <a href="/profile" class="px-10 py-4 border border-white/30 text-white font-bold font-sans rounded-sm tracking-widest uppercase text-xs hover:bg-white/10 transition-all">
+                    My Profile
                 </a>
             </div>
-
-            <p style="margin-top: 3rem; font-size: 1rem; color: rgba(255, 255, 255, 0.7);">
-                Questions? Visit <a href="https://keavalley-greece.com" style="color: var(--gold); text-decoration: underline;" target="_blank">keavalley-greece.com</a>
-            </p>
+            <div class="mt-16 text-reveal" style="animation-delay: 0.9s;">
+                <a class="flex flex-col items-center gap-2 text-white/50 hover:text-primary transition-colors duration-300" href="#vision">
+                    <span class="text-[0.6rem] uppercase tracking-widest">Explore</span>
+                    <span class="material-symbols-outlined text-3xl animate-bounce font-light">keyboard_arrow_down</span>
+                </a>
+            </div>
         </div>
     </section>
 
-    <!-- ============================================
-         FOOTER
-         ============================================ -->
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-section">
-                <div class="footer-logo">KEA VALLEY®</div>
-                <p>The Mediterranean's Premier Destination for Luxury Innovation</p>
-                <div class="social-links">
-                    <a href="#" aria-label="LinkedIn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                        </svg>
-                    </a>
-                    <a href="#" aria-label="Twitter">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
-                        </svg>
-                    </a>
-                    <a href="#" aria-label="Instagram">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                        </svg>
-                    </a>
+    <!-- Main Content -->
+    <main class="relative z-10">
+        
+        <!-- Vision Section -->
+        <section class="py-32 px-6 bg-background-dark" id="vision">
+            <div class="max-w-4xl mx-auto text-center space-y-10">
+                <div class="size-12 mx-auto text-primary opacity-50">
+                    <svg class="w-full h-full" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21L14.017 18C14.017 16.8954 14.8954 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H15.017C14.4647 8 14.017 8.44772 14.017 9V11C14.017 11.5523 13.5693 12 13.017 12H12.017V5H22.017V15C22.017 18.3137 19.3307 21 16.017 21H14.017ZM5.0166 21L5.0166 18C5.0166 16.8954 5.89503 16 7.0166 16H10.0166C10.5689 16 11.0166 15.5523 11.0166 15V9C11.0166 8.44772 10.5689 8 10.0166 8H6.0166C5.46432 8 5.0166 8.44772 5.0166 9V11C5.0166 11.5523 4.56889 12 4.0166 12H3.0166V5H13.0166V15C13.0166 18.3137 10.3303 21 7.0166 21H5.0166Z"></path></svg>
+                </div>
+                <h2 class="text-3xl md:text-5xl font-serif font-light leading-snug text-white/90">
+                    "Kea Valley is more than a destination; it is a sanctuary designed for those who seek the extraordinary. Every detail is crafted to harmonize with the natural beauty of the landscape."
+                </h2>
+                <div class="w-24 h-[1px] bg-primary mx-auto mt-8"></div>
+            </div>
+        </section>
+
+        <!-- Residences Section -->
+        <section class="py-24 bg-surface relative overflow-hidden" id="residences">
+            <div class="absolute top-0 right-0 w-1/3 h-full bg-primary/5 blur-3xl pointer-events-none"></div>
+            <div class="max-w-7xl mx-auto px-6 lg:px-12">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16 border-b border-white/10 pb-8">
+                    <div class="space-y-4">
+                        <span class="text-primary tracking-[0.2em] uppercase text-xs font-bold flex items-center gap-3">
+                            <span class="w-8 h-[1px] bg-primary"></span>
+                            Architectural Highlights
+                        </span>
+                        <h2 class="text-4xl md:text-5xl lg:text-6xl font-serif text-white">The Residences</h2>
+                    </div>
+                    <div class="md:text-right max-w-md">
+                        <p class="text-slate-400 font-light text-sm leading-relaxed">
+                            Designed by world-renowned architects, each residence is a private observation deck to the world's most dramatic sunrises.
+                        </p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+                    <div class="md:col-span-8 group">
+                        <div class="h-[400px] md:h-[600px] w-full overflow-hidden relative rounded-sm">
+                            <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBnlSdEcIzVT64cFT1oTIg0bNZGOiNZdz0uX17uxUXFW9uzqLwwkft7rJ4UBBcYbEpXfsL2wg2gR_91eql-6z4d_VsNWseWzn3twl1wti8v_26U_eRjNHbUGKXAU4_tLhhc449q7Vx9iQfUg9P0Az01QZaSj2RIb4xJg8WHdxb-NI8rNM8141HgJXCHv3dMLuIZhG7f7K2lBYqQXMzC7FXn2oGngQBNmaEN63CnLAUxfIdMAZ4zXAIYAo6zBk8Lryfq7U5hufP_2eg');"></div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80"></div>
+                            <div class="absolute bottom-8 left-8 p-6 bg-black/40 backdrop-blur-md border border-white/10 max-w-sm">
+                                <h3 class="text-2xl font-serif italic mb-2">The Master Suite</h3>
+                                <p class="text-xs text-slate-300 leading-relaxed font-light">Floor-to-ceiling glass walls that vanish at the touch of a button, blending indoor luxury with the raw beauty of the valley.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="md:col-span-4 flex flex-col gap-8 h-full">
+                        <div class="bg-white/5 p-8 md:p-10 h-full border border-white/5 hover:border-primary/30 transition-colors flex flex-col justify-center relative overflow-hidden group">
+                            <div class="absolute -right-10 -top-10 text-white/5 group-hover:text-white/10 transition-colors">
+                                <span class="material-symbols-outlined text-[150px]">architecture</span>
+                            </div>
+                            <h4 class="text-xl font-serif text-primary mb-6">Design Features</h4>
+                            <ul class="space-y-4 text-sm font-light text-slate-300 relative z-10">
+                                <li class="flex items-start gap-3">
+                                    <span class="material-symbols-outlined text-primary text-lg">check</span>
+                                    <span>Cantilevered terraces</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="material-symbols-outlined text-primary text-lg">check</span>
+                                    <span>Sustainable local stone</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="material-symbols-outlined text-primary text-lg">check</span>
+                                    <span>Smart home integration</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="material-symbols-outlined text-primary text-lg">check</span>
+                                    <span>Private elevator access</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </section>
 
-            <div class="footer-section">
-                <h4>Quick Links</h4>
-                <a href="#about">About KEA Valley</a>
-                <a href="#features">Four Pillars</a>
-                <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://kea-valley.com/claim">Free Tokens</a>
-                <a href="https://keavalley-greece.com" target="_blank">Official Website</a>
-            </div>
+        <!-- Lifestyle Section -->
+        <div class="bg-background-dark py-24 space-y-32" id="lifestyle">
+            
+            <!-- Wellness -->
+            <section class="max-w-7xl mx-auto px-6 lg:px-12">
+                <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+                    <div class="order-2 lg:order-1 space-y-8">
+                        <div>
+                            <span class="text-primary font-serif italic text-xl mb-2 block">Chapter I</span>
+                            <h3 class="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-white mb-6">Private Wellness</h3>
+                            <div class="w-16 h-[2px] bg-white/20 mb-8"></div>
+                            <p class="text-slate-400 text-base lg:text-lg font-light leading-relaxed mb-8">
+                                Retreat to a space where time slows down. Our private spa facilities overlook the valley floor, offering thermal circuits, cold plunges, and bespoke treatments using indigenous botanicals.
+                            </p>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div class="flex items-center gap-4 group">
+                                <div class="size-12 rounded-full border border-white/10 flex items-center justify-center group-hover:border-primary transition-colors">
+                                    <span class="material-symbols-outlined text-primary font-light">spa</span>
+                                </div>
+                                <span class="text-sm tracking-wide text-slate-300">Thermal Circuits</span>
+                            </div>
+                            <div class="flex items-center gap-4 group">
+                                <div class="size-12 rounded-full border border-white/10 flex items-center justify-center group-hover:border-primary transition-colors">
+                                    <span class="material-symbols-outlined text-primary font-light">self_improvement</span>
+                                </div>
+                                <span class="text-sm tracking-wide text-slate-300">Meditation Decks</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="order-1 lg:order-2 relative">
+                        <div class="absolute -inset-4 border border-primary/20 rounded-full opacity-50 hidden lg:block"></div>
+                        <div class="h-[400px] lg:h-[600px] w-full overflow-hidden rounded-t-full rounded-b-full shadow-2xl relative">
+                            <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCaB71xhoJeOINfPvorcfz3e73OUVfsGIA_UfRRWOpcNzDPmiXARADGme7rIPCx-yR06jLT-vilP1Rpg5MgyhhXb6KVc7J3h6HH_kk6v5fzExJ-tOJ7KlZiYCD5u6-ynw1l3HOIuXmIVU1SDMZragawOXdua3bIweQNHlWkCKKmTLncyFviKkHQGOegsjNe_VKN0JtjeF2Er_pQjIpFZ7jsTwWAAIXa3B7G8OkKB4G1A8cW2tep_Odfg4fR7M2ps7xwQk0tYDrTNGA');"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-            <div class="footer-section">
-                <h4>Investment</h4>
-                <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://kea-valley.com/claim">Get Your Bonus</a>
-                <a href="#">Token Economics</a>
-                <a href="#">Membership Club</a>
-                <a href="#">Series A Investment</a>
-            </div>
+            <!-- Culinary -->
+            <section class="max-w-7xl mx-auto px-6 lg:px-12">
+                <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+                    <div class="h-[400px] lg:h-[700px] w-full overflow-hidden rounded-sm shadow-2xl relative group">
+                        <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCI0ljr0qG8pBuMudl-4uZNvCS4KOGZ2ypMB4it1YuTh80dKwfH7HSUw3IxTkKpeEI_r7Piy010VZBaV_-8O8PW4AV71i-pkUMv2zhECS5MxEeGIUywtcFyNRd5c2PkiQ_L22cp6V5ClhSUyuYHjK6ke3bEFJB6AFXp5bPid-D8fAM3udrgbUfaOrdqsfx6RVJQ_Mfyo76DPX7b4B3cOGrHh8TrLDURu1uhgI3wkKQLbrJnVcDys9jvK0BIUIH8a5qBz7RdL0YogKw');"></div>
+                        <div class="absolute inset-4 border border-white/20 pointer-events-none"></div>
+                    </div>
+                    <div class="space-y-8">
+                        <div>
+                            <span class="text-primary font-serif italic text-xl mb-2 block">Chapter II</span>
+                            <h3 class="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-white mb-6">Culinary Excellence</h3>
+                            <div class="w-16 h-[2px] bg-white/20 mb-8"></div>
+                            <p class="text-slate-400 text-base lg:text-lg font-light leading-relaxed mb-8">
+                                Indulge in a lifestyle defined by culinary mastery. From private chefs preparing farm-to-table menus to our exclusive vaulted wine cellar featuring the region's finest vintages.
+                            </p>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="p-6 border-l border-white/10 hover:border-primary hover:bg-white/5 transition-all cursor-default">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-serif text-xl">In-Residence Dining</h4>
+                                    <span class="material-symbols-outlined text-primary">restaurant</span>
+                                </div>
+                                <p class="text-sm text-slate-500 font-light">Curated menus prepared by Michelin-trained chefs in your own kitchen.</p>
+                            </div>
+                            <div class="p-6 border-l border-white/10 hover:border-primary hover:bg-white/5 transition-all cursor-default">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-serif text-xl">The Vault</h4>
+                                    <span class="material-symbols-outlined text-primary">wine_bar</span>
+                                </div>
+                                <p class="text-sm text-slate-500 font-light">Access to a collection of rare vintages and private tasting rooms.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-            <div class="footer-section">
-                <h4>Contact</h4>
-                <p>Island of Kea, Greece</p>
-                <p>Email: info@keavalley.com</p>
-                <p>Web: <a href="https://keavalley-greece.com" target="_blank">keavalley-greece.com</a></p>
+            <!-- Services -->
+            <section class="max-w-7xl mx-auto px-6 lg:px-12">
+                <div class="text-center mb-16 space-y-4">
+                    <span class="text-primary font-serif italic text-xl">Chapter III</span>
+                    <h2 class="text-3xl md:text-4xl lg:text-5xl font-serif font-medium">World-Class Services</h2>
+                    <p class="text-slate-400 max-w-xl mx-auto font-light pt-4">Every convenience handled with meticulous attention to detail by our 24/7 concierge team.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/10 border border-white/10 overflow-hidden rounded-lg">
+                    <div class="bg-background-dark p-8 md:p-12 text-center group hover:bg-surface transition-colors duration-500">
+                        <div class="size-16 md:size-20 mx-auto rounded-full bg-surface border border-white/5 flex items-center justify-center mb-8 group-hover:scale-110 group-hover:border-primary/50 transition-all duration-500">
+                            <span class="material-symbols-outlined text-primary text-2xl md:text-3xl font-light">flight_takeoff</span>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-serif mb-4">Private Helipad</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed font-light">Seamless arrivals and departures from our private landing pad.</p>
+                    </div>
+                    <div class="bg-background-dark p-8 md:p-12 text-center group hover:bg-surface transition-colors duration-500">
+                        <div class="size-16 md:size-20 mx-auto rounded-full bg-surface border border-white/5 flex items-center justify-center mb-8 group-hover:scale-110 group-hover:border-primary/50 transition-all duration-500">
+                            <span class="material-symbols-outlined text-primary text-2xl md:text-3xl font-light">pool</span>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-serif mb-4">Infinity Pools</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed font-light">Temperature-controlled pools that merge with the horizon.</p>
+                    </div>
+                    <div class="bg-background-dark p-8 md:p-12 text-center group hover:bg-surface transition-colors duration-500">
+                        <div class="size-16 md:size-20 mx-auto rounded-full bg-surface border border-white/5 flex items-center justify-center mb-8 group-hover:scale-110 group-hover:border-primary/50 transition-all duration-500">
+                            <span class="material-symbols-outlined text-primary text-2xl md:text-3xl font-light">concierge</span>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-serif mb-4">Lifestyle Concierge</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed font-light">Personalized lifestyle management available day and night.</p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- CTA Section -->
+    <section class="relative py-32 md:py-40 border-t border-white/10 overflow-hidden bg-surface">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 blur-[150px] rounded-full -z-10 pointer-events-none"></div>
+        <div class="max-w-4xl mx-auto px-6 text-center space-y-12">
+            <h2 class="text-4xl md:text-5xl lg:text-7xl font-serif font-medium tracking-tight text-white">
+                Ready to transcend <br/><span class="italic text-primary">the ordinary?</span>
+            </h2>
+            <p class="text-slate-400 text-lg max-w-2xl mx-auto font-light">
+                Claim your free VIP tokens and become part of the most exclusive community in the Mediterranean.
+            </p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 pt-6">
+                <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://kea-valley.com/claim" class="w-full sm:w-auto px-10 md:px-12 py-4 md:py-5 bg-primary text-background-dark font-bold font-sans rounded-sm tracking-widest uppercase text-xs gold-glow hover:translate-y-[-2px] transition-transform">
+                    Claim Free Tokens
+                </a>
+                <a href="/profile" class="w-full sm:w-auto px-10 md:px-12 py-4 md:py-5 border border-primary/30 text-primary font-bold font-sans rounded-sm tracking-widest uppercase hover:bg-primary hover:text-background-dark transition-all text-xs">
+                    View My Profile
+                </a>
             </div>
         </div>
+    </section>
 
-        <div class="footer-bottom">
-            <p>&copy; 2026 KEA Valley®. All rights reserved. | <a href="#" style="color: inherit;">Privacy Policy</a> | <a href="#" style="color: inherit;">Terms of Service</a></p>
-            <p style="margin-top: 0.5rem; font-size: 0.85rem;">The KEA Token is a utility token and is not designed as an investment instrument.</p>
+    <!-- Footer -->
+    <footer class="bg-background-dark py-12 md:py-16 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-8">
+                <a href="/" class="flex items-center gap-3">
+                    <div class="size-8 text-primary">
+                        <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
+                        </svg>
+                    </div>
+                    <span class="text-sm font-serif font-bold tracking-widest uppercase text-white">Kea Valley <span class="text-primary font-sans font-normal text-xs ml-1">Estates</span></span>
+                </a>
+                <div class="flex flex-wrap justify-center gap-6 md:gap-8 text-slate-500 text-[0.65rem] tracking-[0.2em] font-bold uppercase font-sans">
+                    <a class="hover:text-primary transition-colors" href="/profile">My Profile</a>
+                    <a class="hover:text-primary transition-colors" href="/claim">Claim Tokens</a>
+                    <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+                    <a class="hover:text-primary transition-colors" href="#">Terms</a>
+                </div>
+                <div class="text-slate-600 text-xs font-light">
+                    © 2026 Kea Valley. All rights reserved.
+                </div>
+            </div>
         </div>
     </footer>
 
-    <!-- ============================================
-         JAVASCRIPT
-         ============================================ -->
-    <script>
-        // ============================================
-        // INTERSECTION OBSERVER FOR FADE-IN ANIMATIONS
-        // ============================================
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, observerOptions);
-
-        document.querySelectorAll('.fade-in').forEach(el => {
-            observer.observe(el);
-        });
-
-        // ============================================
-        // SMOOTH SCROLL FOR ANCHOR LINKS
-        // ============================================
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                const href = this.getAttribute('href');
-                if (href !== '#' && href !== '') {
-                    e.preventDefault();
-                    const target = document.querySelector(href);
-                    if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                }
-            });
-        });
-
-        // ============================================
-        // STAT COUNTER ANIMATION
-        // ============================================
-        const animateCounters = () => {
-            const counters = document.querySelectorAll('.stat-number');
-            
-            counters.forEach(counter => {
-                const target = counter.textContent;
-                const isEuro = target.includes('€');
-                const isPercent = target.includes('%');
-                
-                let numericValue = parseFloat(target.replace(/[€M%+]/g, ''));
-                let suffix = '';
-                
-                if (target.includes('M')) suffix = 'M';
-                if (target.includes('+')) suffix += '+';
-                
-                let current = 0;
-                const increment = numericValue / 50;
-                
-                const updateCounter = () => {
-                    current += increment;
-                    if (current < numericValue) {
-                        if (isEuro) {
-                            counter.textContent = '€' + current.toFixed(1) + suffix;
-                        } else if (isPercent) {
-                            counter.textContent = Math.floor(current) + '%';
-                        } else {
-                            counter.textContent = '€' + current.toFixed(1) + suffix;
-                        }
-                        requestAnimationFrame(updateCounter);
-                    } else {
-                        counter.textContent = target;
-                    }
-                };
-                
-                const counterObserver = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            updateCounter();
-                            counterObserver.unobserve(entry.target);
-                        }
-                    });
-                }, { threshold: 0.5 });
-                
-                counterObserver.observe(counter);
-            });
-        };
-
-        animateCounters();
-
-        // ============================================
-        // BUTTON HOVER EFFECTS
-        // ============================================
-        document.querySelectorAll('.btn').forEach(button => {
-            button.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-3px)';
-            });
-            
-            button.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
-            });
-        });
-
-        // ============================================
-        // LOG PAGE VIEW
-        // ============================================
-        console.log('%c🏝️ KEA VALLEY® Website Loaded', 'color: #D4AF37; font-size: 20px; font-weight: bold;');
-        console.log('%cThe Mediterranean\'s Premier Destination for Luxury Innovation', 'color: #1E5A8E; font-size: 14px;');
-    </script>
 </body>
 </html>
