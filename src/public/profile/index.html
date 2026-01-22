@@ -645,6 +645,60 @@
             const display = document.getElementById('balanceDisplay');
             const claimBtn = document.getElementById('claimBtn');
             
+            // Polygon Mainnet network ID is 137
+            const NETWORK_ID = 137;
+            const apiUrl = `https://api.wallettwo.com/blockchain/balance/${NETWORK_ID}/${address}/${CONFIG.VIP_TOKEN_ADDRESS}`;
+            
+            console.log('🔄 Fetching balance from WalletTwo API:', apiUrl);
+            
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                console.log('📊 WalletTwo API response:', data);
+                
+                // Try to extract balance from response (adjust based on actual response format)
+                let balanceNumber = 0;
+                
+                if (typeof data === 'number') {
+                    balanceNumber = data;
+                } else if (data.balance !== undefined) {
+                    balanceNumber = parseFloat(data.balance);
+                } else if (data.result !== undefined) {
+                    balanceNumber = parseFloat(data.result);
+                } else if (data.value !== undefined) {
+                    balanceNumber = parseFloat(data.value);
+                } else {
+                    console.log('⚠️ Unknown response format, falling back to direct RPC');
+                    return fetchBalanceFromRPC(address);
+                }
+                
+                const formatted = balanceNumber.toFixed(2);
+
+                display.innerHTML = `
+                    <span class="balance-amount">${formatted}</span>
+                    <span class="balance-symbol">VIP</span>
+                `;
+
+                // Show claim button only if balance is less than 2
+                if (balanceNumber < CONFIG.MIN_BALANCE_TO_HIDE_CLAIM) {
+                    claimBtn.style.display = 'flex';
+                } else {
+                    claimBtn.style.display = 'none';
+                }
+
+            } catch (error) {
+                console.error('❌ WalletTwo API error:', error);
+                console.log('🔄 Falling back to direct RPC...');
+                return fetchBalanceFromRPC(address);
+            }
+        }
+
+        // Fallback: Fetch balance directly from blockchain
+        async function fetchBalanceFromRPC(address) {
+            const display = document.getElementById('balanceDisplay');
+            const claimBtn = document.getElementById('claimBtn');
+            
             try {
                 const provider = new ethers.JsonRpcProvider(CONFIG.POLYGON_RPC);
                 const contract = new ethers.Contract(CONFIG.VIP_TOKEN_ADDRESS, ERC20_ABI, provider);
@@ -665,16 +719,14 @@
                 }
 
             } catch (error) {
-                console.error('Error fetching balance:', error);
+                console.error('❌ RPC error:', error);
                 display.innerHTML = `
                     <span class="balance-amount">0</span>
                     <span class="balance-symbol">VIP</span>
                 `;
-                // Show claim button on error (assume 0 balance)
                 claimBtn.style.display = 'flex';
             }
         }
-
         // Copy address to clipboard
         function copyAddress() {
             if (currentUser?.wallet) {
