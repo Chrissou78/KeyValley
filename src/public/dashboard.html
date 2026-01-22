@@ -3,499 +3,574 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | KEA VALLEY®</title>
+    <title>Dashboard - KEA VALLEY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ee9d2b',
+                        'primary-dark': '#d4891f',
+                        'background-dark': '#221a10',
+                    },
+                    fontFamily: {
+                        'display': ['Playfair Display', 'serif'],
+                        'body': ['Manrope', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --deep-blue: #1a3a5c;
-            --gold: #d4af55;
-            --gold-light: #e8d5a3;
-            --white: #ffffff;
-            --light-gray: #f8f9fa;
-            --text-gray: #6c757d;
-            --success: #28a745;
-            --warning: #ffc107;
-            --danger: #dc3545;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
-            font-family: 'Montserrat', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            font-family: 'Manrope', sans-serif;
+            background: linear-gradient(135deg, #221a10 0%, #3d2e1a 50%, #221a10 100%);
             min-height: 100vh;
-            color: var(--deep-blue);
         }
-
-        .header {
-            background: var(--deep-blue);
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(238, 157, 43, 0.2);
         }
-
-        .logo {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem;
-            color: var(--gold);
-            font-weight: 600;
-        }
-
-        .logo span { color: var(--white); font-weight: 400; }
-
-        .header-actions { display: flex; gap: 15px; align-items: center; }
-        .header-actions span { color: var(--gold-light); font-size: 0.9rem; }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary { background: var(--gold); color: var(--deep-blue); }
-        .btn-primary:hover { background: var(--gold-light); transform: translateY(-2px); }
-        .btn-secondary { background: transparent; color: var(--white); border: 1px solid var(--gold); }
-        .btn-secondary:hover { background: var(--gold); color: var(--deep-blue); }
-        .btn-danger { background: var(--danger); color: white; }
-
-        .container { max-width: 1400px; margin: 0 auto; padding: 30px; }
-
-        .page-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 2rem;
-            color: var(--deep-blue);
-            margin-bottom: 30px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
         .stat-card {
-            background: var(--white);
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            text-align: center;
-            border: 1px solid rgba(212, 175, 85, 0.2);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(238, 157, 43, 0.15);
+            transition: all 0.3s ease;
         }
-
-        .stat-value {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.5rem;
-            color: var(--deep-blue);
-            font-weight: 600;
+        .stat-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(238, 157, 43, 0.4);
+            transform: translateY(-2px);
         }
-
-        .stat-label { color: var(--text-gray); font-size: 0.9rem; margin-top: 5px; }
-        .stat-card.success .stat-value { color: var(--success); }
-        .stat-card.warning .stat-value { color: var(--warning); }
-        .stat-card.gold .stat-value { color: var(--gold); }
-
-        .notice-card {
-            background: rgba(212, 175, 55, 0.1);
-            border: 1px solid var(--gold);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 30px;
-            text-align: center;
+        .btn-primary {
+            background: linear-gradient(135deg, #ee9d2b 0%, #d4891f 100%);
+            transition: all 0.3s ease;
         }
-
-        .notice-card p { margin: 0; color: var(--deep-blue); font-size: 0.95rem; }
-
-        .card {
-            background: var(--white);
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-            border: 1px solid rgba(212, 175, 85, 0.2);
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(238, 157, 43, 0.3);
         }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--light-gray);
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
-
-        .card-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--deep-blue); }
-        .actions { display: flex; gap: 10px; flex-wrap: wrap; }
-
-        .filters { display: flex; gap: 10px; margin-bottom: 20px; }
-
-        .filter-btn {
-            padding: 8px 16px;
-            border: 1px solid var(--gold);
-            background: transparent;
-            color: var(--deep-blue);
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 0.85rem;
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(238, 157, 43, 0.3);
+            transition: all 0.3s ease;
         }
-
-        .filter-btn.active, .filter-btn:hover { background: var(--gold); color: var(--deep-blue); }
-
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--light-gray); }
-        th { font-weight: 600; color: var(--deep-blue); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
-        td { color: var(--text-gray); font-size: 0.9rem; }
-
-        .wallet-address { font-family: monospace; font-size: 0.85rem; color: var(--deep-blue); }
-
-        .status-badge {
-            padding: 5px 12px;
-            border-radius: 20px;
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(238, 157, 43, 0.5);
+        }
+        .table-row {
+            transition: all 0.2s ease;
+        }
+        .table-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .badge {
             font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
         }
-
-        .status-minted { background: rgba(40, 167, 69, 0.1); color: var(--success); }
-        .status-pending { background: rgba(255, 193, 7, 0.1); color: #856404; }
-
-        .tx-link { color: var(--gold); text-decoration: none; }
-        .tx-link:hover { text-decoration: underline; }
-
-        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-gray); }
-        .empty-state h3 { font-family: 'Playfair Display', serif; color: var(--deep-blue); margin-bottom: 10px; }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+        .badge-success { background: rgba(34, 197, 94, 0.2); color: #86efac; }
+        .badge-pending { background: rgba(234, 179, 8, 0.2); color: #fde047; }
+        .badge-error { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        .animate-pulse-slow { animation: pulse 3s infinite; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        .modal.active { display: flex; }
-
-        .modal-content {
-            background: var(--white);
-            border-radius: 16px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }
-
-        .modal-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--deep-blue); margin-bottom: 20px; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; color: var(--deep-blue); font-weight: 500; }
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-family: 'Montserrat', sans-serif;
-        }
-        .form-group input:focus { outline: none; border-color: var(--gold); }
-        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-
-        .loading {
-            display: inline-block;
-            width: 20px; height: 20px;
-            border: 2px solid var(--gold-light);
-            border-top-color: var(--gold);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .toast {
-            position: fixed;
-            bottom: 20px; right: 20px;
-            padding: 15px 25px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.3s;
-            z-index: 1001;
-        }
-
-        .toast.show { transform: translateY(0); opacity: 1; }
-        .toast.success { background: var(--success); }
-        .toast.error { background: var(--danger); }
-        .toast.info { background: var(--deep-blue); }
-
-        @media (max-width: 768px) {
-            .header { padding: 15px 20px; flex-direction: column; gap: 15px; }
-            .container { padding: 20px; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            table { font-size: 0.8rem; }
-            th, td { padding: 10px; }
-            .wallet-address { max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
-        }
+        .slide-in { animation: slideIn 0.3s ease-out; }
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="logo">KEA <span>VALLEY®</span></div>
-        <div class="header-actions">
-            <span id="networkName">Loading...</span>
-            <a href="/" class="btn btn-secondary">Home</a>
-            <button onclick="logout()" class="btn btn-danger">Logout</button>
+    <!-- Header -->
+    <header class="glass-card sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="/" class="font-display text-2xl text-primary tracking-wider">KEA VALLEY</a>
+                <span class="text-white/40">|</span>
+                <span class="text-white/60">Admin Dashboard</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="userInfo" class="text-white/60 text-sm"></span>
+                <button id="changePasswordBtn" class="text-white/60 hover:text-primary transition-colors text-sm flex items-center gap-1">
+                    <span class="material-symbols-outlined text-base">key</span>
+                    Change Password
+                </button>
+                <button id="logoutBtn" class="btn-secondary px-4 py-2 rounded-lg text-white/80 text-sm flex items-center gap-2">
+                    <span class="material-symbols-outlined text-base">logout</span>
+                    Logout
+                </button>
+            </div>
         </div>
     </header>
 
-    <div class="container">
-        <h1 class="page-title">Admin Dashboard</h1>
-
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-value" id="totalRegistrants">0</div>
-                <div class="stat-label">Total Registrants</div>
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="stat-card rounded-xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-white/60 text-sm">Total Registrants</p>
+                        <p id="statTotal" class="text-3xl font-bold text-white mt-1">-</p>
+                    </div>
+                    <span class="material-symbols-outlined text-primary text-4xl opacity-50">group</span>
+                </div>
             </div>
-            <div class="stat-card success">
-                <div class="stat-value" id="totalMinted">0</div>
-                <div class="stat-label">Minted</div>
+            <div class="stat-card rounded-xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-white/60 text-sm">Minted</p>
+                        <p id="statMinted" class="text-3xl font-bold text-green-400 mt-1">-</p>
+                    </div>
+                    <span class="material-symbols-outlined text-green-400 text-4xl opacity-50">check_circle</span>
+                </div>
             </div>
-            <div class="stat-card warning">
-                <div class="stat-value" id="totalPending">0</div>
-                <div class="stat-label">Pending</div>
+            <div class="stat-card rounded-xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-white/60 text-sm">Pending</p>
+                        <p id="statPending" class="text-3xl font-bold text-yellow-400 mt-1">-</p>
+                    </div>
+                    <span class="material-symbols-outlined text-yellow-400 text-4xl opacity-50">schedule</span>
+                </div>
             </div>
-            <div class="stat-card gold">
-                <div class="stat-value" id="walletBalance">-</div>
-                <div class="stat-label">Minter Balance</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="mintsRemaining">-</div>
-                <div class="stat-label">Est. Mints Remaining</div>
+            <div class="stat-card rounded-xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-white/60 text-sm">Network</p>
+                        <p id="statNetwork" class="text-xl font-bold text-primary mt-1">-</p>
+                    </div>
+                    <span class="material-symbols-outlined text-primary text-4xl opacity-50">hub</span>
+                </div>
             </div>
         </div>
 
-        <div class="notice-card">
-            <p>
-                <strong>⚠️ Note:</strong> Dashboard data resets on server restart (serverless limitation). 
-                The <strong>blockchain is the source of truth</strong> — all minted tokens are permanently recorded on-chain.
-            </p>
+        <!-- Wallet Info Card -->
+        <div class="glass-card rounded-xl p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">account_balance_wallet</span>
+                    Minter Wallet
+                </h2>
+                <button id="refreshWalletBtn" class="btn-secondary px-3 py-1.5 rounded-lg text-white/60 text-sm flex items-center gap-1">
+                    <span class="material-symbols-outlined text-base">refresh</span>
+                    Refresh
+                </button>
+            </div>
+            <div id="walletInfo" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <p class="text-white/40 text-sm">Address</p>
+                    <p id="walletAddress" class="text-white font-mono text-sm mt-1 break-all">Loading...</p>
+                </div>
+                <div>
+                    <p class="text-white/40 text-sm">Native Balance</p>
+                    <p id="walletBalance" class="text-white text-lg mt-1">-</p>
+                </div>
+                <div>
+                    <p class="text-white/40 text-sm">Token Balance</p>
+                    <p id="tokenBalance" class="text-primary text-lg mt-1">-</p>
+                </div>
+            </div>
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">Registrants</h2>
-                <div class="actions">
-                    <button onclick="showRegisterModal()" class="btn btn-primary">+ Register Wallet</button>
-                    <button onclick="loadRegistrants()" class="btn btn-secondary">🔄 Refresh</button>
+        <!-- Actions & Registrants -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Actions Panel -->
+            <div class="glass-card rounded-xl p-6">
+                <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">bolt</span>
+                    Quick Actions
+                </h2>
+                
+                <div class="space-y-4">
+                    <button id="mintNowBtn" class="btn-primary w-full py-3 rounded-lg text-white font-semibold flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">token</span>
+                        Mint All Pending
+                    </button>
+                    
+                    <button id="syncBtn" class="btn-secondary w-full py-3 rounded-lg text-white/80 flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">sync</span>
+                        Sync On-Chain Status
+                    </button>
+                    
+                    <button id="refreshBtn" class="btn-secondary w-full py-3 rounded-lg text-white/80 flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">refresh</span>
+                        Refresh Data
+                    </button>
+                </div>
+
+                <!-- Action Result -->
+                <div id="actionResult" class="mt-6 hidden">
+                    <div id="actionResultContent" class="p-4 rounded-lg"></div>
+                </div>
+
+                <!-- Auto-refresh indicator -->
+                <div class="mt-6 pt-4 border-t border-white/10">
+                    <p class="text-white/40 text-xs flex items-center gap-2">
+                        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse-slow"></span>
+                        Auto-refresh every 60 seconds
+                    </p>
+                    <p id="lastUpdated" class="text-white/30 text-xs mt-1">Last updated: -</p>
                 </div>
             </div>
 
-            <div class="filters">
-                <button class="filter-btn active" onclick="filterTable('all')">All</button>
-                <button class="filter-btn" onclick="filterTable('minted')">Minted</button>
-                <button class="filter-btn" onclick="filterTable('pending')">Pending</button>
+            <!-- Registrants List -->
+            <div class="lg:col-span-2 glass-card rounded-xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-semibold text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">list</span>
+                        Registrants
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <button id="filterAll" class="filter-btn px-3 py-1 rounded-lg text-sm bg-primary/20 text-primary">All</button>
+                        <button id="filterPending" class="filter-btn px-3 py-1 rounded-lg text-sm text-white/60 hover:bg-white/10">Pending</button>
+                        <button id="filterMinted" class="filter-btn px-3 py-1 rounded-lg text-sm text-white/60 hover:bg-white/10">Minted</button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-white/40 text-sm border-b border-white/10">
+                                <th class="text-left py-3 px-2">Address</th>
+                                <th class="text-left py-3 px-2">Status</th>
+                                <th class="text-left py-3 px-2">Registered</th>
+                                <th class="text-right py-3 px-2">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registrantsTable">
+                            <tr>
+                                <td colspan="4" class="text-center py-8 text-white/40">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination / Load More -->
+                <div id="loadMore" class="mt-4 text-center hidden">
+                    <button class="text-primary hover:text-primary-dark text-sm">Load more...</button>
+                </div>
             </div>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Wallet Address</th>
-                        <th>Status</th>
-                        <th>Registered</th>
-                        <th>TX Hash</th>
-                    </tr>
-                </thead>
-                <tbody id="registrantsTable">
-                    <tr><td colspan="5" class="empty-state"><h3>No registrants yet</h3><p>Registrants will appear here after claiming tokens.</p></td></tr>
-                </tbody>
-            </table>
         </div>
-    </div>
+    </main>
 
-    <div class="modal" id="registerModal">
-        <div class="modal-content">
-            <h3 class="modal-title">Register New Wallet</h3>
-            <form onsubmit="registerWallet(event)">
-                <div class="form-group">
-                    <label>Wallet Address</label>
-                    <input type="text" id="walletAddress" placeholder="0x..." required>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" onclick="closeModal()" class="btn btn-secondary">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Register & Mint</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="toast" id="toast"></div>
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
 
     <script>
-        let registrants = [];
+        // State
         let currentFilter = 'all';
-        let explorerUrl = 'https://polygonscan.com'; // Default to mainnet
+        let registrants = [];
+        let autoRefreshInterval;
 
+        // DOM Elements
+        const elements = {
+            userInfo: document.getElementById('userInfo'),
+            statTotal: document.getElementById('statTotal'),
+            statMinted: document.getElementById('statMinted'),
+            statPending: document.getElementById('statPending'),
+            statNetwork: document.getElementById('statNetwork'),
+            walletAddress: document.getElementById('walletAddress'),
+            walletBalance: document.getElementById('walletBalance'),
+            tokenBalance: document.getElementById('tokenBalance'),
+            registrantsTable: document.getElementById('registrantsTable'),
+            actionResult: document.getElementById('actionResult'),
+            actionResultContent: document.getElementById('actionResultContent'),
+            lastUpdated: document.getElementById('lastUpdated'),
+            mintNowBtn: document.getElementById('mintNowBtn'),
+            syncBtn: document.getElementById('syncBtn'),
+            refreshBtn: document.getElementById('refreshBtn'),
+            refreshWalletBtn: document.getElementById('refreshWalletBtn'),
+            logoutBtn: document.getElementById('logoutBtn'),
+            changePasswordBtn: document.getElementById('changePasswordBtn'),
+            filterAll: document.getElementById('filterAll'),
+            filterPending: document.getElementById('filterPending'),
+            filterMinted: document.getElementById('filterMinted'),
+        };
+
+        // Check auth
         async function checkAuth() {
             try {
                 const res = await fetch('/api/auth-status');
                 const data = await res.json();
-                if (!data.authenticated) { window.location.href = '/login'; return false; }
+                if (!data.authenticated) {
+                    window.location.href = '/login';
+                    return false;
+                }
+                if (data.mustChangePassword) {
+                    window.location.href = '/change-password';
+                    return false;
+                }
+                elements.userInfo.textContent = `Logged in as ${data.username}`;
                 return true;
-            } catch { window.location.href = '/login'; return false; }
+            } catch (e) {
+                window.location.href = '/login';
+                return false;
+            }
         }
 
-        async function loadDashboard() {
-            if (!await checkAuth()) return;
-            await loadStats();
-            await loadRegistrants();
+        // Show toast
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `slide-in px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 ${
+                type === 'success' ? 'bg-green-500/90' :
+                type === 'error' ? 'bg-red-500/90' :
+                'bg-primary/90'
+            } text-white`;
+            toast.innerHTML = `
+                <span class="material-symbols-outlined text-lg">${
+                    type === 'success' ? 'check_circle' :
+                    type === 'error' ? 'error' :
+                    'info'
+                }</span>
+                <span>${message}</span>
+            `;
+            document.getElementById('toastContainer').appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
         }
 
-        async function loadStats() {
+        // Show action result
+        function showActionResult(message, type = 'info') {
+            elements.actionResult.classList.remove('hidden');
+            elements.actionResultContent.className = `p-4 rounded-lg ${
+                type === 'success' ? 'bg-green-500/20 text-green-300' :
+                type === 'error' ? 'bg-red-500/20 text-red-300' :
+                'bg-primary/20 text-primary'
+            }`;
+            elements.actionResultContent.innerHTML = message;
+        }
+
+        // Fetch stats
+        async function fetchStats() {
             try {
                 const res = await fetch('/api/stats');
                 const data = await res.json();
-                
-                document.getElementById('totalRegistrants').textContent = data.total || 0;
-                document.getElementById('totalMinted').textContent = data.minted || 0;
-                document.getElementById('totalPending').textContent = data.pending || 0;
-                
-                if (data.network) {
-                    document.getElementById('networkName').textContent = data.network;
-                }
-                
-                if (data.explorer) {
-                    explorerUrl = data.explorer;
-                }
-
-                // Load wallet balance
-                try {
-                    const walletRes = await fetch('/api/wallet-info');
-                    const walletData = await walletRes.json();
-                    
-                    console.log('Wallet data:', walletData); // Debug log
-                    
-                    if (walletData.balance) {
-                        const balance = parseFloat(walletData.balance);
-                        document.getElementById('walletBalance').textContent = 
-                            balance.toFixed(4) + ' ' + (walletData.currency || 'POL');
-                        
-                        // Calculate estimated mints remaining (0.04 POL per mint)
-                        const gasPerMint = 0.004;
-                        const mintsRemaining = Math.floor(balance / gasPerMint);
-                        document.getElementById('mintsRemaining').textContent = mintsRemaining.toLocaleString();
-                    } else if (walletData.error) {
-                        console.error('Wallet info error:', walletData.error);
-                        document.getElementById('walletBalance').textContent = 'Error';
-                        document.getElementById('mintsRemaining').textContent = '-';
-                    }
-                } catch (walletError) {
-                    console.error('Failed to load wallet info:', walletError);
-                    document.getElementById('walletBalance').textContent = 'Error';
-                    document.getElementById('mintsRemaining').textContent = '-';
-                }
+                elements.statTotal.textContent = data.total || 0;
+                elements.statMinted.textContent = data.minted || 0;
+                elements.statPending.textContent = data.pending || 0;
+                elements.statNetwork.textContent = (data.network || 'Unknown').toUpperCase();
             } catch (e) {
-                console.error('Stats error:', e);
+                console.error('Failed to fetch stats:', e);
             }
-        }    
-
-        async function loadRegistrants() {
-            try {
-                const res = await fetch('/api/registrants');
-                const data = await res.json();
-                registrants = data.registrants || [];
-                renderTable();
-            } catch (e) { console.error('Load error:', e); }
         }
 
-        function renderTable() {
-            const tbody = document.getElementById('registrantsTable');
+        // Fetch wallet info
+        async function fetchWalletInfo() {
+            try {
+                const res = await fetch('/api/wallet-info');
+                const data = await res.json();
+                if (data.address) {
+                    elements.walletAddress.innerHTML = `
+                        <a href="${data.explorer}/address/${data.address}" target="_blank" class="hover:text-primary transition-colors">
+                            ${data.address.slice(0, 10)}...${data.address.slice(-8)}
+                        </a>
+                    `;
+                    elements.walletBalance.textContent = `${parseFloat(data.nativeBalance || 0).toFixed(4)} ${data.nativeSymbol || 'ETH'}`;
+                    elements.tokenBalance.textContent = `${parseFloat(data.tokenBalance || 0).toLocaleString()} ${data.tokenSymbol || 'VIP'}`;
+                } else {
+                    elements.walletAddress.textContent = 'Not configured';
+                }
+            } catch (e) {
+                console.error('Failed to fetch wallet info:', e);
+                elements.walletAddress.textContent = 'Error loading';
+            }
+        }
+
+        // Fetch registrants
+        async function fetchRegistrants() {
+            try {
+                const endpoint = currentFilter === 'pending' ? '/api/registrants/pending' : '/api/registrants';
+                const res = await fetch(endpoint);
+                const data = await res.json();
+                registrants = Array.isArray(data) ? data : data.registrants || [];
+                renderRegistrants();
+            } catch (e) {
+                console.error('Failed to fetch registrants:', e);
+                elements.registrantsTable.innerHTML = `
+                    <tr><td colspan="4" class="text-center py-8 text-red-400">Failed to load registrants</td></tr>
+                `;
+            }
+        }
+
+        // Render registrants
+        function renderRegistrants() {
             let filtered = registrants;
-            
-            if (currentFilter === 'minted') {
-                filtered = registrants.filter(r => r.minted);
-            } else if (currentFilter === 'pending') {
+            if (currentFilter === 'pending') {
                 filtered = registrants.filter(r => !r.minted);
+            } else if (currentFilter === 'minted') {
+                filtered = registrants.filter(r => r.minted);
             }
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="empty-state">
-                            <h3>No ${currentFilter === 'all' ? '' : currentFilter} registrants</h3>
-                            <p>Registrants will appear here after claiming tokens.</p>
-                        </td>
-                    </tr>
+                elements.registrantsTable.innerHTML = `
+                    <tr><td colspan="4" class="text-center py-8 text-white/40">No registrants found</td></tr>
                 `;
                 return;
             }
 
-            tbody.innerHTML = filtered.map((r, i) => `
-                <tr>
-                    <td>${i + 1}</td>
-                    <td class="wallet-address" title="${r.wallet_address}">
-                        ${r.wallet_address.slice(0, 6)}...${r.wallet_address.slice(-4)}
+            elements.registrantsTable.innerHTML = filtered.map(r => `
+                <tr class="table-row border-b border-white/5">
+                    <td class="py-3 px-2">
+                        <span class="font-mono text-sm text-white/80">${r.address.slice(0, 8)}...${r.address.slice(-6)}</span>
                     </td>
-                    <td>
-                        <span class="status-badge ${r.minted ? 'status-minted' : 'status-pending'}">
+                    <td class="py-3 px-2">
+                        <span class="badge ${r.minted ? 'badge-success' : 'badge-pending'}">
                             ${r.minted ? 'Minted' : 'Pending'}
                         </span>
                     </td>
-                    <td>${r.registered_at ? new Date(r.registered_at).toLocaleString() : '-'}</td>
-                    <td>
-                        ${r.tx_hash && r.tx_hash !== 'pre-existing' && r.tx_hash !== 'skipped'
-                            ? `<a href="${explorerUrl}/tx/${r.tx_hash}" target="_blank" class="tx-link">${r.tx_hash.slice(0, 10)}...</a>`
-                            : r.tx_hash || '-'
-                        }
+                    <td class="py-3 px-2 text-white/60 text-sm">
+                        ${r.registeredAt ? new Date(r.registeredAt).toLocaleDateString() : '-'}
+                    </td>
+                    <td class="py-3 px-2 text-right">
+                        <a href="https://polygonscan.com/address/${r.address}" target="_blank" 
+                           class="text-primary hover:text-primary-dark text-sm">
+                            View
+                        </a>
                     </td>
                 </tr>
             `).join('');
         }
 
-        function filterTable(filter) {
-            currentFilter = filter;
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.toggle('active', btn.textContent.toLowerCase().includes(filter)));
-            renderTable();
-        }
-
-        async function registerWallet(e) {
-            e.preventDefault();
-            const address = document.getElementById('walletAddress').value.trim();
-            if (!address.startsWith('0x') || address.length !== 42) { showToast('Invalid address', 'error'); return; }
+        // Mint now
+        async function mintNow() {
+            elements.mintNowBtn.disabled = true;
+            elements.mintNowBtn.innerHTML = `
+                <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Minting...
+            `;
 
             try {
-                const res = await fetch('/api/claim/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ wallet_address: address, message: 'FREE_BONUS_TOKENS_KEA_VALLEY' })
-                });
+                const res = await fetch('/api/mint-now', { method: 'POST' });
                 const data = await res.json();
-                if (res.ok) { showToast('Tokens minted!', 'success'); closeModal(); loadRegistrants(); loadStats(); }
-                else showToast(data.message || 'Failed', 'error');
-            } catch (e) { showToast('Error: ' + e.message, 'error'); }
+                
+                if (data.success) {
+                    showActionResult(`
+                        <p class="font-semibold">Minting Complete!</p>
+                        <p class="mt-1">Minted: ${data.minted || 0} | Skipped: ${data.skipped || 0}</p>
+                        ${data.txHash ? `<a href="https://polygonscan.com/tx/${data.txHash}" target="_blank" class="text-primary underline">View Transaction</a>` : ''}
+                    `, 'success');
+                    showToast('Minting completed successfully', 'success');
+                    refreshAll();
+                } else {
+                    showActionResult(`<p>Minting failed: ${data.error || 'Unknown error'}</p>`, 'error');
+                    showToast('Minting failed', 'error');
+                }
+            } catch (e) {
+                showActionResult(`<p>Error: ${e.message}</p>`, 'error');
+                showToast('Minting error', 'error');
+            } finally {
+                elements.mintNowBtn.disabled = false;
+                elements.mintNowBtn.innerHTML = `
+                    <span class="material-symbols-outlined">token</span>
+                    Mint All Pending
+                `;
+            }
         }
 
-        function showRegisterModal() { document.getElementById('registerModal').classList.add('active'); document.getElementById('walletAddress').value = ''; }
-        function closeModal() { document.getElementById('registerModal').classList.remove('active'); }
-        async function logout() { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login'; }
-        function showToast(msg, type = 'info') { const t = document.getElementById('toast'); t.textContent = msg; t.className = `toast ${type} show`; setTimeout(() => t.classList.remove('show'), 3000); }
+        // Sync
+        async function sync() {
+            elements.syncBtn.disabled = true;
+            elements.syncBtn.innerHTML = `
+                <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Syncing...
+            `;
 
-        document.getElementById('registerModal').addEventListener('click', e => { if (e.target.classList.contains('modal')) closeModal(); });
-        loadDashboard();
+            try {
+                const res = await fetch('/api/sync', { method: 'POST' });
+                const data = await res.json();
+                
+                showActionResult(`
+                    <p class="font-semibold">Sync Complete!</p>
+                    <p class="mt-1">Synced: ${data.synced || 0} | Still Pending: ${data.stillPending || 0}</p>
+                `, 'success');
+                showToast('Sync completed', 'success');
+                refreshAll();
+            } catch (e) {
+                showActionResult(`<p>Sync error: ${e.message}</p>`, 'error');
+                showToast('Sync error', 'error');
+            } finally {
+                elements.syncBtn.disabled = false;
+                elements.syncBtn.innerHTML = `
+                    <span class="material-symbols-outlined">sync</span>
+                    Sync On-Chain Status
+                `;
+            }
+        }
+
+        // Refresh all data
+        async function refreshAll() {
+            await Promise.all([fetchStats(), fetchWalletInfo(), fetchRegistrants()]);
+            elements.lastUpdated.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+        }
+
+        // Set filter
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.className = 'filter-btn px-3 py-1 rounded-lg text-sm text-white/60 hover:bg-white/10';
+            });
+            document.getElementById(`filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`).className = 
+                'filter-btn px-3 py-1 rounded-lg text-sm bg-primary/20 text-primary';
+            renderRegistrants();
+        }
+
+        // Logout
+        async function logout() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+            } catch (e) {}
+            window.location.href = '/login';
+        }
+
+        // Event listeners
+        elements.mintNowBtn.addEventListener('click', mintNow);
+        elements.syncBtn.addEventListener('click', sync);
+        elements.refreshBtn.addEventListener('click', () => {
+            showToast('Refreshing data...', 'info');
+            refreshAll();
+        });
+        elements.refreshWalletBtn.addEventListener('click', fetchWalletInfo);
+        elements.logoutBtn.addEventListener('click', logout);
+        elements.changePasswordBtn.addEventListener('click', () => {
+            window.location.href = '/change-password';
+        });
+        elements.filterAll.addEventListener('click', () => setFilter('all'));
+        elements.filterPending.addEventListener('click', () => setFilter('pending'));
+        elements.filterMinted.addEventListener('click', () => setFilter('minted'));
+
+        // Initialize
+        async function init() {
+            const isAuthed = await checkAuth();
+            if (!isAuthed) return;
+
+            await refreshAll();
+
+            // Auto-refresh every 60 seconds
+            autoRefreshInterval = setInterval(refreshAll, 60000);
+        }
+
+        init();
+
+        // Cleanup on page leave
+        window.addEventListener('beforeunload', () => {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+        });
     </script>
 </body>
 </html>

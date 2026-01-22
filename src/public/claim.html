@@ -41,6 +41,11 @@
         ::-webkit-scrollbar-track { background: #0a0a0a; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
+        .wallet-iframe {
+            border: 1px solid rgba(238, 157, 43, 0.2);
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.02);
+        }
     </style>
 </head>
 <body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
@@ -84,7 +89,7 @@
             <!-- Card -->
             <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
                 <div class="px-8 py-5 border-b border-white/5 flex items-center justify-between">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Claim Status</h3>
+                    <h3 id="cardTitle" class="text-xs font-bold uppercase tracking-widest text-primary">Claim Status</h3>
                     <span class="material-symbols-outlined text-primary/50">redeem</span>
                 </div>
                 <div class="p-8">
@@ -121,56 +126,123 @@
     </footer>
 
     <script>
-        // Parse URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const walletAddress = urlParams.get('wallet') || urlParams.get('address');
-        const signature = urlParams.get('signature');
-        const message = urlParams.get('message');
+        // Configuration
+        const CONFIG = {
+            STORAGE_KEY: 'keavalley_profile',
+            WALLETTWO_LOGIN_URL: 'https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=' + encodeURIComponent(window.location.origin + '/claim')
+        };
 
         const statusEl = document.getElementById('claimStatus');
+        const cardTitle = document.getElementById('cardTitle');
 
-        async function processClaim() {
-            if (!walletAddress) {
-                statusEl.innerHTML = `
-                    <div class="size-16 mx-auto rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-6">
-                        <span class="material-symbols-outlined text-red-400 text-3xl">error</span>
-                    </div>
-                    <h3 class="text-xl font-serif text-white mb-2">No Wallet Detected</h3>
-                    <p class="text-slate-500 text-sm mb-8">Please connect your wallet to claim tokens.</p>
-                    <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://kea-valley.com/claim" class="inline-block bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-transform">
-                        Connect Wallet
-                    </a>
-                `;
-                return;
+        // Parse URL parameters - WalletTwo uses: wlt (wallet), usr (user), signature
+        function getWalletFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            
+            // WalletTwo returns: wlt=wallet, usr=userId, signature=sig
+            const wallet = params.get('wlt') || params.get('wallet') || params.get('address') || params.get('wallet_address');
+            const signature = params.get('signature') || params.get('sig');
+            const userId = params.get('usr') || params.get('user') || params.get('userId');
+            
+            console.log('🔍 URL Params:', { wallet, signature, userId });
+            
+            return { wallet, signature, userId };
+        }
+
+        // Check localStorage for existing session
+        function getWalletFromStorage() {
+            try {
+                const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
+                if (stored) {
+                    const data = JSON.parse(stored);
+                    const age = Date.now() - (data.timestamp || 0);
+                    // Valid for 24 hours
+                    if (data.wallet && age < 24 * 60 * 60 * 1000) {
+                        console.log('📦 Wallet from storage:', data.wallet);
+                        return data.wallet;
+                    }
+                }
+            } catch (e) {
+                console.log('Could not read storage');
             }
+            return null;
+        }
+
+        // Save wallet to storage
+        function saveWalletToStorage(wallet, userId, signature) {
+            try {
+                const data = {
+                    wallet: wallet,
+                    userId: userId,
+                    signature: signature,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(data));
+                console.log('💾 Saved to storage:', data);
+            } catch (e) {
+                console.log('Could not save to storage');
+            }
+        }
+
+        // Show connect wallet UI
+        function showConnectWallet() {
+            cardTitle.textContent = 'Connect Wallet';
+            statusEl.innerHTML = `
+                <div class="size-16 mx-auto rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-primary text-3xl">account_balance_wallet</span>
+                </div>
+                <h3 class="text-xl font-serif text-white mb-2">Connect Your Wallet</h3>
+                <p class="text-slate-500 text-sm mb-8">Please connect your wallet to claim your free VIP tokens.</p>
+                <a href="${CONFIG.WALLETTWO_LOGIN_URL}" class="inline-block bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-transform">
+                    Connect Wallet
+                </a>
+            `;
+        }
+
+        // Show processing
+        function showProcessing(wallet) {
+            cardTitle.textContent = 'Processing';
+            statusEl.innerHTML = `
+                <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+                <p class="text-slate-400 text-sm">Processing your claim...</p>
+                <p class="text-slate-600 text-xs mt-2 font-mono">${wallet.slice(0, 10)}...${wallet.slice(-8)}</p>
+            `;
+        }
+
+        // Process the claim
+        async function processClaim(wallet, signature) {
+            console.log('🚀 Processing claim for:', wallet);
+            showProcessing(wallet);
 
             try {
                 const response = await fetch('/api/claim/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        wallet_address: walletAddress,
+                        wallet_address: wallet,
                         signature: signature,
-                        message: message
+                        message: 'FREE_BONUS_TOKENS_KEA_VALLEY'
                     })
                 });
 
                 const data = await response.json();
+                console.log('📡 Claim response:', response.status, data);
 
                 if (response.status === 201) {
-                    // Success
+                    // Success - minted
+                    cardTitle.textContent = 'Success';
                     statusEl.innerHTML = `
                         <div class="size-16 mx-auto rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-6">
                             <span class="material-symbols-outlined text-green-400 text-3xl">check_circle</span>
                         </div>
                         <h3 class="text-xl font-serif text-white mb-2">Tokens Claimed!</h3>
                         <p class="text-slate-400 text-sm mb-4">${data.message || 'Your VIP tokens have been minted successfully.'}</p>
-                        ${data.tx_hash ? `
-                            <a href="${data.explorer_url}" target="_blank" class="inline-flex items-center gap-2 text-primary text-xs hover:underline mb-8">
+                        ${data.tx_hash && data.explorer_url ? `
+                            <a href="${data.explorer_url}" target="_blank" class="inline-flex items-center gap-2 text-primary text-xs hover:underline mb-6">
                                 View Transaction <span class="material-symbols-outlined text-sm">open_in_new</span>
                             </a>
-                        ` : ''}
-                        <div class="pt-4">
+                        ` : '<div class="mb-6"></div>'}
+                        <div>
                             <a href="/profile" class="inline-block bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-transform">
                                 View My Profile
                             </a>
@@ -178,30 +250,35 @@
                     `;
                 } else if (response.status === 409) {
                     // Already claimed
+                    cardTitle.textContent = 'Already Claimed';
                     statusEl.innerHTML = `
                         <div class="size-16 mx-auto rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-6">
                             <span class="material-symbols-outlined text-primary text-3xl">info</span>
                         </div>
                         <h3 class="text-xl font-serif text-white mb-2">Already Claimed</h3>
-                        <p class="text-slate-400 text-sm mb-8">${data.message || 'This wallet has already claimed tokens.'}</p>
+                        <p class="text-slate-400 text-sm mb-2">${data.message || 'This wallet has already claimed tokens.'}</p>
+                        ${data.balance ? `<p class="text-primary text-lg font-semibold mb-6">Balance: ${parseFloat(data.balance).toFixed(2)} VIP</p>` : '<div class="mb-6"></div>'}
                         <a href="/profile" class="inline-block bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-transform">
                             View My Profile
                         </a>
                     `;
                 } else {
                     // Error
+                    cardTitle.textContent = 'Error';
                     statusEl.innerHTML = `
                         <div class="size-16 mx-auto rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-6">
                             <span class="material-symbols-outlined text-red-400 text-3xl">error</span>
                         </div>
                         <h3 class="text-xl font-serif text-white mb-2">Claim Failed</h3>
                         <p class="text-slate-500 text-sm mb-8">${data.message || data.error || 'An error occurred. Please try again.'}</p>
-                        <a href="/" class="inline-block border border-primary/30 text-primary px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-background-dark transition-all">
-                            Return Home
+                        <a href="${CONFIG.WALLETTWO_LOGIN_URL}" class="inline-block border border-primary/30 text-primary px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-background-dark transition-all">
+                            Try Again
                         </a>
                     `;
                 }
             } catch (error) {
+                console.error('❌ Claim error:', error);
+                cardTitle.textContent = 'Error';
                 statusEl.innerHTML = `
                     <div class="size-16 mx-auto rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-6">
                         <span class="material-symbols-outlined text-red-400 text-3xl">error</span>
@@ -215,8 +292,38 @@
             }
         }
 
-        // Process claim on page load
-        processClaim();
+        // Initialize
+        function init() {
+            console.log('🚀 Claim page loaded');
+            console.log('📍 URL:', window.location.href);
+
+            // First check URL params (returning from WalletTwo)
+            const { wallet, signature, userId } = getWalletFromURL();
+            
+            if (wallet) {
+                console.log('✅ Wallet from URL:', wallet);
+                // Save to storage for profile page
+                saveWalletToStorage(wallet, userId, signature);
+                // Process the claim
+                processClaim(wallet, signature);
+                return;
+            }
+
+            // Check storage for existing session
+            const storedWallet = getWalletFromStorage();
+            if (storedWallet) {
+                console.log('✅ Wallet from storage:', storedWallet);
+                processClaim(storedWallet, null);
+                return;
+            }
+
+            // No wallet found - show connect button
+            console.log('❌ No wallet found');
+            showConnectWallet();
+        }
+
+        // Start
+        init();
     </script>
 </body>
 </html>
