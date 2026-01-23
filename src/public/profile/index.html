@@ -59,6 +59,17 @@
         .copy-btn:active {
             transform: scale(0.95);
         }
+        
+        /* Presale Banner */
+        .presale-banner {
+            background: linear-gradient(135deg, rgba(238, 157, 43, 0.15) 0%, rgba(212, 165, 67, 0.1) 100%);
+            border: 2px solid rgba(238, 157, 43, 0.5);
+            animation: pulse-border 2s infinite;
+        }
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgba(238, 157, 43, 0.5); }
+            50% { border-color: rgba(238, 157, 43, 0.9); }
+        }
     </style>
 </head>
 <body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
@@ -79,6 +90,7 @@
             </a>
             <nav class="hidden md:flex items-center gap-8 lg:gap-12">
                 <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/">Home</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/presale">Presale</a>
             </nav>
         </div>
     </header>
@@ -96,6 +108,30 @@
                 </div>
                 <h1 class="text-4xl md:text-5xl font-serif italic font-medium text-white mb-4">My Profile</h1>
                 <p class="text-slate-400 font-light">View your wallet and token balance.</p>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- PRESALE BANNER - ALWAYS VISIBLE -->
+            <!-- ============================================ -->
+            <div class="presale-banner rounded-lg p-6 mb-8">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-2xl">🚀</span>
+                            <h3 class="text-lg font-bold text-primary">VIP Token Presale Now Live!</h3>
+                        </div>
+                        <p class="text-slate-400 text-sm mb-3">Get VIP tokens at the best price. Pay with Card, POL, or USDC.</p>
+                        <div class="flex flex-wrap gap-2 text-xs">
+                            <span class="bg-white/10 px-3 py-1 rounded-full">💳 Card</span>
+                            <span class="bg-white/10 px-3 py-1 rounded-full">🪙 POL</span>
+                            <span class="bg-white/10 px-3 py-1 rounded-full">💵 USDC</span>
+                        </div>
+                        <p class="text-slate-500 text-xs mt-3"><strong class="text-primary">$0.10</strong> per token • Min 10 • Max 10,000</p>
+                    </div>
+                    <a href="/presale" class="bg-primary text-background-dark px-6 py-3 rounded font-bold text-sm uppercase tracking-wider hover:scale-105 transition-transform whitespace-nowrap">
+                        Join Presale →
+                    </a>
+                </div>
             </div>
 
             <!-- Card -->
@@ -170,10 +206,17 @@
                             </div>
                         </div>
 
+                        <!-- Presale Button (always shown) -->
+                        <div class="mb-4">
+                            <a href="/presale" class="block w-full bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs text-center gold-glow hover:translate-y-[-2px] transition-transform">
+                                🚀 Join Presale
+                            </a>
+                        </div>
+
                         <!-- Claim Button (shown if balance < 2) -->
-                        <div id="claimButtonContainer" class="hidden mb-6">
-                            <a href="/claim" class="block w-full bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs text-center gold-glow hover:translate-y-[-2px] transition-transform">
-                                Claim Free Tokens
+                        <div id="claimButtonContainer" class="hidden mb-4">
+                            <a href="/claim" class="block w-full border border-primary/50 text-primary px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs text-center hover:bg-primary/10 transition-colors">
+                                🎁 Claim Free Tokens
                             </a>
                         </div>
 
@@ -208,7 +251,7 @@
                     <span class="text-xs font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
                 </a>
                 <div class="text-slate-600 text-xs font-light">
-                    © 2026 Kea Valley
+                    © 2025 Kea Valley
                 </div>
             </div>
         </div>
@@ -261,6 +304,7 @@
         let currentUser = null;
         let acceptMessages = true;
         let isDisconnecting = false;
+        let savedToDatabase = false;
 
         // ============================================
         // URL Parameter Handling
@@ -313,6 +357,34 @@
                 console.log('Session cleared');
             } catch (e) {
                 console.error('Error clearing session:', e);
+            }
+        }
+
+        // ============================================
+        // Save to Database (NEW)
+        // ============================================
+        async function saveToDatabase(wallet, email, name) {
+            if (savedToDatabase || !wallet) return;
+            
+            try {
+                console.log('Saving to database:', { wallet, email, name });
+                const response = await fetch('/api/wallet/connect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        walletAddress: wallet,
+                        email: email || null,
+                        name: name || null,
+                        source: 'wallettwo-profile'
+                    })
+                });
+                const result = await response.json();
+                console.log('Database save result:', result);
+                if (result.success) {
+                    savedToDatabase = true;
+                }
+            } catch (error) {
+                console.error('Error saving to database:', error);
             }
         }
 
@@ -388,6 +460,9 @@
 
             // Fetch balance
             fetchBalance(user.wallet);
+            
+            // Save to database (NEW)
+            saveToDatabase(user.wallet, user.email, user.name);
         }
 
         function showDisconnecting() {
@@ -491,6 +566,7 @@
             clearSession();
             currentUser = null;
             acceptMessages = false;
+            savedToDatabase = false;
 
             showDisconnecting();
 
