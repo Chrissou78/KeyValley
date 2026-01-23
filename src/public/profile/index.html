@@ -1,678 +1,457 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>My Profile | Kea Valley</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#ee9d2b",
-                        "primary-light": "#fbdea6",
-                        "background-dark": "#0a0a0a",
-                        "surface": "#121212",
-                    },
-                    fontFamily: {
-                        "sans": ["Manrope", "sans-serif"],
-                        "serif": ["Playfair Display", "serif"],
-                    },
-                },
-            },
-        }
-    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Kea Valley</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Manrope', sans-serif; }
-        h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
-        .gold-glow:hover {
-            box-shadow: 0 0 25px rgba(238, 157, 43, 0.3);
+        * { font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%); min-height: 100vh; }
+        .glass-card {
+            background: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gold-gradient { background: linear-gradient(135deg, #ee9d2b 0%, #d4a543 100%); }
+        .gold-text { color: #ee9d2b; }
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(26, 26, 26, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border-radius: 0.75rem;
+        }
+        .loading-overlay.hidden { display: none; }
+        .btn-gold {
+            background: linear-gradient(135deg, #ee9d2b 0%, #d4a543 100%);
+            color: #000;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(238, 157, 43, 0.4);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-outline:hover {
             border-color: #ee9d2b;
+            color: #ee9d2b;
         }
-        .glass-nav {
-            backdrop-filter: blur(12px);
-            background-color: rgba(10, 10, 10, 0.7);
+        .presale-banner {
+            background: linear-gradient(135deg, rgba(238, 157, 43, 0.15) 0%, rgba(212, 165, 67, 0.1) 100%);
+            border: 1px solid rgba(238, 157, 43, 0.3);
         }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0a0a0a; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
-        
-        .wallet-iframe-container {
-            background: #ffffff;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        .wallet-info {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
         }
-        .wallet-iframe {
-            width: 100%;
-            height: 600px;
-            border: none;
-            display: block;
+        #debug-panel {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.9);
+            color: #0f0;
+            padding: 10px;
+            font-size: 10px;
+            max-width: 300px;
+            max-height: 200px;
+            overflow: auto;
+            z-index: 9999;
+            border-radius: 4px;
+            display: none;
         }
-        
-        .copy-btn:active {
-            transform: scale(0.95);
-        }
+        #debug-panel.visible { display: block; }
     </style>
 </head>
-<body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
-
+<body class="text-white">
     <!-- Header -->
-    <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5">
-        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
-            <a href="/" class="flex items-center gap-4 group cursor-pointer">
-                <div class="size-10 text-primary transition-transform duration-500 group-hover:rotate-180">
-                    <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
-                    </svg>
-                </div>
-                <div>
-                    <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
-                    <p class="text-[0.6rem] text-primary uppercase tracking-[0.3em] font-sans">Estates</p>
-                </div>
-            </a>
-            <nav class="hidden md:flex items-center gap-8 lg:gap-12">
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/">Home</a>
+    <header class="glass-card border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="/" class="text-xl font-bold gold-text">KEA VALLEY®</a>
+            <nav class="flex items-center gap-4">
+                <a href="/" class="text-white/60 hover:text-white transition">Home</a>
+                <a href="/claim" class="text-white/60 hover:text-white transition">Claim</a>
+                <a href="/presale" class="btn-gold text-sm">Join Presale</a>
             </nav>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-1 pt-32 pb-20 px-6 flex items-center justify-center">
-        <div class="max-w-lg mx-auto w-full">
-            
-            <!-- Page Title -->
-            <div class="text-center mb-12">
-                <div class="flex items-center justify-center gap-4 mb-6">
-                    <div class="h-[1px] w-8 bg-primary"></div>
-                    <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Member Area</span>
-                    <div class="h-[1px] w-8 bg-primary"></div>
+    <main class="max-w-4xl mx-auto px-4 py-12">
+        <!-- Page Title -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold mb-2">My Profile</h1>
+            <p class="text-white/60">View your WalletTwo balance and manage your VIP tokens</p>
+        </div>
+
+        <!-- Presale Banner - Always Visible -->
+        <div id="presaleBanner" class="presale-banner rounded-xl p-6 mb-8">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-2xl">🚀</span>
+                        <h3 class="text-xl font-bold gold-text">VIP Token Presale Now Live!</h3>
+                    </div>
+                    <p class="text-white/70 text-sm">Get VIP tokens at the best price. Pay with Card, POL, or USDC.</p>
+                    <div id="presaleWalletInfo" class="mt-2 hidden">
+                        <span class="text-white/50 text-sm">Connected: </span>
+                        <span id="presaleWalletAddress" class="wallet-info text-sm text-green-400"></span>
+                    </div>
                 </div>
-                <h1 class="text-4xl md:text-5xl font-serif italic font-medium text-white mb-4">My Profile</h1>
-                <p class="text-slate-400 font-light">View your wallet and token balance.</p>
+                <a href="/presale" class="btn-gold whitespace-nowrap">Join Presale →</a>
             </div>
+        </div>
 
-            <!-- Card -->
-            <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
-                <div class="px-8 py-5 border-b border-white/5 flex items-center justify-between">
-                    <h3 id="cardTitle" class="text-xs font-bold uppercase tracking-widest text-primary">Profile</h3>
-                    <span class="material-symbols-outlined text-primary/50">person</span>
-                </div>
-                <div class="p-6">
-                    
-                    <!-- Login Container -->
-                    <div id="loginContainer">
-                        <p class="text-slate-400 text-sm text-center mb-6">Connect your wallet to view your profile</p>
-                        <div class="wallet-iframe-container">
-                            <iframe 
-                                id="walletIframe"
-                                src="https://wallet.wallettwo.com/auth/login?action=auth&iframe=true"
-                                class="wallet-iframe"
-                                style="height: 600px !important; min-height: 600px;"
-                                allow="clipboard-write"
-                            ></iframe>
-                        </div>
-                    </div>
+        <!-- Quick Links -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <a href="/" class="btn-outline text-center">← Back to Home</a>
+            <a href="/claim" class="btn-outline text-center">Claim Free Tokens</a>
+            <a href="https://wallet.wallettwo.com/wallet/dashboard?tab=Tokens&companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092" target="_blank" class="btn-outline text-center">Full WalletTwo →</a>
+        </div>
 
-                    <!-- Loading Container (for exchanging code) -->
-                    <div id="loadingContainer" class="hidden text-center py-12">
-                        <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-                        <p class="text-slate-400 text-sm">Loading your profile...</p>
-                    </div>
-
-                    <!-- Profile Container (hidden by default) -->
-                    <div id="profileContainer" class="hidden">
-                        <!-- Avatar & Name -->
-                        <div class="flex items-center gap-4 mb-8">
-                            <div id="avatarCircle" class="size-16 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
-                                <span id="avatarInitials" class="text-primary text-xl font-bold">--</span>
-                            </div>
-                            <div>
-                                <h2 id="displayName" class="text-xl font-serif text-white">Loading...</h2>
-                                <p id="displayEmail" class="text-slate-500 text-sm hidden"></p>
-                            </div>
-                        </div>
-
-                        <!-- Wallet Address -->
-                        <div class="mb-6">
-                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Wallet Address</label>
-                            <div class="flex items-center gap-2 bg-background-dark border border-white/5 rounded-sm p-4">
-                                <span id="walletAddress" class="text-white font-mono text-sm flex-1 truncate">0x...</span>
-                                <button id="copyBtn" class="copy-btn text-slate-500 hover:text-primary transition-colors" title="Copy address">
-                                    <span class="material-symbols-outlined text-xl">content_copy</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- VIP Token Balance -->
-                        <div class="mb-8">
-                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">VIP Token Balance</label>
-                            <div class="bg-background-dark border border-white/5 rounded-sm p-6 text-center">
-                                <div id="balanceLoading" class="flex items-center justify-center gap-2">
-                                    <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                    <span class="text-slate-500 text-sm">Loading balance...</span>
-                                </div>
-                                <div id="balanceDisplay" class="hidden">
-                                    <p class="text-4xl font-serif text-primary mb-1">
-                                        <span id="balanceAmount">0.00</span>
-                                        <span class="text-xl text-primary/60">VIP</span>
-                                    </p>
-                                    <a id="explorerLink" href="#" target="_blank" class="inline-flex items-center gap-1 text-slate-500 text-xs hover:text-primary transition-colors">
-                                        View on Polygonscan <span class="material-symbols-outlined text-sm">open_in_new</span>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Claim Button (shown if balance < 2) -->
-                        <div id="claimButtonContainer" class="hidden mb-6">
-                            <a href="/claim" class="block w-full bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs text-center gold-glow hover:translate-y-[-2px] transition-transform">
-                                Claim Free Tokens
-                            </a>
-                        </div>
-
-                        <!-- Disconnect Button -->
-                        <button id="disconnectBtn" class="w-full border border-white/10 text-slate-500 px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-red-500/30 hover:text-red-400 transition-all">
-                            Disconnect Wallet
-                        </button>
-                    </div>
-
-                    <!-- Disconnecting Container (hidden by default) -->
-                    <div id="disconnectingContainer" class="hidden text-center py-12">
-                        <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-                        <p class="text-slate-400 text-sm">Disconnecting...</p>
-                    </div>
-
+        <!-- Info Banner -->
+        <div class="glass-card rounded-xl p-4 mb-6 border-l-4 border-blue-500">
+            <div class="flex items-start gap-3">
+                <svg class="w-6 h-6 text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <p class="text-white/80">Log in to WalletTwo below to view your VIP token balance.</p>
+                    <p class="text-white/60 text-sm mt-1">
+                        Don't have an account? 
+                        <a href="https://wallet.wallettwo.com/auth/register?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092" target="_blank" class="gold-text hover:underline">Register here →</a>
+                    </p>
                 </div>
             </div>
+        </div>
 
+        <!-- Wallet Status Panel -->
+        <div id="walletStatusPanel" class="glass-card rounded-xl p-4 mb-6 hidden">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="text-white/80">Wallet Connected</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="connectedEmail" class="text-white/60 text-sm"></span>
+                    <span id="connectedAddress" class="wallet-info text-sm text-green-400"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- WalletTwo Dashboard Card -->
+        <div class="glass-card rounded-xl overflow-hidden">
+            <div class="p-4 border-b border-white/10 flex items-center justify-between">
+                <h2 class="font-semibold flex items-center gap-2">
+                    <svg class="w-5 h-5 gold-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                    </svg>
+                    WalletTwo Dashboard
+                </h2>
+                <a href="https://wallet.wallettwo.com/wallet/dashboard?tab=Tokens&companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092" target="_blank" class="text-sm text-white/40 hover:text-white/80 transition">
+                    Open in new tab →
+                </a>
+            </div>
+            <div class="relative" style="min-height: 500px;">
+                <!-- Loading Overlay -->
+                <div id="loadingOverlay" class="loading-overlay">
+                    <div class="text-center">
+                        <div class="animate-spin w-8 h-8 border-2 border-white/20 border-t-[#ee9d2b] rounded-full mx-auto mb-4"></div>
+                        <p class="text-white/60">Loading WalletTwo...</p>
+                    </div>
+                </div>
+                <!-- WalletTwo iframe -->
+                <iframe 
+                    id="walletTwoFrame"
+                    src="https://wallet.wallettwo.com/wallet/dashboard?tab=Tokens&companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092"
+                    class="w-full border-0"
+                    style="height: 500px;"
+                    onload="hideLoading()"
+                    allow="clipboard-write"
+                ></iframe>
+            </div>
         </div>
     </main>
 
     <!-- Footer -->
-    <footer class="bg-background-dark py-8 border-t border-white/5">
-        <div class="max-w-7xl mx-auto px-6 lg:px-12">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <a href="/" class="flex items-center gap-2">
-                    <div class="size-6 text-primary">
-                        <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
-                        </svg>
-                    </div>
-                    <span class="text-xs font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
-                </a>
-                <div class="text-slate-600 text-xs font-light">
-                    © 2026 Kea Valley
-                </div>
-            </div>
+    <footer class="border-t border-white/10 mt-16">
+        <div class="max-w-7xl mx-auto px-4 py-6 text-center text-white/40 text-sm">
+            &copy; 2025 KEA VALLEY®. All rights reserved.
         </div>
     </footer>
 
-    <!-- Hidden logout iframe -->
-    <iframe id="logoutIframe" style="display:none;"></iframe>
+    <!-- Debug Panel -->
+    <div id="debug-panel"></div>
 
     <script>
-        // ============================================
         // Configuration
-        // ============================================
-        const CONFIG = {
-            VIP_TOKEN_ADDRESS: '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F',
-            POLYGON_RPC: 'https://polygon-mainnet.g.alchemy.com/v2/IoufBRdGO6MKWC6pxqbZW',
-            POLYGON_EXPLORER: 'https://polygonscan.com',
-            WALLETTWO_ORIGIN: 'https://wallet.wallettwo.com',
-            STORAGE_KEY: 'keavalley_profile',
-            MIN_BALANCE_TO_HIDE_CLAIM: 2,
-            SESSION_DURATION: 24 * 60 * 60 * 1000 // 24 hours
-        };
-
-        const ERC20_ABI = ['function balanceOf(address owner) view returns (uint256)'];
-
-        // ============================================
-        // DOM Elements
-        // ============================================
-        const loginContainer = document.getElementById('loginContainer');
-        const loadingContainer = document.getElementById('loadingContainer');
-        const profileContainer = document.getElementById('profileContainer');
-        const disconnectingContainer = document.getElementById('disconnectingContainer');
-        const cardTitle = document.getElementById('cardTitle');
-        const walletIframe = document.getElementById('walletIframe');
-        const logoutIframe = document.getElementById('logoutIframe');
-        const avatarInitials = document.getElementById('avatarInitials');
-        const displayName = document.getElementById('displayName');
-        const displayEmail = document.getElementById('displayEmail');
-        const walletAddress = document.getElementById('walletAddress');
-        const copyBtn = document.getElementById('copyBtn');
-        const balanceLoading = document.getElementById('balanceLoading');
-        const balanceDisplay = document.getElementById('balanceDisplay');
-        const balanceAmount = document.getElementById('balanceAmount');
-        const explorerLink = document.getElementById('explorerLink');
-        const claimButtonContainer = document.getElementById('claimButtonContainer');
-        const disconnectBtn = document.getElementById('disconnectBtn');
-
-        // ============================================
-        // State
-        // ============================================
-        let currentUser = null;
-        let acceptMessages = true;
-        let isDisconnecting = false;
-
-        // ============================================
-        // URL Parameter Handling
-        // ============================================
-        function getDataFromURL() {
-            const params = new URLSearchParams(window.location.search);
-            return {
-                wallet: params.get('wlt') || params.get('wallet') || params.get('address'),
-                signature: params.get('signature') || params.get('sig'),
-                userId: params.get('usr') || params.get('user'),
-                code: params.get('code')
-            };
+        const WALLETTWO_ORIGIN = 'https://wallet.wallettwo.com';
+        const STORAGE_KEYS = ['walletTwoSession', 'keavalley_profile', 'walletAddress', 'wallet_address', 'connectedWallet'];
+        const DEBUG = new URLSearchParams(window.location.search).has('debug');
+        
+        // Debug logging
+        function debugLog(msg, data = null) {
+            if (!DEBUG) return;
+            const panel = document.getElementById('debug-panel');
+            panel.classList.add('visible');
+            const time = new Date().toLocaleTimeString();
+            const line = document.createElement('div');
+            line.textContent = `[${time}] ${msg}${data ? ': ' + JSON.stringify(data).substring(0, 100) : ''}`;
+            panel.appendChild(line);
+            panel.scrollTop = panel.scrollHeight;
+            console.log(`[DEBUG] ${msg}`, data);
         }
 
-        // ============================================
-        // LocalStorage Functions
-        // ============================================
-        function getStoredSession() {
-            try {
-                const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
-                if (stored) {
-                    const data = JSON.parse(stored);
-                    const age = Date.now() - (data.timestamp || 0);
-                    if (data.wallet && age < CONFIG.SESSION_DURATION) {
-                        return data;
-                    }
-                    localStorage.removeItem(CONFIG.STORAGE_KEY);
+        // Hide loading overlay
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.classList.add('hidden');
+                debugLog('Loading hidden via onload');
+            }
+        }
+
+        // Fallback to hide loading after 5 seconds
+        setTimeout(() => {
+            hideLoading();
+            debugLog('Loading hidden via 5s fallback');
+        }, 5000);
+
+        // Validate wallet address
+        function isValidAddress(addr) {
+            return addr && typeof addr === 'string' && /^0x[a-fA-F0-9]{40}$/.test(addr);
+        }
+
+        // Format address for display
+        function formatAddress(addr) {
+            if (!addr || addr.length < 10) return addr;
+            return `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`;
+        }
+
+        // Update UI with connected wallet and email
+        function updateWalletUI(address, email = null) {
+            debugLog('Updating UI', { address, email });
+            
+            // Update presale banner
+            const presaleWalletInfo = document.getElementById('presaleWalletInfo');
+            const presaleWalletAddress = document.getElementById('presaleWalletAddress');
+            if (presaleWalletInfo && presaleWalletAddress && isValidAddress(address)) {
+                presaleWalletAddress.textContent = formatAddress(address);
+                presaleWalletInfo.classList.remove('hidden');
+            }
+
+            // Update wallet status panel
+            const statusPanel = document.getElementById('walletStatusPanel');
+            const connectedAddress = document.getElementById('connectedAddress');
+            const connectedEmail = document.getElementById('connectedEmail');
+            if (statusPanel && connectedAddress && isValidAddress(address)) {
+                connectedAddress.textContent = formatAddress(address);
+                if (connectedEmail && email) {
+                    connectedEmail.textContent = email;
                 }
-            } catch (e) {
-                console.error('Error reading session:', e);
-            }
-            return null;
-        }
-
-        function saveSession(data) {
-            try {
-                localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify({
-                    ...data,
-                    timestamp: Date.now()
-                }));
-                console.log('Session saved:', data.wallet);
-            } catch (e) {
-                console.error('Error saving session:', e);
+                statusPanel.classList.remove('hidden');
             }
         }
 
-        function clearSession() {
-            try {
-                localStorage.removeItem(CONFIG.STORAGE_KEY);
-                console.log('Session cleared');
-            } catch (e) {
-                console.error('Error clearing session:', e);
-            }
-        }
-
-        // ============================================
-        // UI Functions
-        // ============================================
-        function showLogin() {
-            loginContainer.classList.remove('hidden');
-            loadingContainer.classList.add('hidden');
-            profileContainer.classList.add('hidden');
-            disconnectingContainer.classList.add('hidden');
-            cardTitle.textContent = 'Connect Wallet';
-            acceptMessages = true;
-            isDisconnecting = false;
-        }
-
-        function showLoading() {
-            loginContainer.classList.add('hidden');
-            loadingContainer.classList.remove('hidden');
-            profileContainer.classList.add('hidden');
-            disconnectingContainer.classList.add('hidden');
-            cardTitle.textContent = 'Loading';
-        }
-
-        function showProfile(user) {
-            currentUser = user;
-            acceptMessages = false;
-            
-            loginContainer.classList.add('hidden');
-            loadingContainer.classList.add('hidden');
-            profileContainer.classList.remove('hidden');
-            disconnectingContainer.classList.add('hidden');
-            cardTitle.textContent = 'Profile';
-
-            // Set avatar initials
-            let initials = '??';
-            if (user.name) {
-                const nameParts = user.name.split(' ');
-                if (nameParts.length >= 2) {
-                    initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
-                } else {
-                    initials = user.name.slice(0, 2).toUpperCase();
-                }
-            } else if (user.email) {
-                initials = user.email.slice(0, 2).toUpperCase();
-            } else if (user.wallet) {
-                initials = user.wallet.slice(2, 4).toUpperCase();
-            }
-            avatarInitials.textContent = initials;
-
-            // Set display name
-            if (user.name) {
-                displayName.textContent = user.name;
-            } else if (user.email) {
-                displayName.textContent = user.email.split('@')[0];
-            } else {
-                displayName.textContent = `User ${initials}`;
-            }
-
-            // Set email if available
-            if (user.email) {
-                displayEmail.textContent = user.email;
-                displayEmail.classList.remove('hidden');
-            } else {
-                displayEmail.classList.add('hidden');
-            }
-
-            // Set wallet address
-            walletAddress.textContent = user.wallet;
-
-            // Set explorer link
-            explorerLink.href = `${CONFIG.POLYGON_EXPLORER}/token/${CONFIG.VIP_TOKEN_ADDRESS}?a=${user.wallet}`;
-
-            // Fetch balance
-            fetchBalance(user.wallet);
-        }
-
-        function showDisconnecting() {
-            loginContainer.classList.add('hidden');
-            loadingContainer.classList.add('hidden');
-            profileContainer.classList.add('hidden');
-            disconnectingContainer.classList.remove('hidden');
-            cardTitle.textContent = 'Disconnecting';
-        }
-
-        // ============================================
-        // Balance Fetching
-        // ============================================
-        async function fetchBalance(address) {
-            balanceLoading.classList.remove('hidden');
-            balanceDisplay.classList.add('hidden');
-            claimButtonContainer.classList.add('hidden');
-
-            try {
-                const apiUrl = `https://api.wallettwo.com/blockchain/balance/137/${address}/${CONFIG.VIP_TOKEN_ADDRESS}`;
-                console.log('Fetching balance from WalletTwo API...');
-                
-                const response = await fetch(apiUrl);
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('WalletTwo API response:', data);
-                    
-                    let balance = 0;
-                    if (typeof data === 'number') {
-                        balance = data;
-                    } else if (data.balance !== undefined) {
-                        balance = parseFloat(data.balance);
-                    } else if (data.result !== undefined) {
-                        balance = parseFloat(data.result);
-                    } else if (data.value !== undefined) {
-                        balance = parseFloat(data.value);
-                    }
-                    
-                    displayBalance(balance);
-                    return;
-                }
-            } catch (error) {
-                console.log('WalletTwo API failed, trying RPC:', error.message);
-            }
-
-            await fetchBalanceFromRPC(address);
-        }
-
-        async function fetchBalanceFromRPC(address) {
-            try {
-                const provider = new ethers.JsonRpcProvider(CONFIG.POLYGON_RPC);
-                const contract = new ethers.Contract(CONFIG.VIP_TOKEN_ADDRESS, ERC20_ABI, provider);
-                const balance = await contract.balanceOf(address);
-                const formatted = parseFloat(ethers.formatUnits(balance, 18));
-                displayBalance(formatted);
-            } catch (error) {
-                console.error('RPC balance fetch failed:', error);
-                displayBalance(0);
-            }
-        }
-
-        function displayBalance(balance) {
-            balanceLoading.classList.add('hidden');
-            balanceDisplay.classList.remove('hidden');
-            
-            balanceAmount.textContent = balance.toFixed(2);
-            
-            if (balance < CONFIG.MIN_BALANCE_TO_HIDE_CLAIM) {
-                claimButtonContainer.classList.remove('hidden');
-            } else {
-                claimButtonContainer.classList.add('hidden');
-            }
-        }
-
-        // ============================================
-        // Copy Address
-        // ============================================
-        function copyAddress() {
-            if (currentUser && currentUser.wallet) {
-                navigator.clipboard.writeText(currentUser.wallet).then(() => {
-                    copyBtn.innerHTML = '<span class="material-symbols-outlined text-xl text-green-400">check</span>';
-                    setTimeout(() => {
-                        copyBtn.innerHTML = '<span class="material-symbols-outlined text-xl">content_copy</span>';
-                    }, 2000);
-                }).catch(err => {
-                    console.error('Copy failed:', err);
-                });
-            }
-        }
-
-        // ============================================
-        // Disconnect / Logout
-        // ============================================
-        function disconnect() {
-            if (isDisconnecting) return;
-            isDisconnecting = true;
-            
-            console.log('Disconnecting...');
-            
-            clearSession();
-            currentUser = null;
-            acceptMessages = false;
-
-            showDisconnecting();
-
-            logoutIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true`;
-            
-            let logoutHandled = false;
-            
-            const handleLogoutMessage = (event) => {
-                if (event.origin.includes('wallettwo.com') && !logoutHandled) {
-                    console.log('Logout message:', event.data);
-                    if (event.data && (event.data.type === 'logout' || event.data.type === 'logoutSuccess' || event.data.event === 'logout')) {
-                        logoutHandled = true;
-                        window.removeEventListener('message', handleLogoutMessage);
-                        completeDisconnect();
-                    }
-                }
-            };
-            
-            window.addEventListener('message', handleLogoutMessage);
-            
-            setTimeout(() => {
-                if (!logoutHandled) {
-                    console.log('Logout timeout, redirecting anyway');
-                    window.removeEventListener('message', handleLogoutMessage);
-                    completeDisconnect();
-                }
-            }, 2000);
-        }
-
-        function completeDisconnect() {
-            console.log('Disconnect complete, redirecting to home');
-            window.location.href = '/';
-        }
-
-        // ============================================
-        // WalletTwo Message Handler
-        // ============================================
-        function handleWalletTwoMessage(event) {
-            if (!event.origin.includes('wallettwo.com')) {
+        // Save wallet and email to database
+        async function saveWalletToDatabase(walletAddress, email = null) {
+            if (!isValidAddress(walletAddress)) {
+                debugLog('Invalid address, not saving', walletAddress);
                 return;
             }
 
-            const data = event.data;
-            console.log('Message from WalletTwo:', data);
+            debugLog('Saving to database', { walletAddress, email });
 
-            if (!acceptMessages || isDisconnecting) {
-                console.log('Ignoring message - acceptMessages:', acceptMessages, 'isDisconnecting:', isDisconnecting);
-                return;
-            }
-
-            if (data && (data.type === 'wallet_login' || data.event === 'wallet_login')) {
-                const wallet = data.wallet || data.wlt || data.address;
-                
-                if (wallet) {
-                    console.log('Wallet login received:', wallet);
-                    acceptMessages = false;
-                    
-                    if (data.code) {
-                        exchangeCodeForUserInfo(data.code, wallet, data.user);
-                    } else {
-                        const userData = {
-                            wallet: wallet,
-                            userId: data.user || data.usr,
-                            timestamp: Date.now()
-                        };
-                        saveSession(userData);
-                        showProfile(userData);
-                    }
-                }
-            }
-        }
-
-        // ============================================
-        // Exchange Code for User Info
-        // ============================================
-        async function exchangeCodeForUserInfo(code, wallet, userId) {
-            showLoading();
-            
             try {
-                console.log('Exchanging code for user info...');
-                
-                const response = await fetch('/api/wallettwo/exchange', {
+                const response = await fetch('/api/wallet/connect', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code })
+                    body: JSON.stringify({
+                        walletAddress: walletAddress,
+                        email: email,
+                        source: 'wallettwo',
+                        timestamp: new Date().toISOString()
+                    })
                 });
 
-                const data = await response.json();
-                console.log('Exchange response:', data);
+                const result = await response.json();
+                debugLog('Save result', result);
 
-                const userData = {
-                    wallet: wallet,
-                    userId: userId || data.user?.sub || data.user?.id,
-                    email: data.user?.email,
-                    name: data.user?.name || data.user?.given_name || 
-                          (data.user?.given_name && data.user?.family_name ? 
-                           `${data.user.given_name} ${data.user.family_name}` : null),
-                    accessToken: data.access_token,
-                    timestamp: Date.now()
-                };
-
-                saveSession(userData);
-                showProfile(userData);
-            } catch (error) {
-                console.error('Exchange failed:', error);
-                const userData = {
-                    wallet: wallet,
-                    userId: userId,
-                    timestamp: Date.now()
-                };
-                saveSession(userData);
-                showProfile(userData);
-            }
-        }
-
-        // ============================================
-        // Event Listeners
-        // ============================================
-        copyBtn.addEventListener('click', copyAddress);
-        disconnectBtn.addEventListener('click', disconnect);
-        window.addEventListener('message', handleWalletTwoMessage);
-
-        // ============================================
-        // Initialize
-        // ============================================
-        function init() {
-            console.log('Profile page initialized');
-            console.log('URL:', window.location.href);
-
-            // 1. Check URL params (coming from claim page or redirect)
-            const urlData = getDataFromURL();
-            
-            // If we have a code, exchange it for user info
-            if (urlData.code && urlData.wallet) {
-                console.log('Have code and wallet from URL, exchanging...');
-                window.history.replaceState({}, document.title, '/profile');
-                exchangeCodeForUserInfo(urlData.code, urlData.wallet, urlData.userId);
-                return;
-            }
-            
-            // If we only have wallet from URL (no code), we need to show iframe to get full profile
-            // But first check if we have a stored session with full info
-            if (urlData.wallet) {
-                console.log('Wallet from URL:', urlData.wallet);
-                window.history.replaceState({}, document.title, '/profile');
-                
-                // Check if stored session has more info (email, name)
-                const stored = getStoredSession();
-                if (stored && stored.wallet === urlData.wallet && (stored.email || stored.name)) {
-                    console.log('Found stored session with full info');
-                    showProfile(stored);
-                    return;
+                if (result.success) {
+                    console.log('Wallet saved to database:', walletAddress);
                 }
-                
-                // No full info - show profile with just wallet, but prompt for full login
-                const userData = {
-                    wallet: urlData.wallet,
-                    userId: urlData.userId,
-                    signature: urlData.signature,
-                    timestamp: Date.now()
-                };
-                saveSession(userData);
-                showProfile(userData);
-                return;
+            } catch (error) {
+                console.error('Error saving wallet to database:', error);
+                debugLog('Save error', error.message);
             }
-
-            // 2. Check localStorage for existing session
-            const stored = getStoredSession();
-            if (stored && stored.wallet) {
-                console.log('Using stored session:', stored.wallet);
-                acceptMessages = false;
-                showProfile(stored);
-                return;
-            }
-
-            // 3. No session - show login
-            console.log('No session found, showing login');
-            showLogin();
         }
 
-        // Start
-        init();
+        // Store wallet data locally
+        function storeWalletData(address, email = null) {
+            const data = {
+                address: address,
+                email: email,
+                timestamp: Date.now()
+            };
+            
+            localStorage.setItem('walletTwoSession', JSON.stringify(data));
+            localStorage.setItem('walletAddress', address);
+            localStorage.setItem('keavalley_profile', JSON.stringify({
+                wallet: address,
+                walletAddress: address,
+                email: email,
+                connectedAt: new Date().toISOString()
+            }));
+
+            debugLog('Stored wallet data locally', data);
+        }
+
+        // Extract wallet and email from message data
+        function extractWalletData(data) {
+            let address = null;
+            let email = null;
+
+            // Try various data structures that WalletTwo might send
+            if (data) {
+                // Direct properties
+                address = data.wallet || data.address || data.walletAddress || data.wallet_address;
+                email = data.email || data.userEmail || data.user_email;
+
+                // Nested in user object
+                if (data.user) {
+                    address = address || data.user.wallet || data.user.address || data.user.walletAddress;
+                    email = email || data.user.email || data.user.userEmail;
+                }
+
+                // Nested in payload
+                if (data.payload) {
+                    address = address || data.payload.wallet || data.payload.address || data.payload.walletAddress;
+                    email = email || data.payload.email || data.payload.userEmail;
+                }
+
+                // Nested in result
+                if (data.result) {
+                    address = address || data.result.wallet || data.result.address || data.result.walletAddress;
+                    email = email || data.result.email || data.result.userEmail;
+                }
+            }
+
+            return { address, email };
+        }
+
+        // Listen for postMessage from WalletTwo iframe
+        window.addEventListener('message', function(event) {
+            // Only accept messages from WalletTwo
+            if (event.origin !== WALLETTWO_ORIGIN) {
+                return;
+            }
+
+            debugLog('Received postMessage', event.data);
+
+            const data = event.data;
+            if (!data) return;
+
+            // Check for authentication success messages
+            const messageType = data.type || data.event || data.action || '';
+            const successTypes = ['AUTH_SUCCESS', 'WALLET_CONNECTED', 'LOGIN_SUCCESS', 'wallet_login', 'authenticated'];
+
+            if (successTypes.includes(messageType) || data.success === true || data.authenticated === true) {
+                debugLog('Auth success detected', messageType);
+
+                const { address, email } = extractWalletData(data);
+
+                if (isValidAddress(address)) {
+                    debugLog('Valid wallet found', { address, email });
+                    
+                    // Store locally
+                    storeWalletData(address, email);
+                    
+                    // Update UI
+                    updateWalletUI(address, email);
+                    
+                    // Save to database (async)
+                    saveWalletToDatabase(address, email);
+                }
+            }
+        });
+
+        // Check for existing wallet on page load
+        function checkExistingWallet() {
+            debugLog('Checking for existing wallet');
+
+            for (const key of STORAGE_KEYS) {
+                try {
+                    const stored = localStorage.getItem(key) || sessionStorage.getItem(key);
+                    if (!stored) continue;
+
+                    debugLog(`Found storage key: ${key}`, stored.substring(0, 50));
+
+                    // Try to parse as JSON
+                    let data;
+                    try {
+                        data = JSON.parse(stored);
+                    } catch {
+                        // Raw address
+                        if (isValidAddress(stored)) {
+                            updateWalletUI(stored);
+                            return;
+                        }
+                        continue;
+                    }
+
+                    // Check validity (24 hour window)
+                    const timestamp = data.timestamp || data.connectedAt;
+                    if (timestamp) {
+                        const age = Date.now() - new Date(timestamp).getTime();
+                        if (age > 24 * 60 * 60 * 1000) {
+                            debugLog('Session expired', key);
+                            continue;
+                        }
+                    }
+
+                    const { address, email } = extractWalletData(data);
+                    if (isValidAddress(address)) {
+                        debugLog('Restored wallet from storage', { address, email });
+                        updateWalletUI(address, email);
+                        return;
+                    }
+                } catch (error) {
+                    debugLog(`Error reading ${key}`, error.message);
+                }
+            }
+
+            debugLog('No existing wallet found');
+        }
+
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            debugLog('Page loaded');
+            checkExistingWallet();
+        });
+
+        // Additional check after a short delay (for slow iframe loads)
+        setTimeout(checkExistingWallet, 3000);
+        setTimeout(checkExistingWallet, 6000);
     </script>
 </body>
 </html>
