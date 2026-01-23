@@ -9,8 +9,32 @@ const minter = require('./minter');
 const auth = require('./auth');
 const { getNetworkConfig } = require('./config/networks');
 
-const Stripe = require('stripe');
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// ===========================================
+// Stripe Setup (Optional - graceful fallback)
+// ===========================================
+let stripe = null;
+try {
+    if (process.env.STRIPE_SECRET_KEY) {
+        const Stripe = require('stripe');
+        stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        console.log('✅ Stripe initialized');
+    } else {
+        console.log('⚠️ Stripe not configured (STRIPE_SECRET_KEY missing)');
+    }
+} catch (e) {
+    console.log('⚠️ Stripe not available:', e.message);
+}
+
+// ===========================================
+// Presale Configuration
+// ===========================================
+const PRESALE_CONFIG = {
+    tokenPrice: parseFloat(process.env.PRESALE_TOKEN_PRICE) || 0.10,
+    totalTokens: parseInt(process.env.PRESALE_TOTAL_TOKENS) || 1000000,
+    minPurchase: parseInt(process.env.PRESALE_MIN_PURCHASE) || 10,
+    maxPurchase: parseInt(process.env.PRESALE_MAX_PURCHASE) || 10000,
+    enabled: process.env.PRESALE_ENABLED !== 'false'
+};
 
 // ===========================================
 // Express App Setup
@@ -153,6 +177,10 @@ app.get('/claim', (req, res) => {
 
 app.get('/profile', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'profile', 'index.html'));
+});
+
+app.get('/presale', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'presale.html'));
 });
 
 app.get('/login', async (req, res) => {
@@ -1011,81 +1039,19 @@ app.post('/api/mint-manual', requireAuth, checkPasswordChange, async (req, res) 
 });
 
 // ===========================================
-// Health Check (Public)
+// Presale API Endpoints
 // ===========================================
-
-app.get('/api/health', async (req, res) => {
-    const healthData = {
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        network: process.env.NETWORK || 'not set',
-        env: {
-            NETWORK: process.env.NETWORK ? 'SET' : 'NOT SET',
-            TOKEN_ADDRESS_AMOY: process.env.TOKEN_ADDRESS_AMOY ? 'SET' : 'NOT SET',
-            TOKEN_ADDRESS_POLYGON: process.env.TOKEN_ADDRESS_POLYGON ? 'SET' : 'NOT SET',
-            PRIVATE_KEY: process.env.PRIVATE_KEY ? 'SET' : 'NOT SET',
-            MINT_AMOUNT: process.env.MINT_AMOUNT || '2 (default)',
-            ADMIN_USERNAME: process.env.ADMIN_USERNAME ? 'SET' : 'NOT SET',
-            ADMIN_PASSWORD: process.env.ADMIN_PASSWORD ? 'SET' : 'NOT SET',
-            DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'NOT SET'
-        }
-    };
-
-    // Check database connection
-    try {
-        const dbConnected = await db.testConnection();
-        healthData.database = {
-            status: dbConnected ? 'connected' : 'disconnected',
-            type: 'PostgreSQL'
-        };
-        
-        if (dbConnected) {
-            const stats = await db.getStats();
-            healthData.database.stats = stats;
-        }
-    } catch (dbError) {
-        healthData.database = {
-            status: 'error',
-            error: dbError.message
-        };
-    }
-
-    try {
-        await minter.initialize();
-        const networkConfig = getNetworkConfig();
-        
-        healthData.minter = {
-            status: 'initialized',
-            wallet: minter.wallet.address,
-            tokenAddress: networkConfig.tokenAddress,
-            tokenName: minter.tokenName,
-            tokenSymbol: minter.tokenSymbol,
-            network: networkConfig.name,
-            explorer: networkConfig.explorer
-        };
-    } catch (error) {
-        healthData.minter = {
-            status: 'error',
-            error: error.message
-        };
-    }
-
-    res.json(healthData);
-});
-
-// ===========================================
-// Presale Routes
-// ===========================================
-
-// Serve presale page
-app.get('/presale', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'presale.html'));
-});
 
 // Get presale configuration
 app.get('/api/presale/config', async (req, res) => {
     try {
-        const stats = await db.getPresaleStats();
+        // Try to get stats, but don't fail if function doesn't exist yet
+        let stats = { tokensSold: 0 };
+        try {
+            stats = await db.getPresaleStats() || { tokensSold: 0 };
+        } catch (e) {
+            console.log('Presale stats not available yet');
+        }
         
         // Fetch POL price from CoinGecko
         let polPrice = 0.50;
@@ -1117,6 +1083,11 @@ app.get('/api/presale/config', async (req, res) => {
 
 // Create Stripe Checkout Session
 app.post('/api/presale/create-checkout', async (req, res) => {
+    // Check if Stripe is configured
+    if (!stripe) {
+        return res.status(503).json({ error: 'Card payments not configured. Please use crypto payment.' });
+    }
+    
     try {
         const { wallet_address, token_amount, amount_usd } = req.body;
         
@@ -1138,7 +1109,11 @@ app.post('/api/presale/create-checkout', async (req, res) => {
         }
         
         // Check remaining tokens
-        const stats = await db.getPresaleStats();
+        let stats = { tokensSold: 0 };
+        try {
+            stats = await db.getPresaleStats() || { tokensSold: 0 };
+        } catch (e) {}
+        
         const remaining = PRESALE_CONFIG.totalTokens - (stats?.tokensSold || 0);
         if (token_amount > remaining) {
             return res.status(400).json({ error: `Only ${remaining} tokens remaining` });
@@ -1155,8 +1130,7 @@ app.post('/api/presale/create-checkout', async (req, res) => {
                     currency: 'usd',
                     product_data: {
                         name: 'VIP Token Presale',
-                        description: `${token_amount.toLocaleString()} VIP Tokens`,
-                        images: ['https://kea-valley.com/logo.png'] // Add your logo URL
+                        description: `${token_amount.toLocaleString()} VIP Tokens`
                     },
                     unit_amount: totalCents
                 },
@@ -1170,20 +1144,23 @@ app.post('/api/presale/create-checkout', async (req, res) => {
                 token_amount: token_amount.toString(),
                 price_per_token: PRESALE_CONFIG.tokenPrice.toString()
             },
-            customer_email: null, // Could add if available
             billing_address_collection: 'auto'
         });
         
         // Save pending purchase to database
-        await db.addPresalePurchase({
-            wallet_address: normalizedAddress,
-            token_amount: token_amount,
-            payment_method: 'card',
-            payment_amount: amount_usd,
-            usd_amount: amount_usd,
-            status: 'pending',
-            stripe_session_id: session.id
-        });
+        try {
+            await db.addPresalePurchase({
+                wallet_address: normalizedAddress,
+                token_amount: token_amount,
+                payment_method: 'card',
+                payment_amount: amount_usd,
+                usd_amount: amount_usd,
+                status: 'pending',
+                stripe_session_id: session.id
+            });
+        } catch (e) {
+            console.log('Could not save presale purchase to DB:', e.message);
+        }
         
         console.log(`💳 Stripe checkout created for ${token_amount} VIP to ${normalizedAddress}`);
         
@@ -1198,10 +1175,19 @@ app.post('/api/presale/create-checkout', async (req, res) => {
     }
 });
 
-// Stripe Webhook Handler
+// Stripe Webhook Handler (needs raw body)
 app.post('/api/presale/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    if (!stripe) {
+        return res.status(503).json({ error: 'Stripe not configured' });
+    }
+    
     const sig = req.headers['stripe-signature'];
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    if (!webhookSecret) {
+        console.error('STRIPE_WEBHOOK_SECRET not configured');
+        return res.status(500).json({ error: 'Webhook not configured' });
+    }
     
     let event;
     
@@ -1220,16 +1206,20 @@ app.post('/api/presale/webhook', express.raw({ type: 'application/json' }), asyn
             console.log('✅ Payment successful:', session.id);
             
             // Update purchase status
-            await db.updatePresalePurchaseByStripeSession(session.id, {
-                status: 'paid',
-                stripe_payment_intent: session.payment_intent
-            });
+            try {
+                await db.updatePresalePurchaseByStripeSession(session.id, {
+                    status: 'paid',
+                    stripe_payment_intent: session.payment_intent
+                });
+            } catch (e) {
+                console.log('Could not update presale purchase:', e.message);
+            }
             
             // Get purchase details from metadata
             const walletAddress = session.metadata.wallet_address;
             const tokenAmount = parseInt(session.metadata.token_amount);
             
-            // Queue token minting (or mint immediately)
+            // Mint tokens
             try {
                 await minter.initialize();
                 const networkConfig = getNetworkConfig();
@@ -1238,26 +1228,31 @@ app.post('/api/presale/webhook', express.raw({ type: 'application/json' }), asyn
                 const result = await minter.mintToAddress(walletAddress, tokenAmount);
                 
                 if (result.receipt?.hash) {
-                    await db.updatePresalePurchaseByStripeSession(session.id, {
-                        status: 'minted',
-                        tx_hash: result.receipt.hash
-                    });
+                    try {
+                        await db.updatePresalePurchaseByStripeSession(session.id, {
+                            status: 'minted',
+                            tx_hash: result.receipt.hash
+                        });
+                    } catch (e) {}
                     console.log(`✅ Minted! TX: ${result.receipt.hash}`);
                 }
             } catch (mintError) {
                 console.error('Minting error:', mintError);
-                // Purchase is paid, mark for manual fulfillment
-                await db.updatePresalePurchaseByStripeSession(session.id, {
-                    status: 'paid_pending_mint'
-                });
+                try {
+                    await db.updatePresalePurchaseByStripeSession(session.id, {
+                        status: 'paid_pending_mint'
+                    });
+                } catch (e) {}
             }
             break;
             
         case 'checkout.session.expired':
             const expiredSession = event.data.object;
-            await db.updatePresalePurchaseByStripeSession(expiredSession.id, {
-                status: 'expired'
-            });
+            try {
+                await db.updatePresalePurchaseByStripeSession(expiredSession.id, {
+                    status: 'expired'
+                });
+            } catch (e) {}
             break;
             
         default:
@@ -1287,14 +1282,19 @@ app.post('/api/presale/purchase', async (req, res) => {
         const normalizedAddress = wallet_address.toLowerCase();
         const usdAmount = token_amount * PRESALE_CONFIG.tokenPrice;
         
-        const purchase = await db.addPresalePurchase({
-            wallet_address: normalizedAddress,
-            token_amount: token_amount,
-            payment_method: payment_method,
-            payment_amount: payment_amount,
-            usd_amount: usdAmount,
-            status: 'pending_payment'
-        });
+        let purchase = { id: Date.now() };
+        try {
+            purchase = await db.addPresalePurchase({
+                wallet_address: normalizedAddress,
+                token_amount: token_amount,
+                payment_method: payment_method,
+                payment_amount: payment_amount,
+                usd_amount: usdAmount,
+                status: 'pending_payment'
+            });
+        } catch (e) {
+            console.log('Could not save presale purchase:', e.message);
+        }
         
         console.log(`📦 Crypto purchase recorded: ${token_amount} VIP for ${normalizedAddress}`);
         
@@ -1314,8 +1314,15 @@ app.post('/api/presale/purchase', async (req, res) => {
 // Admin: Get all presale purchases
 app.get('/api/presale/admin/purchases', requireAuth, checkPasswordChange, async (req, res) => {
     try {
-        const purchases = await db.getAllPresalePurchases();
-        const stats = await db.getPresaleStats();
+        let purchases = [];
+        let stats = { tokensSold: 0, totalUSD: 0, uniqueBuyers: 0 };
+        
+        try {
+            purchases = await db.getAllPresalePurchases() || [];
+            stats = await db.getPresaleStats() || stats;
+        } catch (e) {
+            console.log('Presale data not available:', e.message);
+        }
         
         res.json({
             purchases,
@@ -1369,6 +1376,69 @@ app.post('/api/presale/admin/fulfill', requireAuth, checkPasswordChange, async (
 });
 
 // ===========================================
+// Health Check (Public)
+// ===========================================
+
+app.get('/api/health', async (req, res) => {
+    const healthData = {
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        network: process.env.NETWORK || 'not set',
+        stripe: stripe ? 'configured' : 'not configured',
+        env: {
+            NETWORK: process.env.NETWORK ? 'SET' : 'NOT SET',
+            TOKEN_ADDRESS_POLYGON: process.env.TOKEN_ADDRESS_POLYGON ? 'SET' : 'NOT SET',
+            PRIVATE_KEY: process.env.PRIVATE_KEY ? 'SET' : 'NOT SET',
+            MINT_AMOUNT: process.env.MINT_AMOUNT || '2 (default)',
+            DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'NOT SET',
+            STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY ? 'SET' : 'NOT SET',
+            STRIPE_PUBLIC_KEY: process.env.STRIPE_PUBLIC_KEY ? 'SET' : 'NOT SET'
+        }
+    };
+
+    // Check database connection
+    try {
+        const dbConnected = await db.testConnection();
+        healthData.database = {
+            status: dbConnected ? 'connected' : 'disconnected',
+            type: 'PostgreSQL'
+        };
+        
+        if (dbConnected) {
+            const stats = await db.getStats();
+            healthData.database.stats = stats;
+        }
+    } catch (dbError) {
+        healthData.database = {
+            status: 'error',
+            error: dbError.message
+        };
+    }
+
+    try {
+        await minter.initialize();
+        const networkConfig = getNetworkConfig();
+        
+        healthData.minter = {
+            status: 'initialized',
+            wallet: minter.wallet.address,
+            tokenAddress: networkConfig.tokenAddress,
+            tokenName: minter.tokenName,
+            tokenSymbol: minter.tokenSymbol,
+            network: networkConfig.name,
+            explorer: networkConfig.explorer
+        };
+    } catch (error) {
+        healthData.minter = {
+            status: 'error',
+            error: error.message
+        };
+    }
+
+    res.json(healthData);
+});
+
+// ===========================================
 // Catch-all
 // ===========================================
 
@@ -1398,6 +1468,7 @@ async function startServer() {
                 console.log(`  📊 Dashboard: http://localhost:${PORT}/dashboard`);
                 console.log(`  🎁 Claim:     http://localhost:${PORT}/claim`);
                 console.log(`  👤 Profile:   http://localhost:${PORT}/profile`);
+                console.log(`  💰 Presale:   http://localhost:${PORT}/presale`);
                 console.log(`  💚 Health:    http://localhost:${PORT}/api/health`);
                 console.log('='.repeat(50) + '\n');
                 resolve(server);
