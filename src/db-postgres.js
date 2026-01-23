@@ -74,6 +74,28 @@ async function initDb() {
             CREATE INDEX IF NOT EXISTS idx_sessions_session_id ON sessions(session_id)
         `);
 
+        // Create presale_purchases table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS presale_purchases (
+                id SERIAL PRIMARY KEY,
+                wallet_address VARCHAR(42) NOT NULL,
+                token_amount INTEGER NOT NULL,
+                payment_method VARCHAR(20) NOT NULL,
+                payment_amount DECIMAL(20, 8) NOT NULL,
+                usd_amount DECIMAL(20, 2) NOT NULL,
+                status VARCHAR(30) DEFAULT 'pending',
+                stripe_session_id VARCHAR(255),
+                stripe_payment_intent VARCHAR(255),
+                tx_hash VARCHAR(66),
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            )
+        `);
+
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_presale_wallet ON presale_purchases(wallet_address)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_presale_status ON presale_purchases(status)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_presale_stripe ON presale_purchases(stripe_session_id)`);
+
         // Clean up expired sessions
         await client.query(`
             DELETE FROM sessions WHERE expires_at < CURRENT_TIMESTAMP
@@ -367,6 +389,172 @@ async function cleanExpiredSessions() {
 }
 
 /**
+ * Presale Operations
+ */
+
+// Add presale purchase
+async function addPresalePurchase(purchase) {
+    try {
+        const result = await pool.query(
+            `INSERT INTO presale_purchases 
+             (wallet_address, token_amount, payment_method, payment_amount, usd_amount, status, stripe_session_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             RETURNING *`,
+            [
+                purchase.wallet_address,
+                purchase.token_amount,
+                purchase.payment_method,
+                purchase.payment_amount,
+                purchase.usd_amount,
+                purchase.status || 'pending',
+                purchase.stripe_session_id || null
+            ]
+        );
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error adding presale purchase:', error);
+        throw error;
+    }
+}
+
+// Get presale purchases for address
+async function getPresalePurchases(address) {
+    try {
+        const result = await pool.query(
+            `SELECT * FROM presale_purchases 
+             WHERE LOWER(wallet_address) = LOWER($1) 
+             ORDER BY created_at DESC`,
+            [address]
+        );
+        return result.rows;
+    } catch (error) {
+        console.error('Error getting presale purchases:', error);
+        throw error;
+    }
+}
+
+// Get all presale purchases
+async function getAllPresalePurchases() {
+    try {
+        const result = await pool.query(
+            `SELECT * FROM presale_purchases ORDER BY created_at DESC`
+        );
+        return result.rows;
+    } catch (error) {
+        console.error('Error getting all presale purchases:', error);
+        throw error;
+    }
+}
+
+// Get presale purchase by ID
+async function getPresalePurchaseById(id) {
+    try {
+        const result = await pool.query(
+            `SELECT * FROM presale_purchases WHERE id = $1`,
+            [id]
+        );
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error getting presale purchase by ID:', error);
+        throw error;
+    }
+}
+
+// Get presale stats
+async function getPresaleStats() {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                COALESCE(SUM(CASE WHEN status IN ('paid', 'confirmed', 'minted', 'paid_pending_mint') THEN token_amount ELSE 0 END), 0) as tokens_sold,
+                COALESCE(SUM(CASE WHEN status IN ('paid', 'confirmed', 'minted', 'paid_pending_mint') THEN usd_amount ELSE 0 END), 0) as total_usd,
+                COUNT(DISTINCT CASE WHEN status IN ('paid', 'confirmed', 'minted', 'paid_pending_mint') THEN wallet_address END) as unique_buyers,
+                COUNT(*) as total_purchases
+            FROM presale_purchases
+        `);
+        
+        const row = result.rows[0];
+        return {
+            tokensSold: parseInt(row.tokens_sold) || 0,
+            totalUSD: parseFloat(row.total_usd) || 0,
+            uniqueBuyers: parseInt(row.unique_buyers) || 0,
+            totalPurchases: parseInt(row.total_purchases) || 0
+        };
+    } catch (error) {
+        console.error('Error getting presale stats:', error);
+        return {
+            tokensSold: 0,
+            totalUSD: 0,
+            uniqueBuyers: 0,
+            totalPurchases: 0
+        };
+    }
+}
+
+// Update presale purchase
+async function updatePresalePurchase(id, updates) {
+    try {
+        const fields = [];
+        const values = [];
+        let paramCount = 1;
+        
+        for (const [key, value] of Object.entries(updates)) {
+            if (value !== undefined) {
+                fields.push(`${key} = $${paramCount++}`);
+                values.push(value);
+            }
+        }
+        
+        if (fields.length === 0) {
+            return await getPresalePurchaseById(id);
+        }
+        
+        fields.push(`updated_at = NOW()`);
+        values.push(id);
+        
+        const result = await pool.query(
+            `UPDATE presale_purchases SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING *`,
+            values
+        );
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error updating presale purchase:', error);
+        throw error;
+    }
+}
+
+// Update presale purchase by Stripe session ID
+async function updatePresalePurchaseByStripeSession(sessionId, updates) {
+    try {
+        const fields = [];
+        const values = [];
+        let paramCount = 1;
+        
+        for (const [key, value] of Object.entries(updates)) {
+            if (value !== undefined) {
+                fields.push(`${key} = $${paramCount++}`);
+                values.push(value);
+            }
+        }
+        
+        if (fields.length === 0) {
+            return null;
+        }
+        
+        fields.push(`updated_at = NOW()`);
+        values.push(sessionId);
+        
+        const result = await pool.query(
+            `UPDATE presale_purchases SET ${fields.join(', ')} WHERE stripe_session_id = $${paramCount} RETURNING *`,
+            values
+        );
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error updating presale purchase by Stripe session:', error);
+        throw error;
+    }
+}
+
+/**
  * Helper Functions
  */
 
@@ -376,7 +564,9 @@ function formatRegistrant(row) {
         address: row.address,
         minted: row.minted,
         txHash: row.tx_hash,
+        tx_hash: row.tx_hash,
         registeredAt: row.registered_at,
+        registered_at: row.registered_at,
         mintedAt: row.minted_at,
         signature: row.signature,
         metadata: row.metadata || {}
@@ -399,122 +589,6 @@ async function testConnection() {
 // Close pool (for graceful shutdown)
 async function closePool() {
     await pool.end();
-}
-
-// ===========================================
-// Presale Tables & Functions
-// ===========================================
-
-// Add to initDb function:
-async function initDb() {
-    // ... existing tables ...
-    
-    // Presale purchases table
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS presale_purchases (
-            id SERIAL PRIMARY KEY,
-            wallet_address VARCHAR(42) NOT NULL,
-            token_amount INTEGER NOT NULL,
-            payment_method VARCHAR(10) NOT NULL,
-            payment_amount DECIMAL(20, 8) NOT NULL,
-            usd_amount DECIMAL(20, 2) NOT NULL,
-            status VARCHAR(20) DEFAULT 'pending',
-            tx_hash VARCHAR(66),
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        )
-    `);
-    
-    await pool.query(`
-        CREATE INDEX IF NOT EXISTS idx_presale_wallet ON presale_purchases(wallet_address)
-    `);
-    
-    await pool.query(`
-        CREATE INDEX IF NOT EXISTS idx_presale_status ON presale_purchases(status)
-    `);
-}
-
-// Add presale purchase
-async function addPresalePurchase(purchase) {
-    const result = await pool.query(
-        `INSERT INTO presale_purchases 
-         (wallet_address, token_amount, payment_method, payment_amount, usd_amount, status)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         RETURNING *`,
-        [
-            purchase.wallet_address,
-            purchase.token_amount,
-            purchase.payment_method,
-            purchase.payment_amount,
-            purchase.usd_amount,
-            purchase.status || 'pending'
-        ]
-    );
-    return result.rows[0];
-}
-
-// Get presale purchases for address
-async function getPresalePurchases(address) {
-    const result = await pool.query(
-        `SELECT * FROM presale_purchases 
-         WHERE LOWER(wallet_address) = LOWER($1) 
-         ORDER BY created_at DESC`,
-        [address]
-    );
-    return result.rows;
-}
-
-// Get all presale purchases
-async function getAllPresalePurchases() {
-    const result = await pool.query(
-        `SELECT * FROM presale_purchases ORDER BY created_at DESC`
-    );
-    return result.rows;
-}
-
-// Get presale stats
-async function getPresaleStats() {
-    const result = await pool.query(`
-        SELECT 
-            COALESCE(SUM(CASE WHEN status IN ('paid', 'confirmed', 'minted') THEN token_amount ELSE 0 END), 0) as tokens_sold,
-            COALESCE(SUM(CASE WHEN status IN ('paid', 'confirmed', 'minted') THEN usd_amount ELSE 0 END), 0) as total_usd,
-            COUNT(DISTINCT CASE WHEN status IN ('paid', 'confirmed', 'minted') THEN wallet_address END) as unique_buyers,
-            COUNT(*) as total_purchases
-        FROM presale_purchases
-    `);
-    
-    const row = result.rows[0];
-    return {
-        tokensSold: parseInt(row.tokens_sold) || 0,
-        totalUSD: parseFloat(row.total_usd) || 0,
-        uniqueBuyers: parseInt(row.unique_buyers) || 0,
-        totalPurchases: parseInt(row.total_purchases) || 0
-    };
-}
-
-// Update presale purchase
-async function updatePresalePurchase(id, updates) {
-    const fields = [];
-    const values = [];
-    let paramCount = 1;
-    
-    if (updates.status) {
-        fields.push(`status = $${paramCount++}`);
-        values.push(updates.status);
-    }
-    if (updates.tx_hash) {
-        fields.push(`tx_hash = $${paramCount++}`);
-        values.push(updates.tx_hash);
-    }
-    
-    fields.push(`updated_at = NOW()`);
-    values.push(id);
-    
-    const result = await pool.query(
-        `UPDATE presale_purchases SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING *`,
-        values
-    );
-    return result.rows[0];
 }
 
 module.exports = {
@@ -545,148 +619,15 @@ module.exports = {
     deleteSession,
     cleanExpiredSessions,
     
-    // Direct pool access if needed
-    pool,
-
-    //presale
-    addPresalePurchase,
-    getPresalePurchases,
-    getAllPresalePurchases,
-    getPresaleStats,
-    updatePresalePurchase
-};
-
-await pool.query(`
-    CREATE TABLE IF NOT EXISTS presale_purchases (
-        id SERIAL PRIMARY KEY,
-        wallet_address VARCHAR(42) NOT NULL,
-        token_amount INTEGER NOT NULL,
-        payment_method VARCHAR(20) NOT NULL,
-        payment_amount DECIMAL(20, 8) NOT NULL,
-        usd_amount DECIMAL(20, 2) NOT NULL,
-        status VARCHAR(30) DEFAULT 'pending',
-        stripe_session_id VARCHAR(255),
-        stripe_payment_intent VARCHAR(255),
-        tx_hash VARCHAR(66),
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-    )
-`);
-
-await pool.query(`CREATE INDEX IF NOT EXISTS idx_presale_wallet ON presale_purchases(wallet_address)`);
-await pool.query(`CREATE INDEX IF NOT EXISTS idx_presale_status ON presale_purchases(status)`);
-await pool.query(`CREATE INDEX IF NOT EXISTS idx_presale_stripe ON presale_purchases(stripe_session_id)`);
-
-// Presale functions
-async function addPresalePurchase(purchase) {
-    const result = await pool.query(
-        `INSERT INTO presale_purchases 
-         (wallet_address, token_amount, payment_method, payment_amount, usd_amount, status, stripe_session_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING *`,
-        [
-            purchase.wallet_address,
-            purchase.token_amount,
-            purchase.payment_method,
-            purchase.payment_amount,
-            purchase.usd_amount,
-            purchase.status || 'pending',
-            purchase.stripe_session_id || null
-        ]
-    );
-    return result.rows[0];
-}
-
-async function getPresalePurchases(address) {
-    const result = await pool.query(
-        `SELECT * FROM presale_purchases WHERE LOWER(wallet_address) = LOWER($1) ORDER BY created_at DESC`,
-        [address]
-    );
-    return result.rows;
-}
-
-async function getAllPresalePurchases() {
-    const result = await pool.query(`SELECT * FROM presale_purchases ORDER BY created_at DESC`);
-    return result.rows;
-}
-
-async function getPresalePurchaseById(id) {
-    const result = await pool.query(`SELECT * FROM presale_purchases WHERE id = $1`, [id]);
-    return result.rows[0];
-}
-
-async function getPresaleStats() {
-    const result = await pool.query(`
-        SELECT 
-            COALESCE(SUM(CASE WHEN status IN ('paid', 'minted', 'paid_pending_mint') THEN token_amount ELSE 0 END), 0) as tokens_sold,
-            COALESCE(SUM(CASE WHEN status IN ('paid', 'minted', 'paid_pending_mint') THEN usd_amount ELSE 0 END), 0) as total_usd,
-            COUNT(DISTINCT CASE WHEN status IN ('paid', 'minted', 'paid_pending_mint') THEN wallet_address END) as unique_buyers,
-            COUNT(*) as total_purchases
-        FROM presale_purchases
-    `);
-    
-    const row = result.rows[0];
-    return {
-        tokensSold: parseInt(row.tokens_sold) || 0,
-        totalUSD: parseFloat(row.total_usd) || 0,
-        uniqueBuyers: parseInt(row.unique_buyers) || 0,
-        totalPurchases: parseInt(row.total_purchases) || 0
-    };
-}
-
-async function updatePresalePurchase(id, updates) {
-    const fields = [];
-    const values = [];
-    let paramCount = 1;
-    
-    for (const [key, value] of Object.entries(updates)) {
-        if (value !== undefined) {
-            fields.push(`${key} = $${paramCount++}`);
-            values.push(value);
-        }
-    }
-    
-    fields.push(`updated_at = NOW()`);
-    values.push(id);
-    
-    const result = await pool.query(
-        `UPDATE presale_purchases SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING *`,
-        values
-    );
-    return result.rows[0];
-}
-
-async function updatePresalePurchaseByStripeSession(sessionId, updates) {
-    const fields = [];
-    const values = [];
-    let paramCount = 1;
-    
-    for (const [key, value] of Object.entries(updates)) {
-        if (value !== undefined) {
-            fields.push(`${key} = $${paramCount++}`);
-            values.push(value);
-        }
-    }
-    
-    fields.push(`updated_at = NOW()`);
-    values.push(sessionId);
-    
-    const result = await pool.query(
-        `UPDATE presale_purchases SET ${fields.join(', ')} WHERE stripe_session_id = $${paramCount} RETURNING *`,
-        values
-    );
-    return result.rows[0];
-}
-
-// Export new functions
-module.exports = {
-    // ... existing exports ...
+    // Presale operations
     addPresalePurchase,
     getPresalePurchases,
     getAllPresalePurchases,
     getPresalePurchaseById,
     getPresaleStats,
     updatePresalePurchase,
-    updatePresalePurchaseByStripeSession
+    updatePresalePurchaseByStripeSession,
+    
+    // Direct pool access if needed
+    pool
 };
-
