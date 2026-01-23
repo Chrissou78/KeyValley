@@ -13,6 +13,7 @@ const VIP_TOKEN = {
 
 const POLYGON_RPC = 'https://polygon-bor-rpc.publicnode.com';
 const POLYGON_EXPLORER = 'https://polygonscan.com';
+const COMPANY_ID = '6a27c2f8-894c-46c7-bf9f-f5af11d4e092';
 
 // ERC20 ABI for balanceOf
 const ERC20_ABI = [
@@ -96,7 +97,7 @@ function PresaleBanner({ userAddress }) {
           </div>
           
           <div style={styles.presaleDetails}>
-            <p><strong style={styles.goldText}>$0.10</strong> per VIP token</p>
+            <p style={{ margin: '4px 0' }}><strong style={styles.goldText}>$0.10</strong> per VIP token</p>
             <p style={styles.smallText}>Min: 10 tokens • Max: 10,000 tokens</p>
           </div>
           
@@ -118,17 +119,21 @@ function PresaleBanner({ userAddress }) {
   );
 }
 
-// Profile Content Component
+// Profile Content Component - YOUR OWN DASHBOARD (no iframe after login)
 function ProfileContent() {
-  const { user } = useWalletTwo();
+  const { user, loading: authLoading } = useWalletTwo();
   const [vipBalance, setVipBalance] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [balanceLoading, setBalanceLoading] = useState(false);
   const [savedToDb, setSavedToDb] = useState(false);
 
   // Save user to database when they connect
   useEffect(() => {
     if (user?.address && !savedToDb) {
-      console.log('🔄 User connected:', user.address, user.email);
+      console.log('🔄 User connected via WalletTwo SDK:', {
+        address: user.address,
+        email: user.email,
+        name: user.name
+      });
       
       // Save to database
       saveWalletToDatabase(user.address, user.email || null, user.name || null)
@@ -142,60 +147,105 @@ function ProfileContent() {
   // Fetch VIP balance
   useEffect(() => {
     if (user?.address) {
-      setLoading(true);
+      setBalanceLoading(true);
       getTokenBalance(user.address)
         .then(balance => {
           setVipBalance(balance);
-          setLoading(false);
+          setBalanceLoading(false);
         })
-        .catch(() => setLoading(false));
+        .catch(() => setBalanceLoading(false));
     }
   }, [user?.address]);
 
-  // Not logged in
+  // Loading state
+  if (authLoading) {
+    return (
+      <div className="profile-container">
+        <PresaleBanner />
+        <div className="profile-card loading-card">
+          <div className="loading-spinner"></div>
+          <p>Connecting to WalletTwo...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not logged in - Show login button (WalletTwo handles the auth popup/redirect)
   if (!user) {
     return (
       <div className="profile-container">
-        {/* Presale Banner - Show even when not logged in */}
         <PresaleBanner />
         
         <div className="profile-card login-card">
           <div className="card-icon">🔐</div>
           <h2>Connect Your Wallet</h2>
           <p>Sign in with WalletTwo to view your profile and VIP token balance.</p>
+          
+          {/* This button triggers WalletTwo OAuth - no iframe needed */}
           <AuthAction className="auth-button" />
+          
           <div className="login-footer">
-            <p>Don't have a wallet? <a href="https://wallet.wallettwo.com/auth/register?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092" target="_blank" rel="noopener noreferrer">Create one here</a></p>
+            <p>
+              Don't have a wallet?{' '}
+              <a 
+                href={`https://wallet.wallettwo.com/auth/register?companyId=${COMPANY_ID}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                Create one here
+              </a>
+            </p>
+          </div>
+        </div>
+        
+        {/* Quick links even when not logged in */}
+        <div className="profile-card actions-card">
+          <h3>QUICK LINKS</h3>
+          <div className="action-buttons">
+            <a href="/presale" className="action-button presale-action">
+              🚀 Join Presale
+            </a>
+            <a href="/claim" className="action-button primary">
+              🎁 Claim Free Tokens
+            </a>
+            <a href="/" className="action-button secondary">
+              🏠 Home
+            </a>
           </div>
         </div>
       </div>
     );
   }
 
-  // Logged in
+  // ============================================
+  // LOGGED IN - YOUR OWN DASHBOARD (NO IFRAME)
+  // ============================================
   return (
     <div className="profile-container">
       {/* Presale Banner - Always at top */}
       <PresaleBanner userAddress={user.address} />
 
-      {/* User Info Card */}
+      {/* User Profile Card */}
       <div className="profile-card user-card">
         <div className="card-header">
           <span className="card-label">PROFILE</span>
-          <LogoutAction className="logout-icon" />
+          <LogoutAction className="logout-icon" title="Disconnect" />
         </div>
         <div className="user-header">
           <div className="user-avatar">
-            {user.name ? user.name.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase() || '?'}
+            {user.name 
+              ? user.name.charAt(0).toUpperCase() 
+              : user.email?.charAt(0).toUpperCase() || '👤'}
           </div>
           <div className="user-info">
             {user.name && <h2 className="user-name">{user.name}</h2>}
             {user.email && <p className="user-email">{user.email}</p>}
+            {!user.name && !user.email && <h2 className="user-name">Connected</h2>}
           </div>
         </div>
       </div>
 
-      {/* Wallet Card */}
+      {/* Wallet Address Card */}
       <div className="profile-card wallet-card">
         <h3>WALLET ADDRESS</h3>
         <div className="wallet-address-container">
@@ -204,32 +254,44 @@ function ProfileContent() {
             className="copy-button"
             onClick={() => {
               navigator.clipboard.writeText(user.address);
+              alert('Address copied!');
             }}
             title="Copy address"
           >
             📋
           </button>
         </div>
+        <a 
+          href={`${POLYGON_EXPLORER}/address/${user.address}`}
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="explorer-link"
+        >
+          View on Polygonscan ↗
+        </a>
       </div>
 
-      {/* VIP Balance Card */}
+      {/* VIP Token Balance Card */}
       <div className="profile-card balance-card">
         <h3>VIP TOKEN BALANCE</h3>
-        {loading ? (
+        {balanceLoading ? (
           <div className="loading-spinner"></div>
         ) : (
           <div className="balance-display">
-            <span className="balance-amount">{parseFloat(vipBalance || 0).toFixed(2)}</span>
+            <span className="balance-amount">
+              {parseFloat(vipBalance || 0).toFixed(2)}
+            </span>
             <span className="balance-symbol">VIP</span>
           </div>
         )}
+        <p className="token-info">Kea Valley Token on Polygon</p>
         <a 
           href={`${POLYGON_EXPLORER}/token/${VIP_TOKEN.address}?a=${user.address}`}
           target="_blank" 
           rel="noopener noreferrer"
           className="explorer-link"
         >
-          View on Polygonscan ↗
+          View Token Transactions ↗
         </a>
       </div>
 
@@ -243,13 +305,18 @@ function ProfileContent() {
           <a href="/claim" className="action-button primary">
             🎁 Claim Free Tokens
           </a>
-          <a href="https://wallet.wallettwo.com/wallet/dashboard?tab=Tokens&companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092" target="_blank" rel="noopener noreferrer" className="action-button secondary">
+          <a 
+            href={`https://wallet.wallettwo.com/wallet/dashboard?tab=Tokens&companyId=${COMPANY_ID}`} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="action-button secondary"
+          >
             💼 Open WalletTwo
           </a>
         </div>
       </div>
 
-      {/* Disconnect */}
+      {/* Disconnect Button */}
       <div className="profile-card disconnect-card">
         <LogoutAction className="disconnect-button" />
       </div>
@@ -257,7 +324,7 @@ function ProfileContent() {
   );
 }
 
-// Inline styles for Presale Banner (to ensure they work)
+// Inline styles for Presale Banner
 const styles = {
   presaleBanner: {
     background: 'linear-gradient(135deg, rgba(238, 157, 43, 0.2) 0%, rgba(212, 165, 67, 0.15) 100%)',
@@ -265,7 +332,6 @@ const styles = {
     borderRadius: '12px',
     padding: '20px',
     marginBottom: '20px',
-    animation: 'pulse-border 2s infinite'
   },
   presaleContent: {
     display: 'flex',
@@ -365,6 +431,7 @@ const styles = {
 function CustomLoader() {
   return (
     <div className="profile-container">
+      <PresaleBanner />
       <div className="profile-card loading-card">
         <div className="loading-spinner"></div>
         <p>Loading your profile...</p>
@@ -373,23 +440,21 @@ function CustomLoader() {
   );
 }
 
-// Main App
+// Main App with WalletTwo Provider
 function ProfileApp() {
   return (
-    <WalletTwoProvider loader={<CustomLoader />}>
+    <WalletTwoProvider 
+      companyId={COMPANY_ID}
+      loader={<CustomLoader />}
+    >
       <ProfileContent />
     </WalletTwoProvider>
   );
 }
 
-// Add keyframe animation via style tag
+// Add styles
 const styleSheet = document.createElement('style');
 styleSheet.textContent = `
-  @keyframes pulse-border {
-    0%, 100% { border-color: rgba(238, 157, 43, 0.5); }
-    50% { border-color: rgba(238, 157, 43, 1); }
-  }
-  
   .action-button.presale-action {
     background: linear-gradient(135deg, #ee9d2b 0%, #d4a543 100%) !important;
     color: #000 !important;
@@ -399,6 +464,12 @@ styleSheet.textContent = `
   .action-button.presale-action:hover {
     box-shadow: 0 4px 20px rgba(238, 157, 43, 0.4) !important;
     transform: translateY(-2px);
+  }
+  
+  .token-info {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.75rem;
+    margin: 8px 0;
   }
 `;
 document.head.appendChild(styleSheet);

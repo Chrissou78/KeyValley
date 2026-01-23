@@ -164,6 +164,87 @@ function verifySignature(signature, message, expectedWallet) {
 }
 
 // ===========================================
+// Wallet Connection API (Save wallet + email from profile)
+// ===========================================
+
+app.post('/api/wallet/connect', async (req, res) => {
+    try {
+        const { walletAddress, email, name, source } = req.body;
+
+        console.log('[Wallet Connect] Received:', { walletAddress, email, name, source });
+
+        // Validate wallet address
+        if (!walletAddress || !ethers.isAddress(walletAddress)) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Invalid wallet address' 
+            });
+        }
+
+        const normalizedAddress = walletAddress.toLowerCase();
+
+        // Check if registrant exists
+        let registrant = await db.getRegistrant(normalizedAddress);
+
+        if (registrant) {
+            // Update existing - add email if missing
+            if ((email && !registrant.email) || (name)) {
+                try {
+                    await db.pool.query(
+                        `UPDATE registrants 
+                         SET email = COALESCE($1, email),
+                             metadata = jsonb_set(COALESCE(metadata, '{}'), '{name}', $2::jsonb),
+                             updated_at = NOW() 
+                         WHERE LOWER(address) = $3`,
+                        [email || null, JSON.stringify(name || null), normalizedAddress]
+                    );
+                    console.log(`[Wallet Connect] Updated: ${normalizedAddress}, email: ${email}, name: ${name}`);
+                } catch (updateErr) {
+                    console.error('[Wallet Connect] Update error:', updateErr.message);
+                }
+            }
+            
+            return res.json({
+                success: true,
+                action: 'updated',
+                walletAddress: normalizedAddress,
+                email: email || registrant.email
+            });
+        }
+
+        // Insert new registrant with email
+        try {
+            await db.pool.query(
+                `INSERT INTO registrants (address, email, source, metadata, registered_at, updated_at) 
+                 VALUES ($1, $2, $3, $4, NOW(), NOW())
+                 ON CONFLICT (address) DO UPDATE SET 
+                    email = COALESCE(EXCLUDED.email, registrants.email),
+                    metadata = COALESCE(EXCLUDED.metadata, registrants.metadata),
+                    updated_at = NOW()`,
+                [normalizedAddress, email || null, source || 'wallettwo', JSON.stringify({ name: name || null })]
+            );
+            console.log(`[Wallet Connect] Created: ${normalizedAddress}, email: ${email}, name: ${name}`);
+        } catch (insertErr) {
+            console.error('[Wallet Connect] Insert error:', insertErr.message);
+        }
+
+        return res.json({
+            success: true,
+            action: 'created',
+            walletAddress: normalizedAddress,
+            email: email
+        });
+
+    } catch (error) {
+        console.error('[Wallet Connect] Error:', error);
+        return res.status(500).json({ 
+            success: false, 
+            error: 'Failed to save wallet connection' 
+        });
+    }
+});
+
+// ===========================================
 // Public Pages (No Auth Required)
 // ===========================================
 
