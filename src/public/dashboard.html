@@ -1,83 +1,89 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Admin Dashboard | Kea Valley</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#ee9d2b",
-                        "primary-light": "#fbdea6",
-                        "background-dark": "#0a0a0a",
-                        "surface": "#121212",
-                    },
-                    fontFamily: {
-                        "sans": ["Manrope", "sans-serif"],
-                        "serif": ["Playfair Display", "serif"],
-                    },
-                },
-            },
-        }
-    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Kea Valley</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Manrope', sans-serif; }
-        h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
-        .gold-glow:hover {
-            box-shadow: 0 0 25px rgba(238, 157, 43, 0.3);
-            border-color: #ee9d2b;
-        }
-        .glass-nav {
-            backdrop-filter: blur(12px);
-            background-color: rgba(10, 10, 10, 0.7);
-        }
-        .stat-card {
-            transition: all 0.3s ease;
-        }
-        .stat-card:hover {
-            border-color: rgba(238, 157, 43, 0.3);
-            transform: translateY(-2px);
-        }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0a0a0a; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
-        .table-row:hover {
-            background: rgba(255, 255, 255, 0.02);
-        }
-        .badge {
-            font-size: 0.7rem;
-            padding: 0.2rem 0.6rem;
-            border-radius: 2px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 700;
-        }
-        .badge-success { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
-        .badge-pending { background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
-        .badge-paid { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
-        .badge-failed { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .slide-in { animation: slideIn 0.3s ease-out; }
+        * { font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%); min-height: 100vh; }
         
-        /* Fixed input field styles */
-        .input-field {
-            background: #1a1a1a;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+        .glass-card {
+            background: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .gold-gradient { background: linear-gradient(135deg, #ee9d2b 0%, #d4a543 100%); }
+        .gold-text { color: #ee9d2b; }
+        
+        /* Tab styles */
+        .main-tab {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
             transition: all 0.3s ease;
+            color: rgba(255, 255, 255, 0.6);
+            background: transparent;
+            border: 1px solid transparent;
+        }
+        .main-tab:hover {
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .main-tab.active {
+            color: #ee9d2b;
+            background: rgba(238, 157, 43, 0.1);
+            border-color: rgba(238, 157, 43, 0.3);
+        }
+        
+        .sub-tab {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: rgba(255, 255, 255, 0.5);
+            background: transparent;
+            font-size: 0.875rem;
+        }
+        .sub-tab:hover {
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .sub-tab.active {
             color: #ffffff;
+            background: rgba(238, 157, 43, 0.2);
+        }
+        
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        
+        /* Badge styles */
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .badge-success { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .badge-warning { background: rgba(234, 179, 8, 0.2); color: #eab308; }
+        .badge-pending { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .badge-error { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        
+        /* Input field fixes - ensure visibility on dark background */
+        .input-field {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            background: #1a1a1a !important;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ffffff !important;
+            transition: all 0.3s ease;
         }
         .input-field:focus {
-            background: #222222;
+            background: #222222 !important;
             border-color: #ee9d2b;
             outline: none;
             box-shadow: 0 0 0 2px rgba(238, 157, 43, 0.2);
@@ -86,31 +92,106 @@
             color: rgba(255, 255, 255, 0.35);
         }
         .input-field:read-only {
-            background: #111111;
-            color: rgba(255, 255, 255, 0.5);
-            cursor: not-allowed;
-        }
-        /* Ensure number inputs show white text */
-        .input-field[type="number"],
-        .input-field[type="text"] {
-            color: #ffffff;
+            background: #111111 !important;
+            color: rgba(255, 255, 255, 0.5) !important;
         }
         
-        .tab-btn {
-            transition: all 0.2s ease;
+        /* Table styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
         }
-        .tab-btn.active {
-            background: linear-gradient(135deg, rgba(238, 157, 43, 0.2) 0%, rgba(238, 157, 43, 0.05) 100%);
+        .data-table th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .data-table td {
+            padding: 0.75rem 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .data-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        /* Button styles */
+        .btn-gold {
+            background: linear-gradient(135deg, #ee9d2b 0%, #d4a543 100%);
+            color: #000;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-gold:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(238, 157, 43, 0.4);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-outline:hover {
             border-color: #ee9d2b;
             color: #ee9d2b;
         }
-        .tab-content {
+        
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
             display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
         }
-        .tab-content.active {
-            display: block;
-            animation: slideIn 0.3s ease-out;
+        .modal-overlay.active {
+            display: flex;
         }
+        .modal-content {
+            background: #1a1a1a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        /* Stat card styles */
+        .stat-card {
+            background: rgba(26, 26, 26, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+        }
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        /* Toggle switch */
         .toggle-switch {
             position: relative;
             width: 48px;
@@ -118,7 +199,7 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: background 0.3s ease;
         }
         .toggle-switch.active {
             background: #ee9d2b;
@@ -126,1556 +207,851 @@
         .toggle-switch::after {
             content: '';
             position: absolute;
-            width: 20px;
-            height: 20px;
-            background: white;
-            border-radius: 50%;
             top: 2px;
             left: 2px;
-            transition: transform 0.3s;
+            width: 20px;
+            height: 20px;
+            background: #ffffff;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
         }
         .toggle-switch.active::after {
             transform: translateX(24px);
         }
     </style>
 </head>
-<body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen">
-
+<body class="text-white">
     <!-- Header -->
-    <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5">
-        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-16">
+    <header class="glass-card border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <div class="flex items-center gap-4">
-                <a href="/" class="flex items-center gap-3 group cursor-pointer">
-                    <div class="size-8 text-primary transition-transform duration-500 group-hover:rotate-180">
-                        <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
-                        </svg>
-                    </div>
-                    <span class="text-lg font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
-                </a>
-                <span class="text-white/20">|</span>
-                <span class="text-xs font-bold uppercase tracking-widest text-primary">Admin</span>
+                <a href="/" class="text-xl font-bold gold-text">KEA VALLEY®</a>
+                <span class="text-white/40">|</span>
+                <span class="text-white/60">Admin Dashboard</span>
             </div>
-            <div class="flex items-center gap-6">
-                <span id="userInfo" class="text-slate-500 text-xs hidden md:block"></span>
-                <button id="changePasswordBtn" class="text-slate-500 hover:text-primary transition-colors text-xs flex items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">key</span>
-                    <span class="hidden md:inline">Password</span>
-                </button>
-                <button id="logoutBtn" class="text-slate-500 hover:text-red-400 transition-colors text-xs flex items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">logout</span>
-                    <span class="hidden md:inline">Logout</span>
-                </button>
+            <div class="flex items-center gap-4">
+                <a href="/" class="btn-outline text-sm">Back to Site</a>
+                <button onclick="logout()" class="btn-outline text-sm text-red-400 border-red-400/30 hover:border-red-400">Logout</button>
             </div>
         </div>
     </header>
-
+    
     <!-- Main Content -->
-    <main class="pt-24 pb-12 px-6">
-        <div class="max-w-7xl mx-auto">
-
-            <!-- Page Title -->
-            <div class="mb-8">
-                <div class="flex items-center gap-4 mb-2">
-                    <div class="h-[1px] w-8 bg-primary"></div>
-                    <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Dashboard</span>
-                </div>
-                <h1 class="text-3xl font-serif italic font-medium text-white">Admin Overview</h1>
-            </div>
-
-            <!-- Main Tabs Navigation -->
-            <div class="flex gap-2 mb-8 overflow-x-auto pb-2">
-                <button id="tabClaims" class="tab-btn active flex items-center gap-2 px-6 py-3 border border-white/10 rounded-sm text-sm font-bold uppercase tracking-widest whitespace-nowrap">
-                    <span class="material-symbols-outlined text-lg">redeem</span>
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Main Tabs -->
+        <div class="flex gap-2 mb-8">
+            <button class="main-tab active" data-tab="claims" onclick="switchMainTab('claims')">
+                <span class="flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
                     Free Claims
-                </button>
-                <button id="tabPresale" class="tab-btn flex items-center gap-2 px-6 py-3 border border-white/10 rounded-sm text-sm font-bold uppercase tracking-widest whitespace-nowrap">
-                    <span class="material-symbols-outlined text-lg">shopping_cart</span>
+                </span>
+            </button>
+            <button class="main-tab" data-tab="presale" onclick="switchMainTab('presale')">
+                <span class="flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
                     Presale
-                </button>
-                <button id="tabSettings" class="tab-btn flex items-center gap-2 px-6 py-3 border border-white/10 rounded-sm text-sm font-bold uppercase tracking-widest whitespace-nowrap">
-                    <span class="material-symbols-outlined text-lg">settings</span>
+                </span>
+            </button>
+            <button class="main-tab" data-tab="settings" onclick="switchMainTab('settings')">
+                <span class="flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
                     Settings
-                </button>
+                </span>
+            </button>
+        </div>
+        
+        <!-- Claims Tab Panel -->
+        <div id="claims-panel" class="tab-panel active">
+            <!-- Claims Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div class="stat-card">
+                    <div class="stat-label">Total Registrants</div>
+                    <div class="stat-value" id="claims-total">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Minted</div>
+                    <div class="stat-value text-green-400" id="claims-minted">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value text-yellow-400" id="claims-pending">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">With Balance</div>
+                    <div class="stat-value text-blue-400" id="claims-balance">--</div>
+                </div>
             </div>
-
-            <!-- ==================== CLAIMS TAB ==================== -->
-            <div id="contentClaims" class="tab-content active">
+            
+            <!-- Claims Actions -->
+            <div class="flex gap-4 mb-6">
+                <button onclick="loadRegistrants()" class="btn-gold">Refresh Data</button>
+                <button onclick="openFullSyncModal()" class="btn-outline">Full Sync</button>
+                <button onclick="exportClaimsCSV()" class="btn-outline">Export CSV</button>
+            </div>
+            
+            <!-- Claims Table -->
+            <div class="glass-card rounded-xl overflow-hidden">
+                <div class="p-4 border-b border-white/10">
+                    <h3 class="font-semibold">Registrants</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Address</th>
+                                <th>Status</th>
+                                <th>TX Hash</th>
+                                <th>Registered</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registrants-table">
+                            <tr>
+                                <td colspan="6" class="text-center text-white/40 py-8">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Presale Tab Panel -->
+        <div id="presale-panel" class="tab-panel">
+            <!-- Presale Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+                <div class="stat-card">
+                    <div class="stat-label">Total Purchases</div>
+                    <div class="stat-value" id="presale-total">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Tokens Sold</div>
+                    <div class="stat-value gold-text" id="presale-tokens">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total USD</div>
+                    <div class="stat-value text-green-400" id="presale-usd">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Unique Buyers</div>
+                    <div class="stat-value text-blue-400" id="presale-buyers">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Pending Mint</div>
+                    <div class="stat-value text-yellow-400" id="presale-pending">--</div>
+                </div>
+            </div>
+            
+            <!-- Presale Progress -->
+            <div class="glass-card rounded-xl p-6 mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-white/60">Sale Progress</span>
+                    <span class="gold-text font-semibold" id="presale-progress-pct">0%</span>
+                </div>
+                <div class="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+                    <div id="presale-progress-bar" class="h-full gold-gradient transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between mt-2 text-sm text-white/40">
+                    <span>0</span>
+                    <span id="presale-progress-total">1,000,000 VIP</span>
+                </div>
+            </div>
+            
+            <!-- Presale Actions -->
+            <div class="flex gap-4 mb-6">
+                <button onclick="loadPresaleStats()" class="btn-gold">Refresh Data</button>
+                <button onclick="fulfillOrders()" class="btn-outline">Fulfill Orders</button>
+                <button onclick="exportPresaleCSV()" class="btn-outline">Export CSV</button>
+                <a href="/presale" target="_blank" class="btn-outline">View Presale</a>
+            </div>
+            
+            <!-- Presale Purchases Table -->
+            <div class="glass-card rounded-xl overflow-hidden">
+                <div class="p-4 border-b border-white/10 flex items-center justify-between">
+                    <h3 class="font-semibold">Presale Purchases</h3>
+                    <div class="flex gap-2">
+                        <button onclick="filterPresale('all')" class="sub-tab active" data-filter="all">All</button>
+                        <button onclick="filterPresale('pending')" class="sub-tab" data-filter="pending">Pending</button>
+                        <button onclick="filterPresale('paid')" class="sub-tab" data-filter="paid">Paid</button>
+                        <button onclick="filterPresale('minted')" class="sub-tab" data-filter="minted">Minted</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Wallet</th>
+                                <th>Tokens</th>
+                                <th>Amount</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="presale-table">
+                            <tr>
+                                <td colspan="8" class="text-center text-white/40 py-8">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Settings Tab Panel -->
+        <div id="settings-panel" class="tab-panel">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Presale Configuration -->
+                <div class="glass-card rounded-xl p-6">
+                    <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
+                        <svg class="w-5 h-5 gold-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Presale Configuration
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <label class="text-white/80">Presale Enabled</label>
+                            <div id="presale-enabled-toggle" class="toggle-switch" onclick="togglePresaleEnabled()"></div>
+                        </div>
+                        
+                        <div>
+                            <label class="text-white/60 text-sm block mb-2">Token Price (USD)</label>
+                            <input type="number" id="setting-token-price" class="input-field" value="0.10" step="0.01" min="0.01">
+                        </div>
+                        
+                        <div>
+                            <label class="text-white/60 text-sm block mb-2">Total Tokens</label>
+                            <input type="number" id="setting-total-tokens" class="input-field" value="1000000" min="1">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-white/60 text-sm block mb-2">Min Purchase</label>
+                                <input type="number" id="setting-min-purchase" class="input-field" value="10" min="1">
+                            </div>
+                            <div>
+                                <label class="text-white/60 text-sm block mb-2">Max Purchase</label>
+                                <input type="number" id="setting-max-purchase" class="input-field" value="10000" min="1">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="text-white/60 text-sm block mb-2">Presale Wallet</label>
+                            <input type="text" id="setting-presale-wallet" class="input-field font-mono text-sm" placeholder="0x...">
+                        </div>
+                        
+                        <div class="pt-4">
+                            <button onclick="savePresaleSettings()" class="btn-gold w-full">Save Settings</button>
+                        </div>
+                        
+                        <p class="text-white/40 text-xs mt-2">Note: Some settings require Vercel env var changes for persistence.</p>
+                    </div>
+                </div>
                 
-                <!-- Claims Stats Grid -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Registrants</p>
-                                <p id="statTotal" class="text-3xl font-serif text-white mt-2">--</p>
-                            </div>
-                            <span class="material-symbols-outlined text-primary/30 text-3xl">group</span>
-                        </div>
-                    </div>
-                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Minted</p>
-                                <p id="statMinted" class="text-3xl font-serif text-green-400 mt-2">--</p>
-                            </div>
-                            <span class="material-symbols-outlined text-green-400/30 text-3xl">check_circle</span>
-                        </div>
-                    </div>
-                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Pending</p>
-                                <p id="statPending" class="text-3xl font-serif text-yellow-400 mt-2">--</p>
-                            </div>
-                            <span class="material-symbols-outlined text-yellow-400/30 text-3xl">schedule</span>
-                        </div>
-                    </div>
-                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Network</p>
-                                <p id="statNetwork" class="text-xl font-serif text-primary mt-2">--</p>
-                            </div>
-                            <span class="material-symbols-outlined text-primary/30 text-3xl">hub</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Wallet Info & Actions Row -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Claim Configuration -->
+                <div class="glass-card rounded-xl p-6">
+                    <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
+                        <svg class="w-5 h-5 gold-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Claim Configuration
+                    </h3>
                     
-                    <!-- Minter Wallet Card -->
-                    <div class="lg:col-span-2 bg-surface border border-white/5 rounded-sm overflow-hidden">
-                        <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
-                            <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Minter Wallet</h3>
-                            <button id="refreshWalletBtn" class="text-slate-500 hover:text-primary transition-colors">
-                                <span class="material-symbols-outlined text-lg">refresh</span>
-                            </button>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-white/60 text-sm block mb-2">Mint Amount per Claim</label>
+                            <input type="text" id="setting-mint-amount" class="input-field" value="100" readonly>
+                            <p class="text-white/40 text-xs mt-1">Set via MINT_AMOUNT env var</p>
                         </div>
-                        <div class="p-6">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div>
-                                    <p class="text-slate-500 text-xs mb-2">Address</p>
-                                    <p id="walletAddress" class="text-white font-mono text-sm truncate">Loading...</p>
-                                </div>
-                                <div>
-                                    <p class="text-slate-500 text-xs mb-2">Native Balance</p>
-                                    <p id="walletBalance" class="text-white text-xl font-semibold">--</p>
-                                </div>
-                                <div>
-                                    <p class="text-slate-500 text-xs mb-2">Token Balance</p>
-                                    <p id="tokenBalance" class="text-primary text-xl font-semibold">--</p>
-                                </div>
-                            </div>
+                        
+                        <div>
+                            <label class="text-white/60 text-sm block mb-2">VIP Token Contract</label>
+                            <input type="text" id="setting-contract" class="input-field font-mono text-sm" value="0x6860c34db140DB7B589DaDA38859a1d3736bbE3F" readonly>
+                            <a href="https://polygonscan.com/token/0x6860c34db140DB7B589DaDA38859a1d3736bbE3F" target="_blank" class="text-xs gold-text hover:underline mt-1 inline-block">View on Polygonscan →</a>
                         </div>
-                    </div>
-
-                    <!-- Quick Actions Card -->
-                    <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
-                        <div class="px-6 py-4 border-b border-white/5">
-                            <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Quick Actions</h3>
-                        </div>
-                        <div class="p-6 space-y-3">
-                            <button id="mintNowBtn" class="w-full bg-primary text-background-dark px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-1px] transition-all flex items-center justify-center gap-2">
-                                <span class="material-symbols-outlined text-lg">token</span>
-                                Mint Pending
-                            </button>
-                            <button id="manualMintBtn" class="w-full border border-primary/30 text-primary px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/10 transition-all flex items-center justify-center gap-2">
-                                <span class="material-symbols-outlined text-lg">edit</span>
-                                Manual Mint
-                            </button>
-                            <button id="fullSyncBtn" class="w-full border border-white/10 text-white px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-primary/30 hover:text-primary transition-all flex items-center justify-center gap-2">
-                                <span class="material-symbols-outlined text-lg">sync</span>
-                                Full Sync
-                            </button>
-                            <button id="refreshBtn" class="w-full border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all flex items-center justify-center gap-2">
-                                <span class="material-symbols-outlined text-lg">refresh</span>
-                                Refresh
-                            </button>
-                        </div>
-                        <!-- Action Result -->
-                        <div id="actionResult" class="hidden px-6 pb-6">
-                            <div id="actionResultContent" class="p-4 rounded-sm text-sm"></div>
+                        
+                        <div>
+                            <label class="text-white/60 text-sm block mb-2">Network</label>
+                            <input type="text" class="input-field" value="Polygon Mainnet (Chain ID: 137)" readonly>
                         </div>
                     </div>
                 </div>
-
-                <!-- Registrants Table -->
-                <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between flex-wrap gap-4">
-                        <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Claim Registrants</h3>
-                        <div class="flex items-center gap-2">
-                            <button id="filterAll" class="filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30">All</button>
-                            <button id="filterPending" class="filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Pending</button>
-                            <button id="filterMinted" class="filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Minted</button>
-                        </div>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead>
-                                <tr class="border-b border-white/5">
-                                    <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Email</th>
-                                    <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Address</th>
-                                    <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Status</th>
-                                    <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">TX Hash</th>
-                                    <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Registered</th>
-                                    <th class="text-right py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="registrantsTable">
-                                <tr>
-                                    <td colspan="6" class="text-center py-12 text-slate-500">Loading...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ==================== PRESALE TAB ==================== -->
-            <div id="contentPresale" class="tab-content">
                 
-                <!-- Presale Stats Grid -->
-                <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Total Purchases</p>
-                                <p id="presaleTotalPurchases" class="text-3xl font-serif text-white mt-2">--</p>
-                            </div>
-                            <span class="material-symbols-outlined text-primary/30 text-3xl">receipt_long</span>
+                <!-- Stripe Integration -->
+                <div class="glass-card rounded-xl p-6">
+                    <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
+                        <svg class="w-5 h-5 gold-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                        </svg>
+                        Stripe Integration
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                            <span class="text-white/80">Status</span>
+                            <span id="stripe-status" class="badge badge-pending">Checking...</span>
                         </div>
-                    </div>
-                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Tokens Sold</p>
-                                <p id="presaleTokensSold" class="text-3xl font-serif text-green-400 mt-2">--</p>
-                            </div>
-                            <span class="material-symbols-outlined text-green-400/30 text-3xl">token</span>
-                        </div>
-                    </div>
-                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Total USD</p>
-                                <p id="presaleTotalUSD" class="text-3xl font-serif text-primary mt-2">--</p>
-                            </div>
-                            <span class="material-symbols-outlined text-primary/30 text-3xl">attach_money</span>
-                        </div>
-                    </div>
-                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Unique Buyers</p>
-                                <p id="presaleUniqueBuyers" class="text-3xl font-serif text-blue-400 mt-2">--</p>
-                            </div>
-                            <span class="material-symbols-outlined text-blue-400/30 text-3xl">people</span>
-                        </div>
-                    </div>
-                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Pending Mint</p>
-                                <p id="presalePendingMint" class="text-3xl font-serif text-yellow-400 mt-2">--</p>
-                            </div>
-                            <span class="material-symbols-outlined text-yellow-400/30 text-3xl">pending</span>
-                        </div>
+                        
+                        <p class="text-white/60 text-sm">Stripe keys are configured via environment variables:</p>
+                        <ul class="text-white/40 text-sm space-y-1 ml-4">
+                            <li>• STRIPE_SECRET_KEY</li>
+                            <li>• STRIPE_PUBLIC_KEY</li>
+                            <li>• STRIPE_WEBHOOK_SECRET</li>
+                        </ul>
+                        
+                        <a href="https://dashboard.stripe.com" target="_blank" class="btn-outline w-full text-center block mt-4">
+                            Open Stripe Dashboard →
+                        </a>
                     </div>
                 </div>
-
-                <!-- Presale Progress -->
-                <div class="bg-surface border border-white/5 rounded-sm p-6 mb-8">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Sale Progress</h3>
-                        <span id="presaleProgressPercent" class="text-sm text-slate-500">0%</span>
-                    </div>
-                    <div class="h-4 bg-background-dark rounded-full overflow-hidden mb-4">
-                        <div id="presaleProgressBar" class="h-full bg-gradient-to-r from-primary to-primary-light rounded-full transition-all duration-500" style="width: 0%"></div>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-slate-500">Sold: <span id="presaleProgressSold" class="text-white">0</span> VIP</span>
-                        <span class="text-slate-500">Total: <span id="presaleProgressTotal" class="text-white">1,000,000</span> VIP</span>
-                    </div>
-                </div>
-
-                <!-- Presale Actions -->
-                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
-                    <button id="refreshPresaleBtn" class="bg-surface border border-white/10 text-white px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-primary/30 hover:text-primary transition-all flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined text-lg">refresh</span>
-                        Refresh Data
-                    </button>
-                    <button id="fulfillOrdersBtn" class="bg-surface border border-primary/30 text-primary px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/10 transition-all flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined text-lg">send</span>
-                        Fulfill Orders
-                    </button>
-                    <button id="exportCsvBtn" class="bg-surface border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined text-lg">download</span>
-                        Export CSV
-                    </button>
-                    <a href="/presale" target="_blank" class="bg-surface border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined text-lg">open_in_new</span>
-                        View Presale
-                    </a>
-                </div>
-
-                <!-- Presale Purchases Table -->
-                <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between flex-wrap gap-4">
-                        <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Presale Purchases</h3>
-                        <div class="flex items-center gap-2">
-                            <button id="presaleFilterAll" class="presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30">All</button>
-                            <button id="presaleFilterPending" class="presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Pending</button>
-                            <button id="presaleFilterPaid" class="presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Paid</button>
-                            <button id="presaleFilterMinted" class="presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Minted</button>
-                        </div>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead>
-                                <tr class="border-b border-white/5">
-                                    <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Wallet</th>
-                                    <th class="text-right py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Tokens</th>
-                                    <th class="text-right py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Amount</th>
-                                    <th class="text-center py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Method</th>
-                                    <th class="text-center py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Status</th>
-                                    <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Date</th>
-                                    <th class="text-right py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="presalePurchasesTable">
-                                <tr>
-                                    <td colspan="7" class="text-center py-12 text-slate-500">Loading...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ==================== SETTINGS TAB ==================== -->
-            <div id="contentSettings" class="tab-content">
                 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Database Status -->
+                <div class="glass-card rounded-xl p-6">
+                    <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
+                        <svg class="w-5 h-5 gold-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
+                        </svg>
+                        Database Status
+                    </h3>
                     
-                    <!-- Presale Settings Card -->
-                    <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
-                        <div class="px-6 py-4 border-b border-white/5">
-                            <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Presale Configuration</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                            <span class="text-white/80">PostgreSQL</span>
+                            <span id="db-status" class="badge badge-pending">Checking...</span>
                         </div>
-                        <div class="p-6 space-y-6">
-                            
-                            <!-- Presale Enabled Toggle -->
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-white font-medium">Presale Enabled</p>
-                                    <p class="text-slate-500 text-xs mt-1">Allow new purchases on the presale page</p>
-                                </div>
-                                <div id="presaleEnabledToggle" class="toggle-switch active"></div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-3 bg-white/5 rounded-lg text-center">
+                                <div class="text-2xl font-bold" id="db-registrants">--</div>
+                                <div class="text-white/40 text-sm">Registrants</div>
                             </div>
-                            
-                            <div class="border-t border-white/5 pt-6">
-                                <form id="presaleSettingsForm" class="space-y-4">
-                                    
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Token Price (USD)</label>
-                                            <input type="number" id="settingTokenPrice" step="0.01" min="0.01" 
-                                                   class="input-field w-full px-4 py-3 rounded-sm text-white text-sm" placeholder="0.10">
-                                        </div>
-                                        <div>
-                                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Total Tokens</label>
-                                            <input type="number" id="settingTotalTokens" min="1" 
-                                                   class="input-field w-full px-4 py-3 rounded-sm text-white text-sm" placeholder="1000000">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Min Purchase</label>
-                                            <input type="number" id="settingMinPurchase" min="1" 
-                                                   class="input-field w-full px-4 py-3 rounded-sm text-white text-sm" placeholder="10">
-                                        </div>
-                                        <div>
-                                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Max Purchase</label>
-                                            <input type="number" id="settingMaxPurchase" min="1" 
-                                                   class="input-field w-full px-4 py-3 rounded-sm text-white text-sm" placeholder="10000">
-                                        </div>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Presale Wallet (Receive crypto payments)</label>
-                                        <input type="text" id="settingPresaleWallet" 
-                                               class="input-field w-full px-4 py-3 rounded-sm text-white font-mono text-sm" placeholder="0x...">
-                                    </div>
-                                    
-                                    <div class="pt-4">
-                                        <button type="submit" class="w-full bg-primary text-background-dark px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-1px] transition-all flex items-center justify-center gap-2">
-                                            <span class="material-symbols-outlined text-lg">save</span>
-                                            Save Settings
-                                        </button>
-                                    </div>
-                                </form>
-                                
-                                <div id="settingsResult" class="hidden mt-4 p-4 rounded-sm text-sm"></div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Claim Settings Card -->
-                    <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
-                        <div class="px-6 py-4 border-b border-white/5">
-                            <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Claim Configuration</h3>
-                        </div>
-                        <div class="p-6 space-y-6">
-                            
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Mint Amount per Claim</label>
-                                    <input type="number" id="settingMintAmount" min="1" 
-                                           class="input-field w-full px-4 py-3 rounded-sm text-white text-sm" placeholder="2">
-                                    <p class="text-slate-600 text-xs mt-2">Set via MINT_AMOUNT environment variable</p>
-                                </div>
-                                
-                                <div>
-                                    <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Token Contract</label>
-                                    <div class="input-field w-full px-4 py-3 rounded-sm text-slate-400 font-mono text-sm">
-                                        0x6860c34db140DB7B589DaDA38859a1d3736bbE3F
-                                    </div>
-                                    <p class="text-slate-600 text-xs mt-2">VIP Token on Polygon</p>
-                                </div>
-                                
-                                <div>
-                                    <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Network</label>
-                                    <div class="input-field w-full px-4 py-3 rounded-sm text-slate-400 text-sm">
-                                        Polygon Mainnet (Chain ID: 137)
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="border-t border-white/5 pt-6">
-                                <p class="text-slate-500 text-xs mb-4">Environment-based settings require redeployment to change.</p>
-                                <a href="https://vercel.com/dashboard" target="_blank" 
-                                   class="w-full border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all flex items-center justify-center gap-2">
-                                    <span class="material-symbols-outlined text-lg">open_in_new</span>
-                                    Vercel Dashboard
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Stripe Settings Card -->
-                    <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
-                        <div class="px-6 py-4 border-b border-white/5">
-                            <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Stripe Integration</h3>
-                        </div>
-                        <div class="p-6 space-y-4">
-                            <div class="flex items-center justify-between p-4 bg-background-dark rounded-sm">
-                                <div class="flex items-center gap-3">
-                                    <span class="material-symbols-outlined text-2xl" id="stripeStatusIcon">pending</span>
-                                    <div>
-                                        <p class="text-white font-medium">Stripe Status</p>
-                                        <p id="stripeStatusText" class="text-slate-500 text-xs">Checking...</p>
-                                    </div>
-                                </div>
-                                <span id="stripeStatusBadge" class="badge badge-pending">Unknown</span>
-                            </div>
-                            
-                            <p class="text-slate-600 text-xs">
-                                Stripe keys are configured via environment variables:<br>
-                                STRIPE_SECRET_KEY, STRIPE_PUBLIC_KEY, STRIPE_WEBHOOK_SECRET
-                            </p>
-                            
-                            <a href="https://dashboard.stripe.com" target="_blank" 
-                               class="w-full border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all flex items-center justify-center gap-2">
-                                <span class="material-symbols-outlined text-lg">open_in_new</span>
-                                Stripe Dashboard
-                            </a>
-                        </div>
-                    </div>
-                    
-                    <!-- Database Info Card -->
-                    <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
-                        <div class="px-6 py-4 border-b border-white/5">
-                            <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Database Status</h3>
-                        </div>
-                        <div class="p-6 space-y-4">
-                            <div class="flex items-center justify-between p-4 bg-background-dark rounded-sm">
-                                <div class="flex items-center gap-3">
-                                    <span class="material-symbols-outlined text-2xl text-green-400">check_circle</span>
-                                    <div>
-                                        <p class="text-white font-medium">PostgreSQL</p>
-                                        <p class="text-slate-500 text-xs">Connected</p>
-                                    </div>
-                                </div>
-                                <span class="badge badge-success">Active</span>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-4 text-sm">
-                                <div class="p-3 bg-background-dark rounded-sm">
-                                    <p class="text-slate-500 text-xs">Registrants Table</p>
-                                    <p id="dbRegistrantsCount" class="text-white font-semibold">--</p>
-                                </div>
-                                <div class="p-3 bg-background-dark rounded-sm">
-                                    <p class="text-slate-500 text-xs">Presale Purchases</p>
-                                    <p id="dbPresaleCount" class="text-white font-semibold">--</p>
-                                </div>
+                            <div class="p-3 bg-white/5 rounded-lg text-center">
+                                <div class="text-2xl font-bold" id="db-purchases">--</div>
+                                <div class="text-white/40 text-sm">Purchases</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Footer Info -->
-            <div class="mt-6 flex items-center justify-between text-xs text-slate-600">
-                <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    <span>Auto-refresh every 60s</span>
-                </div>
-                <p id="lastUpdated">Last updated: --</p>
-            </div>
-
         </div>
     </main>
-
-    <!-- Manual Mint Modal -->
-    <div id="manualMintModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6">
-        <div class="absolute inset-0 bg-black/70 modal-backdrop"></div>
-        <div class="relative bg-surface border border-white/10 rounded-sm w-full max-w-md overflow-hidden">
-            <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
-                <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Manual Mint</h3>
-                <button class="close-modal text-slate-500 hover:text-white transition-colors">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-            <div class="p-6">
-                <p class="text-slate-400 text-sm mb-6">Mint VIP tokens to a specific wallet address.</p>
-                <form id="manualMintForm">
-                    <div class="mb-4">
-                        <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Wallet Address</label>
-                        <input 
-                            type="text" 
-                            id="manualMintAddress" 
-                            required
-                            placeholder="0x..."
-                            class="input-field w-full px-4 py-3 rounded-sm text-white font-mono text-sm"
-                        >
-                    </div>
-                    <div class="mb-6">
-                        <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Amount (VIP)</label>
-                        <input 
-                            type="number" 
-                            id="manualMintAmount" 
-                            required
-                            min="1"
-                            value="2"
-                            class="input-field w-full px-4 py-3 rounded-sm text-white text-sm"
-                        >
-                    </div>
-                    <div class="flex gap-3">
-                        <button type="button" class="close-modal flex-1 border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all">
-                            Cancel
-                        </button>
-                        <button type="submit" id="manualMintSubmitBtn" class="flex-1 bg-primary text-background-dark px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-1px] transition-all flex items-center justify-center gap-2">
-                            <span id="manualMintBtnText">Mint Tokens</span>
-                            <span id="manualMintBtnLoader" class="hidden">
-                                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            </span>
-                        </button>
-                    </div>
-                </form>
-                <div id="manualMintResult" class="hidden mt-6 p-4 rounded-sm text-sm"></div>
-            </div>
-        </div>
-    </div>
-
+    
     <!-- Full Sync Modal -->
-    <div id="fullSyncModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6">
-        <div class="absolute inset-0 bg-black/70 modal-backdrop"></div>
-        <div class="relative bg-surface border border-white/10 rounded-sm w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
-            <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
-                <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Full Sync Results</h3>
-                <button class="close-modal text-slate-500 hover:text-white transition-colors">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
+    <div id="fullsync-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="p-6 border-b border-white/10 flex items-center justify-between">
+                <h3 class="font-semibold text-lg">Full Sync Results</h3>
+                <button onclick="closeFullSyncModal()" class="text-white/40 hover:text-white">&times;</button>
             </div>
-            <div class="p-6 overflow-y-auto flex-1">
-                <div id="fullSyncLoading" class="text-center py-12">
-                    <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-                    <p class="text-slate-400 text-sm">Syncing with blockchain...</p>
-                    <p class="text-slate-600 text-xs mt-2">This may take a moment</p>
-                </div>
-                <div id="fullSyncResults" class="hidden">
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                        <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
-                            <p class="text-slate-500 text-xs mb-1">Total</p>
-                            <p id="syncTotal" class="text-2xl font-serif text-white">0</p>
-                        </div>
-                        <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
-                            <p class="text-slate-500 text-xs mb-1">With Balance</p>
-                            <p id="syncWithBalance" class="text-2xl font-serif text-green-400">0</p>
-                        </div>
-                        <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
-                            <p class="text-slate-500 text-xs mb-1">No Balance</p>
-                            <p id="syncWithoutBalance" class="text-2xl font-serif text-yellow-400">0</p>
-                        </div>
-                        <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
-                            <p class="text-slate-500 text-xs mb-1">Updated</p>
-                            <p id="syncUpdated" class="text-2xl font-serif text-primary">0</p>
-                        </div>
-                        <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
-                            <p class="text-slate-500 text-xs mb-1">TX Found</p>
-                            <p id="syncTxFound" class="text-2xl font-serif text-blue-400">0</p>
-                        </div>
-                    </div>
-                    <div class="border border-white/5 rounded-sm overflow-hidden">
-                        <table class="w-full">
-                            <thead>
-                                <tr class="border-b border-white/5 bg-background-dark">
-                                    <th class="text-left py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">Email</th>
-                                    <th class="text-left py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">Address</th>
-                                    <th class="text-right py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">Balance</th>
-                                    <th class="text-center py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">Status</th>
-                                    <th class="text-left py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">TX Hash</th>
-                                </tr>
-                            </thead>
-                            <tbody id="syncHoldersTable"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <div id="fullSyncError" class="hidden text-center py-12">
-                    <span class="material-symbols-outlined text-red-400 text-5xl mb-4">error</span>
-                    <p class="text-red-400 text-sm" id="fullSyncErrorText">An error occurred</p>
+            <div id="fullsync-content" class="p-6">
+                <div class="text-center text-white/40 py-8">
+                    <div class="animate-spin w-8 h-8 border-2 border-white/20 border-t-gold-text rounded-full mx-auto mb-4"></div>
+                    Running sync...
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Presale Fulfill Modal -->
-    <div id="presaleFulfillModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6">
-        <div class="absolute inset-0 bg-black/70 modal-backdrop"></div>
-        <div class="relative bg-surface border border-white/10 rounded-sm w-full max-w-md overflow-hidden">
-            <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
-                <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Fulfill Presale Order</h3>
-                <button class="close-modal text-slate-500 hover:text-white transition-colors">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-            <div class="p-6">
-                <p class="text-slate-400 text-sm mb-6">Mint tokens for a paid presale order.</p>
-                <form id="presaleFulfillForm">
-                    <input type="hidden" id="fulfillPurchaseId">
-                    <div class="mb-4">
-                        <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Wallet Address</label>
-                        <input type="text" id="fulfillWalletAddress" readonly
-                               class="input-field w-full px-4 py-3 rounded-sm text-white font-mono text-sm opacity-60">
-                    </div>
-                    <div class="mb-6">
-                        <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Token Amount</label>
-                        <input type="number" id="fulfillTokenAmount" readonly
-                               class="input-field w-full px-4 py-3 rounded-sm text-white text-sm opacity-60">
-                    </div>
-                    <div class="flex gap-3">
-                        <button type="button" class="close-modal flex-1 border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all">
-                            Cancel
-                        </button>
-                        <button type="submit" id="fulfillSubmitBtn" class="flex-1 bg-primary text-background-dark px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-1px] transition-all flex items-center justify-center gap-2">
-                            <span id="fulfillBtnText">Mint & Fulfill</span>
-                            <span id="fulfillBtnLoader" class="hidden">
-                                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            </span>
-                        </button>
-                    </div>
-                </form>
-                <div id="fulfillResult" class="hidden mt-6 p-4 rounded-sm text-sm"></div>
-            </div>
+    
+    <!-- Footer -->
+    <footer class="border-t border-white/10 mt-16">
+        <div class="max-w-7xl mx-auto px-4 py-6 text-center text-white/40 text-sm">
+            &copy; 2025 KEA VALLEY®. All rights reserved.
         </div>
-    </div>
-
-    <!-- Toast Container -->
-    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 space-y-2"></div>
-
+    </footer>
+    
     <script>
-        // ============================================
-        // State
-        // ============================================
+        // Configuration
+        const EXPLORER_URL = 'https://polygonscan.com';
         let currentFilter = 'all';
-        let presaleFilter = 'all';
-        let registrants = [];
-        let presalePurchases = [];
-        let autoRefreshInterval;
-        let explorerUrl = 'https://polygonscan.com';
-        let presaleConfig = {
-            enabled: true,
-            tokenPrice: 0.10,
-            totalTokens: 1000000,
-            minPurchase: 10,
-            maxPurchase: 10000,
-            presaleWallet: ''
-        };
-
-        // ============================================
-        // Tab Navigation - GLOBAL FUNCTION
-        // ============================================
-        window.switchMainTab = function(tab) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
+        let registrantsData = [];
+        let presaleData = [];
+        
+        // ==========================================
+        // TAB SWITCHING - MUST BE IN GLOBAL SCOPE
+        // ==========================================
+        function switchMainTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.main-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.tab === tabName) {
+                    tab.classList.add('active');
+                }
+            });
             
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            document.getElementById(`content${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
+            // Update panels
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-panel`).classList.add('active');
             
-            if (tab === 'presale') {
-                loadPresaleData();
-            } else if (tab === 'settings') {
+            // Load data for the tab
+            if (tabName === 'claims') {
+                loadRegistrants();
+            } else if (tabName === 'presale') {
+                loadPresaleStats();
+                loadPresalePurchases();
+            } else if (tabName === 'settings') {
                 loadSettings();
             }
-        };
-
-        // ============================================
-        // Modal Functions - GLOBAL
-        // ============================================
-        window.openManualMintModal = function() {
-            document.getElementById('manualMintModal').classList.remove('hidden');
-            document.getElementById('manualMintAddress').value = '';
-            document.getElementById('manualMintAmount').value = '2';
-            document.getElementById('manualMintResult').classList.add('hidden');
-        };
-
-        window.closeManualMintModal = function() {
-            document.getElementById('manualMintModal').classList.add('hidden');
-        };
-
-        window.openFullSyncModal = function() {
-            document.getElementById('fullSyncModal').classList.remove('hidden');
-            document.getElementById('fullSyncLoading').classList.remove('hidden');
-            document.getElementById('fullSyncResults').classList.add('hidden');
-            document.getElementById('fullSyncError').classList.add('hidden');
-            performFullSync();
-        };
-
-        window.closeFullSyncModal = function() {
-            document.getElementById('fullSyncModal').classList.add('hidden');
-        };
-
-        window.openPresaleFulfillModal = function() {
-            const pendingOrders = presalePurchases.filter(p => p.status === 'paid' || p.status === 'paid_pending_mint');
-            if (pendingOrders.length === 0) {
-                showToast('No orders pending fulfillment', 'info');
-                return;
-            }
-            const order = pendingOrders[0];
-            openFulfillModal(order.id, order.wallet_address, order.token_amount);
-        };
-
-        window.openFulfillModal = function(id, wallet, amount) {
-            document.getElementById('presaleFulfillModal').classList.remove('hidden');
-            document.getElementById('fulfillPurchaseId').value = id;
-            document.getElementById('fulfillWalletAddress').value = wallet;
-            document.getElementById('fulfillTokenAmount').value = amount;
-            document.getElementById('fulfillResult').classList.add('hidden');
-        };
-
-        window.closePresaleFulfillModal = function() {
-            document.getElementById('presaleFulfillModal').classList.add('hidden');
-        };
-
-        window.togglePresaleEnabled = function() {
-            const toggle = document.getElementById('presaleEnabledToggle');
-            toggle.classList.toggle('active');
-            presaleConfig.enabled = toggle.classList.contains('active');
-        };
-
-        window.setPresaleFilter = function(filter) {
-            presaleFilter = filter;
-            document.querySelectorAll('.presale-filter-btn').forEach(btn => {
-                btn.className = 'presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors';
-            });
-            const activeBtn = document.getElementById(`presaleFilter${filter.charAt(0).toUpperCase() + filter.slice(1)}`);
-            if (activeBtn) {
-                activeBtn.className = 'presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30';
-            }
-            renderPresalePurchases();
-        };
-
-        window.refreshPresaleData = async function() {
-            showToast('Refreshing presale data...', 'info');
-            await loadPresaleData();
-            showToast('Presale data refreshed', 'success');
-        };
-
-        window.exportPresaleCSV = function() {
-            if (!presalePurchases || presalePurchases.length === 0) {
-                showToast('No purchases to export', 'error');
-                return;
-            }
-            
-            const headers = ['Wallet', 'Tokens', 'USD Amount', 'Payment Method', 'Status', 'TX Hash', 'Date'];
-            const rows = presalePurchases.map(p => [
-                p.wallet_address,
-                p.token_amount,
-                p.usd_amount,
-                p.payment_method,
-                p.status,
-                p.tx_hash || '',
-                new Date(p.created_at).toISOString()
-            ]);
-            
-            const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `presale-purchases-${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-            
-            showToast('CSV exported', 'success');
-        };
-
-        // ============================================
-        // Auth Check
-        // ============================================
-        async function checkAuth() {
+        }
+        
+        // ==========================================
+        // CLAIMS / REGISTRANTS
+        // ==========================================
+        async function loadRegistrants() {
             try {
-                const res = await fetch('/api/auth-status');
-                const data = await res.json();
-                if (!data.authenticated) {
-                    window.location.href = '/login';
-                    return false;
-                }
-                if (data.mustChangePassword) {
-                    window.location.href = '/change-password';
-                    return false;
-                }
-                document.getElementById('userInfo').textContent = `${data.username}`;
-                return true;
-            } catch (e) {
-                window.location.href = '/login';
-                return false;
-            }
-        }
-
-        // ============================================
-        // Toast Notifications
-        // ============================================
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            const bgColor = type === 'success' ? 'bg-green-500/90' : type === 'error' ? 'bg-red-500/90' : 'bg-primary/90';
-            const icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
-            
-            toast.className = `slide-in px-4 py-3 rounded-sm shadow-lg flex items-center gap-2 ${bgColor} text-white text-sm`;
-            toast.innerHTML = `
-                <span class="material-symbols-outlined text-lg">${icon}</span>
-                <span>${message}</span>
-            `;
-            document.getElementById('toastContainer').appendChild(toast);
-            setTimeout(() => toast.remove(), 5000);
-        }
-
-        // ============================================
-        // Action Result Display
-        // ============================================
-        function showActionResult(message, type = 'info') {
-            const el = document.getElementById('actionResult');
-            const content = document.getElementById('actionResultContent');
-            el.classList.remove('hidden');
-            const bgColor = type === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 
-                           type === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 
-                           'bg-primary/10 text-primary border border-primary/20';
-            content.className = `p-4 rounded-sm text-sm ${bgColor}`;
-            content.innerHTML = message;
-        }
-
-        // ============================================
-        // Claims Data Functions
-        // ============================================
-        async function fetchStats() {
-            try {
-                const res = await fetch('/api/stats');
-                const data = await res.json();
-                document.getElementById('statTotal').textContent = data.total || 0;
-                document.getElementById('statMinted').textContent = data.minted || 0;
-                document.getElementById('statPending').textContent = data.pending || 0;
-                document.getElementById('statNetwork').textContent = (data.network || 'Unknown').toUpperCase();
-                if (data.explorer) explorerUrl = data.explorer;
-                
-                document.getElementById('dbRegistrantsCount').textContent = data.total || 0;
-            } catch (e) {
-                console.error('Failed to fetch stats:', e);
-            }
-        }
-
-        async function fetchWalletInfo() {
-            try {
-                const res = await fetch('/api/wallet-info');
-                const data = await res.json();
-                
-                if (data.address) {
-                    const explorer = data.explorer || explorerUrl;
-                    document.getElementById('walletAddress').innerHTML = `
-                        <a href="${explorer}/address/${data.address}" target="_blank" class="hover:text-primary transition-colors">
-                            ${data.address.slice(0, 10)}...${data.address.slice(-8)}
-                        </a>
-                    `;
-                    document.getElementById('walletBalance').textContent = `${parseFloat(data.balance || 0).toFixed(4)} ${data.currency || 'POL'}`;
-                    document.getElementById('tokenBalance').textContent = `${parseFloat(data.tokenBalance || 0).toLocaleString()} ${data.tokenSymbol || 'VIP'}`;
-                } else {
-                    document.getElementById('walletAddress').textContent = 'Not configured';
-                }
-            } catch (e) {
-                console.error('Failed to fetch wallet info:', e);
-                document.getElementById('walletAddress').textContent = 'Error loading';
-            }
-        }
-
-        async function fetchRegistrants() {
-            try {
-                const endpoint = currentFilter === 'pending' ? '/api/registrants/pending' : '/api/registrants';
-                const res = await fetch(endpoint);
-                const data = await res.json();
-                registrants = Array.isArray(data) ? data : data.registrants || [];
-                renderRegistrants();
-            } catch (e) {
-                console.error('Failed to fetch registrants:', e);
-                document.getElementById('registrantsTable').innerHTML = `
-                    <tr><td colspan="6" class="text-center py-12 text-red-400">Failed to load registrants</td></tr>
+                const response = await fetch('/api/registrants');
+                const data = await response.json();
+                registrantsData = data.registrants || data || [];
+                renderRegistrants(registrantsData);
+                updateClaimsStats(registrantsData);
+            } catch (error) {
+                console.error('Error loading registrants:', error);
+                document.getElementById('registrants-table').innerHTML = `
+                    <tr><td colspan="6" class="text-center text-red-400 py-8">Error loading data</td></tr>
                 `;
             }
         }
-
-        function renderRegistrants() {
-            let filtered = registrants;
-            if (currentFilter === 'pending') {
-                filtered = registrants.filter(r => !r.minted);
-            } else if (currentFilter === 'minted') {
-                filtered = registrants.filter(r => r.minted);
-            }
-
-            if (filtered.length === 0) {
-                document.getElementById('registrantsTable').innerHTML = `
-                    <tr><td colspan="6" class="text-center py-12 text-slate-500">No registrants found</td></tr>
-                `;
+        
+        function renderRegistrants(registrants) {
+            const tbody = document.getElementById('registrants-table');
+            
+            if (!registrants || registrants.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-white/40 py-8">No registrants found</td></tr>`;
                 return;
             }
-
-            document.getElementById('registrantsTable').innerHTML = filtered.map(r => {
-                const txHash = r.tx_hash || r.txHash || null;
-                const hasTxHash = txHash && txHash !== 'synced-from-chain' && txHash.startsWith('0x');
-                const email = r.email || (r.metadata && r.metadata.email) || null;
+            
+            tbody.innerHTML = registrants.map(r => {
+                const email = r.email || r.metadata?.email || '--';
+                const address = r.wallet_address || r.walletAddress || r.address || '--';
+                const txHash = r.tx_hash || r.txHash || '';
+                const minted = r.minted || r.status === 'minted';
+                const date = r.created_at || r.createdAt || r.registered_at;
                 
                 return `
-                <tr class="table-row border-b border-white/5">
-                    <td class="py-4 px-6">
-                        ${email ? `
-                            <a href="mailto:${email}" class="text-sm text-white hover:text-primary transition-colors flex items-center gap-2">
-                                <span class="material-symbols-outlined text-sm text-slate-500">mail</span>
-                                <span class="truncate max-w-[180px]">${email}</span>
+                    <tr>
+                        <td>
+                            ${email !== '--' ? `
+                                <a href="mailto:${email}" class="text-blue-400 hover:underline flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                    ${email.length > 25 ? email.substring(0, 25) + '...' : email}
+                                </a>
+                            ` : '<span class="text-white/40">--</span>'}
+                        </td>
+                        <td>
+                            <a href="${EXPLORER_URL}/address/${address}" target="_blank" class="text-blue-400 hover:underline font-mono text-sm">
+                                ${address.substring(0, 6)}...${address.substring(address.length - 4)}
                             </a>
-                        ` : `<span class="text-slate-600 text-xs">--</span>`}
-                    </td>
-                    <td class="py-4 px-6">
-                        <a href="${explorerUrl}/address/${r.address}" target="_blank" class="font-mono text-sm text-white hover:text-primary transition-colors">
-                            ${r.address.slice(0, 10)}...${r.address.slice(-8)}
-                        </a>
-                    </td>
-                    <td class="py-4 px-6">
-                        <span class="badge ${r.minted ? 'badge-success' : 'badge-pending'}">
-                            ${r.minted ? 'Minted' : 'Pending'}
-                        </span>
-                    </td>
-                    <td class="py-4 px-6">
-                        ${hasTxHash ? `
-                            <a href="${explorerUrl}/tx/${txHash}" target="_blank" class="font-mono text-xs text-blue-400 hover:text-blue-300 transition-colors">
-                                ${txHash.slice(0, 10)}...${txHash.slice(-6)}
+                        </td>
+                        <td>
+                            <span class="badge ${minted ? 'badge-success' : 'badge-warning'}">
+                                ${minted ? 'Minted' : 'Pending'}
+                            </span>
+                        </td>
+                        <td>
+                            ${txHash ? `
+                                <a href="${EXPLORER_URL}/tx/${txHash}" target="_blank" class="text-blue-400 hover:underline font-mono text-sm">
+                                    ${txHash.substring(0, 8)}...
+                                </a>
+                            ` : '<span class="text-white/40">--</span>'}
+                        </td>
+                        <td class="text-white/60 text-sm">
+                            ${date ? new Date(date).toLocaleDateString() : '--'}
+                        </td>
+                        <td>
+                            <a href="${EXPLORER_URL}/address/${address}" target="_blank" class="text-white/40 hover:text-white text-sm">
+                                View →
                             </a>
-                        ` : `<span class="text-slate-600 text-xs">--</span>`}
-                    </td>
-                    <td class="py-4 px-6 text-slate-500 text-sm">
-                        ${r.registeredAt || r.registered_at ? new Date(r.registeredAt || r.registered_at).toLocaleDateString() : '--'}
-                    </td>
-                    <td class="py-4 px-6 text-right">
-                        <a href="${explorerUrl}/address/${r.address}" target="_blank" 
-                           class="text-primary hover:underline text-xs font-bold uppercase tracking-widest">View</a>
-                    </td>
-                </tr>
-            `}).join('');
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
-
-        function setFilter(filter) {
-            currentFilter = filter;
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.className = 'filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors';
-            });
-            const activeBtn = document.getElementById(`filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`);
-            activeBtn.className = 'filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30';
-            renderRegistrants();
+        
+        function updateClaimsStats(registrants) {
+            const total = registrants.length;
+            const minted = registrants.filter(r => r.minted || r.status === 'minted').length;
+            const pending = total - minted;
+            const withBalance = registrants.filter(r => parseFloat(r.balance || 0) > 0).length;
+            
+            document.getElementById('claims-total').textContent = total.toLocaleString();
+            document.getElementById('claims-minted').textContent = minted.toLocaleString();
+            document.getElementById('claims-pending').textContent = pending.toLocaleString();
+            document.getElementById('claims-balance').textContent = withBalance.toLocaleString();
         }
-
-        // ============================================
-        // Presale Data Functions
-        // ============================================
-        async function loadPresaleData() {
-            await Promise.all([fetchPresaleConfig(), fetchPresalePurchases(), fetchPresaleStats()]);
-        }
-
-        async function fetchPresaleConfig() {
+        
+        // ==========================================
+        // PRESALE
+        // ==========================================
+        async function loadPresaleStats() {
             try {
-                const res = await fetch('/api/presale/config');
-                const data = await res.json();
-                presaleConfig = { ...presaleConfig, ...data };
+                const response = await fetch('/api/presale/admin/stats');
+                const data = await response.json();
                 
-                const sold = data.tokensSold || 0;
-                const total = data.totalTokens || 1000000;
-                const percent = total > 0 ? ((sold / total) * 100).toFixed(1) : 0;
+                document.getElementById('presale-total').textContent = (data.totalPurchases || 0).toLocaleString();
+                document.getElementById('presale-tokens').textContent = (data.tokensSold || 0).toLocaleString();
+                document.getElementById('presale-usd').textContent = '$' + (data.totalUsd || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('presale-buyers').textContent = (data.uniqueBuyers || 0).toLocaleString();
+                document.getElementById('presale-pending').textContent = (data.pendingMint || 0).toLocaleString();
                 
-                document.getElementById('presaleProgressBar').style.width = `${percent}%`;
-                document.getElementById('presaleProgressPercent').textContent = `${percent}%`;
-                document.getElementById('presaleProgressSold').textContent = sold.toLocaleString();
-                document.getElementById('presaleProgressTotal').textContent = total.toLocaleString();
+                const totalTokens = data.totalTokens || 1000000;
+                const soldPct = ((data.tokensSold || 0) / totalTokens * 100).toFixed(2);
+                document.getElementById('presale-progress-pct').textContent = soldPct + '%';
+                document.getElementById('presale-progress-bar').style.width = soldPct + '%';
+                document.getElementById('presale-progress-total').textContent = totalTokens.toLocaleString() + ' VIP';
+            } catch (error) {
+                console.error('Error loading presale stats:', error);
+            }
+        }
+        
+        async function loadPresalePurchases() {
+            try {
+                const response = await fetch('/api/presale/admin/purchases');
+                const data = await response.json();
+                presaleData = data.purchases || data || [];
+                renderPresalePurchases(presaleData);
+            } catch (error) {
+                console.error('Error loading presale purchases:', error);
+            }
+        }
+        
+        function renderPresalePurchases(purchases) {
+            const tbody = document.getElementById('presale-table');
+            
+            let filtered = purchases;
+            if (currentFilter !== 'all') {
+                filtered = purchases.filter(p => {
+                    const status = (p.status || '').toLowerCase();
+                    if (currentFilter === 'pending') return status === 'pending' || status === 'created';
+                    if (currentFilter === 'paid') return status === 'paid' || status === 'paid_pending_mint';
+                    if (currentFilter === 'minted') return status === 'minted' || status === 'completed';
+                    return true;
+                });
+            }
+            
+            if (!filtered || filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-white/40 py-8">No purchases found</td></tr>`;
+                return;
+            }
+            
+            tbody.innerHTML = filtered.map(p => {
+                const email = p.email || p.metadata?.email || '--';
+                const wallet = p.wallet_address || p.walletAddress || '--';
+                const tokens = p.token_amount || p.tokenAmount || 0;
+                const amount = p.amount_usd || p.amountUsd || p.amount || 0;
+                const payment = p.payment_method || p.paymentMethod || 'card';
+                const status = p.status || 'pending';
+                const date = p.created_at || p.createdAt;
                 
-                document.getElementById('settingTokenPrice').value = data.tokenPrice || 0.10;
-                document.getElementById('settingTotalTokens').value = data.totalTokens || 1000000;
-                document.getElementById('settingMinPurchase').value = data.minPurchase || 10;
-                document.getElementById('settingMaxPurchase').value = data.maxPurchase || 10000;
-                document.getElementById('settingPresaleWallet').value = data.presaleWallet || '';
+                let statusClass = 'badge-warning';
+                if (status === 'paid' || status === 'paid_pending_mint') statusClass = 'badge-pending';
+                if (status === 'minted' || status === 'completed') statusClass = 'badge-success';
+                if (status === 'failed' || status === 'cancelled') statusClass = 'badge-error';
                 
-                const toggle = document.getElementById('presaleEnabledToggle');
-                if (data.enabled !== false) {
+                return `
+                    <tr>
+                        <td>
+                            ${email !== '--' ? `
+                                <a href="mailto:${email}" class="text-blue-400 hover:underline text-sm">
+                                    ${email.length > 20 ? email.substring(0, 20) + '...' : email}
+                                </a>
+                            ` : '<span class="text-white/40">--</span>'}
+                        </td>
+                        <td>
+                            <a href="${EXPLORER_URL}/address/${wallet}" target="_blank" class="text-blue-400 hover:underline font-mono text-sm">
+                                ${wallet.substring(0, 6)}...${wallet.substring(wallet.length - 4)}
+                            </a>
+                        </td>
+                        <td class="font-semibold">${tokens.toLocaleString()}</td>
+                        <td class="text-green-400">$${parseFloat(amount).toFixed(2)}</td>
+                        <td class="capitalize text-white/60">${payment}</td>
+                        <td><span class="badge ${statusClass}">${status}</span></td>
+                        <td class="text-white/60 text-sm">${date ? new Date(date).toLocaleDateString() : '--'}</td>
+                        <td>
+                            <button onclick="viewPurchase('${p.id}')" class="text-white/40 hover:text-white text-sm">View</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function filterPresale(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('[data-filter]').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.filter === filter) {
+                    btn.classList.add('active');
+                }
+            });
+            renderPresalePurchases(presaleData);
+        }
+        
+        function viewPurchase(id) {
+            // TODO: Open purchase detail modal
+            console.log('View purchase:', id);
+        }
+        
+        async function fulfillOrders() {
+            // TODO: Implement batch fulfillment
+            alert('Batch fulfillment coming soon');
+        }
+        
+        // ==========================================
+        // SETTINGS
+        // ==========================================
+        async function loadSettings() {
+            try {
+                // Load presale config
+                const configRes = await fetch('/api/presale/config');
+                const config = await configRes.json();
+                
+                document.getElementById('setting-token-price').value = config.tokenPrice || 0.10;
+                document.getElementById('setting-total-tokens').value = config.totalTokens || 1000000;
+                document.getElementById('setting-min-purchase').value = config.minPurchase || 10;
+                document.getElementById('setting-max-purchase').value = config.maxPurchase || 10000;
+                document.getElementById('setting-presale-wallet').value = config.presaleWallet || '';
+                
+                const toggle = document.getElementById('presale-enabled-toggle');
+                if (config.enabled) {
                     toggle.classList.add('active');
                 } else {
                     toggle.classList.remove('active');
                 }
                 
-                updateStripeStatus(data.stripePublicKey);
+                // Check Stripe status
+                document.getElementById('stripe-status').innerHTML = config.stripePublicKey ? 
+                    '<span class="badge badge-success">Connected</span>' : 
+                    '<span class="badge badge-warning">Not Configured</span>';
                 
-            } catch (e) {
-                console.error('Failed to fetch presale config:', e);
-            }
-        }
-
-        async function fetchPresaleStats() {
-            try {
-                const res = await fetch('/api/presale/admin/stats');
-                if (res.ok) {
-                    const data = await res.json();
-                    document.getElementById('presaleTotalPurchases').textContent = data.total_purchases || 0;
-                    document.getElementById('presaleTokensSold').textContent = (data.tokens_sold || 0).toLocaleString();
-                    document.getElementById('presaleTotalUSD').textContent = `$${parseFloat(data.total_usd || 0).toFixed(2)}`;
-                    document.getElementById('presaleUniqueBuyers').textContent = data.unique_buyers || 0;
-                    document.getElementById('presalePendingMint').textContent = data.pending_mint || 0;
-                    
-                    document.getElementById('dbPresaleCount').textContent = data.total_purchases || 0;
-                }
-            } catch (e) {
-                console.error('Failed to fetch presale stats:', e);
-            }
-        }
-
-        async function fetchPresalePurchases() {
-            try {
-                const res = await fetch('/api/presale/admin/purchases');
-                if (res.ok) {
-                    presalePurchases = await res.json();
-                    renderPresalePurchases();
-                }
-            } catch (e) {
-                console.error('Failed to fetch presale purchases:', e);
-                document.getElementById('presalePurchasesTable').innerHTML = `
-                    <tr><td colspan="7" class="text-center py-12 text-red-400">Failed to load purchases</td></tr>
-                `;
-            }
-        }
-
-        function renderPresalePurchases() {
-            let filtered = presalePurchases;
-            if (presaleFilter === 'pending') {
-                filtered = presalePurchases.filter(p => p.status === 'pending' || p.status === 'pending_payment');
-            } else if (presaleFilter === 'paid') {
-                filtered = presalePurchases.filter(p => p.status === 'paid' || p.status === 'paid_pending_mint');
-            } else if (presaleFilter === 'minted') {
-                filtered = presalePurchases.filter(p => p.status === 'minted' || p.status === 'completed');
-            }
-
-            if (!filtered || filtered.length === 0) {
-                document.getElementById('presalePurchasesTable').innerHTML = `
-                    <tr><td colspan="7" class="text-center py-12 text-slate-500">No purchases found</td></tr>
-                `;
-                return;
-            }
-
-            document.getElementById('presalePurchasesTable').innerHTML = filtered.map(p => {
-                const statusClass = getStatusBadgeClass(p.status);
-                const canFulfill = p.status === 'paid' || p.status === 'paid_pending_mint';
+                // Load DB stats
+                const statsRes = await fetch('/api/registrants');
+                const stats = await statsRes.json();
+                const regCount = (stats.registrants || stats || []).length;
+                document.getElementById('db-registrants').textContent = regCount.toLocaleString();
+                document.getElementById('db-status').innerHTML = '<span class="badge badge-success">Connected</span>';
                 
-                return `
-                <tr class="table-row border-b border-white/5">
-                    <td class="py-4 px-6">
-                        <a href="${explorerUrl}/address/${p.wallet_address}" target="_blank" class="font-mono text-sm text-white hover:text-primary transition-colors">
-                            ${p.wallet_address.slice(0, 8)}...${p.wallet_address.slice(-6)}
-                        </a>
-                    </td>
-                    <td class="py-4 px-6 text-right text-white font-semibold">
-                        ${parseInt(p.token_amount).toLocaleString()} VIP
-                    </td>
-                    <td class="py-4 px-6 text-right text-slate-400">
-
-                        $${parseFloat(p.usd_amount).toFixed(2)}
-                    </td>
-                    <td class="py-4 px-6 text-center">
-                        <span class="text-xs font-bold uppercase ${p.payment_method === 'card' ? 'text-purple-400' : p.payment_method === 'POL' ? 'text-purple-400' : 'text-blue-400'}">
-                            ${p.payment_method}
-                        </span>
-                    </td>
-                    <td class="py-4 px-6 text-center">
-                        <span class="badge ${statusClass}">${formatStatus(p.status)}</span>
-                    </td>
-                    <td class="py-4 px-6 text-slate-500 text-sm">
-                        ${new Date(p.created_at).toLocaleDateString()}
-                    </td>
-                    <td class="py-4 px-6 text-right">
-                        ${canFulfill ? `
-                            <button onclick="openFulfillModal(${p.id}, '${p.wallet_address}', ${p.token_amount})" 
-                                    class="text-primary hover:underline text-xs font-bold uppercase tracking-widest">
-                                Fulfill
-                            </button>
-                        ` : p.tx_hash ? `
-                            <a href="${explorerUrl}/tx/${p.tx_hash}" target="_blank" class="text-blue-400 hover:underline text-xs font-bold uppercase tracking-widest">
-                                TX
-                            </a>
-                        ` : `<span class="text-slate-600">--</span>`}
-                    </td>
-                </tr>
-            `}).join('');
+                // Load presale purchase count
+                const presaleStats = await fetch('/api/presale/admin/stats').then(r => r.json()).catch(() => ({}));
+                document.getElementById('db-purchases').textContent = (presaleStats.totalPurchases || 0).toLocaleString();
+                
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                document.getElementById('db-status').innerHTML = '<span class="badge badge-error">Error</span>';
+            }
         }
-
-        function getStatusBadgeClass(status) {
-            const classes = {
-                'pending': 'badge-pending',
-                'pending_payment': 'badge-pending',
-                'paid': 'badge-paid',
-                'paid_pending_mint': 'badge-paid',
-                'minted': 'badge-success',
-                'completed': 'badge-success',
-                'failed': 'badge-failed',
-                'expired': 'badge-failed'
-            };
-            return classes[status] || 'badge-pending';
+        
+        function togglePresaleEnabled() {
+            const toggle = document.getElementById('presale-enabled-toggle');
+            toggle.classList.toggle('active');
         }
-
-        function formatStatus(status) {
-            const labels = {
-                'pending': 'Pending',
-                'pending_payment': 'Awaiting',
-                'paid': 'Paid',
-                'paid_pending_mint': 'Paid',
-                'minted': 'Minted',
-                'completed': 'Complete',
-                'failed': 'Failed',
-                'expired': 'Expired'
-            };
-            return labels[status] || status;
-        }
-
-        // ============================================
-        // Settings Functions
-        // ============================================
-        async function loadSettings() {
-            await fetchPresaleConfig();
-            checkStripeStatus();
-        }
-
-        async function savePresaleSettings(e) {
-            e.preventDefault();
-            
+        
+        async function savePresaleSettings() {
             const settings = {
-                enabled: document.getElementById('presaleEnabledToggle').classList.contains('active'),
-                tokenPrice: parseFloat(document.getElementById('settingTokenPrice').value) || 0.10,
-                totalTokens: parseInt(document.getElementById('settingTotalTokens').value) || 1000000,
-                minPurchase: parseInt(document.getElementById('settingMinPurchase').value) || 10,
-                maxPurchase: parseInt(document.getElementById('settingMaxPurchase').value) || 10000,
-                presaleWallet: document.getElementById('settingPresaleWallet').value.trim()
+                enabled: document.getElementById('presale-enabled-toggle').classList.contains('active'),
+                tokenPrice: parseFloat(document.getElementById('setting-token-price').value),
+                totalTokens: parseInt(document.getElementById('setting-total-tokens').value),
+                minPurchase: parseInt(document.getElementById('setting-min-purchase').value),
+                maxPurchase: parseInt(document.getElementById('setting-max-purchase').value),
+                presaleWallet: document.getElementById('setting-presale-wallet').value
             };
             
-            const resultDiv = document.getElementById('settingsResult');
-            
             try {
-                const res = await fetch('/api/presale/admin/settings', {
+                const response = await fetch('/api/presale/admin/settings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(settings)
                 });
                 
-                const data = await res.json();
-                
-                if (data.success) {
-                    resultDiv.className = 'mt-4 p-4 rounded-sm text-sm bg-green-500/10 text-green-400 border border-green-500/20';
-                    resultDiv.textContent = 'Settings saved successfully!';
-                    showToast('Presale settings saved', 'success');
-                    presaleConfig = { ...presaleConfig, ...settings };
+                if (response.ok) {
+                    alert('Settings saved successfully');
                 } else {
-                    resultDiv.className = 'mt-4 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
-                    resultDiv.textContent = data.error || 'Failed to save settings';
-                    showToast('Failed to save settings', 'error');
+                    throw new Error('Failed to save');
                 }
-                resultDiv.classList.remove('hidden');
             } catch (error) {
-                resultDiv.className = 'mt-4 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
-                resultDiv.textContent = `Error: ${error.message}`;
-                resultDiv.classList.remove('hidden');
-                showToast('Error saving settings', 'error');
+                console.error('Error saving settings:', error);
+                alert('Error saving settings');
             }
         }
-
-        function updateStripeStatus(publicKey) {
-            const icon = document.getElementById('stripeStatusIcon');
-            const text = document.getElementById('stripeStatusText');
-            const badge = document.getElementById('stripeStatusBadge');
-            
-            if (publicKey) {
-                icon.textContent = 'check_circle';
-                icon.className = 'material-symbols-outlined text-2xl text-green-400';
-                text.textContent = 'Configured and ready';
-                badge.className = 'badge badge-success';
-                badge.textContent = 'Active';
-            } else {
-                icon.textContent = 'warning';
-                icon.className = 'material-symbols-outlined text-2xl text-yellow-400';
-                text.textContent = 'Not configured - Card payments disabled';
-                badge.className = 'badge badge-pending';
-                badge.textContent = 'Inactive';
-            }
+        
+        // ==========================================
+        // FULL SYNC
+        // ==========================================
+        function openFullSyncModal() {
+            document.getElementById('fullsync-modal').classList.add('active');
+            performFullSync();
         }
-
-        async function checkStripeStatus() {
-            try {
-                const res = await fetch('/api/health');
-                if (res.ok) {
-                    const data = await res.json();
-                    updateStripeStatus(data.stripe === 'configured');
-                }
-            } catch (e) {
-                console.error('Failed to check Stripe status:', e);
-            }
+        
+        function closeFullSyncModal() {
+            document.getElementById('fullsync-modal').classList.remove('active');
         }
-
-        // ============================================
-        // Mint Actions
-        // ============================================
-        async function mintNow() {
-            const btn = document.getElementById('mintNowBtn');
-            btn.disabled = true;
-            btn.innerHTML = `
-                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Minting...
+        
+        async function performFullSync() {
+            const content = document.getElementById('fullsync-content');
+            content.innerHTML = `
+                <div class="text-center text-white/40 py-8">
+                    <div class="animate-spin w-8 h-8 border-2 border-white/20 border-t-[#ee9d2b] rounded-full mx-auto mb-4"></div>
+                    Running sync...
+                </div>
             `;
-
+            
             try {
-                const res = await fetch('/api/mint-now', { method: 'POST' });
-                const data = await res.json();
+                const response = await fetch('/api/full-sync', { method: 'POST' });
+                const data = await response.json();
                 
-                if (data.success) {
-                    showActionResult(`
-                        <p class="font-semibold">Minting Complete!</p>
-                        <p class="mt-1 text-xs opacity-80">Minted: ${data.minted || 0} | Skipped: ${data.skipped || 0}</p>
-                        ${data.tx_hash ? `<a href="${explorerUrl}/tx/${data.tx_hash}" target="_blank" class="text-primary underline text-xs mt-2 inline-block">View Transaction</a>` : ''}
-                    `, 'success');
-                    showToast('Minting completed', 'success');
-                    refreshAll();
-                } else {
-                    showActionResult(`<p>Minting failed: ${data.error || 'Unknown error'}</p>`, 'error');
-                    showToast('Minting failed', 'error');
-                }
-            } catch (e) {
-                showActionResult(`<p>Error: ${e.message}</p>`, 'error');
-                showToast('Minting error', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = `<span class="material-symbols-outlined text-lg">token</span>Mint Pending`;
+                const results = data.results || data;
+                const registrants = results.registrants || [];
+                
+                content.innerHTML = `
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <div class="text-center p-4 bg-white/5 rounded-lg">
+                            <div class="text-2xl font-bold">${results.total || registrants.length || 0}</div>
+                            <div class="text-white/40 text-sm">Total</div>
+                        </div>
+                        <div class="text-center p-4 bg-white/5 rounded-lg">
+                            <div class="text-2xl font-bold text-green-400">${results.withBalance || 0}</div>
+                            <div class="text-white/40 text-sm">With Balance</div>
+                        </div>
+                        <div class="text-center p-4 bg-white/5 rounded-lg">
+                            <div class="text-2xl font-bold text-yellow-400">${results.updated || 0}</div>
+                            <div class="text-white/40 text-sm">Updated</div>
+                        </div>
+                    </div>
+                    
+                    <div class="max-h-64 overflow-y-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Address</th>
+                                    <th>Balance</th>
+                                    <th>Status</th>
+                                    <th>TX Hash</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${registrants.map(r => {
+                                    const email = r.email || r.metadata?.email || '--';
+                                    const addr = r.wallet_address || r.walletAddress || r.address || '--';
+                                    const txHash = r.tx_hash || r.txHash || '';
+                                    const balance = parseFloat(r.balance || 0);
+                                    const minted = r.minted || balance > 0;
+                                    
+                                    return `
+                                        <tr>
+                                            <td class="text-sm">${email !== '--' ? email.substring(0, 20) + (email.length > 20 ? '...' : '') : '--'}</td>
+                                            <td>
+                                                <a href="${EXPLORER_URL}/address/${addr}" target="_blank" class="text-blue-400 hover:underline font-mono text-xs">
+                                                    ${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}
+                                                </a>
+                                            </td>
+                                            <td class="${balance > 0 ? 'text-green-400' : 'text-white/40'}">${balance.toLocaleString()} VIP</td>
+                                            <td><span class="badge ${minted ? 'badge-success' : 'badge-warning'}">${minted ? 'Minted' : 'Pending'}</span></td>
+                                            <td>
+                                                ${txHash ? `
+                                                    <a href="${EXPLORER_URL}/tx/${txHash}" target="_blank" class="text-blue-400 hover:underline font-mono text-xs">
+                                                        ${txHash.substring(0, 8)}...
+                                                    </a>
+                                                ` : '--'}
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Full sync error:', error);
+                content.innerHTML = `
+                    <div class="text-center text-red-400 py-8">
+                        <p class="mb-2">Error running sync</p>
+                        <p class="text-sm text-white/40">${error.message}</p>
+                    </div>
+                `;
             }
         }
-
-        async function submitManualMint(e) {
-            e.preventDefault();
-            
-            const address = document.getElementById('manualMintAddress').value.trim();
-            const amount = parseInt(document.getElementById('manualMintAmount').value) || 2;
-            const submitBtn = document.getElementById('manualMintSubmitBtn');
-            const btnText = document.getElementById('manualMintBtnText');
-            const btnLoader = document.getElementById('manualMintBtnLoader');
-            const resultDiv = document.getElementById('manualMintResult');
-
-            if (!address || !address.startsWith('0x') || address.length !== 42) {
-                resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
-                resultDiv.textContent = 'Please enter a valid Ethereum address';
-                resultDiv.classList.remove('hidden');
+        
+        // ==========================================
+        // EXPORT
+        // ==========================================
+        function exportClaimsCSV() {
+            if (!registrantsData.length) {
+                alert('No data to export');
                 return;
             }
-
-            submitBtn.disabled = true;
-            btnText.textContent = 'Minting...';
-            btnLoader.classList.remove('hidden');
-            resultDiv.classList.add('hidden');
-
-            try {
-                const res = await fetch('/api/mint-manual', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ address, amount })
-                });
-
-                const data = await res.json();
-
-                if (data.success) {
-                    resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-green-500/10 text-green-400 border border-green-500/20';
-                    resultDiv.innerHTML = `
-                        <p class="font-semibold">Success!</p>
-                        <p class="mt-1 text-xs opacity-80">${data.message}</p>
-                        ${data.tx_hash ? `<a href="${data.explorer_url}" target="_blank" class="text-green-400 underline text-xs mt-2 inline-block">View Transaction</a>` : ''}
-                    `;
-                    showToast('Manual mint successful', 'success');
-                    refreshAll();
-                } else {
-                    resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
-                    resultDiv.innerHTML = `<p>${data.error || data.message || 'Minting failed'}</p>`;
-                    showToast('Manual mint failed', 'error');
-                }
-                resultDiv.classList.remove('hidden');
-            } catch (error) {
-                resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
-                resultDiv.textContent = `Error: ${error.message}`;
-                resultDiv.classList.remove('hidden');
-                showToast('Manual mint error', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                btnText.textContent = 'Mint Tokens';
-                btnLoader.classList.add('hidden');
-            }
-        }
-
-        async function performFullSync() {
-            try {
-                const res = await fetch('/api/full-sync', { method: 'POST' });
-                const data = await res.json();
-
-                document.getElementById('fullSyncLoading').classList.add('hidden');
-
-                if (data.success) {
-                    document.getElementById('fullSyncResults').classList.remove('hidden');
-                    
-                    document.getElementById('syncTotal').textContent = data.results.total;
-                    document.getElementById('syncWithBalance').textContent = data.results.withBalance;
-                    document.getElementById('syncWithoutBalance').textContent = data.results.withoutBalance;
-                    document.getElementById('syncUpdated').textContent = data.results.updated;
-                    document.getElementById('syncTxFound').textContent = data.results.txHashesFound || 0;
-
-                    const tbody = document.getElementById('syncHoldersTable');
-                    const syncExplorer = data.explorer || explorerUrl;
-                    
-                    if (data.results.registrants && data.results.registrants.length > 0) {
-                        tbody.innerHTML = data.results.registrants.map(r => {
-                            const txHash = r.txHash || r.tx_hash || null;
-                            const hasTxHash = txHash && txHash !== 'synced-from-chain' && txHash.startsWith('0x');
-                            const email = r.email || (r.metadata && r.metadata.email) || null;
-                            
-                            return `
-                            <tr class="border-b border-white/5">
-                                <td class="py-3 px-4">
-                                    ${email ? `
-                                        <span class="text-xs text-slate-400 truncate max-w-[150px] inline-block">${email}</span>
-                                    ` : `<span class="text-slate-600 text-xs">--</span>`}
-                                </td>
-                                <td class="py-3 px-4">
-                                    <a href="${syncExplorer}/address/${r.address}" target="_blank" class="font-mono text-xs text-white hover:text-primary">
-                                        ${r.address.slice(0, 10)}...${r.address.slice(-8)}
-                                    </a>
-                                </td>
-                                <td class="py-3 px-4 text-right font-mono text-sm ${parseFloat(r.balance) > 0 ? 'text-green-400' : 'text-slate-500'}">
-                                    ${r.balance === 'error' ? '<span class="text-red-400">Error</span>' : parseFloat(r.balance).toFixed(2) + ' VIP'}
-                                </td>
-                                <td class="py-3 px-4 text-center">
-                                    <span class="badge ${r.minted ? 'badge-success' : 'badge-pending'}">${r.minted ? 'Minted' : 'Pending'}</span>
-                                </td>
-                                <td class="py-3 px-4">
-                                    ${hasTxHash ? `
-                                        <a href="${syncExplorer}/tx/${txHash}" target="_blank" class="font-mono text-xs text-blue-400 hover:text-blue-300">
-                                            ${txHash.slice(0, 8)}...${txHash.slice(-4)}
-                                        </a>
-                                    ` : `<span class="text-slate-600 text-xs">--</span>`}
-                                </td>
-                            </tr>
-                        `}).join('');
-                    } else {
-                        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-500">No registrants found</td></tr>';
-                    }
-
-                    showToast(`Full sync completed - ${data.results.txHashesFound || 0} TX hashes found`, 'success');
-                    refreshAll();
-                } else {
-                    throw new Error(data.error || 'Sync failed');
-                }
-            } catch (error) {
-                document.getElementById('fullSyncLoading').classList.add('hidden');
-                document.getElementById('fullSyncError').classList.remove('hidden');
-                document.getElementById('fullSyncErrorText').textContent = error.message;
-                showToast('Full sync failed', 'error');
-            }
-        }
-
-        async function submitFulfill(e) {
-            e.preventDefault();
             
-            const id = document.getElementById('fulfillPurchaseId').value;
-            const submitBtn = document.getElementById('fulfillSubmitBtn');
-            const btnText = document.getElementById('fulfillBtnText');
-            const btnLoader = document.getElementById('fulfillBtnLoader');
-            const resultDiv = document.getElementById('fulfillResult');
-
-            submitBtn.disabled = true;
-            btnText.textContent = 'Processing...';
-            btnLoader.classList.remove('hidden');
-            resultDiv.classList.add('hidden');
-
-            try {
-                const res = await fetch('/api/presale/admin/fulfill', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ purchase_id: parseInt(id) })
-                });
-
-                const data = await res.json();
-
-                if (data.success) {
-                    resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-green-500/10 text-green-400 border border-green-500/20';
-                    resultDiv.innerHTML = `
-                        <p class="font-semibold">Order Fulfilled!</p>
-                        <p class="mt-1 text-xs opacity-80">${data.message || 'Tokens minted successfully'}</p>
-                        ${data.tx_hash ? `<a href="${data.explorer_url || explorerUrl + '/tx/' + data.tx_hash}" target="_blank" class="text-green-400 underline text-xs mt-2 inline-block">View Transaction</a>` : ''}
-                    `;
-                    showToast('Order fulfilled', 'success');
-                    await loadPresaleData();
-                } else {
-                    resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
-                    resultDiv.innerHTML = `<p>${data.error || 'Fulfillment failed'}</p>`;
-                    showToast('Fulfillment failed', 'error');
-                }
-                resultDiv.classList.remove('hidden');
-            } catch (error) {
-                resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
-                resultDiv.textContent = `Error: ${error.message}`;
-                resultDiv.classList.remove('hidden');
-                showToast('Fulfillment error', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                btnText.textContent = 'Mint & Fulfill';
-                btnLoader.classList.add('hidden');
+            const headers = ['Email', 'Wallet Address', 'Status', 'TX Hash', 'Balance', 'Registered'];
+            const rows = registrantsData.map(r => [
+                r.email || r.metadata?.email || '',
+                r.wallet_address || r.walletAddress || r.address || '',
+                (r.minted || r.status === 'minted') ? 'Minted' : 'Pending',
+                r.tx_hash || r.txHash || '',
+                r.balance || '0',
+                r.created_at || r.createdAt || ''
+            ]);
+            
+            const csv = [headers, ...rows].map(row => row.map(c => `"${c}"`).join(',')).join('\n');
+            downloadCSV(csv, 'kea-valley-claims.csv');
+        }
+        
+        function exportPresaleCSV() {
+            if (!presaleData.length) {
+                alert('No data to export');
+                return;
             }
+            
+            const headers = ['Email', 'Wallet', 'Tokens', 'Amount USD', 'Payment Method', 'Status', 'Date'];
+            const rows = presaleData.map(p => [
+                p.email || p.metadata?.email || '',
+                p.wallet_address || p.walletAddress || '',
+                p.token_amount || p.tokenAmount || 0,
+                p.amount_usd || p.amountUsd || p.amount || 0,
+                p.payment_method || p.paymentMethod || 'card',
+                p.status || 'pending',
+                p.created_at || p.createdAt || ''
+            ]);
+            
+            const csv = [headers, ...rows].map(row => row.map(c => `"${c}"`).join(',')).join('\n');
+            downloadCSV(csv, 'kea-valley-presale.csv');
         }
-
-        // ============================================
-        // Refresh All Data
-        // ============================================
-        async function refreshAll() {
-            await Promise.all([fetchStats(), fetchWalletInfo(), fetchRegistrants()]);
-            document.getElementById('lastUpdated').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+        
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
         }
-
-        // ============================================
-        // Logout
-        // ============================================
-        async function logout() {
-            try {
-                await fetch('/api/logout', { method: 'POST' });
-            } catch (e) {}
-            window.location.href = '/login';
+        
+        // ==========================================
+        // AUTH / LOGOUT
+        // ==========================================
+        function logout() {
+            localStorage.removeItem('adminToken');
+            sessionStorage.removeItem('adminToken');
+            window.location.href = '/admin/login';
         }
-
-        // ============================================
-        // Event Listeners
-        // ============================================
-        document.addEventListener('DOMContentLoaded', function() {
-            // Tab buttons
-            document.getElementById('tabClaims').addEventListener('click', () => switchMainTab('claims'));
-            document.getElementById('tabPresale').addEventListener('click', () => switchMainTab('presale'));
-            document.getElementById('tabSettings').addEventListener('click', () => switchMainTab('settings'));
-
-            // Claims actions
-            document.getElementById('mintNowBtn').addEventListener('click', mintNow);
-            document.getElementById('manualMintBtn').addEventListener('click', openManualMintModal);
-            document.getElementById('fullSyncBtn').addEventListener('click', openFullSyncModal);
-            document.getElementById('refreshBtn').addEventListener('click', () => {
-                showToast('Refreshing...', 'info');
-                refreshAll();
-            });
-            document.getElementById('refreshWalletBtn').addEventListener('click', fetchWalletInfo);
-
-            // Header actions
-            document.getElementById('logoutBtn').addEventListener('click', logout);
-            document.getElementById('changePasswordBtn').addEventListener('click', () => window.location.href = '/change-password');
-
-            // Claims filters
-            document.getElementById('filterAll').addEventListener('click', () => setFilter('all'));
-            document.getElementById('filterPending').addEventListener('click', () => setFilter('pending'));
-            document.getElementById('filterMinted').addEventListener('click', () => setFilter('minted'));
-
-            // Presale actions
-            document.getElementById('refreshPresaleBtn').addEventListener('click', refreshPresaleData);
-            document.getElementById('fulfillOrdersBtn').addEventListener('click', openPresaleFulfillModal);
-            document.getElementById('exportCsvBtn').addEventListener('click', exportPresaleCSV);
-
-            // Presale filters
-            document.getElementById('presaleFilterAll').addEventListener('click', () => setPresaleFilter('all'));
-            document.getElementById('presaleFilterPending').addEventListener('click', () => setPresaleFilter('pending'));
-            document.getElementById('presaleFilterPaid').addEventListener('click', () => setPresaleFilter('paid'));
-            document.getElementById('presaleFilterMinted').addEventListener('click', () => setPresaleFilter('minted'));
-
-            // Settings
-            document.getElementById('presaleEnabledToggle').addEventListener('click', togglePresaleEnabled);
-
-            // Forms
-            document.getElementById('manualMintForm').addEventListener('submit', submitManualMint);
-            document.getElementById('presaleSettingsForm').addEventListener('submit', savePresaleSettings);
-            document.getElementById('presaleFulfillForm').addEventListener('submit', submitFulfill);
-
-            // Modal close buttons and backdrops
-            document.querySelectorAll('.close-modal').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.closest('.fixed').classList.add('hidden');
-                });
-            });
-
-            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-                backdrop.addEventListener('click', function() {
-                    this.closest('.fixed').classList.add('hidden');
-                });
-            });
-
-            // Initialize
-            init();
-        });
-
-        // ============================================
-        // Initialize
-        // ============================================
-        async function init() {
-            const isAuthed = await checkAuth();
-            if (!isAuthed) return;
-
-            await refreshAll();
-            autoRefreshInterval = setInterval(refreshAll, 60000);
-        }
-
-        window.addEventListener('beforeunload', () => {
-            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+        
+        // ==========================================
+        // INIT
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRegistrants();
         });
     </script>
 </body>
