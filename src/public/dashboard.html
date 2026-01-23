@@ -170,15 +170,15 @@
 
             <!-- Main Tabs Navigation -->
             <div class="flex gap-2 mb-8 overflow-x-auto pb-2">
-                <button onclick="switchMainTab('claims')" id="tabClaims" class="tab-btn active flex items-center gap-2 px-6 py-3 border border-white/10 rounded-sm text-sm font-bold uppercase tracking-widest whitespace-nowrap">
+                <button id="tabClaims" class="tab-btn active flex items-center gap-2 px-6 py-3 border border-white/10 rounded-sm text-sm font-bold uppercase tracking-widest whitespace-nowrap">
                     <span class="material-symbols-outlined text-lg">redeem</span>
                     Free Claims
                 </button>
-                <button onclick="switchMainTab('presale')" id="tabPresale" class="tab-btn flex items-center gap-2 px-6 py-3 border border-white/10 rounded-sm text-sm font-bold uppercase tracking-widest whitespace-nowrap">
+                <button id="tabPresale" class="tab-btn flex items-center gap-2 px-6 py-3 border border-white/10 rounded-sm text-sm font-bold uppercase tracking-widest whitespace-nowrap">
                     <span class="material-symbols-outlined text-lg">shopping_cart</span>
                     Presale
                 </button>
-                <button onclick="switchMainTab('settings')" id="tabSettings" class="tab-btn flex items-center gap-2 px-6 py-3 border border-white/10 rounded-sm text-sm font-bold uppercase tracking-widest whitespace-nowrap">
+                <button id="tabSettings" class="tab-btn flex items-center gap-2 px-6 py-3 border border-white/10 rounded-sm text-sm font-bold uppercase tracking-widest whitespace-nowrap">
                     <span class="material-symbols-outlined text-lg">settings</span>
                     Settings
                 </button>
@@ -387,15 +387,15 @@
 
                 <!-- Presale Actions -->
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
-                    <button onclick="refreshPresaleData()" class="bg-surface border border-white/10 text-white px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-primary/30 hover:text-primary transition-all flex items-center justify-center gap-2">
+                    <button id="refreshPresaleBtn" class="bg-surface border border-white/10 text-white px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-primary/30 hover:text-primary transition-all flex items-center justify-center gap-2">
                         <span class="material-symbols-outlined text-lg">refresh</span>
                         Refresh Data
                     </button>
-                    <button onclick="openPresaleFulfillModal()" class="bg-surface border border-primary/30 text-primary px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/10 transition-all flex items-center justify-center gap-2">
+                    <button id="fulfillOrdersBtn" class="bg-surface border border-primary/30 text-primary px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/10 transition-all flex items-center justify-center gap-2">
                         <span class="material-symbols-outlined text-lg">send</span>
                         Fulfill Orders
                     </button>
-                    <button onclick="exportPresaleCSV()" class="bg-surface border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all flex items-center justify-center gap-2">
+                    <button id="exportCsvBtn" class="bg-surface border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all flex items-center justify-center gap-2">
                         <span class="material-symbols-outlined text-lg">download</span>
                         Export CSV
                     </button>
@@ -410,10 +410,10 @@
                     <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between flex-wrap gap-4">
                         <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Presale Purchases</h3>
                         <div class="flex items-center gap-2">
-                            <button onclick="setPresaleFilter('all')" id="presaleFilterAll" class="presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30">All</button>
-                            <button onclick="setPresaleFilter('pending')" id="presaleFilterPending" class="presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Pending</button>
-                            <button onclick="setPresaleFilter('paid')" id="presaleFilterPaid" class="presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Paid</button>
-                            <button onclick="setPresaleFilter('minted')" id="presaleFilterMinted" class="presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Minted</button>
+                            <button id="presaleFilterAll" class="presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30">All</button>
+                            <button id="presaleFilterPending" class="presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Pending</button>
+                            <button id="presaleFilterPaid" class="presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Paid</button>
+                            <button id="presaleFilterMinted" class="presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Minted</button>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
@@ -457,7 +457,7 @@
                                     <p class="text-white font-medium">Presale Enabled</p>
                                     <p class="text-slate-500 text-xs mt-1">Allow new purchases on the presale page</p>
                                 </div>
-                                <div id="presaleEnabledToggle" class="toggle-switch active" onclick="togglePresaleEnabled()"></div>
+                                <div id="presaleEnabledToggle" class="toggle-switch active"></div>
                             </div>
                             
                             <div class="border-t border-white/5 pt-6">
@@ -597,4 +597,1071 @@
                                 <span class="badge badge-success">Active</span>
                             </div>
                             
-                            <div class="grid grid-cols-2 gap-4
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div class="p-3 bg-background-dark rounded-sm">
+                                    <p class="text-slate-500 text-xs">Registrants Table</p>
+                                    <p id="dbRegistrantsCount" class="text-white font-semibold">--</p>
+                                </div>
+                                <div class="p-3 bg-background-dark rounded-sm">
+                                    <p class="text-slate-500 text-xs">Presale Purchases</p>
+                                    <p id="dbPresaleCount" class="text-white font-semibold">--</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Info -->
+            <div class="mt-6 flex items-center justify-between text-xs text-slate-600">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <span>Auto-refresh every 60s</span>
+                </div>
+                <p id="lastUpdated">Last updated: --</p>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Manual Mint Modal -->
+    <div id="manualMintModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6">
+        <div class="absolute inset-0 bg-black/70 modal-backdrop"></div>
+        <div class="relative bg-surface border border-white/10 rounded-sm w-full max-w-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Manual Mint</h3>
+                <button class="close-modal text-slate-500 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="p-6">
+                <p class="text-slate-400 text-sm mb-6">Mint VIP tokens to a specific wallet address.</p>
+                <form id="manualMintForm">
+                    <div class="mb-4">
+                        <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Wallet Address</label>
+                        <input 
+                            type="text" 
+                            id="manualMintAddress" 
+                            required
+                            placeholder="0x..."
+                            class="input-field w-full px-4 py-3 rounded-sm text-white font-mono text-sm"
+                        >
+                    </div>
+                    <div class="mb-6">
+                        <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Amount (VIP)</label>
+                        <input 
+                            type="number" 
+                            id="manualMintAmount" 
+                            required
+                            min="1"
+                            value="2"
+                            class="input-field w-full px-4 py-3 rounded-sm text-white text-sm"
+                        >
+                    </div>
+                    <div class="flex gap-3">
+                        <button type="button" class="close-modal flex-1 border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all">
+                            Cancel
+                        </button>
+                        <button type="submit" id="manualMintSubmitBtn" class="flex-1 bg-primary text-background-dark px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-1px] transition-all flex items-center justify-center gap-2">
+                            <span id="manualMintBtnText">Mint Tokens</span>
+                            <span id="manualMintBtnLoader" class="hidden">
+                                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+                </form>
+                <div id="manualMintResult" class="hidden mt-6 p-4 rounded-sm text-sm"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Sync Modal -->
+    <div id="fullSyncModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6">
+        <div class="absolute inset-0 bg-black/70 modal-backdrop"></div>
+        <div class="relative bg-surface border border-white/10 rounded-sm w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Full Sync Results</h3>
+                <button class="close-modal text-slate-500 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1">
+                <div id="fullSyncLoading" class="text-center py-12">
+                    <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+                    <p class="text-slate-400 text-sm">Syncing with blockchain...</p>
+                    <p class="text-slate-600 text-xs mt-2">This may take a moment</p>
+                </div>
+                <div id="fullSyncResults" class="hidden">
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                        <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
+                            <p class="text-slate-500 text-xs mb-1">Total</p>
+                            <p id="syncTotal" class="text-2xl font-serif text-white">0</p>
+                        </div>
+                        <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
+                            <p class="text-slate-500 text-xs mb-1">With Balance</p>
+                            <p id="syncWithBalance" class="text-2xl font-serif text-green-400">0</p>
+                        </div>
+                        <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
+                            <p class="text-slate-500 text-xs mb-1">No Balance</p>
+                            <p id="syncWithoutBalance" class="text-2xl font-serif text-yellow-400">0</p>
+                        </div>
+                        <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
+                            <p class="text-slate-500 text-xs mb-1">Updated</p>
+                            <p id="syncUpdated" class="text-2xl font-serif text-primary">0</p>
+                        </div>
+                        <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
+                            <p class="text-slate-500 text-xs mb-1">TX Found</p>
+                            <p id="syncTxFound" class="text-2xl font-serif text-blue-400">0</p>
+                        </div>
+                    </div>
+                    <div class="border border-white/5 rounded-sm overflow-hidden">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-white/5 bg-background-dark">
+                                    <th class="text-left py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">Email</th>
+                                    <th class="text-left py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">Address</th>
+                                    <th class="text-right py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">Balance</th>
+                                    <th class="text-center py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">Status</th>
+                                    <th class="text-left py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">TX Hash</th>
+                                </tr>
+                            </thead>
+                            <tbody id="syncHoldersTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="fullSyncError" class="hidden text-center py-12">
+                    <span class="material-symbols-outlined text-red-400 text-5xl mb-4">error</span>
+                    <p class="text-red-400 text-sm" id="fullSyncErrorText">An error occurred</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Presale Fulfill Modal -->
+    <div id="presaleFulfillModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6">
+        <div class="absolute inset-0 bg-black/70 modal-backdrop"></div>
+        <div class="relative bg-surface border border-white/10 rounded-sm w-full max-w-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Fulfill Presale Order</h3>
+                <button class="close-modal text-slate-500 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="p-6">
+                <p class="text-slate-400 text-sm mb-6">Mint tokens for a paid presale order.</p>
+                <form id="presaleFulfillForm">
+                    <input type="hidden" id="fulfillPurchaseId">
+                    <div class="mb-4">
+                        <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Wallet Address</label>
+                        <input type="text" id="fulfillWalletAddress" readonly
+                               class="input-field w-full px-4 py-3 rounded-sm text-white font-mono text-sm opacity-60">
+                    </div>
+                    <div class="mb-6">
+                        <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Token Amount</label>
+                        <input type="number" id="fulfillTokenAmount" readonly
+                               class="input-field w-full px-4 py-3 rounded-sm text-white text-sm opacity-60">
+                    </div>
+                    <div class="flex gap-3">
+                        <button type="button" class="close-modal flex-1 border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all">
+                            Cancel
+                        </button>
+                        <button type="submit" id="fulfillSubmitBtn" class="flex-1 bg-primary text-background-dark px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-1px] transition-all flex items-center justify-center gap-2">
+                            <span id="fulfillBtnText">Mint & Fulfill</span>
+                            <span id="fulfillBtnLoader" class="hidden">
+                                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+                </form>
+                <div id="fulfillResult" class="hidden mt-6 p-4 rounded-sm text-sm"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 space-y-2"></div>
+
+    <script>
+        // ============================================
+        // State
+        // ============================================
+        let currentFilter = 'all';
+        let presaleFilter = 'all';
+        let registrants = [];
+        let presalePurchases = [];
+        let autoRefreshInterval;
+        let explorerUrl = 'https://polygonscan.com';
+        let presaleConfig = {
+            enabled: true,
+            tokenPrice: 0.10,
+            totalTokens: 1000000,
+            minPurchase: 10,
+            maxPurchase: 10000,
+            presaleWallet: ''
+        };
+
+        // ============================================
+        // Tab Navigation - GLOBAL FUNCTION
+        // ============================================
+        window.switchMainTab = function(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`content${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
+            
+            if (tab === 'presale') {
+                loadPresaleData();
+            } else if (tab === 'settings') {
+                loadSettings();
+            }
+        };
+
+        // ============================================
+        // Modal Functions - GLOBAL
+        // ============================================
+        window.openManualMintModal = function() {
+            document.getElementById('manualMintModal').classList.remove('hidden');
+            document.getElementById('manualMintAddress').value = '';
+            document.getElementById('manualMintAmount').value = '2';
+            document.getElementById('manualMintResult').classList.add('hidden');
+        };
+
+        window.closeManualMintModal = function() {
+            document.getElementById('manualMintModal').classList.add('hidden');
+        };
+
+        window.openFullSyncModal = function() {
+            document.getElementById('fullSyncModal').classList.remove('hidden');
+            document.getElementById('fullSyncLoading').classList.remove('hidden');
+            document.getElementById('fullSyncResults').classList.add('hidden');
+            document.getElementById('fullSyncError').classList.add('hidden');
+            performFullSync();
+        };
+
+        window.closeFullSyncModal = function() {
+            document.getElementById('fullSyncModal').classList.add('hidden');
+        };
+
+        window.openPresaleFulfillModal = function() {
+            const pendingOrders = presalePurchases.filter(p => p.status === 'paid' || p.status === 'paid_pending_mint');
+            if (pendingOrders.length === 0) {
+                showToast('No orders pending fulfillment', 'info');
+                return;
+            }
+            const order = pendingOrders[0];
+            openFulfillModal(order.id, order.wallet_address, order.token_amount);
+        };
+
+        window.openFulfillModal = function(id, wallet, amount) {
+            document.getElementById('presaleFulfillModal').classList.remove('hidden');
+            document.getElementById('fulfillPurchaseId').value = id;
+            document.getElementById('fulfillWalletAddress').value = wallet;
+            document.getElementById('fulfillTokenAmount').value = amount;
+            document.getElementById('fulfillResult').classList.add('hidden');
+        };
+
+        window.closePresaleFulfillModal = function() {
+            document.getElementById('presaleFulfillModal').classList.add('hidden');
+        };
+
+        window.togglePresaleEnabled = function() {
+            const toggle = document.getElementById('presaleEnabledToggle');
+            toggle.classList.toggle('active');
+            presaleConfig.enabled = toggle.classList.contains('active');
+        };
+
+        window.setPresaleFilter = function(filter) {
+            presaleFilter = filter;
+            document.querySelectorAll('.presale-filter-btn').forEach(btn => {
+                btn.className = 'presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors';
+            });
+            const activeBtn = document.getElementById(`presaleFilter${filter.charAt(0).toUpperCase() + filter.slice(1)}`);
+            if (activeBtn) {
+                activeBtn.className = 'presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30';
+            }
+            renderPresalePurchases();
+        };
+
+        window.refreshPresaleData = async function() {
+            showToast('Refreshing presale data...', 'info');
+            await loadPresaleData();
+            showToast('Presale data refreshed', 'success');
+        };
+
+        window.exportPresaleCSV = function() {
+            if (!presalePurchases || presalePurchases.length === 0) {
+                showToast('No purchases to export', 'error');
+                return;
+            }
+            
+            const headers = ['Wallet', 'Tokens', 'USD Amount', 'Payment Method', 'Status', 'TX Hash', 'Date'];
+            const rows = presalePurchases.map(p => [
+                p.wallet_address,
+                p.token_amount,
+                p.usd_amount,
+                p.payment_method,
+                p.status,
+                p.tx_hash || '',
+                new Date(p.created_at).toISOString()
+            ]);
+            
+            const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `presale-purchases-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showToast('CSV exported', 'success');
+        };
+
+        // ============================================
+        // Auth Check
+        // ============================================
+        async function checkAuth() {
+            try {
+                const res = await fetch('/api/auth-status');
+                const data = await res.json();
+                if (!data.authenticated) {
+                    window.location.href = '/login';
+                    return false;
+                }
+                if (data.mustChangePassword) {
+                    window.location.href = '/change-password';
+                    return false;
+                }
+                document.getElementById('userInfo').textContent = `${data.username}`;
+                return true;
+            } catch (e) {
+                window.location.href = '/login';
+                return false;
+            }
+        }
+
+        // ============================================
+        // Toast Notifications
+        // ============================================
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-500/90' : type === 'error' ? 'bg-red-500/90' : 'bg-primary/90';
+            const icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
+            
+            toast.className = `slide-in px-4 py-3 rounded-sm shadow-lg flex items-center gap-2 ${bgColor} text-white text-sm`;
+            toast.innerHTML = `
+                <span class="material-symbols-outlined text-lg">${icon}</span>
+                <span>${message}</span>
+            `;
+            document.getElementById('toastContainer').appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        }
+
+        // ============================================
+        // Action Result Display
+        // ============================================
+        function showActionResult(message, type = 'info') {
+            const el = document.getElementById('actionResult');
+            const content = document.getElementById('actionResultContent');
+            el.classList.remove('hidden');
+            const bgColor = type === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 
+                           type === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 
+                           'bg-primary/10 text-primary border border-primary/20';
+            content.className = `p-4 rounded-sm text-sm ${bgColor}`;
+            content.innerHTML = message;
+        }
+
+        // ============================================
+        // Claims Data Functions
+        // ============================================
+        async function fetchStats() {
+            try {
+                const res = await fetch('/api/stats');
+                const data = await res.json();
+                document.getElementById('statTotal').textContent = data.total || 0;
+                document.getElementById('statMinted').textContent = data.minted || 0;
+                document.getElementById('statPending').textContent = data.pending || 0;
+                document.getElementById('statNetwork').textContent = (data.network || 'Unknown').toUpperCase();
+                if (data.explorer) explorerUrl = data.explorer;
+                
+                document.getElementById('dbRegistrantsCount').textContent = data.total || 0;
+            } catch (e) {
+                console.error('Failed to fetch stats:', e);
+            }
+        }
+
+        async function fetchWalletInfo() {
+            try {
+                const res = await fetch('/api/wallet-info');
+                const data = await res.json();
+                
+                if (data.address) {
+                    const explorer = data.explorer || explorerUrl;
+                    document.getElementById('walletAddress').innerHTML = `
+                        <a href="${explorer}/address/${data.address}" target="_blank" class="hover:text-primary transition-colors">
+                            ${data.address.slice(0, 10)}...${data.address.slice(-8)}
+                        </a>
+                    `;
+                    document.getElementById('walletBalance').textContent = `${parseFloat(data.balance || 0).toFixed(4)} ${data.currency || 'POL'}`;
+                    document.getElementById('tokenBalance').textContent = `${parseFloat(data.tokenBalance || 0).toLocaleString()} ${data.tokenSymbol || 'VIP'}`;
+                } else {
+                    document.getElementById('walletAddress').textContent = 'Not configured';
+                }
+            } catch (e) {
+                console.error('Failed to fetch wallet info:', e);
+                document.getElementById('walletAddress').textContent = 'Error loading';
+            }
+        }
+
+        async function fetchRegistrants() {
+            try {
+                const endpoint = currentFilter === 'pending' ? '/api/registrants/pending' : '/api/registrants';
+                const res = await fetch(endpoint);
+                const data = await res.json();
+                registrants = Array.isArray(data) ? data : data.registrants || [];
+                renderRegistrants();
+            } catch (e) {
+                console.error('Failed to fetch registrants:', e);
+                document.getElementById('registrantsTable').innerHTML = `
+                    <tr><td colspan="6" class="text-center py-12 text-red-400">Failed to load registrants</td></tr>
+                `;
+            }
+        }
+
+        function renderRegistrants() {
+            let filtered = registrants;
+            if (currentFilter === 'pending') {
+                filtered = registrants.filter(r => !r.minted);
+            } else if (currentFilter === 'minted') {
+                filtered = registrants.filter(r => r.minted);
+            }
+
+            if (filtered.length === 0) {
+                document.getElementById('registrantsTable').innerHTML = `
+                    <tr><td colspan="6" class="text-center py-12 text-slate-500">No registrants found</td></tr>
+                `;
+                return;
+            }
+
+            document.getElementById('registrantsTable').innerHTML = filtered.map(r => {
+                const txHash = r.tx_hash || r.txHash || null;
+                const hasTxHash = txHash && txHash !== 'synced-from-chain' && txHash.startsWith('0x');
+                const email = r.email || (r.metadata && r.metadata.email) || null;
+                
+                return `
+                <tr class="table-row border-b border-white/5">
+                    <td class="py-4 px-6">
+                        ${email ? `
+                            <a href="mailto:${email}" class="text-sm text-white hover:text-primary transition-colors flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm text-slate-500">mail</span>
+                                <span class="truncate max-w-[180px]">${email}</span>
+                            </a>
+                        ` : `<span class="text-slate-600 text-xs">--</span>`}
+                    </td>
+                    <td class="py-4 px-6">
+                        <a href="${explorerUrl}/address/${r.address}" target="_blank" class="font-mono text-sm text-white hover:text-primary transition-colors">
+                            ${r.address.slice(0, 10)}...${r.address.slice(-8)}
+                        </a>
+                    </td>
+                    <td class="py-4 px-6">
+                        <span class="badge ${r.minted ? 'badge-success' : 'badge-pending'}">
+                            ${r.minted ? 'Minted' : 'Pending'}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6">
+                        ${hasTxHash ? `
+                            <a href="${explorerUrl}/tx/${txHash}" target="_blank" class="font-mono text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                                ${txHash.slice(0, 10)}...${txHash.slice(-6)}
+                            </a>
+                        ` : `<span class="text-slate-600 text-xs">--</span>`}
+                    </td>
+                    <td class="py-4 px-6 text-slate-500 text-sm">
+                        ${r.registeredAt || r.registered_at ? new Date(r.registeredAt || r.registered_at).toLocaleDateString() : '--'}
+                    </td>
+                    <td class="py-4 px-6 text-right">
+                        <a href="${explorerUrl}/address/${r.address}" target="_blank" 
+                           class="text-primary hover:underline text-xs font-bold uppercase tracking-widest">View</a>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.className = 'filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors';
+            });
+            const activeBtn = document.getElementById(`filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`);
+            activeBtn.className = 'filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30';
+            renderRegistrants();
+        }
+
+        // ============================================
+        // Presale Data Functions
+        // ============================================
+        async function loadPresaleData() {
+            await Promise.all([fetchPresaleConfig(), fetchPresalePurchases(), fetchPresaleStats()]);
+        }
+
+        async function fetchPresaleConfig() {
+            try {
+                const res = await fetch('/api/presale/config');
+                const data = await res.json();
+                presaleConfig = { ...presaleConfig, ...data };
+                
+                const sold = data.tokensSold || 0;
+                const total = data.totalTokens || 1000000;
+                const percent = total > 0 ? ((sold / total) * 100).toFixed(1) : 0;
+                
+                document.getElementById('presaleProgressBar').style.width = `${percent}%`;
+                document.getElementById('presaleProgressPercent').textContent = `${percent}%`;
+                document.getElementById('presaleProgressSold').textContent = sold.toLocaleString();
+                document.getElementById('presaleProgressTotal').textContent = total.toLocaleString();
+                
+                document.getElementById('settingTokenPrice').value = data.tokenPrice || 0.10;
+                document.getElementById('settingTotalTokens').value = data.totalTokens || 1000000;
+                document.getElementById('settingMinPurchase').value = data.minPurchase || 10;
+                document.getElementById('settingMaxPurchase').value = data.maxPurchase || 10000;
+                document.getElementById('settingPresaleWallet').value = data.presaleWallet || '';
+                
+                const toggle = document.getElementById('presaleEnabledToggle');
+                if (data.enabled !== false) {
+                    toggle.classList.add('active');
+                } else {
+                    toggle.classList.remove('active');
+                }
+                
+                updateStripeStatus(data.stripePublicKey);
+                
+            } catch (e) {
+                console.error('Failed to fetch presale config:', e);
+            }
+        }
+
+        async function fetchPresaleStats() {
+            try {
+                const res = await fetch('/api/presale/admin/stats');
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('presaleTotalPurchases').textContent = data.total_purchases || 0;
+                    document.getElementById('presaleTokensSold').textContent = (data.tokens_sold || 0).toLocaleString();
+                    document.getElementById('presaleTotalUSD').textContent = `$${parseFloat(data.total_usd || 0).toFixed(2)}`;
+                    document.getElementById('presaleUniqueBuyers').textContent = data.unique_buyers || 0;
+                    document.getElementById('presalePendingMint').textContent = data.pending_mint || 0;
+                    
+                    document.getElementById('dbPresaleCount').textContent = data.total_purchases || 0;
+                }
+            } catch (e) {
+                console.error('Failed to fetch presale stats:', e);
+            }
+        }
+
+        async function fetchPresalePurchases() {
+            try {
+                const res = await fetch('/api/presale/admin/purchases');
+                if (res.ok) {
+                    presalePurchases = await res.json();
+                    renderPresalePurchases();
+                }
+            } catch (e) {
+                console.error('Failed to fetch presale purchases:', e);
+                document.getElementById('presalePurchasesTable').innerHTML = `
+                    <tr><td colspan="7" class="text-center py-12 text-red-400">Failed to load purchases</td></tr>
+                `;
+            }
+        }
+
+        function renderPresalePurchases() {
+            let filtered = presalePurchases;
+            if (presaleFilter === 'pending') {
+                filtered = presalePurchases.filter(p => p.status === 'pending' || p.status === 'pending_payment');
+            } else if (presaleFilter === 'paid') {
+                filtered = presalePurchases.filter(p => p.status === 'paid' || p.status === 'paid_pending_mint');
+            } else if (presaleFilter === 'minted') {
+                filtered = presalePurchases.filter(p => p.status === 'minted' || p.status === 'completed');
+            }
+
+            if (!filtered || filtered.length === 0) {
+                document.getElementById('presalePurchasesTable').innerHTML = `
+                    <tr><td colspan="7" class="text-center py-12 text-slate-500">No purchases found</td></tr>
+                `;
+                return;
+            }
+
+            document.getElementById('presalePurchasesTable').innerHTML = filtered.map(p => {
+                const statusClass = getStatusBadgeClass(p.status);
+                const canFulfill = p.status === 'paid' || p.status === 'paid_pending_mint';
+                
+                return `
+                <tr class="table-row border-b border-white/5">
+                    <td class="py-4 px-6">
+                        <a href="${explorerUrl}/address/${p.wallet_address}" target="_blank" class="font-mono text-sm text-white hover:text-primary transition-colors">
+                            ${p.wallet_address.slice(0, 8)}...${p.wallet_address.slice(-6)}
+                        </a>
+                    </td>
+                    <td class="py-4 px-6 text-right text-white font-semibold">
+                        ${parseInt(p.token_amount).toLocaleString()} VIP
+                    </td>
+                    <td class="py-4 px-6 text-right text-slate-400">
+
+                        $${parseFloat(p.usd_amount).toFixed(2)}
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <span class="text-xs font-bold uppercase ${p.payment_method === 'card' ? 'text-purple-400' : p.payment_method === 'POL' ? 'text-purple-400' : 'text-blue-400'}">
+                            ${p.payment_method}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <span class="badge ${statusClass}">${formatStatus(p.status)}</span>
+                    </td>
+                    <td class="py-4 px-6 text-slate-500 text-sm">
+                        ${new Date(p.created_at).toLocaleDateString()}
+                    </td>
+                    <td class="py-4 px-6 text-right">
+                        ${canFulfill ? `
+                            <button onclick="openFulfillModal(${p.id}, '${p.wallet_address}', ${p.token_amount})" 
+                                    class="text-primary hover:underline text-xs font-bold uppercase tracking-widest">
+                                Fulfill
+                            </button>
+                        ` : p.tx_hash ? `
+                            <a href="${explorerUrl}/tx/${p.tx_hash}" target="_blank" class="text-blue-400 hover:underline text-xs font-bold uppercase tracking-widest">
+                                TX
+                            </a>
+                        ` : `<span class="text-slate-600">--</span>`}
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function getStatusBadgeClass(status) {
+            const classes = {
+                'pending': 'badge-pending',
+                'pending_payment': 'badge-pending',
+                'paid': 'badge-paid',
+                'paid_pending_mint': 'badge-paid',
+                'minted': 'badge-success',
+                'completed': 'badge-success',
+                'failed': 'badge-failed',
+                'expired': 'badge-failed'
+            };
+            return classes[status] || 'badge-pending';
+        }
+
+        function formatStatus(status) {
+            const labels = {
+                'pending': 'Pending',
+                'pending_payment': 'Awaiting',
+                'paid': 'Paid',
+                'paid_pending_mint': 'Paid',
+                'minted': 'Minted',
+                'completed': 'Complete',
+                'failed': 'Failed',
+                'expired': 'Expired'
+            };
+            return labels[status] || status;
+        }
+
+        // ============================================
+        // Settings Functions
+        // ============================================
+        async function loadSettings() {
+            await fetchPresaleConfig();
+            checkStripeStatus();
+        }
+
+        async function savePresaleSettings(e) {
+            e.preventDefault();
+            
+            const settings = {
+                enabled: document.getElementById('presaleEnabledToggle').classList.contains('active'),
+                tokenPrice: parseFloat(document.getElementById('settingTokenPrice').value) || 0.10,
+                totalTokens: parseInt(document.getElementById('settingTotalTokens').value) || 1000000,
+                minPurchase: parseInt(document.getElementById('settingMinPurchase').value) || 10,
+                maxPurchase: parseInt(document.getElementById('settingMaxPurchase').value) || 10000,
+                presaleWallet: document.getElementById('settingPresaleWallet').value.trim()
+            };
+            
+            const resultDiv = document.getElementById('settingsResult');
+            
+            try {
+                const res = await fetch('/api/presale/admin/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'mt-4 p-4 rounded-sm text-sm bg-green-500/10 text-green-400 border border-green-500/20';
+                    resultDiv.textContent = 'Settings saved successfully!';
+                    showToast('Presale settings saved', 'success');
+                    presaleConfig = { ...presaleConfig, ...settings };
+                } else {
+                    resultDiv.className = 'mt-4 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
+                    resultDiv.textContent = data.error || 'Failed to save settings';
+                    showToast('Failed to save settings', 'error');
+                }
+                resultDiv.classList.remove('hidden');
+            } catch (error) {
+                resultDiv.className = 'mt-4 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
+                resultDiv.textContent = `Error: ${error.message}`;
+                resultDiv.classList.remove('hidden');
+                showToast('Error saving settings', 'error');
+            }
+        }
+
+        function updateStripeStatus(publicKey) {
+            const icon = document.getElementById('stripeStatusIcon');
+            const text = document.getElementById('stripeStatusText');
+            const badge = document.getElementById('stripeStatusBadge');
+            
+            if (publicKey) {
+                icon.textContent = 'check_circle';
+                icon.className = 'material-symbols-outlined text-2xl text-green-400';
+                text.textContent = 'Configured and ready';
+                badge.className = 'badge badge-success';
+                badge.textContent = 'Active';
+            } else {
+                icon.textContent = 'warning';
+                icon.className = 'material-symbols-outlined text-2xl text-yellow-400';
+                text.textContent = 'Not configured - Card payments disabled';
+                badge.className = 'badge badge-pending';
+                badge.textContent = 'Inactive';
+            }
+        }
+
+        async function checkStripeStatus() {
+            try {
+                const res = await fetch('/api/health');
+                if (res.ok) {
+                    const data = await res.json();
+                    updateStripeStatus(data.stripe === 'configured');
+                }
+            } catch (e) {
+                console.error('Failed to check Stripe status:', e);
+            }
+        }
+
+        // ============================================
+        // Mint Actions
+        // ============================================
+        async function mintNow() {
+            const btn = document.getElementById('mintNowBtn');
+            btn.disabled = true;
+            btn.innerHTML = `
+                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Minting...
+            `;
+
+            try {
+                const res = await fetch('/api/mint-now', { method: 'POST' });
+                const data = await res.json();
+                
+                if (data.success) {
+                    showActionResult(`
+                        <p class="font-semibold">Minting Complete!</p>
+                        <p class="mt-1 text-xs opacity-80">Minted: ${data.minted || 0} | Skipped: ${data.skipped || 0}</p>
+                        ${data.tx_hash ? `<a href="${explorerUrl}/tx/${data.tx_hash}" target="_blank" class="text-primary underline text-xs mt-2 inline-block">View Transaction</a>` : ''}
+                    `, 'success');
+                    showToast('Minting completed', 'success');
+                    refreshAll();
+                } else {
+                    showActionResult(`<p>Minting failed: ${data.error || 'Unknown error'}</p>`, 'error');
+                    showToast('Minting failed', 'error');
+                }
+            } catch (e) {
+                showActionResult(`<p>Error: ${e.message}</p>`, 'error');
+                showToast('Minting error', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined text-lg">token</span>Mint Pending`;
+            }
+        }
+
+        async function submitManualMint(e) {
+            e.preventDefault();
+            
+            const address = document.getElementById('manualMintAddress').value.trim();
+            const amount = parseInt(document.getElementById('manualMintAmount').value) || 2;
+            const submitBtn = document.getElementById('manualMintSubmitBtn');
+            const btnText = document.getElementById('manualMintBtnText');
+            const btnLoader = document.getElementById('manualMintBtnLoader');
+            const resultDiv = document.getElementById('manualMintResult');
+
+            if (!address || !address.startsWith('0x') || address.length !== 42) {
+                resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
+                resultDiv.textContent = 'Please enter a valid Ethereum address';
+                resultDiv.classList.remove('hidden');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            btnText.textContent = 'Minting...';
+            btnLoader.classList.remove('hidden');
+            resultDiv.classList.add('hidden');
+
+            try {
+                const res = await fetch('/api/mint-manual', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ address, amount })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-green-500/10 text-green-400 border border-green-500/20';
+                    resultDiv.innerHTML = `
+                        <p class="font-semibold">Success!</p>
+                        <p class="mt-1 text-xs opacity-80">${data.message}</p>
+                        ${data.tx_hash ? `<a href="${data.explorer_url}" target="_blank" class="text-green-400 underline text-xs mt-2 inline-block">View Transaction</a>` : ''}
+                    `;
+                    showToast('Manual mint successful', 'success');
+                    refreshAll();
+                } else {
+                    resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
+                    resultDiv.innerHTML = `<p>${data.error || data.message || 'Minting failed'}</p>`;
+                    showToast('Manual mint failed', 'error');
+                }
+                resultDiv.classList.remove('hidden');
+            } catch (error) {
+                resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
+                resultDiv.textContent = `Error: ${error.message}`;
+                resultDiv.classList.remove('hidden');
+                showToast('Manual mint error', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                btnText.textContent = 'Mint Tokens';
+                btnLoader.classList.add('hidden');
+            }
+        }
+
+        async function performFullSync() {
+            try {
+                const res = await fetch('/api/full-sync', { method: 'POST' });
+                const data = await res.json();
+
+                document.getElementById('fullSyncLoading').classList.add('hidden');
+
+                if (data.success) {
+                    document.getElementById('fullSyncResults').classList.remove('hidden');
+                    
+                    document.getElementById('syncTotal').textContent = data.results.total;
+                    document.getElementById('syncWithBalance').textContent = data.results.withBalance;
+                    document.getElementById('syncWithoutBalance').textContent = data.results.withoutBalance;
+                    document.getElementById('syncUpdated').textContent = data.results.updated;
+                    document.getElementById('syncTxFound').textContent = data.results.txHashesFound || 0;
+
+                    const tbody = document.getElementById('syncHoldersTable');
+                    const syncExplorer = data.explorer || explorerUrl;
+                    
+                    if (data.results.registrants && data.results.registrants.length > 0) {
+                        tbody.innerHTML = data.results.registrants.map(r => {
+                            const txHash = r.txHash || r.tx_hash || null;
+                            const hasTxHash = txHash && txHash !== 'synced-from-chain' && txHash.startsWith('0x');
+                            const email = r.email || (r.metadata && r.metadata.email) || null;
+                            
+                            return `
+                            <tr class="border-b border-white/5">
+                                <td class="py-3 px-4">
+                                    ${email ? `
+                                        <span class="text-xs text-slate-400 truncate max-w-[150px] inline-block">${email}</span>
+                                    ` : `<span class="text-slate-600 text-xs">--</span>`}
+                                </td>
+                                <td class="py-3 px-4">
+                                    <a href="${syncExplorer}/address/${r.address}" target="_blank" class="font-mono text-xs text-white hover:text-primary">
+                                        ${r.address.slice(0, 10)}...${r.address.slice(-8)}
+                                    </a>
+                                </td>
+                                <td class="py-3 px-4 text-right font-mono text-sm ${parseFloat(r.balance) > 0 ? 'text-green-400' : 'text-slate-500'}">
+                                    ${r.balance === 'error' ? '<span class="text-red-400">Error</span>' : parseFloat(r.balance).toFixed(2) + ' VIP'}
+                                </td>
+                                <td class="py-3 px-4 text-center">
+                                    <span class="badge ${r.minted ? 'badge-success' : 'badge-pending'}">${r.minted ? 'Minted' : 'Pending'}</span>
+                                </td>
+                                <td class="py-3 px-4">
+                                    ${hasTxHash ? `
+                                        <a href="${syncExplorer}/tx/${txHash}" target="_blank" class="font-mono text-xs text-blue-400 hover:text-blue-300">
+                                            ${txHash.slice(0, 8)}...${txHash.slice(-4)}
+                                        </a>
+                                    ` : `<span class="text-slate-600 text-xs">--</span>`}
+                                </td>
+                            </tr>
+                        `}).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-slate-500">No registrants found</td></tr>';
+                    }
+
+                    showToast(`Full sync completed - ${data.results.txHashesFound || 0} TX hashes found`, 'success');
+                    refreshAll();
+                } else {
+                    throw new Error(data.error || 'Sync failed');
+                }
+            } catch (error) {
+                document.getElementById('fullSyncLoading').classList.add('hidden');
+                document.getElementById('fullSyncError').classList.remove('hidden');
+                document.getElementById('fullSyncErrorText').textContent = error.message;
+                showToast('Full sync failed', 'error');
+            }
+        }
+
+        async function submitFulfill(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('fulfillPurchaseId').value;
+            const submitBtn = document.getElementById('fulfillSubmitBtn');
+            const btnText = document.getElementById('fulfillBtnText');
+            const btnLoader = document.getElementById('fulfillBtnLoader');
+            const resultDiv = document.getElementById('fulfillResult');
+
+            submitBtn.disabled = true;
+            btnText.textContent = 'Processing...';
+            btnLoader.classList.remove('hidden');
+            resultDiv.classList.add('hidden');
+
+            try {
+                const res = await fetch('/api/presale/admin/fulfill', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ purchase_id: parseInt(id) })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-green-500/10 text-green-400 border border-green-500/20';
+                    resultDiv.innerHTML = `
+                        <p class="font-semibold">Order Fulfilled!</p>
+                        <p class="mt-1 text-xs opacity-80">${data.message || 'Tokens minted successfully'}</p>
+                        ${data.tx_hash ? `<a href="${data.explorer_url || explorerUrl + '/tx/' + data.tx_hash}" target="_blank" class="text-green-400 underline text-xs mt-2 inline-block">View Transaction</a>` : ''}
+                    `;
+                    showToast('Order fulfilled', 'success');
+                    await loadPresaleData();
+                } else {
+                    resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
+                    resultDiv.innerHTML = `<p>${data.error || 'Fulfillment failed'}</p>`;
+                    showToast('Fulfillment failed', 'error');
+                }
+                resultDiv.classList.remove('hidden');
+            } catch (error) {
+                resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
+                resultDiv.textContent = `Error: ${error.message}`;
+                resultDiv.classList.remove('hidden');
+                showToast('Fulfillment error', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                btnText.textContent = 'Mint & Fulfill';
+                btnLoader.classList.add('hidden');
+            }
+        }
+
+        // ============================================
+        // Refresh All Data
+        // ============================================
+        async function refreshAll() {
+            await Promise.all([fetchStats(), fetchWalletInfo(), fetchRegistrants()]);
+            document.getElementById('lastUpdated').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+        }
+
+        // ============================================
+        // Logout
+        // ============================================
+        async function logout() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+            } catch (e) {}
+            window.location.href = '/login';
+        }
+
+        // ============================================
+        // Event Listeners
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab buttons
+            document.getElementById('tabClaims').addEventListener('click', () => switchMainTab('claims'));
+            document.getElementById('tabPresale').addEventListener('click', () => switchMainTab('presale'));
+            document.getElementById('tabSettings').addEventListener('click', () => switchMainTab('settings'));
+
+            // Claims actions
+            document.getElementById('mintNowBtn').addEventListener('click', mintNow);
+            document.getElementById('manualMintBtn').addEventListener('click', openManualMintModal);
+            document.getElementById('fullSyncBtn').addEventListener('click', openFullSyncModal);
+            document.getElementById('refreshBtn').addEventListener('click', () => {
+                showToast('Refreshing...', 'info');
+                refreshAll();
+            });
+            document.getElementById('refreshWalletBtn').addEventListener('click', fetchWalletInfo);
+
+            // Header actions
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('changePasswordBtn').addEventListener('click', () => window.location.href = '/change-password');
+
+            // Claims filters
+            document.getElementById('filterAll').addEventListener('click', () => setFilter('all'));
+            document.getElementById('filterPending').addEventListener('click', () => setFilter('pending'));
+            document.getElementById('filterMinted').addEventListener('click', () => setFilter('minted'));
+
+            // Presale actions
+            document.getElementById('refreshPresaleBtn').addEventListener('click', refreshPresaleData);
+            document.getElementById('fulfillOrdersBtn').addEventListener('click', openPresaleFulfillModal);
+            document.getElementById('exportCsvBtn').addEventListener('click', exportPresaleCSV);
+
+            // Presale filters
+            document.getElementById('presaleFilterAll').addEventListener('click', () => setPresaleFilter('all'));
+            document.getElementById('presaleFilterPending').addEventListener('click', () => setPresaleFilter('pending'));
+            document.getElementById('presaleFilterPaid').addEventListener('click', () => setPresaleFilter('paid'));
+            document.getElementById('presaleFilterMinted').addEventListener('click', () => setPresaleFilter('minted'));
+
+            // Settings
+            document.getElementById('presaleEnabledToggle').addEventListener('click', togglePresaleEnabled);
+
+            // Forms
+            document.getElementById('manualMintForm').addEventListener('submit', submitManualMint);
+            document.getElementById('presaleSettingsForm').addEventListener('submit', savePresaleSettings);
+            document.getElementById('presaleFulfillForm').addEventListener('submit', submitFulfill);
+
+            // Modal close buttons and backdrops
+            document.querySelectorAll('.close-modal').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.closest('.fixed').classList.add('hidden');
+                });
+            });
+
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                backdrop.addEventListener('click', function() {
+                    this.closest('.fixed').classList.add('hidden');
+                });
+            });
+
+            // Initialize
+            init();
+        });
+
+        // ============================================
+        // Initialize
+        // ============================================
+        async function init() {
+            const isAuthed = await checkAuth();
+            if (!isAuthed) return;
+
+            await refreshAll();
+            autoRefreshInterval = setInterval(refreshAll, 60000);
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+        });
+    </script>
+</body>
+</html>

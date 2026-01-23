@@ -173,12 +173,7 @@
             border-radius: 16px;
             padding: 25px 30px;
             margin-bottom: 30px;
-            display: none;
             animation: slideIn 0.5s ease;
-        }
-
-        .presale-banner.visible {
-            display: block;
         }
 
         @keyframes slideIn {
@@ -290,6 +285,30 @@
             color: var(--white);
         }
 
+        /* Always visible presale link for testing */
+        .presale-link-always {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .presale-link-always a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .presale-link-always a:hover {
+            opacity: 0.9;
+        }
+
         .quick-links {
             display: flex;
             gap: 15px;
@@ -308,6 +327,22 @@
         .footer a {
             color: var(--gold);
             text-decoration: none;
+        }
+
+        /* Debug panel */
+        .debug-panel {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            display: none;
+        }
+
+        .debug-panel.show {
+            display: block;
         }
 
         @media (max-width: 768px) {
@@ -363,7 +398,13 @@
             <p class="page-subtitle">View your WalletTwo balance and manage your VIP tokens</p>
         </div>
 
-        <!-- Presale Banner - Shows when wallet is connected -->
+        <!-- Debug Panel (hidden by default, add ?debug=1 to URL to show) -->
+        <div class="debug-panel" id="debugPanel">
+            <strong>Debug Info:</strong>
+            <div id="debugContent">Loading...</div>
+        </div>
+
+        <!-- Presale Banner - Always visible now, will show wallet status -->
         <div class="presale-banner" id="presaleBanner">
             <div class="presale-content">
                 <div class="presale-info">
@@ -372,7 +413,7 @@
                         <span class="presale-badge">Now Live</span>
                     </h2>
                     <p class="presale-description">
-                        Exclusive access for connected wallets. Purchase VIP tokens at the presale price before public launch!
+                        Exclusive access for connected wallets. Purchase VIP tokens at presale price before public launch!
                     </p>
                     <div class="presale-features">
                         <div class="presale-feature">
@@ -394,7 +435,7 @@
                         </svg>
                     </a>
                     <div class="presale-wallet" id="presaleWalletInfo">
-                        Connected: <strong id="presaleWalletAddress">...</strong>
+                        <span id="walletStatus">Checking wallet...</span>
                     </div>
                 </div>
             </div>
@@ -429,6 +470,9 @@
         <div class="quick-links">
             <a href="/" class="btn btn-secondary" style="color: var(--deep-blue); border-color: var(--gold);">← Back to Home</a>
             <a href="/claim" class="btn btn-primary">Claim Free Tokens</a>
+            <a href="/presale" class="btn btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                🚀 Join Presale
+            </a>
             <a href="https://wallet.wallettwo.com/wallet/dashboard?tab=Tokens&companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092" target="_blank" class="btn btn-secondary" style="color: var(--deep-blue); border-color: var(--gold);">
                 Full WalletTwo ↗
             </a>
@@ -440,8 +484,17 @@
     </footer>
 
     <script>
-        const STORAGE_KEY = 'walletTwoSession';
+        // Storage keys to check
+        const STORAGE_KEYS = [
+            'walletTwoSession',
+            'keavalley_profile', 
+            'walletAddress',
+            'wallet_address',
+            'connectedWallet'
+        ];
+        
         let walletAddress = null;
+        let debugMode = new URLSearchParams(window.location.search).get('debug') === '1';
 
         function hideLoading() {
             const loader = document.getElementById('loadingIndicator');
@@ -450,63 +503,120 @@
             }
         }
 
-        // Fallback: hide loading after 5 seconds even if iframe doesn't trigger onload
+        // Fallback: hide loading after 5 seconds
         setTimeout(hideLoading, 5000);
 
-        // Check for wallet connection and show presale banner
-        function checkWalletAndShowPresale() {
-            // Try WalletTwo session first
-            const session = localStorage.getItem(STORAGE_KEY);
-            if (session) {
-                try {
-                    const sessionData = JSON.parse(session);
-                    if (sessionData.address) {
-                        walletAddress = sessionData.address;
-                        showPresaleBanner(walletAddress);
-                        return;
-                    }
-                } catch (e) {
-                    console.log('Error parsing WalletTwo session');
-                }
-            }
-
-            // Fallback: check other storage locations
-            walletAddress = localStorage.getItem('walletAddress') || sessionStorage.getItem('walletAddress');
-            if (walletAddress && walletAddress.length === 42) {
-                showPresaleBanner(walletAddress);
+        function log(message) {
+            console.log('[Profile]', message);
+            if (debugMode) {
+                const debugContent = document.getElementById('debugContent');
+                debugContent.innerHTML += `<br>${new Date().toLocaleTimeString()}: ${message}`;
             }
         }
 
-        function showPresaleBanner(address) {
-            const banner = document.getElementById('presaleBanner');
-            const walletDisplay = document.getElementById('presaleWalletAddress');
+        // Check for wallet connection
+        function checkWalletConnection() {
+            log('Checking wallet connection...');
             
-            if (banner) {
-                banner.classList.add('visible');
+            // Show debug panel if enabled
+            if (debugMode) {
+                document.getElementById('debugPanel').classList.add('show');
             }
+
+            // Check all possible storage keys
+            for (const key of STORAGE_KEYS) {
+                const stored = localStorage.getItem(key);
+                log(`Checking ${key}: ${stored ? 'found' : 'not found'}`);
+                
+                if (stored) {
+                    try {
+                        // Try parsing as JSON
+                        const data = JSON.parse(stored);
+                        log(`Parsed ${key}: ${JSON.stringify(data).slice(0, 100)}...`);
+                        
+                        // Check various possible address fields
+                        const address = data.wallet || data.address || data.walletAddress || 
+                                       data.user?.walletAddress || data.user?.address;
+                        
+                        if (address && address.length === 42 && address.startsWith('0x')) {
+                            walletAddress = address;
+                            log(`Found wallet address: ${address}`);
+                            updateWalletStatus(address);
+                            return;
+                        }
+                    } catch (e) {
+                        // Not JSON, check if it's a raw address
+                        if (stored.length === 42 && stored.startsWith('0x')) {
+                            walletAddress = stored;
+                            log(`Found raw wallet address: ${stored}`);
+                            updateWalletStatus(stored);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // Also check sessionStorage
+            for (const key of STORAGE_KEYS) {
+                const stored = sessionStorage.getItem(key);
+                if (stored) {
+                    log(`Checking sessionStorage ${key}: found`);
+                    try {
+                        const data = JSON.parse(stored);
+                        const address = data.wallet || data.address || data.walletAddress;
+                        if (address && address.length === 42 && address.startsWith('0x')) {
+                            walletAddress = address;
+                            log(`Found wallet in sessionStorage: ${address}`);
+                            updateWalletStatus(address);
+                            return;
+                        }
+                    } catch (e) {
+                        if (stored.length === 42 && stored.startsWith('0x')) {
+                            walletAddress = stored;
+                            updateWalletStatus(stored);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            log('No wallet found in storage');
+            updateWalletStatus(null);
+        }
+
+        function updateWalletStatus(address) {
+            const walletStatus = document.getElementById('walletStatus');
             
-            if (walletDisplay && address) {
-                walletDisplay.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+            if (address) {
+                walletStatus.innerHTML = `Connected: <strong>${address.slice(0, 6)}...${address.slice(-4)}</strong>`;
+            } else {
+                walletStatus.innerHTML = `<span style="color: #ffcc00;">Connect wallet below to access all features</span>`;
             }
         }
 
         // Listen for wallet connection events from WalletTwo iframe
         window.addEventListener('message', (event) => {
+            // Log all messages for debugging
+            log(`Received message from: ${event.origin}`);
+            
             // Accept messages from WalletTwo
             if (event.origin.includes('wallettwo.com')) {
                 const data = event.data;
+                log(`WalletTwo message: ${JSON.stringify(data).slice(0, 200)}`);
                 
-                // Check for AUTH_SUCCESS or similar messages
-                if (data?.type === 'AUTH_SUCCESS' || data?.type === 'WALLET_CONNECTED') {
-                    const address = data.address || data.wallet_address || data.walletAddress;
+                // Check for various message types
+                if (data?.type === 'AUTH_SUCCESS' || data?.type === 'WALLET_CONNECTED' || data?.type === 'wallet_login') {
+                    const address = data.address || data.wallet_address || data.walletAddress || data.wallet;
                     if (address) {
+                        log(`Wallet connected via postMessage: ${address}`);
+                        
                         // Store the address
-                        const sessionData = { address, timestamp: Date.now() };
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
+                        const sessionData = { address, wallet: address, timestamp: Date.now() };
+                        localStorage.setItem('walletTwoSession', JSON.stringify(sessionData));
                         localStorage.setItem('walletAddress', address);
                         
-                        // Show presale banner
-                        showPresaleBanner(address);
+                        walletAddress = address;
+                        updateWalletStatus(address);
                     }
                 }
 
@@ -514,10 +624,12 @@
                 if (data?.user?.walletAddress || data?.walletAddress) {
                     const address = data.user?.walletAddress || data.walletAddress;
                     if (address) {
-                        const sessionData = { address, timestamp: Date.now() };
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
+                        log(`User info received: ${address}`);
+                        const sessionData = { address, wallet: address, timestamp: Date.now() };
+                        localStorage.setItem('walletTwoSession', JSON.stringify(sessionData));
                         localStorage.setItem('walletAddress', address);
-                        showPresaleBanner(address);
+                        walletAddress = address;
+                        updateWalletStatus(address);
                     }
                 }
             }
@@ -525,11 +637,19 @@
 
         // Check on page load
         document.addEventListener('DOMContentLoaded', () => {
-            checkWalletAndShowPresale();
+            log('Page loaded, checking wallet...');
+            checkWalletConnection();
             
-            // Also check periodically in case iframe updates session
-            setTimeout(checkWalletAndShowPresale, 3000);
-            setTimeout(checkWalletAndShowPresale, 6000);
+            // Re-check periodically in case iframe updates storage
+            setTimeout(checkWalletConnection, 2000);
+            setTimeout(checkWalletConnection, 5000);
+            setTimeout(checkWalletConnection, 10000);
+        });
+
+        // Also check when storage changes
+        window.addEventListener('storage', (e) => {
+            log(`Storage changed: ${e.key}`);
+            checkWalletConnection();
         });
     </script>
 </body>
