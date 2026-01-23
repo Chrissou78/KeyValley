@@ -1415,6 +1415,96 @@ app.post('/api/presale/admin/fulfill', requireAuth, checkPasswordChange, async (
     }
 });
 
+// POST /api/wallet/connect - Save wallet address and email when user connects via WalletTwo
+app.post('/api/wallet/connect', async (req, res) => {
+    try {
+        const { walletAddress, email, source } = req.body;
+
+        // Validate wallet address
+        if (!walletAddress || !ethers.isAddress(walletAddress)) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Invalid wallet address' 
+            });
+        }
+
+        // Normalize address to lowercase
+        const normalizedAddress = walletAddress.toLowerCase();
+
+        console.log(`[Wallet Connect] Address: ${normalizedAddress}, Email: ${email || 'N/A'}, Source: ${source || 'wallettwo'}`);
+
+        // Upsert registrant with email
+        const registrant = await db.upsertRegistrant(normalizedAddress, email || null, source || 'wallettwo');
+
+        if (registrant) {
+            console.log(`[Wallet Connect] Saved/Updated: ${normalizedAddress}`);
+            return res.json({
+                success: true,
+                action: registrant.email === email ? 'updated' : 'created',
+                walletAddress: normalizedAddress,
+                email: registrant.email
+            });
+        }
+
+        res.json({
+            success: true,
+            action: 'exists',
+            walletAddress: normalizedAddress
+        });
+
+    } catch (error) {
+        console.error('[Wallet Connect] Error:', error);
+        return res.status(500).json({ 
+            success: false, 
+            error: 'Failed to save wallet connection' 
+        });
+    }
+});
+
+// GET /api/wallet/info/:address - Get wallet info including email
+app.get('/api/wallet/info/:address', async (req, res) => {
+    try {
+        const { address } = req.params;
+
+        if (!address || !ethers.isAddress(address)) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Invalid wallet address' 
+            });
+        }
+
+        const normalizedAddress = address.toLowerCase();
+        const registrant = await db.getRegistrant(normalizedAddress);
+
+        if (!registrant) {
+            return res.json({
+                success: true,
+                exists: false,
+                walletAddress: normalizedAddress
+            });
+        }
+
+        res.json({
+            success: true,
+            exists: true,
+            walletAddress: registrant.address,
+            email: registrant.email,
+            minted: registrant.minted,
+            txHash: registrant.tx_hash,
+            source: registrant.source,
+            createdAt: registrant.registered_at,
+            updatedAt: registrant.updated_at
+        });
+
+    } catch (error) {
+        console.error('[Wallet Info] Error:', error);
+        return res.status(500).json({ 
+            success: false, 
+            error: 'Failed to get wallet info' 
+        });
+    }
+});
+
 // ===========================================
 // Health Check (Public)
 // ===========================================

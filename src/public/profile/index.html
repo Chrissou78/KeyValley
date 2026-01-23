@@ -74,12 +74,13 @@
             color: #0f0;
             padding: 10px;
             font-size: 10px;
-            max-width: 300px;
-            max-height: 200px;
+            max-width: 400px;
+            max-height: 300px;
             overflow: auto;
             z-index: 9999;
             border-radius: 4px;
             display: none;
+            font-family: monospace;
         }
         #debug-panel.visible { display: block; }
     </style>
@@ -147,13 +148,13 @@
 
         <!-- Wallet Status Panel -->
         <div id="walletStatusPanel" class="glass-card rounded-xl p-4 mb-6 hidden">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
                     <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                     <span class="text-white/80">Wallet Connected</span>
                 </div>
-                <div class="flex items-center gap-4">
-                    <span id="connectedEmail" class="text-white/60 text-sm"></span>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+                    <span id="connectedEmail" class="text-blue-400 text-sm"></span>
                     <span id="connectedAddress" class="wallet-info text-sm text-green-400"></span>
                 </div>
             </div>
@@ -209,17 +210,24 @@
         const STORAGE_KEYS = ['walletTwoSession', 'keavalley_profile', 'walletAddress', 'wallet_address', 'connectedWallet'];
         const DEBUG = new URLSearchParams(window.location.search).has('debug');
         
+        // Track if we've already saved this session
+        let savedToDatabase = false;
+        
         // Debug logging
         function debugLog(msg, data = null) {
+            const logMsg = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            console.log(logMsg, data || '');
+            
             if (!DEBUG) return;
             const panel = document.getElementById('debug-panel');
             panel.classList.add('visible');
-            const time = new Date().toLocaleTimeString();
             const line = document.createElement('div');
-            line.textContent = `[${time}] ${msg}${data ? ': ' + JSON.stringify(data).substring(0, 100) : ''}`;
+            line.style.borderBottom = '1px solid #333';
+            line.style.paddingBottom = '4px';
+            line.style.marginBottom = '4px';
+            line.innerHTML = `<strong>${msg}</strong>${data ? '<br><span style="color:#aaa">' + JSON.stringify(data, null, 2).substring(0, 200) + '</span>' : ''}`;
             panel.appendChild(line);
             panel.scrollTop = panel.scrollHeight;
-            console.log(`[DEBUG] ${msg}`, data);
         }
 
         // Hide loading overlay
@@ -227,24 +235,21 @@
             const overlay = document.getElementById('loadingOverlay');
             if (overlay) {
                 overlay.classList.add('hidden');
-                debugLog('Loading hidden via onload');
+                debugLog('Loading hidden');
             }
         }
 
         // Fallback to hide loading after 5 seconds
-        setTimeout(() => {
-            hideLoading();
-            debugLog('Loading hidden via 5s fallback');
-        }, 5000);
+        setTimeout(hideLoading, 5000);
 
         // Validate wallet address
         function isValidAddress(addr) {
-            return addr && typeof addr === 'string' && /^0x[a-fA-F0-9]{40}$/.test(addr);
+            return addr && typeof addr === 'string' && /^0x[a-fA-F0-9]{40}$/i.test(addr);
         }
 
         // Format address for display
         function formatAddress(addr) {
-            if (!addr || addr.length < 10) return addr;
+            if (!addr || addr.length < 10) return addr || '';
             return `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`;
         }
 
@@ -252,10 +257,15 @@
         function updateWalletUI(address, email = null) {
             debugLog('Updating UI', { address, email });
             
+            if (!isValidAddress(address)) {
+                debugLog('Invalid address for UI update');
+                return;
+            }
+            
             // Update presale banner
             const presaleWalletInfo = document.getElementById('presaleWalletInfo');
             const presaleWalletAddress = document.getElementById('presaleWalletAddress');
-            if (presaleWalletInfo && presaleWalletAddress && isValidAddress(address)) {
+            if (presaleWalletInfo && presaleWalletAddress) {
                 presaleWalletAddress.textContent = formatAddress(address);
                 presaleWalletInfo.classList.remove('hidden');
             }
@@ -264,10 +274,16 @@
             const statusPanel = document.getElementById('walletStatusPanel');
             const connectedAddress = document.getElementById('connectedAddress');
             const connectedEmail = document.getElementById('connectedEmail');
-            if (statusPanel && connectedAddress && isValidAddress(address)) {
+            
+            if (statusPanel && connectedAddress) {
                 connectedAddress.textContent = formatAddress(address);
-                if (connectedEmail && email) {
-                    connectedEmail.textContent = email;
+                if (connectedEmail) {
+                    if (email) {
+                        connectedEmail.textContent = email;
+                        connectedEmail.classList.remove('hidden');
+                    } else {
+                        connectedEmail.classList.add('hidden');
+                    }
                 }
                 statusPanel.classList.remove('hidden');
             }
@@ -276,7 +292,12 @@
         // Save wallet and email to database
         async function saveWalletToDatabase(walletAddress, email = null) {
             if (!isValidAddress(walletAddress)) {
-                debugLog('Invalid address, not saving', walletAddress);
+                debugLog('Invalid address, not saving');
+                return;
+            }
+
+            if (savedToDatabase) {
+                debugLog('Already saved this session');
                 return;
             }
 
@@ -288,9 +309,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         walletAddress: walletAddress,
-                        email: email,
-                        source: 'wallettwo',
-                        timestamp: new Date().toISOString()
+                        email: email || null,
+                        source: 'wallettwo'
                     })
                 });
 
@@ -298,11 +318,12 @@
                 debugLog('Save result', result);
 
                 if (result.success) {
-                    console.log('Wallet saved to database:', walletAddress);
+                    savedToDatabase = true;
+                    console.log('✅ Wallet saved to database:', walletAddress, email ? `(${email})` : '');
                 }
             } catch (error) {
                 console.error('Error saving wallet to database:', error);
-                debugLog('Save error', error.message);
+                debugLog('Save error', { message: error.message });
             }
         }
 
@@ -310,148 +331,194 @@
         function storeWalletData(address, email = null) {
             const data = {
                 address: address,
+                wallet: address,
+                walletAddress: address,
                 email: email,
                 timestamp: Date.now()
             };
             
-            localStorage.setItem('walletTwoSession', JSON.stringify(data));
-            localStorage.setItem('walletAddress', address);
-            localStorage.setItem('keavalley_profile', JSON.stringify({
-                wallet: address,
-                walletAddress: address,
-                email: email,
-                connectedAt: new Date().toISOString()
-            }));
-
-            debugLog('Stored wallet data locally', data);
+            try {
+                localStorage.setItem('walletTwoSession', JSON.stringify(data));
+                localStorage.setItem('walletAddress', address);
+                localStorage.setItem('keavalley_profile', JSON.stringify({
+                    wallet: address,
+                    walletAddress: address,
+                    email: email,
+                    connectedAt: new Date().toISOString()
+                }));
+                debugLog('Stored wallet data locally');
+            } catch (e) {
+                debugLog('Error storing locally', { error: e.message });
+            }
         }
 
-        // Extract wallet and email from message data
+        // Extract wallet and email from message data (handles various WalletTwo formats)
         function extractWalletData(data) {
             let address = null;
             let email = null;
 
-            // Try various data structures that WalletTwo might send
-            if (data) {
-                // Direct properties
-                address = data.wallet || data.address || data.walletAddress || data.wallet_address;
-                email = data.email || data.userEmail || data.user_email;
+            if (!data) return { address, email };
 
-                // Nested in user object
-                if (data.user) {
-                    address = address || data.user.wallet || data.user.address || data.user.walletAddress;
-                    email = email || data.user.email || data.user.userEmail;
-                }
+            debugLog('Extracting from data', data);
 
-                // Nested in payload
-                if (data.payload) {
-                    address = address || data.payload.wallet || data.payload.address || data.payload.walletAddress;
-                    email = email || data.payload.email || data.payload.userEmail;
-                }
+            // Direct properties
+            address = data.wallet || data.address || data.walletAddress || data.wallet_address || data.publicAddress;
+            email = data.email || data.userEmail || data.user_email || data.mail;
 
-                // Nested in result
-                if (data.result) {
-                    address = address || data.result.wallet || data.result.address || data.result.walletAddress;
-                    email = email || data.result.email || data.result.userEmail;
+            // Nested in user object
+            if (data.user && typeof data.user === 'object') {
+                address = address || data.user.wallet || data.user.address || data.user.walletAddress || data.user.publicAddress;
+                email = email || data.user.email || data.user.userEmail || data.user.mail;
+            }
+
+            // Nested in payload
+            if (data.payload && typeof data.payload === 'object') {
+                address = address || data.payload.wallet || data.payload.address || data.payload.walletAddress;
+                email = email || data.payload.email || data.payload.userEmail;
+            }
+
+            // Nested in result
+            if (data.result && typeof data.result === 'object') {
+                address = address || data.result.wallet || data.result.address || data.result.walletAddress;
+                email = email || data.result.email || data.result.userEmail;
+            }
+
+            // Nested in data property
+            if (data.data && typeof data.data === 'object') {
+                address = address || data.data.wallet || data.data.address || data.data.walletAddress;
+                email = email || data.data.email || data.data.userEmail;
+                
+                if (data.data.user && typeof data.data.user === 'object') {
+                    address = address || data.data.user.wallet || data.data.user.walletAddress;
+                    email = email || data.data.user.email;
                 }
             }
 
+            debugLog('Extracted', { address, email });
             return { address, email };
+        }
+
+        // Handle successful wallet connection
+        function handleWalletConnected(address, email) {
+            if (!isValidAddress(address)) {
+                debugLog('Invalid address in handleWalletConnected');
+                return;
+            }
+
+            debugLog('Wallet connected!', { address, email });
+            
+            // Store locally
+            storeWalletData(address, email);
+            
+            // Update UI
+            updateWalletUI(address, email);
+            
+            // Save to database (async)
+            saveWalletToDatabase(address, email);
         }
 
         // Listen for postMessage from WalletTwo iframe
         window.addEventListener('message', function(event) {
-            // Only accept messages from WalletTwo
-            if (event.origin !== WALLETTWO_ORIGIN) {
+            // Accept messages from WalletTwo
+            if (!event.origin.includes('wallettwo.com')) {
                 return;
             }
 
-            debugLog('Received postMessage', event.data);
+            debugLog('postMessage received', { origin: event.origin, data: event.data });
 
             const data = event.data;
             if (!data) return;
 
-            // Check for authentication success messages
-            const messageType = data.type || data.event || data.action || '';
-            const successTypes = ['AUTH_SUCCESS', 'WALLET_CONNECTED', 'LOGIN_SUCCESS', 'wallet_login', 'authenticated'];
+            // Check message type
+            const messageType = data.type || data.event || data.action || data.message || '';
+            const successTypes = [
+                'AUTH_SUCCESS', 'WALLET_CONNECTED', 'LOGIN_SUCCESS', 
+                'wallet_login', 'authenticated', 'user_authenticated',
+                'AUTHENTICATION_SUCCESS', 'auth_complete', 'login_complete'
+            ];
 
-            if (successTypes.includes(messageType) || data.success === true || data.authenticated === true) {
+            const isSuccess = successTypes.some(t => 
+                messageType.toLowerCase().includes(t.toLowerCase())
+            ) || data.success === true || data.authenticated === true || data.loggedIn === true;
+
+            if (isSuccess) {
                 debugLog('Auth success detected', messageType);
-
                 const { address, email } = extractWalletData(data);
-
+                
                 if (isValidAddress(address)) {
-                    debugLog('Valid wallet found', { address, email });
-                    
-                    // Store locally
-                    storeWalletData(address, email);
-                    
-                    // Update UI
-                    updateWalletUI(address, email);
-                    
-                    // Save to database (async)
-                    saveWalletToDatabase(address, email);
+                    handleWalletConnected(address, email);
+                } else {
+                    debugLog('No valid address in auth success message');
                 }
+            }
+            
+            // Also check if data itself contains wallet info (some auth flows)
+            const { address, email } = extractWalletData(data);
+            if (isValidAddress(address) && !savedToDatabase) {
+                handleWalletConnected(address, email);
             }
         });
 
         // Check for existing wallet on page load
         function checkExistingWallet() {
-            debugLog('Checking for existing wallet');
+            debugLog('Checking for existing wallet in storage');
 
             for (const key of STORAGE_KEYS) {
                 try {
                     const stored = localStorage.getItem(key) || sessionStorage.getItem(key);
                     if (!stored) continue;
 
-                    debugLog(`Found storage key: ${key}`, stored.substring(0, 50));
+                    debugLog(`Found: ${key}`);
 
                     // Try to parse as JSON
                     let data;
                     try {
                         data = JSON.parse(stored);
                     } catch {
-                        // Raw address
+                        // Raw address string
                         if (isValidAddress(stored)) {
+                            debugLog('Raw address found', stored);
                             updateWalletUI(stored);
-                            return;
+                            return true;
                         }
                         continue;
                     }
 
-                    // Check validity (24 hour window)
+                    // Check session validity (24 hour window)
                     const timestamp = data.timestamp || data.connectedAt;
                     if (timestamp) {
                         const age = Date.now() - new Date(timestamp).getTime();
                         if (age > 24 * 60 * 60 * 1000) {
                             debugLog('Session expired', key);
+                            localStorage.removeItem(key);
                             continue;
                         }
                     }
 
                     const { address, email } = extractWalletData(data);
                     if (isValidAddress(address)) {
-                        debugLog('Restored wallet from storage', { address, email });
+                        debugLog('Restored wallet from storage', { address, email, key });
                         updateWalletUI(address, email);
-                        return;
+                        return true;
                     }
                 } catch (error) {
-                    debugLog(`Error reading ${key}`, error.message);
+                    debugLog(`Error reading ${key}`, { error: error.message });
                 }
             }
 
             debugLog('No existing wallet found');
+            return false;
         }
 
         // Initialize on DOM ready
         document.addEventListener('DOMContentLoaded', function() {
-            debugLog('Page loaded');
+            debugLog('Page loaded, checking for existing wallet');
             checkExistingWallet();
         });
 
-        // Additional check after a short delay (for slow iframe loads)
-        setTimeout(checkExistingWallet, 3000);
-        setTimeout(checkExistingWallet, 6000);
+        // Additional checks for slow iframe loads
+        setTimeout(checkExistingWallet, 2000);
+        setTimeout(checkExistingWallet, 5000);
     </script>
 </body>
 </html>

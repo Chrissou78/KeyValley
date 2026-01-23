@@ -17,39 +17,48 @@ let isInitialized = false;
  */
 async function initDb() {
     if (isInitialized) {
-        await pool.query(`
-            ALTER TABLE registrants 
-            ADD COLUMN IF NOT EXISTS email VARCHAR(255)
-        `);
+        // Ensure email column exists even if already initialized
+        try {
+            await pool.query(`ALTER TABLE registrants ADD COLUMN IF NOT EXISTS email VARCHAR(255)`);
+            await pool.query(`ALTER TABLE registrants ADD COLUMN IF NOT EXISTS source VARCHAR(50) DEFAULT 'unknown'`);
+            await pool.query(`ALTER TABLE registrants ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`);
+        } catch (e) {
+            // Column might already exist
+        }
         return;
     }
 
     const client = await pool.connect();
     try {
-        // Create registrants table
+        // Create registrants table with email column
         await client.query(`
             CREATE TABLE IF NOT EXISTS registrants (
                 id SERIAL PRIMARY KEY,
                 address VARCHAR(42) UNIQUE NOT NULL,
+                email VARCHAR(255),
                 minted BOOLEAN DEFAULT FALSE,
                 tx_hash VARCHAR(66),
                 registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 minted_at TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 signature TEXT,
+                source VARCHAR(50) DEFAULT 'unknown',
                 metadata JSONB DEFAULT '{}'::jsonb
             )
         `);
 
-        // Create index on address for faster lookups
-        await client.query(`
-            CREATE INDEX IF NOT EXISTS idx_registrants_address ON registrants(address)
-        `);
+        // Add columns if they don't exist (for existing tables)
+        await client.query(`ALTER TABLE registrants ADD COLUMN IF NOT EXISTS email VARCHAR(255)`);
+        await client.query(`ALTER TABLE registrants ADD COLUMN IF NOT EXISTS source VARCHAR(50) DEFAULT 'unknown'`);
+        await client.query(`ALTER TABLE registrants ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`);
 
-        // Create index on minted status for filtering
-        await client.query(`
-            CREATE INDEX IF NOT EXISTS idx_registrants_minted ON registrants(minted)
-        `);
+        // Create indexes
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_registrants_address ON registrants(address)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_registrants_minted ON registrants(minted)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_registrants_email ON registrants(email)`);
 
+        // ... rest of your existing initDb code for admin_users, sessions, presale_purchases ...
+        
         // Create admin_users table
         await client.query(`
             CREATE TABLE IF NOT EXISTS admin_users (
@@ -73,16 +82,14 @@ async function initDb() {
             )
         `);
 
-        // Create index on session_id
-        await client.query(`
-            CREATE INDEX IF NOT EXISTS idx_sessions_session_id ON sessions(session_id)
-        `);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_sessions_session_id ON sessions(session_id)`);
 
         // Create presale_purchases table
         await client.query(`
             CREATE TABLE IF NOT EXISTS presale_purchases (
                 id SERIAL PRIMARY KEY,
                 wallet_address VARCHAR(42) NOT NULL,
+                email VARCHAR(255),
                 token_amount INTEGER NOT NULL,
                 payment_method VARCHAR(20) NOT NULL,
                 payment_amount DECIMAL(20, 8) NOT NULL,
@@ -101,9 +108,7 @@ async function initDb() {
         await client.query(`CREATE INDEX IF NOT EXISTS idx_presale_stripe ON presale_purchases(stripe_session_id)`);
 
         // Clean up expired sessions
-        await client.query(`
-            DELETE FROM sessions WHERE expires_at < CURRENT_TIMESTAMP
-        `);
+        await client.query(`DELETE FROM sessions WHERE expires_at < CURRENT_TIMESTAMP`);
 
         isInitialized = true;
         console.log('✅ PostgreSQL database initialized');
@@ -115,6 +120,22 @@ async function initDb() {
     }
 }
 
+async function updateRegistrantEmail(address, email) {
+    const normalizedAddress = address.toLowerCase();
+    try {
+        const result = await pool.query(
+            `UPDATE registrants 
+             SET email = $2, updated_at = NOW() 
+             WHERE address = $1
+             RETURNING *`,
+            [normalizedAddress, email]
+        );
+        return result.rows[0] ? formatRegistrant(result.rows[0]) : null;
+    } catch (error) {
+        console.error('Error updating registrant email:', error);
+        throw error;
+    }
+}
 /**
  * Registrant Operations
  */
@@ -122,15 +143,21 @@ async function initDb() {
 // Add a new registrant
 async function addRegistrant(address, signature = null, metadata = {}) {
     const normalizedAddress = address.toLowerCase();
+    const email = metadata.email || null;
+    const source = metadata.source || 'unknown';
+    
     try {
         const result = await pool.query(
-            `INSERT INTO registrants (address, signature, metadata) 
-             VALUES ($1, $2, $3) 
-             ON CONFLICT (address) DO NOTHING
+            `INSERT INTO registrants (address, email, signature, source, metadata, updated_at) 
+             VALUES ($1, $2, $3, $4, $5, NOW()) 
+             ON CONFLICT (address) DO UPDATE SET
+                email = COALESCE(EXCLUDED.email, registrants.email),
+                source = COALESCE(EXCLUDED.source, registrants.source),
+                updated_at = NOW()
              RETURNING *`,
-            [normalizedAddress, signature, JSON.stringify(metadata)]
+            [normalizedAddress, email, signature, source, JSON.stringify(metadata)]
         );
-        return result.rows[0] || await getRegistrant(normalizedAddress);
+        return result.rows[0] ? formatRegistrant(result.rows[0]) : await getRegistrant(normalizedAddress);
     } catch (error) {
         console.error('Error adding registrant:', error);
         throw error;
@@ -195,6 +222,26 @@ async function markAsMinted(address, txHash = null) {
         return result.rows[0] ? formatRegistrant(result.rows[0]) : null;
     } catch (error) {
         console.error('Error marking as minted:', error);
+        throw error;
+    }
+}
+
+async function upsertRegistrant(address, email = null, source = 'unknown') {
+    const normalizedAddress = address.toLowerCase();
+    try {
+        const result = await pool.query(
+            `INSERT INTO registrants (address, email, source, updated_at) 
+             VALUES ($1, $2, $3, NOW()) 
+             ON CONFLICT (address) DO UPDATE SET
+                email = COALESCE(EXCLUDED.email, registrants.email),
+                source = CASE WHEN registrants.source = 'unknown' THEN EXCLUDED.source ELSE registrants.source END,
+                updated_at = NOW()
+             RETURNING *`,
+            [normalizedAddress, email, source]
+        );
+        return result.rows[0] ? formatRegistrant(result.rows[0]) : null;
+    } catch (error) {
+        console.error('Error upserting registrant:', error);
         throw error;
     }
 }
@@ -568,13 +615,19 @@ function formatRegistrant(row) {
     return {
         id: row.id,
         address: row.address,
-        email: row.email || row.metadata?.email || null,
+        wallet_address: row.address,
+        email: row.email || null,
         minted: row.minted,
         txHash: row.tx_hash,
         tx_hash: row.tx_hash,
+        balance: row.balance || '0',
+        source: row.source || 'unknown',
         registeredAt: row.registered_at,
         registered_at: row.registered_at,
         mintedAt: row.minted_at,
+        minted_at: row.minted_at,
+        updatedAt: row.updated_at,
+        updated_at: row.updated_at,
         signature: row.signature,
         metadata: row.metadata
     };
@@ -613,6 +666,9 @@ module.exports = {
     updateRegistrant,
     hasRegistrant,
     getStats,
+
+    updateRegistrantEmail,
+    upsertRegistrant,
     
     // Admin operations
     getAdminUser,
