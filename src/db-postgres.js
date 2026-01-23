@@ -401,6 +401,122 @@ async function closePool() {
     await pool.end();
 }
 
+// ===========================================
+// Presale Tables & Functions
+// ===========================================
+
+// Add to initDb function:
+async function initDb() {
+    // ... existing tables ...
+    
+    // Presale purchases table
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS presale_purchases (
+            id SERIAL PRIMARY KEY,
+            wallet_address VARCHAR(42) NOT NULL,
+            token_amount INTEGER NOT NULL,
+            payment_method VARCHAR(10) NOT NULL,
+            payment_amount DECIMAL(20, 8) NOT NULL,
+            usd_amount DECIMAL(20, 2) NOT NULL,
+            status VARCHAR(20) DEFAULT 'pending',
+            tx_hash VARCHAR(66),
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+    `);
+    
+    await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_presale_wallet ON presale_purchases(wallet_address)
+    `);
+    
+    await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_presale_status ON presale_purchases(status)
+    `);
+}
+
+// Add presale purchase
+async function addPresalePurchase(purchase) {
+    const result = await pool.query(
+        `INSERT INTO presale_purchases 
+         (wallet_address, token_amount, payment_method, payment_amount, usd_amount, status)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [
+            purchase.wallet_address,
+            purchase.token_amount,
+            purchase.payment_method,
+            purchase.payment_amount,
+            purchase.usd_amount,
+            purchase.status || 'pending'
+        ]
+    );
+    return result.rows[0];
+}
+
+// Get presale purchases for address
+async function getPresalePurchases(address) {
+    const result = await pool.query(
+        `SELECT * FROM presale_purchases 
+         WHERE LOWER(wallet_address) = LOWER($1) 
+         ORDER BY created_at DESC`,
+        [address]
+    );
+    return result.rows;
+}
+
+// Get all presale purchases
+async function getAllPresalePurchases() {
+    const result = await pool.query(
+        `SELECT * FROM presale_purchases ORDER BY created_at DESC`
+    );
+    return result.rows;
+}
+
+// Get presale stats
+async function getPresaleStats() {
+    const result = await pool.query(`
+        SELECT 
+            COALESCE(SUM(CASE WHEN status IN ('paid', 'confirmed', 'minted') THEN token_amount ELSE 0 END), 0) as tokens_sold,
+            COALESCE(SUM(CASE WHEN status IN ('paid', 'confirmed', 'minted') THEN usd_amount ELSE 0 END), 0) as total_usd,
+            COUNT(DISTINCT CASE WHEN status IN ('paid', 'confirmed', 'minted') THEN wallet_address END) as unique_buyers,
+            COUNT(*) as total_purchases
+        FROM presale_purchases
+    `);
+    
+    const row = result.rows[0];
+    return {
+        tokensSold: parseInt(row.tokens_sold) || 0,
+        totalUSD: parseFloat(row.total_usd) || 0,
+        uniqueBuyers: parseInt(row.unique_buyers) || 0,
+        totalPurchases: parseInt(row.total_purchases) || 0
+    };
+}
+
+// Update presale purchase
+async function updatePresalePurchase(id, updates) {
+    const fields = [];
+    const values = [];
+    let paramCount = 1;
+    
+    if (updates.status) {
+        fields.push(`status = $${paramCount++}`);
+        values.push(updates.status);
+    }
+    if (updates.tx_hash) {
+        fields.push(`tx_hash = $${paramCount++}`);
+        values.push(updates.tx_hash);
+    }
+    
+    fields.push(`updated_at = NOW()`);
+    values.push(id);
+    
+    const result = await pool.query(
+        `UPDATE presale_purchases SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING *`,
+        values
+    );
+    return result.rows[0];
+}
+
 module.exports = {
     // Initialization
     initDb,
@@ -430,5 +546,13 @@ module.exports = {
     cleanExpiredSessions,
     
     // Direct pool access if needed
-    pool
+    pool,
+
+    //presale
+    addPresalePurchase,
+    getPresalePurchases,
+    getAllPresalePurchases,
+    getPresaleStats,
+    updatePresalePurchase
 };
+

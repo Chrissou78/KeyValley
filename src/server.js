@@ -1071,6 +1071,191 @@ app.get('/api/health', async (req, res) => {
 });
 
 // ===========================================
+// Presale Configuration
+// ===========================================
+const PRESALE_CONFIG = {
+    tokenPrice: parseFloat(process.env.PRESALE_TOKEN_PRICE) || 0.10,      // USD per token
+    totalTokens: parseInt(process.env.PRESALE_TOTAL_TOKENS) || 1000000,   // Total for sale
+    minPurchase: parseInt(process.env.PRESALE_MIN_PURCHASE) || 10,        // Min tokens
+    maxPurchase: parseInt(process.env.PRESALE_MAX_PURCHASE) || 10000,     // Max tokens
+    presaleWallet: process.env.PRESALE_WALLET || '',                       // Wallet to receive funds
+    endDate: process.env.PRESALE_END_DATE || null,                         // ISO date string
+    enabled: process.env.PRESALE_ENABLED === 'true'
+};
+
+// ===========================================
+// Presale Routes
+// ===========================================
+
+// Serve presale page
+app.get('/presale', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'presale.html'));
+});
+
+// Get presale configuration
+app.get('/api/presale/config', async (req, res) => {
+    try {
+        // Get sold count from database
+        const stats = await db.getPresaleStats();
+        
+        // Fetch POL price (you could use CoinGecko or similar)
+        let polPrice = 0.50; // Default
+        try {
+            const priceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd');
+            if (priceRes.ok) {
+                const priceData = await priceRes.json();
+                polPrice = priceData['matic-network']?.usd || 0.50;
+            }
+        } catch (e) {
+            console.log('Using default POL price');
+        }
+        
+        res.json({
+            tokenPrice: PRESALE_CONFIG.tokenPrice,
+            totalTokens: PRESALE_CONFIG.totalTokens,
+            tokensSold: stats?.tokensSold || 0,
+            minPurchase: PRESALE_CONFIG.minPurchase,
+            maxPurchase: PRESALE_CONFIG.maxPurchase,
+            presaleWallet: PRESALE_CONFIG.presaleWallet,
+            endDate: PRESALE_CONFIG.endDate,
+            enabled: PRESALE_CONFIG.enabled,
+            polPrice: polPrice
+        });
+    } catch (error) {
+        console.error('Presale config error:', error);
+        res.status(500).json({ error: 'Failed to load config' });
+    }
+});
+
+// Submit presale purchase
+app.post('/api/presale/purchase', async (req, res) => {
+    try {
+        const { wallet_address, token_amount, payment_method, payment_amount } = req.body;
+        
+        // Validation
+        if (!wallet_address || !ethers.isAddress(wallet_address)) {
+            return res.status(400).json({ error: 'Invalid wallet address' });
+        }
+        
+        if (!token_amount || token_amount < PRESALE_CONFIG.minPurchase) {
+            return res.status(400).json({ error: `Minimum purchase is ${PRESALE_CONFIG.minPurchase} tokens` });
+        }
+        
+        if (token_amount > PRESALE_CONFIG.maxPurchase) {
+            return res.status(400).json({ error: `Maximum purchase is ${PRESALE_CONFIG.maxPurchase} tokens` });
+        }
+        
+        if (!PRESALE_CONFIG.enabled) {
+            return res.status(400).json({ error: 'Presale is not currently active' });
+        }
+        
+        // Check if presale ended
+        if (PRESALE_CONFIG.endDate && new Date() > new Date(PRESALE_CONFIG.endDate)) {
+            return res.status(400).json({ error: 'Presale has ended' });
+        }
+        
+        // Check remaining tokens
+        const stats = await db.getPresaleStats();
+        const remaining = PRESALE_CONFIG.totalTokens - (stats?.tokensSold || 0);
+        if (token_amount > remaining) {
+            return res.status(400).json({ error: `Only ${remaining} tokens remaining` });
+        }
+        
+        const normalizedAddress = wallet_address.toLowerCase();
+        
+        // Record purchase in database (pending payment verification)
+        const purchase = await db.addPresalePurchase({
+            wallet_address: normalizedAddress,
+            token_amount: token_amount,
+            payment_method: payment_method,
+            payment_amount: payment_amount,
+            usd_amount: token_amount * PRESALE_CONFIG.tokenPrice,
+            status: 'pending'
+        });
+        
+        console.log(`📦 Presale purchase recorded: ${token_amount} VIP for ${normalizedAddress}`);
+        
+        // For now, return success with instructions
+        // In production, you'd verify the payment on-chain before confirming
+        res.json({
+            success: true,
+            message: 'Purchase recorded',
+            purchase_id: purchase.id,
+            token_amount: token_amount,
+            payment_method: payment_method,
+            payment_amount: payment_amount,
+            presale_wallet: PRESALE_CONFIG.presaleWallet,
+            instructions: `Please send ${payment_amount} ${payment_method} to ${PRESALE_CONFIG.presaleWallet}`
+        });
+        
+    } catch (error) {
+        console.error('Presale purchase error:', error);
+        res.status(500).json({ error: 'Purchase failed' });
+    }
+});
+
+// Get user's presale purchases
+app.get('/api/presale/purchases/:address', async (req, res) => {
+    const { address } = req.params;
+    
+    if (!validateAddress(address)) {
+        return res.status(400).json({ error: 'Invalid wallet address' });
+    }
+    
+    try {
+        const purchases = await db.getPresalePurchases(address.toLowerCase());
+        res.json({ purchases });
+    } catch (error) {
+        console.error('Error fetching purchases:', error);
+        res.status(500).json({ error: 'Failed to fetch purchases' });
+    }
+});
+
+// Admin: Get all presale purchases
+app.get('/api/presale/admin/purchases', requireAuth, checkPasswordChange, async (req, res) => {
+    try {
+        const purchases = await db.getAllPresalePurchases();
+        const stats = await db.getPresaleStats();
+        
+        res.json({
+            purchases,
+            stats: {
+                totalPurchases: purchases.length,
+                tokensSold: stats?.tokensSold || 0,
+                totalUSD: stats?.totalUSD || 0,
+                uniqueBuyers: stats?.uniqueBuyers || 0
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching presale data:', error);
+        res.status(500).json({ error: 'Failed to fetch presale data' });
+    }
+});
+
+// Admin: Update purchase status
+app.post('/api/presale/admin/update-status', requireAuth, checkPasswordChange, async (req, res) => {
+    try {
+        const { purchase_id, status, tx_hash } = req.body;
+        
+        if (!purchase_id || !status) {
+            return res.status(400).json({ error: 'Purchase ID and status required' });
+        }
+        
+        const validStatuses = ['pending', 'paid', 'confirmed', 'minted', 'cancelled'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ error: 'Invalid status' });
+        }
+        
+        await db.updatePresalePurchase(purchase_id, { status, tx_hash });
+        
+        res.json({ success: true, message: 'Purchase updated' });
+    } catch (error) {
+        console.error('Error updating purchase:', error);
+        res.status(500).json({ error: 'Failed to update purchase' });
+    }
+});
+
+// ===========================================
 // Catch-all
 // ===========================================
 
