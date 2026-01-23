@@ -9,6 +9,9 @@ const minter = require('./minter');
 const auth = require('./auth');
 const { getNetworkConfig } = require('./config/networks');
 
+const Stripe = require('stripe');
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
 // ===========================================
 // Express App Setup
 // ===========================================
@@ -1071,19 +1074,6 @@ app.get('/api/health', async (req, res) => {
 });
 
 // ===========================================
-// Presale Configuration
-// ===========================================
-const PRESALE_CONFIG = {
-    tokenPrice: parseFloat(process.env.PRESALE_TOKEN_PRICE) || 0.10,      // USD per token
-    totalTokens: parseInt(process.env.PRESALE_TOTAL_TOKENS) || 1000000,   // Total for sale
-    minPurchase: parseInt(process.env.PRESALE_MIN_PURCHASE) || 10,        // Min tokens
-    maxPurchase: parseInt(process.env.PRESALE_MAX_PURCHASE) || 10000,     // Max tokens
-    presaleWallet: process.env.PRESALE_WALLET || '',                       // Wallet to receive funds
-    endDate: process.env.PRESALE_END_DATE || null,                         // ISO date string
-    enabled: process.env.PRESALE_ENABLED === 'true'
-};
-
-// ===========================================
 // Presale Routes
 // ===========================================
 
@@ -1095,11 +1085,10 @@ app.get('/presale', (req, res) => {
 // Get presale configuration
 app.get('/api/presale/config', async (req, res) => {
     try {
-        // Get sold count from database
         const stats = await db.getPresaleStats();
         
-        // Fetch POL price (you could use CoinGecko or similar)
-        let polPrice = 0.50; // Default
+        // Fetch POL price from CoinGecko
+        let polPrice = 0.50;
         try {
             const priceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd');
             if (priceRes.ok) {
@@ -1116,10 +1105,9 @@ app.get('/api/presale/config', async (req, res) => {
             tokensSold: stats?.tokensSold || 0,
             minPurchase: PRESALE_CONFIG.minPurchase,
             maxPurchase: PRESALE_CONFIG.maxPurchase,
-            presaleWallet: PRESALE_CONFIG.presaleWallet,
-            endDate: PRESALE_CONFIG.endDate,
             enabled: PRESALE_CONFIG.enabled,
-            polPrice: polPrice
+            polPrice,
+            stripePublicKey: process.env.STRIPE_PUBLIC_KEY || null
         });
     } catch (error) {
         console.error('Presale config error:', error);
@@ -1127,10 +1115,10 @@ app.get('/api/presale/config', async (req, res) => {
     }
 });
 
-// Submit presale purchase
-app.post('/api/presale/purchase', async (req, res) => {
+// Create Stripe Checkout Session
+app.post('/api/presale/create-checkout', async (req, res) => {
     try {
-        const { wallet_address, token_amount, payment_method, payment_amount } = req.body;
+        const { wallet_address, token_amount, amount_usd } = req.body;
         
         // Validation
         if (!wallet_address || !ethers.isAddress(wallet_address)) {
@@ -1146,12 +1134,7 @@ app.post('/api/presale/purchase', async (req, res) => {
         }
         
         if (!PRESALE_CONFIG.enabled) {
-            return res.status(400).json({ error: 'Presale is not currently active' });
-        }
-        
-        // Check if presale ended
-        if (PRESALE_CONFIG.endDate && new Date() > new Date(PRESALE_CONFIG.endDate)) {
-            return res.status(400).json({ error: 'Presale has ended' });
+            return res.status(400).json({ error: 'Presale is not active' });
         }
         
         // Check remaining tokens
@@ -1162,52 +1145,169 @@ app.post('/api/presale/purchase', async (req, res) => {
         }
         
         const normalizedAddress = wallet_address.toLowerCase();
+        const totalCents = Math.round(amount_usd * 100);
         
-        // Record purchase in database (pending payment verification)
+        // Create Stripe Checkout Session
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: 'VIP Token Presale',
+                        description: `${token_amount.toLocaleString()} VIP Tokens`,
+                        images: ['https://kea-valley.com/logo.png'] // Add your logo URL
+                    },
+                    unit_amount: totalCents
+                },
+                quantity: 1
+            }],
+            mode: 'payment',
+            success_url: `${process.env.BASE_URL || 'https://kea-valley.com'}/presale?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.BASE_URL || 'https://kea-valley.com'}/presale?canceled=true`,
+            metadata: {
+                wallet_address: normalizedAddress,
+                token_amount: token_amount.toString(),
+                price_per_token: PRESALE_CONFIG.tokenPrice.toString()
+            },
+            customer_email: null, // Could add if available
+            billing_address_collection: 'auto'
+        });
+        
+        // Save pending purchase to database
+        await db.addPresalePurchase({
+            wallet_address: normalizedAddress,
+            token_amount: token_amount,
+            payment_method: 'card',
+            payment_amount: amount_usd,
+            usd_amount: amount_usd,
+            status: 'pending',
+            stripe_session_id: session.id
+        });
+        
+        console.log(`💳 Stripe checkout created for ${token_amount} VIP to ${normalizedAddress}`);
+        
+        res.json({
+            sessionId: session.id,
+            url: session.url
+        });
+        
+    } catch (error) {
+        console.error('Stripe checkout error:', error);
+        res.status(500).json({ error: error.message || 'Failed to create checkout' });
+    }
+});
+
+// Stripe Webhook Handler
+app.post('/api/presale/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    let event;
+    
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err) {
+        console.error('Webhook signature verification failed:', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+    
+    // Handle the event
+    switch (event.type) {
+        case 'checkout.session.completed':
+            const session = event.data.object;
+            
+            console.log('✅ Payment successful:', session.id);
+            
+            // Update purchase status
+            await db.updatePresalePurchaseByStripeSession(session.id, {
+                status: 'paid',
+                stripe_payment_intent: session.payment_intent
+            });
+            
+            // Get purchase details from metadata
+            const walletAddress = session.metadata.wallet_address;
+            const tokenAmount = parseInt(session.metadata.token_amount);
+            
+            // Queue token minting (or mint immediately)
+            try {
+                await minter.initialize();
+                const networkConfig = getNetworkConfig();
+                
+                console.log(`🎯 Minting ${tokenAmount} VIP to ${walletAddress}`);
+                const result = await minter.mintToAddress(walletAddress, tokenAmount);
+                
+                if (result.receipt?.hash) {
+                    await db.updatePresalePurchaseByStripeSession(session.id, {
+                        status: 'minted',
+                        tx_hash: result.receipt.hash
+                    });
+                    console.log(`✅ Minted! TX: ${result.receipt.hash}`);
+                }
+            } catch (mintError) {
+                console.error('Minting error:', mintError);
+                // Purchase is paid, mark for manual fulfillment
+                await db.updatePresalePurchaseByStripeSession(session.id, {
+                    status: 'paid_pending_mint'
+                });
+            }
+            break;
+            
+        case 'checkout.session.expired':
+            const expiredSession = event.data.object;
+            await db.updatePresalePurchaseByStripeSession(expiredSession.id, {
+                status: 'expired'
+            });
+            break;
+            
+        default:
+            console.log(`Unhandled event type: ${event.type}`);
+    }
+    
+    res.json({ received: true });
+});
+
+// Crypto purchase (POL/USDC)
+app.post('/api/presale/purchase', async (req, res) => {
+    try {
+        const { wallet_address, token_amount, payment_method, payment_amount } = req.body;
+        
+        if (!wallet_address || !ethers.isAddress(wallet_address)) {
+            return res.status(400).json({ error: 'Invalid wallet address' });
+        }
+        
+        if (!token_amount || token_amount < PRESALE_CONFIG.minPurchase) {
+            return res.status(400).json({ error: `Minimum purchase is ${PRESALE_CONFIG.minPurchase} tokens` });
+        }
+        
+        if (token_amount > PRESALE_CONFIG.maxPurchase) {
+            return res.status(400).json({ error: `Maximum purchase is ${PRESALE_CONFIG.maxPurchase} tokens` });
+        }
+        
+        const normalizedAddress = wallet_address.toLowerCase();
+        const usdAmount = token_amount * PRESALE_CONFIG.tokenPrice;
+        
         const purchase = await db.addPresalePurchase({
             wallet_address: normalizedAddress,
             token_amount: token_amount,
             payment_method: payment_method,
             payment_amount: payment_amount,
-            usd_amount: token_amount * PRESALE_CONFIG.tokenPrice,
-            status: 'pending'
+            usd_amount: usdAmount,
+            status: 'pending_payment'
         });
         
-        console.log(`📦 Presale purchase recorded: ${token_amount} VIP for ${normalizedAddress}`);
+        console.log(`📦 Crypto purchase recorded: ${token_amount} VIP for ${normalizedAddress}`);
         
-        // For now, return success with instructions
-        // In production, you'd verify the payment on-chain before confirming
         res.json({
             success: true,
-            message: 'Purchase recorded',
             purchase_id: purchase.id,
-            token_amount: token_amount,
-            payment_method: payment_method,
-            payment_amount: payment_amount,
-            presale_wallet: PRESALE_CONFIG.presaleWallet,
-            instructions: `Please send ${payment_amount} ${payment_method} to ${PRESALE_CONFIG.presaleWallet}`
+            message: 'Purchase recorded. Please send payment to complete.',
+            payment_wallet: process.env.PRESALE_WALLET || 'Contact support for payment address'
         });
         
     } catch (error) {
-        console.error('Presale purchase error:', error);
+        console.error('Purchase error:', error);
         res.status(500).json({ error: 'Purchase failed' });
-    }
-});
-
-// Get user's presale purchases
-app.get('/api/presale/purchases/:address', async (req, res) => {
-    const { address } = req.params;
-    
-    if (!validateAddress(address)) {
-        return res.status(400).json({ error: 'Invalid wallet address' });
-    }
-    
-    try {
-        const purchases = await db.getPresalePurchases(address.toLowerCase());
-        res.json({ purchases });
-    } catch (error) {
-        console.error('Error fetching purchases:', error);
-        res.status(500).json({ error: 'Failed to fetch purchases' });
     }
 });
 
@@ -1219,12 +1319,8 @@ app.get('/api/presale/admin/purchases', requireAuth, checkPasswordChange, async 
         
         res.json({
             purchases,
-            stats: {
-                totalPurchases: purchases.length,
-                tokensSold: stats?.tokensSold || 0,
-                totalUSD: stats?.totalUSD || 0,
-                uniqueBuyers: stats?.uniqueBuyers || 0
-            }
+            stats,
+            config: PRESALE_CONFIG
         });
     } catch (error) {
         console.error('Error fetching presale data:', error);
@@ -1232,26 +1328,43 @@ app.get('/api/presale/admin/purchases', requireAuth, checkPasswordChange, async 
     }
 });
 
-// Admin: Update purchase status
-app.post('/api/presale/admin/update-status', requireAuth, checkPasswordChange, async (req, res) => {
+// Admin: Manually fulfill purchase
+app.post('/api/presale/admin/fulfill', requireAuth, checkPasswordChange, async (req, res) => {
     try {
-        const { purchase_id, status, tx_hash } = req.body;
+        const { purchase_id } = req.body;
         
-        if (!purchase_id || !status) {
-            return res.status(400).json({ error: 'Purchase ID and status required' });
+        const purchase = await db.getPresalePurchaseById(purchase_id);
+        if (!purchase) {
+            return res.status(404).json({ error: 'Purchase not found' });
         }
         
-        const validStatuses = ['pending', 'paid', 'confirmed', 'minted', 'cancelled'];
-        if (!validStatuses.includes(status)) {
-            return res.status(400).json({ error: 'Invalid status' });
+        if (purchase.status === 'minted') {
+            return res.status(400).json({ error: 'Already fulfilled' });
         }
         
-        await db.updatePresalePurchase(purchase_id, { status, tx_hash });
+        await minter.initialize();
+        const networkConfig = getNetworkConfig();
         
-        res.json({ success: true, message: 'Purchase updated' });
+        const result = await minter.mintToAddress(purchase.wallet_address, purchase.token_amount);
+        
+        if (result.receipt?.hash) {
+            await db.updatePresalePurchase(purchase_id, {
+                status: 'minted',
+                tx_hash: result.receipt.hash
+            });
+            
+            res.json({
+                success: true,
+                tx_hash: result.receipt.hash,
+                explorer_url: `${networkConfig.explorer}/tx/${result.receipt.hash}`
+            });
+        } else {
+            res.status(500).json({ error: 'Minting failed' });
+        }
+        
     } catch (error) {
-        console.error('Error updating purchase:', error);
-        res.status(500).json({ error: 'Failed to update purchase' });
+        console.error('Fulfill error:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 

@@ -6,6 +6,7 @@
     <title>Token Presale | Kea Valley</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <script>
@@ -57,6 +58,7 @@
         
         .payment-option {
             transition: all 0.3s ease;
+            cursor: pointer;
         }
         
         .payment-option:hover {
@@ -94,6 +96,10 @@
         .countdown-digit {
             background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
             border: 1px solid rgba(238, 157, 43, 0.3);
+        }
+        
+        .stripe-badge {
+            background: linear-gradient(135deg, #635bff 0%, #a855f7 100%);
         }
     </style>
 </head>
@@ -133,7 +139,7 @@
                     <span class="text-primary"> Presale</span>
                 </h1>
                 <p class="text-gray-400 text-lg max-w-2xl mx-auto">
-                    Get early access to VIP tokens at an exclusive presale price. Limited allocation available.
+                    Get early access to VIP tokens at an exclusive presale price. Pay with card or crypto.
                 </p>
             </div>
 
@@ -192,26 +198,34 @@
                         </div>
                     </div>
                     
-                    <!-- Countdown (Optional) -->
-                    <div class="glass-card rounded-2xl p-6" id="countdownCard">
-                        <h3 class="text-xs font-bold uppercase tracking-widest text-primary mb-4">Presale Ends In</h3>
-                        <div class="flex justify-center gap-3">
-                            <div class="countdown-digit rounded-lg p-4 text-center min-w-[70px]">
-                                <p class="text-2xl font-bold text-white" id="countDays">00</p>
-                                <p class="text-xs text-gray-500">Days</p>
+                    <!-- Accepted Payments -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-primary mb-4">Accepted Payments</h3>
+                        <div class="flex flex-wrap gap-3">
+                            <div class="flex items-center gap-2 bg-surface rounded-lg px-4 py-2">
+                                <svg class="w-8 h-5" viewBox="0 0 50 32"><rect fill="#1434CB" width="50" height="32" rx="4"/><text fill="white" font-size="12" font-weight="bold" x="8" y="20">VISA</text></svg>
+                                <span class="text-gray-400 text-sm">Visa</span>
                             </div>
-                            <div class="countdown-digit rounded-lg p-4 text-center min-w-[70px]">
-                                <p class="text-2xl font-bold text-white" id="countHours">00</p>
-                                <p class="text-xs text-gray-500">Hours</p>
+                            <div class="flex items-center gap-2 bg-surface rounded-lg px-4 py-2">
+                                <svg class="w-8 h-5" viewBox="0 0 50 32"><rect fill="#EB001B" width="50" height="32" rx="4"/><circle cx="20" cy="16" r="10" fill="#EB001B"/><circle cx="30" cy="16" r="10" fill="#F79E1B"/><path d="M25 8a10 10 0 010 16 10 10 0 000-16z" fill="#FF5F00"/></svg>
+                                <span class="text-gray-400 text-sm">Mastercard</span>
                             </div>
-                            <div class="countdown-digit rounded-lg p-4 text-center min-w-[70px]">
-                                <p class="text-2xl font-bold text-white" id="countMinutes">00</p>
-                                <p class="text-xs text-gray-500">Mins</p>
+                            <div class="flex items-center gap-2 bg-surface rounded-lg px-4 py-2">
+                                <div class="w-8 h-5 bg-purple-600 rounded flex items-center justify-center">
+                                    <span class="text-white text-xs font-bold">POL</span>
+                                </div>
+                                <span class="text-gray-400 text-sm">Polygon</span>
                             </div>
-                            <div class="countdown-digit rounded-lg p-4 text-center min-w-[70px]">
-                                <p class="text-2xl font-bold text-white" id="countSeconds">00</p>
-                                <p class="text-xs text-gray-500">Secs</p>
+                            <div class="flex items-center gap-2 bg-surface rounded-lg px-4 py-2">
+                                <div class="w-8 h-5 bg-blue-500 rounded flex items-center justify-center">
+                                    <span class="text-white text-xs font-bold">$</span>
+                                </div>
+                                <span class="text-gray-400 text-sm">USDC</span>
                             </div>
+                        </div>
+                        <div class="mt-4 flex items-center gap-2 text-xs text-gray-500">
+                            <span class="material-symbols-outlined text-sm">lock</span>
+                            Secured by Stripe
                         </div>
                     </div>
                     
@@ -245,15 +259,14 @@
                 <!-- Right: Purchase Form -->
                 <div class="glass-card rounded-2xl p-6 lg:p-8 live-indicator">
                     
-                    <!-- Connect Wallet State -->
-                    <div id="connectWalletSection">
-                        <div class="text-center mb-8">
-                            <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <span class="material-symbols-outlined text-primary text-3xl">account_balance_wallet</span>
-                            </div>
-                            <h3 class="text-xl font-serif text-white mb-2">Connect Your Wallet</h3>
-                            <p class="text-gray-400 text-sm">Connect with WalletTwo to participate in the presale</p>
+                    <!-- Step 1: Connect Wallet -->
+                    <div id="step1Section">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-black font-bold text-sm">1</div>
+                            <h3 class="text-lg font-semibold text-white">Connect Your Wallet</h3>
                         </div>
+                        
+                        <p class="text-gray-400 text-sm mb-6">Connect your wallet to receive your VIP tokens after purchase.</p>
                         
                         <div class="wallet-iframe-container">
                             <iframe 
@@ -265,30 +278,33 @@
                         </div>
                     </div>
                     
-                    <!-- Purchase Form State -->
-                    <div id="purchaseSection" class="hidden">
+                    <!-- Step 2: Choose Amount & Pay -->
+                    <div id="step2Section" class="hidden">
                         
                         <!-- Connected Wallet -->
                         <div class="flex items-center justify-between mb-6 pb-6 border-b border-white/10">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
-                                    <span class="text-primary font-bold" id="walletInitials">--</span>
+                                <div class="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-green-400">check_circle</span>
                                 </div>
                                 <div>
                                     <p class="text-white font-medium" id="walletAddressDisplay">0x...</p>
-                                    <p class="text-gray-500 text-sm">Connected</p>
+                                    <p class="text-green-400 text-sm">Wallet Connected</p>
                                 </div>
                             </div>
-                            <button onclick="disconnectWallet()" class="text-gray-500 hover:text-red-400 transition-colors">
-                                <span class="material-symbols-outlined">logout</span>
+                            <button onclick="disconnectWallet()" class="text-gray-500 hover:text-red-400 transition-colors text-sm">
+                                Disconnect
                             </button>
+                        </div>
+                        
+                        <!-- Step 2 Header -->
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-black font-bold text-sm">2</div>
+                            <h3 class="text-lg font-semibold text-white">Choose Amount</h3>
                         </div>
                         
                         <!-- Token Amount Input -->
                         <div class="mb-6">
-                            <label class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2 block">
-                                Amount to Purchase
-                            </label>
                             <div class="relative">
                                 <input 
                                     type="number" 
@@ -302,49 +318,16 @@
                                     <span class="text-primary font-bold">VIP</span>
                                 </div>
                             </div>
-                            <div class="flex justify-between mt-2 text-sm">
-                                <button onclick="setAmount(100)" class="text-gray-500 hover:text-primary">100</button>
-                                <button onclick="setAmount(500)" class="text-gray-500 hover:text-primary">500</button>
-                                <button onclick="setAmount(1000)" class="text-gray-500 hover:text-primary">1,000</button>
-                                <button onclick="setAmount(5000)" class="text-gray-500 hover:text-primary">5,000</button>
-                                <button onclick="setMax()" class="text-primary font-bold">MAX</button>
+                            <div class="flex justify-between mt-3 text-sm">
+                                <button onclick="setAmount(100)" class="px-3 py-1 rounded bg-surface text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors">100</button>
+                                <button onclick="setAmount(500)" class="px-3 py-1 rounded bg-surface text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors">500</button>
+                                <button onclick="setAmount(1000)" class="px-3 py-1 rounded bg-surface text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors">1,000</button>
+                                <button onclick="setAmount(5000)" class="px-3 py-1 rounded bg-surface text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors">5,000</button>
+                                <button onclick="setMax()" class="px-3 py-1 rounded bg-primary/20 text-primary font-bold hover:bg-primary/30 transition-colors">MAX</button>
                             </div>
                         </div>
                         
-                        <!-- Payment Method -->
-                        <div class="mb-6">
-                            <label class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3 block">
-                                Payment Method
-                            </label>
-                            <div class="grid grid-cols-2 gap-3">
-                                <button onclick="selectPayment('POL')" id="payPOL" 
-                                        class="payment-option selected border border-white/10 rounded-xl p-4 text-left">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 bg-purple-500/20 rounded-full flex items-center justify-center">
-                                            <span class="text-purple-400 font-bold text-sm">P</span>
-                                        </div>
-                                        <div>
-                                            <p class="text-white font-medium">POL</p>
-                                            <p class="text-gray-500 text-xs">Native Token</p>
-                                        </div>
-                                    </div>
-                                </button>
-                                <button onclick="selectPayment('USDC')" id="payUSDC" 
-                                        class="payment-option border border-white/10 rounded-xl p-4 text-left">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
-                                            <span class="text-blue-400 font-bold text-sm">$</span>
-                                        </div>
-                                        <div>
-                                            <p class="text-white font-medium">USDC</p>
-                                            <p class="text-gray-500 text-xs">Stablecoin</p>
-                                        </div>
-                                    </div>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Total -->
+                        <!-- Total Summary -->
                         <div class="bg-surface rounded-xl p-4 mb-6">
                             <div class="flex justify-between mb-2">
                                 <span class="text-gray-500">Token Price</span>
@@ -356,36 +339,103 @@
                             </div>
                             <div class="border-t border-white/10 my-3"></div>
                             <div class="flex justify-between">
-                                <span class="text-white font-bold">Total</span>
-                                <span class="text-primary text-xl font-bold" id="displayTotal">0 POL</span>
+                                <span class="text-white font-bold text-lg">Total</span>
+                                <span class="text-primary text-2xl font-bold" id="displayTotal">$0.00</span>
                             </div>
                         </div>
                         
-                        <!-- Your Balance -->
-                        <div class="flex justify-between text-sm mb-6 px-1">
-                            <span class="text-gray-500">Your Balance:</span>
-                            <span class="text-white" id="userBalance">Loading...</span>
+                        <!-- Step 3 Header -->
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-black font-bold text-sm">3</div>
+                            <h3 class="text-lg font-semibold text-white">Choose Payment Method</h3>
+                        </div>
+                        
+                        <!-- Payment Methods -->
+                        <div class="space-y-3 mb-6">
+                            <!-- Stripe / Card -->
+                            <div onclick="selectPayment('card')" id="payCard" 
+                                 class="payment-option selected border border-white/10 rounded-xl p-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-12 h-8 stripe-badge rounded flex items-center justify-center">
+                                            <span class="text-white font-bold text-xs">STRIPE</span>
+                                        </div>
+                                        <div>
+                                            <p class="text-white font-medium">Credit / Debit Card</p>
+                                            <p class="text-gray-500 text-xs">Visa, Mastercard, Amex & more</p>
+                                        </div>
+                                    </div>
+                                    <div class="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center" id="cardRadio">
+                                        <div class="w-3 h-3 rounded-full bg-primary"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- POL -->
+                            <div onclick="selectPayment('POL')" id="payPOL" 
+                                 class="payment-option border border-white/10 rounded-xl p-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-12 h-8 bg-purple-600 rounded flex items-center justify-center">
+                                            <span class="text-white font-bold text-sm">POL</span>
+                                        </div>
+                                        <div>
+                                            <p class="text-white font-medium">POL (Polygon)</p>
+                                            <p class="text-gray-500 text-xs" id="polEquivalent">≈ 0 POL</p>
+                                        </div>
+                                    </div>
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-600 flex items-center justify-center" id="polRadio">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- USDC -->
+                            <div onclick="selectPayment('USDC')" id="payUSDC" 
+                                 class="payment-option border border-white/10 rounded-xl p-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-12 h-8 bg-blue-500 rounded flex items-center justify-center">
+                                            <span class="text-white font-bold text-sm">USDC</span>
+                                        </div>
+                                        <div>
+                                            <p class="text-white font-medium">USDC (Stablecoin)</p>
+                                            <p class="text-gray-500 text-xs" id="usdcEquivalent">≈ 0 USDC</p>
+                                        </div>
+                                    </div>
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-600 flex items-center justify-center" id="usdcRadio">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Crypto Balance (shown for POL/USDC) -->
+                        <div id="cryptoBalanceSection" class="hidden mb-6 px-1">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-500">Your Balance:</span>
+                                <span class="text-white" id="userBalance">Loading...</span>
+                            </div>
                         </div>
                         
                         <!-- Buy Button -->
                         <button 
                             id="buyButton"
                             onclick="executePurchase()"
-                            class="w-full bg-primary text-background-dark py-4 rounded-xl font-bold uppercase tracking-widest text-sm gold-glow hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                            class="w-full bg-primary text-background-dark py-4 rounded-xl font-bold uppercase tracking-widest text-sm gold-glow hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
                         >
-                            Buy VIP Tokens
+                            <span class="material-symbols-outlined">shopping_cart</span>
+                            <span id="buyButtonText">Buy with Card</span>
                         </button>
                         
                         <p class="text-center text-gray-500 text-xs mt-4">
-                            By purchasing, you agree to our terms & conditions
+                            Tokens will be sent to your connected wallet after payment
                         </p>
                     </div>
                     
-                    <!-- Transaction Processing -->
+                    <!-- Processing State -->
                     <div id="processingSection" class="hidden text-center py-12">
                         <div class="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-6"></div>
-                        <h3 class="text-xl font-serif text-white mb-2">Processing Transaction</h3>
-                        <p class="text-gray-400 text-sm" id="processingStatus">Please confirm in your wallet...</p>
+                        <h3 class="text-xl font-serif text-white mb-2">Processing...</h3>
+                        <p class="text-gray-400 text-sm" id="processingStatus">Redirecting to payment...</p>
                     </div>
                     
                     <!-- Success State -->
@@ -394,14 +444,17 @@
                             <span class="material-symbols-outlined text-green-400 text-4xl">check_circle</span>
                         </div>
                         <h3 class="text-2xl font-serif text-white mb-2">Purchase Successful!</h3>
-                        <p class="text-gray-400 mb-6" id="successMessage">You have successfully purchased VIP tokens</p>
+                        <p class="text-gray-400 mb-6" id="successMessage">Your VIP tokens will be sent shortly</p>
                         <a id="txLink" href="#" target="_blank" 
-                           class="inline-flex items-center gap-2 text-primary hover:underline mb-6">
+                           class="inline-flex items-center gap-2 text-primary hover:underline mb-6 hidden">
                             <span class="material-symbols-outlined text-sm">open_in_new</span>
                             View Transaction
                         </a>
-                        <div class="pt-6">
-                            <button onclick="resetPurchase()" class="text-gray-500 hover:text-white transition-colors">
+                        <div class="pt-6 space-y-3">
+                            <a href="/profile" class="block w-full bg-primary text-background-dark py-3 rounded-xl font-bold uppercase tracking-widest text-sm">
+                                View Profile
+                            </a>
+                            <button onclick="resetPurchase()" class="text-gray-500 hover:text-white transition-colors text-sm">
                                 Make Another Purchase
                             </button>
                         </div>
@@ -412,8 +465,8 @@
                         <div class="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
                             <span class="material-symbols-outlined text-red-400 text-4xl">error</span>
                         </div>
-                        <h3 class="text-2xl font-serif text-white mb-2">Transaction Failed</h3>
-                        <p class="text-gray-400 mb-6" id="errorMessage">Something went wrong</p>
+                        <h3 class="text-2xl font-serif text-white mb-2">Something Went Wrong</h3>
+                        <p class="text-gray-400 mb-6" id="errorMessage">Payment could not be processed</p>
                         <button onclick="resetPurchase()" 
                                 class="bg-surface border border-white/10 text-white px-6 py-3 rounded-xl hover:border-primary transition-colors">
                             Try Again
@@ -426,27 +479,34 @@
             <!-- How It Works -->
             <div class="mt-16">
                 <h2 class="text-2xl font-serif text-center text-white mb-8">How It Works</h2>
-                <div class="grid md:grid-cols-3 gap-6">
+                <div class="grid md:grid-cols-4 gap-6">
                     <div class="glass-card rounded-xl p-6 text-center">
                         <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                             <span class="text-primary font-bold text-xl">1</span>
                         </div>
                         <h3 class="text-white font-semibold mb-2">Connect Wallet</h3>
-                        <p class="text-gray-500 text-sm">Connect your WalletTwo wallet to the presale platform</p>
+                        <p class="text-gray-500 text-sm">Connect your wallet to receive tokens</p>
                     </div>
                     <div class="glass-card rounded-xl p-6 text-center">
                         <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                             <span class="text-primary font-bold text-xl">2</span>
                         </div>
-                        <h3 class="text-white font-semibold mb-2">Enter Amount</h3>
-                        <p class="text-gray-500 text-sm">Choose how many VIP tokens you want to purchase</p>
+                        <h3 class="text-white font-semibold mb-2">Choose Amount</h3>
+                        <p class="text-gray-500 text-sm">Select how many tokens to buy</p>
                     </div>
                     <div class="glass-card rounded-xl p-6 text-center">
                         <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                             <span class="text-primary font-bold text-xl">3</span>
                         </div>
+                        <h3 class="text-white font-semibold mb-2">Pay Securely</h3>
+                        <p class="text-gray-500 text-sm">Card or crypto via Stripe</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-6 text-center">
+                        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-primary font-bold text-xl">4</span>
+                        </div>
                         <h3 class="text-white font-semibold mb-2">Receive Tokens</h3>
-                        <p class="text-gray-500 text-sm">Tokens are sent directly to your wallet after purchase</p>
+                        <p class="text-gray-500 text-sm">Tokens sent to your wallet</p>
                     </div>
                 </div>
             </div>
@@ -475,48 +535,50 @@
         // Configuration
         // ============================================
         const CONFIG = {
-            // Presale settings (will be loaded from API)
-            tokenPrice: 0.10,           // USD per token
-            totalTokens: 1000000,       // Total tokens for sale
-            tokensSold: 0,              // Tokens sold so far
-            minPurchase: 10,            // Minimum tokens per purchase
-            maxPurchase: 10000,         // Maximum tokens per purchase
-            presaleEndDate: null,       // Set to enable countdown
+            tokenPrice: 0.10,
+            totalTokens: 1000000,
+            tokensSold: 0,
+            minPurchase: 10,
+            maxPurchase: 10000,
             
-            // Network settings
-            POLYGON_RPC: 'https://polygon-mainnet.g.alchemy.com/v2/IoufBRdGO6MKWC6pxqbZW',
-            VIP_TOKEN_ADDRESS: '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F',
-            USDC_ADDRESS: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', // USDC on Polygon
-            PRESALE_WALLET: '', // Will be loaded from API
-            
-            // WalletTwo
             WALLETTWO_ORIGIN: 'https://wallet.wallettwo.com',
-            STORAGE_KEY: 'keavalley_profile'
+            STORAGE_KEY: 'keavalley_profile',
+            POLYGON_RPC: 'https://polygon-mainnet.g.alchemy.com/v2/IoufBRdGO6MKWC6pxqbZW',
+            USDC_ADDRESS: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'
         };
         
         // State
         let connectedWallet = null;
-        let selectedPayment = 'POL';
-        let polPrice = 0.50; // POL price in USD (will be fetched)
+        let selectedPayment = 'card';
+        let polPrice = 0.50;
         let userBalances = { POL: 0, USDC: 0 };
+        let stripe = null;
         
         // ============================================
         // Initialize
         // ============================================
         async function init() {
-            // Load presale config from API
+            // Check URL for success/cancel from Stripe
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('success') === 'true') {
+                showSuccess('Payment successful! Your tokens will be sent shortly.');
+                // Clear URL params
+                window.history.replaceState({}, '', '/presale');
+                return;
+            }
+            if (urlParams.get('canceled') === 'true') {
+                showError('Payment was canceled.');
+                window.history.replaceState({}, '', '/presale');
+            }
+            
+            // Load presale config
             await loadPresaleConfig();
             
-            // Check for existing session
+            // Check existing session
             checkExistingSession();
             
-            // Setup WalletTwo message listener
+            // Setup WalletTwo listener
             setupWalletListener();
-            
-            // Start countdown if end date is set
-            if (CONFIG.presaleEndDate) {
-                startCountdown();
-            }
             
             // Update UI
             updatePresaleUI();
@@ -532,32 +594,28 @@
                     CONFIG.tokensSold = data.tokensSold || CONFIG.tokensSold;
                     CONFIG.minPurchase = data.minPurchase || CONFIG.minPurchase;
                     CONFIG.maxPurchase = data.maxPurchase || CONFIG.maxPurchase;
-                    CONFIG.presaleEndDate = data.endDate ? new Date(data.endDate) : null;
-                    CONFIG.PRESALE_WALLET = data.presaleWallet || '';
                     polPrice = data.polPrice || polPrice;
+                    
+                    // Initialize Stripe if key provided
+                    if (data.stripePublicKey) {
+                        stripe = Stripe(data.stripePublicKey);
+                    }
                 }
             } catch (e) {
-                console.log('Using default presale config');
+                console.log('Using default config');
             }
         }
         
         function updatePresaleUI() {
-            // Progress
             const progress = CONFIG.totalTokens > 0 ? (CONFIG.tokensSold / CONFIG.totalTokens) * 100 : 0;
-            document.getElementById('progressBar').style.width = `${progress}%`;
+            document.getElementById('progressBar').style.width = `${Math.min(progress, 100)}%`;
             document.getElementById('progressPercent').textContent = `${progress.toFixed(1)}%`;
             document.getElementById('tokensSold').textContent = `${CONFIG.tokensSold.toLocaleString()} VIP`;
             document.getElementById('totalTokens').textContent = `${CONFIG.totalTokens.toLocaleString()} VIP`;
             
-            // Price
             document.getElementById('tokenPrice').textContent = `$${CONFIG.tokenPrice.toFixed(2)}`;
             document.getElementById('minPurchase').textContent = `${CONFIG.minPurchase.toLocaleString()} VIP`;
             document.getElementById('maxPurchase').textContent = `${CONFIG.maxPurchase.toLocaleString()} VIP`;
-            
-            // Hide countdown if no end date
-            if (!CONFIG.presaleEndDate) {
-                document.getElementById('countdownCard').classList.add('hidden');
-            }
         }
         
         // ============================================
@@ -568,52 +626,36 @@
             if (stored) {
                 try {
                     const session = JSON.parse(stored);
-                    const age = Date.now() - (session.timestamp || 0);
-                    if (age < 24 * 60 * 60 * 1000 && session.wallet) {
-                        connectWallet(session.wallet, session.email, session.name);
+                    if (Date.now() - (session.timestamp || 0) < 24 * 60 * 60 * 1000 && session.wallet) {
+                        connectWallet(session.wallet);
                     }
-                } catch (e) {
-                    console.error('Session parse error:', e);
-                }
+                } catch (e) {}
             }
         }
         
         function setupWalletListener() {
-            window.addEventListener('message', async (event) => {
+            window.addEventListener('message', (event) => {
                 if (!event.origin.includes('wallettwo.com')) return;
                 
                 const data = event.data;
-                console.log('WalletTwo message:', data);
-                
                 if (data.type === 'wallet_login' && data.wallet) {
-                    // Save session
-                    const session = {
+                    localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify({
                         wallet: data.wallet,
-                        email: data.email,
-                        name: data.name,
                         timestamp: Date.now()
-                    };
-                    localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(session));
-                    
-                    connectWallet(data.wallet, data.email, data.name);
+                    }));
+                    connectWallet(data.wallet);
                 }
             });
         }
         
-        async function connectWallet(address, email, name) {
+        async function connectWallet(address) {
             connectedWallet = address;
             
-            // Update UI
-            document.getElementById('connectWalletSection').classList.add('hidden');
-            document.getElementById('purchaseSection').classList.remove('hidden');
-            
-            // Set initials
-            const initials = address.slice(2, 4).toUpperCase();
-            document.getElementById('walletInitials').textContent = initials;
+            document.getElementById('step1Section').classList.add('hidden');
+            document.getElementById('step2Section').classList.remove('hidden');
             document.getElementById('walletAddressDisplay').textContent = 
                 `${address.slice(0, 6)}...${address.slice(-4)}`;
             
-            // Fetch balances
             await fetchUserBalances();
             updateTotals();
         }
@@ -622,10 +664,9 @@
             localStorage.removeItem(CONFIG.STORAGE_KEY);
             connectedWallet = null;
             
-            document.getElementById('connectWalletSection').classList.remove('hidden');
-            document.getElementById('purchaseSection').classList.add('hidden');
+            document.getElementById('step1Section').classList.remove('hidden');
+            document.getElementById('step2Section').classList.add('hidden');
             
-            // Reload iframe
             document.getElementById('walletIframe').src = 
                 'https://wallet.wallettwo.com/auth/login?action=auth&iframe=true';
         }
@@ -634,47 +675,36 @@
             if (!connectedWallet) return;
             
             try {
-                // Fetch from WalletTwo API
-                const polResponse = await fetch(
-                    `https://api.wallettwo.com/blockchain/balance/137/${connectedWallet}/native`
-                );
-                if (polResponse.ok) {
-                    const polData = await polResponse.json();
+                // POL balance
+                const polRes = await fetch(`https://api.wallettwo.com/blockchain/balance/137/${connectedWallet}/native`);
+                if (polRes.ok) {
+                    const polData = await polRes.json();
                     userBalances.POL = parseFloat(polData.balance || 0);
                 }
                 
-                // Fetch USDC balance
-                const usdcResponse = await fetch(
-                    `https://api.wallettwo.com/blockchain/balance/137/${connectedWallet}/${CONFIG.USDC_ADDRESS}`
-                );
-                if (usdcResponse.ok) {
-                    const usdcData = await usdcResponse.json();
+                // USDC balance
+                const usdcRes = await fetch(`https://api.wallettwo.com/blockchain/balance/137/${connectedWallet}/${CONFIG.USDC_ADDRESS}`);
+                if (usdcRes.ok) {
+                    const usdcData = await usdcRes.json();
                     userBalances.USDC = parseFloat(usdcData.balance || 0);
                 }
             } catch (e) {
                 console.error('Balance fetch error:', e);
-                // Fallback to RPC
-                try {
-                    const provider = new ethers.JsonRpcProvider(CONFIG.POLYGON_RPC);
-                    const polBalance = await provider.getBalance(connectedWallet);
-                    userBalances.POL = parseFloat(ethers.formatEther(polBalance));
-                } catch (e2) {
-                    console.error('RPC fallback error:', e2);
-                }
             }
             
             updateBalanceDisplay();
         }
         
         function updateBalanceDisplay() {
-            const balance = selectedPayment === 'POL' 
-                ? `${userBalances.POL.toFixed(4)} POL`
-                : `${userBalances.USDC.toFixed(2)} USDC`;
-            document.getElementById('userBalance').textContent = balance;
+            if (selectedPayment === 'POL') {
+                document.getElementById('userBalance').textContent = `${userBalances.POL.toFixed(4)} POL`;
+            } else if (selectedPayment === 'USDC') {
+                document.getElementById('userBalance').textContent = `${userBalances.USDC.toFixed(2)} USDC`;
+            }
         }
         
         // ============================================
-        // Purchase Form
+        // Amount & Payment Selection
         // ============================================
         function setAmount(amount) {
             document.getElementById('tokenAmount').value = amount;
@@ -689,12 +719,36 @@
         function selectPayment(method) {
             selectedPayment = method;
             
-            // Update UI
-            document.getElementById('payPOL').classList.toggle('selected', method === 'POL');
-            document.getElementById('payUSDC').classList.toggle('selected', method === 'USDC');
+            // Update selection UI
+            ['card', 'POL', 'USDC'].forEach(m => {
+                const el = document.getElementById(`pay${m === 'card' ? 'Card' : m}`);
+                const radio = document.getElementById(`${m === 'card' ? 'card' : m.toLowerCase()}Radio`);
+                
+                if (m === method) {
+                    el.classList.add('selected');
+                    radio.innerHTML = '<div class="w-3 h-3 rounded-full bg-primary"></div>';
+                    radio.classList.remove('border-gray-600');
+                    radio.classList.add('border-primary');
+                } else {
+                    el.classList.remove('selected');
+                    radio.innerHTML = '';
+                    radio.classList.add('border-gray-600');
+                    radio.classList.remove('border-primary');
+                }
+            });
+            
+            // Show/hide crypto balance
+            const cryptoSection = document.getElementById('cryptoBalanceSection');
+            if (method === 'card') {
+                cryptoSection.classList.add('hidden');
+                document.getElementById('buyButtonText').textContent = 'Buy with Card';
+            } else {
+                cryptoSection.classList.remove('hidden');
+                document.getElementById('buyButtonText').textContent = `Buy with ${method}`;
+                updateBalanceDisplay();
+            }
             
             updateTotals();
-            updateBalanceDisplay();
         }
         
         function updateTotals() {
@@ -703,13 +757,12 @@
             
             document.getElementById('displayPrice').textContent = `$${CONFIG.tokenPrice.toFixed(2)}`;
             document.getElementById('displayQuantity').textContent = `${amount.toLocaleString()} VIP`;
+            document.getElementById('displayTotal').textContent = `$${totalUSD.toFixed(2)}`;
             
-            if (selectedPayment === 'POL') {
-                const totalPOL = polPrice > 0 ? totalUSD / polPrice : 0;
-                document.getElementById('displayTotal').textContent = `${totalPOL.toFixed(4)} POL`;
-            } else {
-                document.getElementById('displayTotal').textContent = `${totalUSD.toFixed(2)} USDC`;
-            }
+            // Update crypto equivalents
+            const totalPOL = polPrice > 0 ? totalUSD / polPrice : 0;
+            document.getElementById('polEquivalent').textContent = `≈ ${totalPOL.toFixed(4)} POL`;
+            document.getElementById('usdcEquivalent').textContent = `≈ ${totalUSD.toFixed(2)} USDC`;
         }
         
         // ============================================
@@ -720,133 +773,149 @@
             
             // Validation
             if (amount < CONFIG.minPurchase) {
-                showError(`Minimum purchase is ${CONFIG.minPurchase} VIP tokens`);
+                alert(`Minimum purchase is ${CONFIG.minPurchase} VIP tokens`);
                 return;
             }
             
             if (amount > CONFIG.maxPurchase) {
-                showError(`Maximum purchase is ${CONFIG.maxPurchase} VIP tokens`);
+                alert(`Maximum purchase is ${CONFIG.maxPurchase} VIP tokens`);
                 return;
             }
             
             if (!connectedWallet) {
-                showError('Please connect your wallet first');
+                alert('Please connect your wallet first');
                 return;
             }
             
-            // Calculate total
             const totalUSD = amount * CONFIG.tokenPrice;
+            
+            // For card payments, use Stripe Checkout
+            if (selectedPayment === 'card') {
+                await payWithStripe(amount, totalUSD);
+            } else {
+                // For crypto, submit purchase request
+                await payWithCrypto(amount, selectedPayment);
+            }
+        }
+        
+        async function payWithStripe(tokenAmount, totalUSD) {
+            showProcessing('Creating checkout session...');
+            
+            try {
+                const response = await fetch('/api/presale/create-checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        wallet_address: connectedWallet,
+                        token_amount: tokenAmount,
+                        amount_usd: totalUSD
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                // Redirect to Stripe Checkout
+                if (data.url) {
+                    window.location.href = data.url;
+                } else if (data.sessionId && stripe) {
+                    const result = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+                    if (result.error) {
+                        showError(result.error.message);
+                    }
+                } else {
+                    showError('Could not create checkout session');
+                }
+                
+            } catch (error) {
+                console.error('Stripe error:', error);
+                showError(error.message || 'Payment failed');
+            }
+        }
+        
+        async function payWithCrypto(tokenAmount, method) {
+            const totalUSD = tokenAmount * CONFIG.tokenPrice;
             const totalPOL = polPrice > 0 ? totalUSD / polPrice : 0;
             
             // Check balance
-            if (selectedPayment === 'POL' && userBalances.POL < totalPOL) {
-                showError('Insufficient POL balance');
+            if (method === 'POL' && userBalances.POL < totalPOL) {
+                alert('Insufficient POL balance');
                 return;
             }
-            if (selectedPayment === 'USDC' && userBalances.USDC < totalUSD) {
-                showError('Insufficient USDC balance');
+            if (method === 'USDC' && userBalances.USDC < totalUSD) {
+                alert('Insufficient USDC balance');
                 return;
             }
             
-            // Show processing
-            showSection('processing');
-            document.getElementById('processingStatus').textContent = 'Submitting purchase request...';
+            showProcessing('Submitting purchase...');
             
             try {
-                // Submit to server
                 const response = await fetch('/api/presale/purchase', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         wallet_address: connectedWallet,
-                        token_amount: amount,
-                        payment_method: selectedPayment,
-                        payment_amount: selectedPayment === 'POL' ? totalPOL : totalUSD
+                        token_amount: tokenAmount,
+                        payment_method: method,
+                        payment_amount: method === 'POL' ? totalPOL : totalUSD
                     })
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    document.getElementById('successMessage').textContent = 
-                        `You have purchased ${amount.toLocaleString()} VIP tokens!`;
-                    
-                    if (data.tx_hash) {
-                        document.getElementById('txLink').href = 
-                            `https://polygonscan.com/tx/${data.tx_hash}`;
-                        document.getElementById('txLink').classList.remove('hidden');
-                    } else {
-                        document.getElementById('txLink').classList.add('hidden');
-                    }
-                    
-                    showSection('success');
-                    
-                    // Reload config to update sold count
-                    await loadPresaleConfig();
-                    updatePresaleUI();
+                    showSuccess(`Purchase recorded! Please send ${method === 'POL' ? totalPOL.toFixed(4) + ' POL' : totalUSD.toFixed(2) + ' USDC'} to complete your order.`);
                 } else {
                     showError(data.error || 'Purchase failed');
                 }
                 
             } catch (error) {
-                console.error('Purchase error:', error);
                 showError(error.message || 'Network error');
             }
         }
         
-        function showSection(section) {
-            document.getElementById('purchaseSection').classList.add('hidden');
-            document.getElementById('processingSection').classList.add('hidden');
+        // ============================================
+        // UI State Management
+        // ============================================
+        function showProcessing(message) {
+            document.getElementById('step2Section').classList.add('hidden');
+            document.getElementById('processingSection').classList.remove('hidden');
             document.getElementById('successSection').classList.add('hidden');
             document.getElementById('errorSection').classList.add('hidden');
-            
-            document.getElementById(`${section}Section`).classList.remove('hidden');
+            document.getElementById('processingStatus').textContent = message;
+        }
+        
+        function showSuccess(message) {
+            document.getElementById('step1Section').classList.add('hidden');
+            document.getElementById('step2Section').classList.add('hidden');
+            document.getElementById('processingSection').classList.add('hidden');
+            document.getElementById('successSection').classList.remove('hidden');
+            document.getElementById('errorSection').classList.add('hidden');
+            document.getElementById('successMessage').textContent = message;
         }
         
         function showError(message) {
+            document.getElementById('step2Section').classList.add('hidden');
+            document.getElementById('processingSection').classList.add('hidden');
+            document.getElementById('successSection').classList.add('hidden');
+            document.getElementById('errorSection').classList.remove('hidden');
             document.getElementById('errorMessage').textContent = message;
-            showSection('error');
         }
         
         function resetPurchase() {
             document.getElementById('tokenAmount').value = '';
-            showSection('purchase');
-            document.getElementById('purchaseSection').classList.remove('hidden');
+            document.getElementById('step2Section').classList.remove('hidden');
+            document.getElementById('processingSection').classList.add('hidden');
+            document.getElementById('successSection').classList.add('hidden');
+            document.getElementById('errorSection').classList.add('hidden');
             updateTotals();
         }
         
-        // ============================================
-        // Countdown
-        // ============================================
-        function startCountdown() {
-            function update() {
-                const now = new Date();
-                const diff = CONFIG.presaleEndDate - now;
-                
-                if (diff <= 0) {
-                    document.getElementById('countDays').textContent = '00';
-                    document.getElementById('countHours').textContent = '00';
-                    document.getElementById('countMinutes').textContent = '00';
-                    document.getElementById('countSeconds').textContent = '00';
-                    return;
-                }
-                
-                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                
-                document.getElementById('countDays').textContent = String(days).padStart(2, '0');
-                document.getElementById('countHours').textContent = String(hours).padStart(2, '0');
-                document.getElementById('countMinutes').textContent = String(minutes).padStart(2, '0');
-                document.getElementById('countSeconds').textContent = String(seconds).padStart(2, '0');
-            }
-            
-            update();
-            setInterval(update, 1000);
-        }
-        
-        // Initialize on load
+        // Initialize
         init();
     </script>
 </body>
