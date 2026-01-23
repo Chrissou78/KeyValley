@@ -68,19 +68,34 @@
             to { opacity: 1; transform: translateY(0); }
         }
         .slide-in { animation: slideIn 0.3s ease-out; }
+        
+        /* Fixed input field styles */
         .input-field {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #1a1a1a;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             transition: all 0.3s ease;
+            color: #ffffff;
         }
         .input-field:focus {
-            background: rgba(255, 255, 255, 0.05);
+            background: #222222;
             border-color: #ee9d2b;
             outline: none;
+            box-shadow: 0 0 0 2px rgba(238, 157, 43, 0.2);
         }
         .input-field::placeholder {
-            color: rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.35);
         }
+        .input-field:read-only {
+            background: #111111;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: not-allowed;
+        }
+        /* Ensure number inputs show white text */
+        .input-field[type="number"],
+        .input-field[type="text"] {
+            color: #ffffff;
+        }
+        
         .tab-btn {
             transition: all 0.2s ease;
         }
