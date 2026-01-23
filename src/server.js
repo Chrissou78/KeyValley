@@ -1311,6 +1311,46 @@ app.post('/api/presale/purchase', async (req, res) => {
     }
 });
 
+// GET /api/presale/admin/stats
+app.get('/api/presale/admin/stats', requireAuth, checkPasswordChange, async (req, res) => {
+    try {
+        await db.initDb();
+        const stats = await db.getPresaleStats();
+        
+        // Count pending mint
+        const pendingResult = await db.pool.query(
+            `SELECT COUNT(*) FROM presale_purchases WHERE status IN ('paid', 'paid_pending_mint')`
+        );
+        
+        res.json({
+            ...stats,
+            pending_mint: parseInt(pendingResult.rows[0]?.count || 0)
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// POST /api/presale/admin/settings
+app.post('/api/presale/admin/settings', requireAuth, checkPasswordChange, async (req, res) => {
+    try {
+        const { enabled, tokenPrice, totalTokens, minPurchase, maxPurchase, presaleWallet } = req.body;
+        
+        // Store in environment or database
+        // For now, just acknowledge (actual persistence depends on your setup)
+        PRESALE_CONFIG.enabled = enabled;
+        PRESALE_CONFIG.tokenPrice = tokenPrice;
+        PRESALE_CONFIG.totalTokens = totalTokens;
+        PRESALE_CONFIG.minPurchase = minPurchase;
+        PRESALE_CONFIG.maxPurchase = maxPurchase;
+        PRESALE_CONFIG.presaleWallet = presaleWallet;
+        
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Admin: Get all presale purchases
 app.get('/api/presale/admin/purchases', requireAuth, checkPasswordChange, async (req, res) => {
     try {

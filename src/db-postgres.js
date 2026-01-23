@@ -17,6 +17,10 @@ let isInitialized = false;
  */
 async function initDb() {
     if (isInitialized) {
+        await pool.query(`
+            ALTER TABLE registrants 
+            ADD COLUMN IF NOT EXISTS email VARCHAR(255)
+        `);
         return;
     }
 
@@ -560,8 +564,11 @@ async function updatePresalePurchaseByStripeSession(sessionId, updates) {
 
 // Format registrant for API response
 function formatRegistrant(row) {
+    if (!row) return null;
     return {
+        id: row.id,
         address: row.address,
+        email: row.email || row.metadata?.email || null,
         minted: row.minted,
         txHash: row.tx_hash,
         tx_hash: row.tx_hash,
@@ -569,7 +576,7 @@ function formatRegistrant(row) {
         registered_at: row.registered_at,
         mintedAt: row.minted_at,
         signature: row.signature,
-        metadata: row.metadata || {}
+        metadata: row.metadata
     };
 }
 

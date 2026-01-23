@@ -61,6 +61,8 @@
         }
         .badge-success { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
         .badge-pending { background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
+        .badge-paid { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-failed { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
         @keyframes slideIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -78,6 +80,47 @@
         }
         .input-field::placeholder {
             color: rgba(255, 255, 255, 0.3);
+        }
+        .tab-btn {
+            transition: all 0.2s ease;
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(238, 157, 43, 0.2) 0%, rgba(238, 157, 43, 0.05) 100%);
+            border-color: #ee9d2b;
+            color: #ee9d2b;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .toggle-switch.active {
+            background: #ee9d2b;
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+        }
+        .toggle-switch.active::after {
+            transform: translateX(24px);
         }
     </style>
 </head>
@@ -125,733 +168,433 @@
                 <h1 class="text-3xl font-serif italic font-medium text-white">Admin Overview</h1>
             </div>
 
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Registrants</p>
-                            <p id="statTotal" class="text-3xl font-serif text-white mt-2">--</p>
-                        </div>
-                        <span class="material-symbols-outlined text-primary/30 text-3xl">group</span>
-                    </div>
-                </div>
-                <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Minted</p>
-                            <p id="statMinted" class="text-3xl font-serif text-green-400 mt-2">--</p>
-                        </div>
-                        <span class="material-symbols-outlined text-green-400/30 text-3xl">check_circle</span>
-                    </div>
-                </div>
-                <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Pending</p>
-                            <p id="statPending" class="text-3xl font-serif text-yellow-400 mt-2">--</p>
-                        </div>
-                        <span class="material-symbols-outlined text-yellow-400/30 text-3xl">schedule</span>
-                    </div>
-                </div>
-                <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Network</p>
-                            <p id="statNetwork" class="text-xl font-serif text-primary mt-2">--</p>
-                        </div>
-                        <span class="material-symbols-outlined text-primary/30 text-3xl">hub</span>
-                    </div>
-                </div>
+            <!-- Main Tabs Navigation -->
+            <div class="flex gap-2 mb-8 overflow-x-auto pb-2">
+                <button onclick="switchMainTab('claims')" id="tabClaims" class="tab-btn active flex items-center gap-2 px-6 py-3 border border-white/10 rounded-sm text-sm font-bold uppercase tracking-widest whitespace-nowrap">
+                    <span class="material-symbols-outlined text-lg">redeem</span>
+                    Free Claims
+                </button>
+                <button onclick="switchMainTab('presale')" id="tabPresale" class="tab-btn flex items-center gap-2 px-6 py-3 border border-white/10 rounded-sm text-sm font-bold uppercase tracking-widest whitespace-nowrap">
+                    <span class="material-symbols-outlined text-lg">shopping_cart</span>
+                    Presale
+                </button>
+                <button onclick="switchMainTab('settings')" id="tabSettings" class="tab-btn flex items-center gap-2 px-6 py-3 border border-white/10 rounded-sm text-sm font-bold uppercase tracking-widest whitespace-nowrap">
+                    <span class="material-symbols-outlined text-lg">settings</span>
+                    Settings
+                </button>
             </div>
 
-            <!-- Wallet Info & Actions Row -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- ==================== CLAIMS TAB ==================== -->
+            <div id="contentClaims" class="tab-content active">
                 
-                <!-- Minter Wallet Card -->
-                <div class="lg:col-span-2 bg-surface border border-white/5 rounded-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
-                        <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Minter Wallet</h3>
-                        <button id="refreshWalletBtn" class="text-slate-500 hover:text-primary transition-colors">
-                            <span class="material-symbols-outlined text-lg">refresh</span>
-                        </button>
+                <!-- Claims Stats Grid -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Registrants</p>
+                                <p id="statTotal" class="text-3xl font-serif text-white mt-2">--</p>
+                            </div>
+                            <span class="material-symbols-outlined text-primary/30 text-3xl">group</span>
+                        </div>
                     </div>
-                    <div class="p-6">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
+                        <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-slate-500 text-xs mb-2">Address</p>
-                                <p id="walletAddress" class="text-white font-mono text-sm truncate">Loading...</p>
+                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Minted</p>
+                                <p id="statMinted" class="text-3xl font-serif text-green-400 mt-2">--</p>
                             </div>
+                            <span class="material-symbols-outlined text-green-400/30 text-3xl">check_circle</span>
+                        </div>
+                    </div>
+                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
+                        <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-slate-500 text-xs mb-2">Native Balance</p>
-                                <p id="walletBalance" class="text-white text-xl font-semibold">--</p>
+                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Pending</p>
+                                <p id="statPending" class="text-3xl font-serif text-yellow-400 mt-2">--</p>
                             </div>
+                            <span class="material-symbols-outlined text-yellow-400/30 text-3xl">schedule</span>
+                        </div>
+                    </div>
+                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
+                        <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-slate-500 text-xs mb-2">Token Balance</p>
-                                <p id="tokenBalance" class="text-primary text-xl font-semibold">--</p>
+                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Network</p>
+                                <p id="statNetwork" class="text-xl font-serif text-primary mt-2">--</p>
                             </div>
+                            <span class="material-symbols-outlined text-primary/30 text-3xl">hub</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Quick Actions Card -->
+                <!-- Wallet Info & Actions Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    
+                    <!-- Minter Wallet Card -->
+                    <div class="lg:col-span-2 bg-surface border border-white/5 rounded-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Minter Wallet</h3>
+                            <button id="refreshWalletBtn" class="text-slate-500 hover:text-primary transition-colors">
+                                <span class="material-symbols-outlined text-lg">refresh</span>
+                            </button>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <p class="text-slate-500 text-xs mb-2">Address</p>
+                                    <p id="walletAddress" class="text-white font-mono text-sm truncate">Loading...</p>
+                                </div>
+                                <div>
+                                    <p class="text-slate-500 text-xs mb-2">Native Balance</p>
+                                    <p id="walletBalance" class="text-white text-xl font-semibold">--</p>
+                                </div>
+                                <div>
+                                    <p class="text-slate-500 text-xs mb-2">Token Balance</p>
+                                    <p id="tokenBalance" class="text-primary text-xl font-semibold">--</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions Card -->
+                    <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-white/5">
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Quick Actions</h3>
+                        </div>
+                        <div class="p-6 space-y-3">
+                            <button id="mintNowBtn" class="w-full bg-primary text-background-dark px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-1px] transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-lg">token</span>
+                                Mint Pending
+                            </button>
+                            <button id="manualMintBtn" class="w-full border border-primary/30 text-primary px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/10 transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-lg">edit</span>
+                                Manual Mint
+                            </button>
+                            <button id="fullSyncBtn" class="w-full border border-white/10 text-white px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-primary/30 hover:text-primary transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-lg">sync</span>
+                                Full Sync
+                            </button>
+                            <button id="refreshBtn" class="w-full border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-lg">refresh</span>
+                                Refresh
+                            </button>
+                        </div>
+                        <!-- Action Result -->
+                        <div id="actionResult" class="hidden px-6 pb-6">
+                            <div id="actionResultContent" class="p-4 rounded-sm text-sm"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Registrants Table -->
                 <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-white/5">
-                        <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Quick Actions</h3>
+                    <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between flex-wrap gap-4">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Claim Registrants</h3>
+                        <div class="flex items-center gap-2">
+                            <button id="filterAll" class="filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30">All</button>
+                            <button id="filterPending" class="filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Pending</button>
+                            <button id="filterMinted" class="filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Minted</button>
+                        </div>
                     </div>
-                    <div class="p-6 space-y-3">
-                        <button id="mintNowBtn" class="w-full bg-primary text-background-dark px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-1px] transition-all flex items-center justify-center gap-2">
-                            <span class="material-symbols-outlined text-lg">token</span>
-                            Mint Pending
-                        </button>
-                        <button id="manualMintBtn" class="w-full border border-primary/30 text-primary px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/10 transition-all flex items-center justify-center gap-2">
-                            <span class="material-symbols-outlined text-lg">edit</span>
-                            Manual Mint
-                        </button>
-                        <button id="fullSyncBtn" class="w-full border border-white/10 text-white px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-primary/30 hover:text-primary transition-all flex items-center justify-center gap-2">
-                            <span class="material-symbols-outlined text-lg">sync</span>
-                            Full Sync
-                        </button>
-                        <button id="refreshBtn" class="w-full border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all flex items-center justify-center gap-2">
-                            <span class="material-symbols-outlined text-lg">refresh</span>
-                            Refresh
-                        </button>
-                    </div>
-                    <!-- Action Result -->
-                    <div id="actionResult" class="hidden px-6 pb-6">
-                        <div id="actionResultContent" class="p-4 rounded-sm text-sm"></div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-white/5">
+                                    <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Email</th>
+                                    <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Address</th>
+                                    <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Status</th>
+                                    <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">TX Hash</th>
+                                    <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Registered</th>
+                                    <th class="text-right py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="registrantsTable">
+                                <tr>
+                                    <td colspan="6" class="text-center py-12 text-slate-500">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <!-- Manual Mint Modal -->
-            <div id="manualMintModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6">
-                <div class="absolute inset-0 bg-black/70" onclick="closeManualMintModal()"></div>
-                <div class="relative bg-surface border border-white/10 rounded-sm w-full max-w-md overflow-hidden">
-                    <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
-                        <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Manual Mint</h3>
-                        <button onclick="closeManualMintModal()" class="text-slate-500 hover:text-white transition-colors">
-                            <span class="material-symbols-outlined">close</span>
-                        </button>
-                    </div>
-                    <div class="p-6">
-                        <p class="text-slate-400 text-sm mb-6">Mint 2 VIP tokens to a specific wallet address.</p>
-                        <form id="manualMintForm">
-                            <div class="mb-6">
-                                <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Wallet Address</label>
-                                <input 
-                                    type="text" 
-                                    id="manualMintAddress" 
-                                    required
-                                    placeholder="0x..."
-                                    class="input-field w-full px-4 py-3 rounded-sm text-white font-mono text-sm"
-                                >
+            <!-- ==================== PRESALE TAB ==================== -->
+            <div id="contentPresale" class="tab-content">
+                
+                <!-- Presale Stats Grid -->
+                <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Total Purchases</p>
+                                <p id="presaleTotalPurchases" class="text-3xl font-serif text-white mt-2">--</p>
                             </div>
-                            <div class="flex gap-3">
-                                <button type="button" onclick="closeManualMintModal()" class="flex-1 border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all">
-                                    Cancel
-                                </button>
-                                <button type="submit" id="manualMintSubmitBtn" class="flex-1 bg-primary text-background-dark px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-1px] transition-all flex items-center justify-center gap-2">
-                                    <span id="manualMintBtnText">Mint Tokens</span>
-                                    <span id="manualMintBtnLoader" class="hidden">
-                                        <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                    </span>
-                                </button>
-                            </div>
-                        </form>
-                        <!-- Manual Mint Result -->
-                        <div id="manualMintResult" class="hidden mt-6 p-4 rounded-sm text-sm"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Full Sync Modal -->
-            <div id="fullSyncModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6">
-                <div class="absolute inset-0 bg-black/70" onclick="closeFullSyncModal()"></div>
-                <div class="relative bg-surface border border-white/10 rounded-sm w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
-                    <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
-                        <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Full Sync Results</h3>
-                        <button onclick="closeFullSyncModal()" class="text-slate-500 hover:text-white transition-colors">
-                            <span class="material-symbols-outlined">close</span>
-                        </button>
-                    </div>
-                    <div class="p-6 overflow-y-auto flex-1">
-                        <!-- Sync Loading -->
-                        <div id="fullSyncLoading" class="text-center py-12">
-                            <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-                            <p class="text-slate-400 text-sm">Syncing with blockchain...</p>
-                            <p class="text-slate-600 text-xs mt-2">This may take a moment</p>
+                            <span class="material-symbols-outlined text-primary/30 text-3xl">receipt_long</span>
                         </div>
-                        <!-- Sync Results -->
-                        <div id="fullSyncResults" class="hidden">
-                            <!-- Summary -->
-                            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                                <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
-                                    <p class="text-slate-500 text-xs mb-1">Total</p>
-                                    <p id="syncTotal" class="text-2xl font-serif text-white">0</p>
-                                </div>
-                                <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
-                                    <p class="text-slate-500 text-xs mb-1">With Balance</p>
-                                    <p id="syncWithBalance" class="text-2xl font-serif text-green-400">0</p>
-                                </div>
-                                <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
-                                    <p class="text-slate-500 text-xs mb-1">No Balance</p>
-                                    <p id="syncWithoutBalance" class="text-2xl font-serif text-yellow-400">0</p>
-                                </div>
-                                <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
-                                    <p class="text-slate-500 text-xs mb-1">Updated</p>
-                                    <p id="syncUpdated" class="text-2xl font-serif text-primary">0</p>
-                                </div>
-                                <div class="bg-background-dark border border-white/5 rounded-sm p-4 text-center">
-                                    <p class="text-slate-500 text-xs mb-1">TX Found</p>
-                                    <p id="syncTxFound" class="text-2xl font-serif text-blue-400">0</p>
-                                </div>
+                    </div>
+                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Tokens Sold</p>
+                                <p id="presaleTokensSold" class="text-3xl font-serif text-green-400 mt-2">--</p>
                             </div>
-                            <!-- Holders List -->
-                            <div class="border border-white/5 rounded-sm overflow-hidden">
-                                <table class="w-full">
-                                    <thead>
-                                        <tr class="border-b border-white/5 bg-background-dark">
-                                            <th class="text-left py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">Address</th>
-                                            <th class="text-right py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">Balance</th>
-                                            <th class="text-center py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">Status</th>
-                                            <th class="text-left py-3 px-4 text-xs font-bold uppercase tracking-widest text-slate-500">TX Hash</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="syncHoldersTable">
-                                    </tbody>
-                                </table>
-                            </div>
+                            <span class="material-symbols-outlined text-green-400/30 text-3xl">token</span>
                         </div>
-                        <!-- Sync Error -->
-                        <div id="fullSyncError" class="hidden text-center py-12">
-                            <span class="material-symbols-outlined text-red-400 text-5xl mb-4">error</span>
-                            <p class="text-red-400 text-sm" id="fullSyncErrorText">An error occurred</p>
+                    </div>
+                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Total USD</p>
+                                <p id="presaleTotalUSD" class="text-3xl font-serif text-primary mt-2">--</p>
+                            </div>
+                            <span class="material-symbols-outlined text-primary/30 text-3xl">attach_money</span>
+                        </div>
+                    </div>
+                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Unique Buyers</p>
+                                <p id="presaleUniqueBuyers" class="text-3xl font-serif text-blue-400 mt-2">--</p>
+                            </div>
+                            <span class="material-symbols-outlined text-blue-400/30 text-3xl">people</span>
+                        </div>
+                    </div>
+                    <div class="stat-card bg-surface border border-white/5 rounded-sm p-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest">Pending Mint</p>
+                                <p id="presalePendingMint" class="text-3xl font-serif text-yellow-400 mt-2">--</p>
+                            </div>
+                            <span class="material-symbols-outlined text-yellow-400/30 text-3xl">pending</span>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Registrants Table -->
-            <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
-                <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between flex-wrap gap-4">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Registrants</h3>
-                    <div class="flex items-center gap-2">
-                        <button id="filterAll" class="filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30">All</button>
-                        <button id="filterPending" class="filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Pending</button>
-                        <button id="filterMinted" class="filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Minted</button>
+                <!-- Presale Progress -->
+                <div class="bg-surface border border-white/5 rounded-sm p-6 mb-8">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Sale Progress</h3>
+                        <span id="presaleProgressPercent" class="text-sm text-slate-500">0%</span>
+                    </div>
+                    <div class="h-4 bg-background-dark rounded-full overflow-hidden mb-4">
+                        <div id="presaleProgressBar" class="h-full bg-gradient-to-r from-primary to-primary-light rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-500">Sold: <span id="presaleProgressSold" class="text-white">0</span> VIP</span>
+                        <span class="text-slate-500">Total: <span id="presaleProgressTotal" class="text-white">1,000,000</span> VIP</span>
                     </div>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="border-b border-white/5">
-                                <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Address</th>
-                                <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Status</th>
-                                <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">TX Hash</th>
-                                <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Registered</th>
-                                <th class="text-right py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="registrantsTable">
-                            <tr>
-                                <td colspan="5" class="text-center py-12 text-slate-500">Loading...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+                <!-- Presale Actions -->
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+                    <button onclick="refreshPresaleData()" class="bg-surface border border-white/10 text-white px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-primary/30 hover:text-primary transition-all flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-lg">refresh</span>
+                        Refresh Data
+                    </button>
+                    <button onclick="openPresaleFulfillModal()" class="bg-surface border border-primary/30 text-primary px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/10 transition-all flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-lg">send</span>
+                        Fulfill Orders
+                    </button>
+                    <button onclick="exportPresaleCSV()" class="bg-surface border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-lg">download</span>
+                        Export CSV
+                    </button>
+                    <a href="/presale" target="_blank" class="bg-surface border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-lg">open_in_new</span>
+                        View Presale
+                    </a>
+                </div>
+
+                <!-- Presale Purchases Table -->
+                <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between flex-wrap gap-4">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Presale Purchases</h3>
+                        <div class="flex items-center gap-2">
+                            <button onclick="setPresaleFilter('all')" id="presaleFilterAll" class="presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30">All</button>
+                            <button onclick="setPresaleFilter('pending')" id="presaleFilterPending" class="presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Pending</button>
+                            <button onclick="setPresaleFilter('paid')" id="presaleFilterPaid" class="presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Paid</button>
+                            <button onclick="setPresaleFilter('minted')" id="presaleFilterMinted" class="presale-filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors">Minted</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-white/5">
+                                    <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Wallet</th>
+                                    <th class="text-right py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Tokens</th>
+                                    <th class="text-right py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Amount</th>
+                                    <th class="text-center py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Method</th>
+                                    <th class="text-center py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Status</th>
+                                    <th class="text-left py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Date</th>
+                                    <th class="text-right py-4 px-6 text-xs font-bold uppercase tracking-widest text-slate-500">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="presalePurchasesTable">
+                                <tr>
+                                    <td colspan="7" class="text-center py-12 text-slate-500">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            <!-- Footer Info -->
-            <div class="mt-6 flex items-center justify-between text-xs text-slate-600">
-                <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    <span>Auto-refresh every 60s</span>
-                </div>
-                <p id="lastUpdated">Last updated: --</p>
-            </div>
-
-        </div>
-    </main>
-
-    <!-- Toast Container -->
-    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 space-y-2"></div>
-
-    <script>
-        // ============================================
-        // State
-        // ============================================
-        let currentFilter = 'all';
-        let registrants = [];
-        let autoRefreshInterval;
-        let explorerUrl = 'https://polygonscan.com';
-
-        // ============================================
-        // DOM Elements
-        // ============================================
-        const elements = {
-            userInfo: document.getElementById('userInfo'),
-            statTotal: document.getElementById('statTotal'),
-            statMinted: document.getElementById('statMinted'),
-            statPending: document.getElementById('statPending'),
-            statNetwork: document.getElementById('statNetwork'),
-            walletAddress: document.getElementById('walletAddress'),
-            walletBalance: document.getElementById('walletBalance'),
-            tokenBalance: document.getElementById('tokenBalance'),
-            registrantsTable: document.getElementById('registrantsTable'),
-            actionResult: document.getElementById('actionResult'),
-            actionResultContent: document.getElementById('actionResultContent'),
-            lastUpdated: document.getElementById('lastUpdated'),
-            mintNowBtn: document.getElementById('mintNowBtn'),
-            manualMintBtn: document.getElementById('manualMintBtn'),
-            fullSyncBtn: document.getElementById('fullSyncBtn'),
-            refreshBtn: document.getElementById('refreshBtn'),
-            refreshWalletBtn: document.getElementById('refreshWalletBtn'),
-            logoutBtn: document.getElementById('logoutBtn'),
-            changePasswordBtn: document.getElementById('changePasswordBtn'),
-            filterAll: document.getElementById('filterAll'),
-            filterPending: document.getElementById('filterPending'),
-            filterMinted: document.getElementById('filterMinted'),
-        };
-
-        // ============================================
-        // Auth Check
-        // ============================================
-        async function checkAuth() {
-            try {
-                const res = await fetch('/api/auth-status');
-                const data = await res.json();
-                if (!data.authenticated) {
-                    window.location.href = '/login';
-                    return false;
-                }
-                if (data.mustChangePassword) {
-                    window.location.href = '/change-password';
-                    return false;
-                }
-                elements.userInfo.textContent = `${data.username}`;
-                return true;
-            } catch (e) {
-                window.location.href = '/login';
-                return false;
-            }
-        }
-
-        // ============================================
-        // Toast Notifications
-        // ============================================
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            const bgColor = type === 'success' ? 'bg-green-500/90' : type === 'error' ? 'bg-red-500/90' : 'bg-primary/90';
-            const icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
-            
-            toast.className = `slide-in px-4 py-3 rounded-sm shadow-lg flex items-center gap-2 ${bgColor} text-white text-sm`;
-            toast.innerHTML = `
-                <span class="material-symbols-outlined text-lg">${icon}</span>
-                <span>${message}</span>
-            `;
-            document.getElementById('toastContainer').appendChild(toast);
-            setTimeout(() => toast.remove(), 5000);
-        }
-
-        // ============================================
-        // Action Result Display
-        // ============================================
-        function showActionResult(message, type = 'info') {
-            elements.actionResult.classList.remove('hidden');
-            const bgColor = type === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 
-                           type === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 
-                           'bg-primary/10 text-primary border border-primary/20';
-            elements.actionResultContent.className = `p-4 rounded-sm text-sm ${bgColor}`;
-            elements.actionResultContent.innerHTML = message;
-        }
-
-        // ============================================
-        // Fetch Stats
-        // ============================================
-        async function fetchStats() {
-            try {
-                const res = await fetch('/api/stats');
-                const data = await res.json();
-                elements.statTotal.textContent = data.total || 0;
-                elements.statMinted.textContent = data.minted || 0;
-                elements.statPending.textContent = data.pending || 0;
-                elements.statNetwork.textContent = (data.network || 'Unknown').toUpperCase();
-                if (data.explorer) explorerUrl = data.explorer;
-            } catch (e) {
-                console.error('Failed to fetch stats:', e);
-            }
-        }
-
-        // ============================================
-        // Fetch Wallet Info
-        // ============================================
-        async function fetchWalletInfo() {
-            try {
-                const res = await fetch('/api/wallet-info');
-                const data = await res.json();
-                console.log('Wallet info:', data);
+            <!-- ==================== SETTINGS TAB ==================== -->
+            <div id="contentSettings" class="tab-content">
                 
-                if (data.address) {
-                    const explorer = data.explorer || explorerUrl;
-                    elements.walletAddress.innerHTML = `
-                        <a href="${explorer}/address/${data.address}" target="_blank" class="hover:text-primary transition-colors">
-                            ${data.address.slice(0, 10)}...${data.address.slice(-8)}
-                        </a>
-                    `;
-                    elements.walletBalance.textContent = `${parseFloat(data.balance || 0).toFixed(4)} ${data.currency || 'POL'}`;
-                    elements.tokenBalance.textContent = `${parseFloat(data.tokenBalance || 0).toLocaleString()} ${data.tokenSymbol || 'VIP'}`;
-                } else {
-                    elements.walletAddress.textContent = 'Not configured';
-                }
-            } catch (e) {
-                console.error('Failed to fetch wallet info:', e);
-                elements.walletAddress.textContent = 'Error loading';
-            }
-        }
-
-        // ============================================
-        // Fetch Registrants
-        // ============================================
-        async function fetchRegistrants() {
-            try {
-                const endpoint = currentFilter === 'pending' ? '/api/registrants/pending' : '/api/registrants';
-                const res = await fetch(endpoint);
-                const data = await res.json();
-                registrants = Array.isArray(data) ? data : data.registrants || [];
-                renderRegistrants();
-            } catch (e) {
-                console.error('Failed to fetch registrants:', e);
-                elements.registrantsTable.innerHTML = `
-                    <tr><td colspan="5" class="text-center py-12 text-red-400">Failed to load registrants</td></tr>
-                `;
-            }
-        }
-
-        // ============================================
-        // Render Registrants Table
-        // ============================================
-        function renderRegistrants() {
-            let filtered = registrants;
-            if (currentFilter === 'pending') {
-                filtered = registrants.filter(r => !r.minted);
-            } else if (currentFilter === 'minted') {
-                filtered = registrants.filter(r => r.minted);
-            }
-
-            if (filtered.length === 0) {
-                elements.registrantsTable.innerHTML = `
-                    <tr><td colspan="5" class="text-center py-12 text-slate-500">No registrants found</td></tr>
-                `;
-                return;
-            }
-
-            elements.registrantsTable.innerHTML = filtered.map(r => {
-                // Get tx hash - check multiple possible field names
-                const txHash = r.tx_hash || r.txHash || null;
-                const hasTxHash = txHash && txHash !== 'synced-from-chain' && txHash.startsWith('0x');
-                
-                return `
-                <tr class="table-row border-b border-white/5">
-                    <td class="py-4 px-6">
-                        <a href="${explorerUrl}/address/${r.address}" target="_blank" class="font-mono text-sm text-white hover:text-primary transition-colors">
-                            ${r.address.slice(0, 10)}...${r.address.slice(-8)}
-                        </a>
-                    </td>
-                    <td class="py-4 px-6">
-                        <span class="badge ${r.minted ? 'badge-success' : 'badge-pending'}">
-                            ${r.minted ? 'Minted' : 'Pending'}
-                        </span>
-                    </td>
-                    <td class="py-4 px-6">
-                        ${hasTxHash ? `
-                            <a href="${explorerUrl}/tx/${txHash}" target="_blank" class="font-mono text-xs text-blue-400 hover:text-blue-300 transition-colors">
-                                ${txHash.slice(0, 10)}...${txHash.slice(-6)}
-                            </a>
-                        ` : `
-                            <span class="text-slate-600 text-xs">--</span>
-                        `}
-                    </td>
-                    <td class="py-4 px-6 text-slate-500 text-sm">
-                        ${r.registeredAt || r.registered_at ? new Date(r.registeredAt || r.registered_at).toLocaleDateString() : '--'}
-                    </td>
-                    <td class="py-4 px-6 text-right">
-                        <a href="${explorerUrl}/address/${r.address}" target="_blank" 
-                           class="text-primary hover:underline text-xs font-bold uppercase tracking-widest">
-                            View
-                        </a>
-                    </td>
-                </tr>
-            `}).join('');
-        }
-
-        // ============================================
-        // Mint Pending Action
-        // ============================================
-        async function mintNow() {
-            elements.mintNowBtn.disabled = true;
-            elements.mintNowBtn.innerHTML = `
-                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Minting...
-            `;
-
-            try {
-                const res = await fetch('/api/mint-now', { method: 'POST' });
-                const data = await res.json();
-                
-                if (data.success) {
-                    showActionResult(`
-                        <p class="font-semibold">Minting Complete!</p>
-                        <p class="mt-1 text-xs opacity-80">Minted: ${data.minted || 0} | Skipped: ${data.skipped || 0}</p>
-                        ${data.tx_hash ? `<a href="${explorerUrl}/tx/${data.tx_hash}" target="_blank" class="text-primary underline text-xs mt-2 inline-block">View Transaction</a>` : ''}
-                    `, 'success');
-                    showToast('Minting completed', 'success');
-                    refreshAll();
-                } else {
-                    showActionResult(`<p>Minting failed: ${data.error || 'Unknown error'}</p>`, 'error');
-                    showToast('Minting failed', 'error');
-                }
-            } catch (e) {
-                showActionResult(`<p>Error: ${e.message}</p>`, 'error');
-                showToast('Minting error', 'error');
-            } finally {
-                elements.mintNowBtn.disabled = false;
-                elements.mintNowBtn.innerHTML = `
-                    <span class="material-symbols-outlined text-lg">token</span>
-                    Mint Pending
-                `;
-            }
-        }
-
-        // ============================================
-        // Manual Mint Modal
-        // ============================================
-        function openManualMintModal() {
-            document.getElementById('manualMintModal').classList.remove('hidden');
-            document.getElementById('manualMintAddress').value = '';
-            document.getElementById('manualMintResult').classList.add('hidden');
-        }
-
-        function closeManualMintModal() {
-            document.getElementById('manualMintModal').classList.add('hidden');
-        }
-
-        async function submitManualMint(e) {
-            e.preventDefault();
-            
-            const address = document.getElementById('manualMintAddress').value.trim();
-            const submitBtn = document.getElementById('manualMintSubmitBtn');
-            const btnText = document.getElementById('manualMintBtnText');
-            const btnLoader = document.getElementById('manualMintBtnLoader');
-            const resultDiv = document.getElementById('manualMintResult');
-
-            if (!address || !address.startsWith('0x') || address.length !== 42) {
-                resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
-                resultDiv.textContent = 'Please enter a valid Ethereum address';
-                resultDiv.classList.remove('hidden');
-                return;
-            }
-
-            submitBtn.disabled = true;
-            btnText.textContent = 'Minting...';
-            btnLoader.classList.remove('hidden');
-            resultDiv.classList.add('hidden');
-
-            try {
-                const res = await fetch('/api/mint-manual', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ address })
-                });
-
-                const data = await res.json();
-
-                if (data.success) {
-                    resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-green-500/10 text-green-400 border border-green-500/20';
-                    resultDiv.innerHTML = `
-                        <p class="font-semibold">Success!</p>
-                        <p class="mt-1 text-xs opacity-80">${data.message}</p>
-                        ${data.tx_hash ? `<a href="${data.explorer_url}" target="_blank" class="text-green-400 underline text-xs mt-2 inline-block">View Transaction</a>` : ''}
-                    `;
-                    showToast('Manual mint successful', 'success');
-                    refreshAll();
-                } else {
-                    resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
-                    resultDiv.innerHTML = `<p>${data.error || data.message || 'Minting failed'}</p>`;
-                    showToast('Manual mint failed', 'error');
-                }
-                resultDiv.classList.remove('hidden');
-            } catch (error) {
-                resultDiv.className = 'mt-6 p-4 rounded-sm text-sm bg-red-500/10 text-red-400 border border-red-500/20';
-                resultDiv.textContent = `Error: ${error.message}`;
-                resultDiv.classList.remove('hidden');
-                showToast('Manual mint error', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                btnText.textContent = 'Mint Tokens';
-                btnLoader.classList.add('hidden');
-            }
-        }
-
-        // ============================================
-        // Full Sync Modal
-        // ============================================
-        function openFullSyncModal() {
-            document.getElementById('fullSyncModal').classList.remove('hidden');
-            document.getElementById('fullSyncLoading').classList.remove('hidden');
-            document.getElementById('fullSyncResults').classList.add('hidden');
-            document.getElementById('fullSyncError').classList.add('hidden');
-            performFullSync();
-        }
-
-        function closeFullSyncModal() {
-            document.getElementById('fullSyncModal').classList.add('hidden');
-        }
-
-        async function performFullSync() {
-            try {
-                const res = await fetch('/api/full-sync', { method: 'POST' });
-                const data = await res.json();
-
-                document.getElementById('fullSyncLoading').classList.add('hidden');
-
-                if (data.success) {
-                    document.getElementById('fullSyncResults').classList.remove('hidden');
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     
-                    // Update summary
-                    document.getElementById('syncTotal').textContent = data.results.total;
-                    document.getElementById('syncWithBalance').textContent = data.results.withBalance;
-                    document.getElementById('syncWithoutBalance').textContent = data.results.withoutBalance;
-                    document.getElementById('syncUpdated').textContent = data.results.updated;
-                    document.getElementById('syncTxFound').textContent = data.results.txHashesFound || 0;
-
-                    // Populate holders table
-                    const tbody = document.getElementById('syncHoldersTable');
-                    const syncExplorer = data.explorer || explorerUrl;
-                    
-                    if (data.results.registrants && data.results.registrants.length > 0) {
-                        tbody.innerHTML = data.results.registrants.map(r => {
-                            const txHash = r.txHash || r.tx_hash || null;
-                            const hasTxHash = txHash && txHash !== 'synced-from-chain' && txHash.startsWith('0x');
+                    <!-- Presale Settings Card -->
+                    <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-white/5">
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Presale Configuration</h3>
+                        </div>
+                        <div class="p-6 space-y-6">
                             
-                            return `
-                            <tr class="border-b border-white/5">
-                                <td class="py-3 px-4">
-                                    <a href="${syncExplorer}/address/${r.address}" target="_blank" class="font-mono text-xs text-white hover:text-primary">
-                                        ${r.address.slice(0, 10)}...${r.address.slice(-8)}
-                                    </a>
-                                </td>
-                                <td class="py-3 px-4 text-right font-mono text-sm ${parseFloat(r.balance) > 0 ? 'text-green-400' : 'text-slate-500'}">
-                                    ${r.balance === 'error' ? '<span class="text-red-400">Error</span>' : parseFloat(r.balance).toFixed(2) + ' VIP'}
-                                </td>
-                                <td class="py-3 px-4 text-center">
-                                    <span class="badge ${r.minted ? 'badge-success' : 'badge-pending'}">${r.minted ? 'Minted' : 'Pending'}</span>
-                                </td>
-                                <td class="py-3 px-4">
-                                    ${hasTxHash ? `
-                                        <a href="${syncExplorer}/tx/${txHash}" target="_blank" class="font-mono text-xs text-blue-400 hover:text-blue-300">
-                                            ${txHash.slice(0, 8)}...${txHash.slice(-4)}
-                                        </a>
-                                    ` : `<span class="text-slate-600 text-xs">--</span>`}
-                                </td>
-                            </tr>
-                        `}).join('');
-                    } else {
-                        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-500">No registrants found</td></tr>';
-                    }
-
-                    showToast(`Full sync completed - ${data.results.txHashesFound || 0} TX hashes found`, 'success');
-                    refreshAll();
-                } else {
-                    throw new Error(data.error || 'Sync failed');
-                }
-            } catch (error) {
-                document.getElementById('fullSyncLoading').classList.add('hidden');
-                document.getElementById('fullSyncError').classList.remove('hidden');
-                document.getElementById('fullSyncErrorText').textContent = error.message;
-                showToast('Full sync failed', 'error');
-            }
-        }
-
-        // ============================================
-        // Refresh All Data
-        // ============================================
-        async function refreshAll() {
-            await Promise.all([fetchStats(), fetchWalletInfo(), fetchRegistrants()]);
-            elements.lastUpdated.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
-        }
-
-        // ============================================
-        // Filter Functions
-        // ============================================
-        function setFilter(filter) {
-            currentFilter = filter;
-            
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.className = 'filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest text-slate-500 border border-white/10 hover:border-white/20 hover:text-white transition-colors';
-            });
-            
-            const activeBtn = document.getElementById(`filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`);
-            activeBtn.className = 'filter-btn px-3 py-1.5 rounded-sm text-xs font-bold uppercase tracking-widest bg-primary/20 text-primary border border-primary/30';
-            
-            renderRegistrants();
-        }
-
-        // ============================================
-        // Logout
-        // ============================================
-        async function logout() {
-            try {
-                await fetch('/api/logout', { method: 'POST' });
-            } catch (e) {}
-            window.location.href = '/login';
-        }
-
-        // ============================================
-        // Event Listeners
-        // ============================================
-        elements.mintNowBtn.addEventListener('click', mintNow);
-        elements.manualMintBtn.addEventListener('click', openManualMintModal);
-        elements.fullSyncBtn.addEventListener('click', openFullSyncModal);
-        elements.refreshBtn.addEventListener('click', () => {
-            showToast('Refreshing...', 'info');
-            refreshAll();
-        });
-        elements.refreshWalletBtn.addEventListener('click', fetchWalletInfo);
-        elements.logoutBtn.addEventListener('click', logout);
-        elements.changePasswordBtn.addEventListener('click', () => window.location.href = '/change-password');
-        elements.filterAll.addEventListener('click', () => setFilter('all'));
-        elements.filterPending.addEventListener('click', () => setFilter('pending'));
-        elements.filterMinted.addEventListener('click', () => setFilter('minted'));
-
-        // Manual mint form
-        document.getElementById('manualMintForm').addEventListener('submit', submitManualMint);
-
-        // ============================================
-        // Initialize
-        // ============================================
-        async function init() {
-            const isAuthed = await checkAuth();
-            if (!isAuthed) return;
-
-            await refreshAll();
-
-            // Auto-refresh every 60 seconds
-            autoRefreshInterval = setInterval(refreshAll, 60000);
-        }
-
-        init();
-
-        // Cleanup on page leave
-        window.addEventListener('beforeunload', () => {
-            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-        });
-    </script>
-</body>
-</html>
+                            <!-- Presale Enabled Toggle -->
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-white font-medium">Presale Enabled</p>
+                                    <p class="text-slate-500 text-xs mt-1">Allow new purchases on the presale page</p>
+                                </div>
+                                <div id="presaleEnabledToggle" class="toggle-switch active" onclick="togglePresaleEnabled()"></div>
+                            </div>
+                            
+                            <div class="border-t border-white/5 pt-6">
+                                <form id="presaleSettingsForm" class="space-y-4">
+                                    
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Token Price (USD)</label>
+                                            <input type="number" id="settingTokenPrice" step="0.01" min="0.01" 
+                                                   class="input-field w-full px-4 py-3 rounded-sm text-white text-sm" placeholder="0.10">
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Total Tokens</label>
+                                            <input type="number" id="settingTotalTokens" min="1" 
+                                                   class="input-field w-full px-4 py-3 rounded-sm text-white text-sm" placeholder="1000000">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Min Purchase</label>
+                                            <input type="number" id="settingMinPurchase" min="1" 
+                                                   class="input-field w-full px-4 py-3 rounded-sm text-white text-sm" placeholder="10">
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Max Purchase</label>
+                                            <input type="number" id="settingMaxPurchase" min="1" 
+                                                   class="input-field w-full px-4 py-3 rounded-sm text-white text-sm" placeholder="10000">
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Presale Wallet (Receive crypto payments)</label>
+                                        <input type="text" id="settingPresaleWallet" 
+                                               class="input-field w-full px-4 py-3 rounded-sm text-white font-mono text-sm" placeholder="0x...">
+                                    </div>
+                                    
+                                    <div class="pt-4">
+                                        <button type="submit" class="w-full bg-primary text-background-dark px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-1px] transition-all flex items-center justify-center gap-2">
+                                            <span class="material-symbols-outlined text-lg">save</span>
+                                            Save Settings
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div id="settingsResult" class="hidden mt-4 p-4 rounded-sm text-sm"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Claim Settings Card -->
+                    <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-white/5">
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Claim Configuration</h3>
+                        </div>
+                        <div class="p-6 space-y-6">
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Mint Amount per Claim</label>
+                                    <input type="number" id="settingMintAmount" min="1" 
+                                           class="input-field w-full px-4 py-3 rounded-sm text-white text-sm" placeholder="2">
+                                    <p class="text-slate-600 text-xs mt-2">Set via MINT_AMOUNT environment variable</p>
+                                </div>
+                                
+                                <div>
+                                    <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Token Contract</label>
+                                    <div class="input-field w-full px-4 py-3 rounded-sm text-slate-400 font-mono text-sm">
+                                        0x6860c34db140DB7B589DaDA38859a1d3736bbE3F
+                                    </div>
+                                    <p class="text-slate-600 text-xs mt-2">VIP Token on Polygon</p>
+                                </div>
+                                
+                                <div>
+                                    <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Network</label>
+                                    <div class="input-field w-full px-4 py-3 rounded-sm text-slate-400 text-sm">
+                                        Polygon Mainnet (Chain ID: 137)
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="border-t border-white/5 pt-6">
+                                <p class="text-slate-500 text-xs mb-4">Environment-based settings require redeployment to change.</p>
+                                <a href="https://vercel.com/dashboard" target="_blank" 
+                                   class="w-full border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined text-lg">open_in_new</span>
+                                    Vercel Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Stripe Settings Card -->
+                    <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-white/5">
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Stripe Integration</h3>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div class="flex items-center justify-between p-4 bg-background-dark rounded-sm">
+                                <div class="flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-2xl" id="stripeStatusIcon">pending</span>
+                                    <div>
+                                        <p class="text-white font-medium">Stripe Status</p>
+                                        <p id="stripeStatusText" class="text-slate-500 text-xs">Checking...</p>
+                                    </div>
+                                </div>
+                                <span id="stripeStatusBadge" class="badge badge-pending">Unknown</span>
+                            </div>
+                            
+                            <p class="text-slate-600 text-xs">
+                                Stripe keys are configured via environment variables:<br>
+                                STRIPE_SECRET_KEY, STRIPE_PUBLIC_KEY, STRIPE_WEBHOOK_SECRET
+                            </p>
+                            
+                            <a href="https://dashboard.stripe.com" target="_blank" 
+                               class="w-full border border-white/10 text-slate-500 px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-white/20 hover:text-white transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-lg">open_in_new</span>
+                                Stripe Dashboard
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Database Info Card -->
+                    <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-white/5">
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Database Status</h3>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div class="flex items-center justify-between p-4 bg-background-dark rounded-sm">
+                                <div class="flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-2xl text-green-400">check_circle</span>
+                                    <div>
+                                        <p class="text-white font-medium">PostgreSQL</p>
+                                        <p class="text-slate-500 text-xs">Connected</p>
+                                    </div>
+                                </div>
+                                <span class="badge badge-success">Active</span>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4

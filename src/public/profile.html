@@ -166,6 +166,130 @@
             font-weight: 600;
         }
 
+        /* Presale Banner Styles */
+        .presale-banner {
+            background: linear-gradient(135deg, var(--deep-blue) 0%, #2a4a6c 100%);
+            border: 2px solid var(--gold);
+            border-radius: 16px;
+            padding: 25px 30px;
+            margin-bottom: 30px;
+            display: none;
+            animation: slideIn 0.5s ease;
+        }
+
+        .presale-banner.visible {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .presale-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .presale-info {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .presale-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--gold);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .presale-badge {
+            background: var(--gold);
+            color: var(--deep-blue);
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .presale-description {
+            color: var(--white);
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            opacity: 0.9;
+        }
+
+        .presale-features {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .presale-feature {
+            color: var(--gold-light);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .presale-feature span {
+            font-size: 1rem;
+        }
+
+        .presale-action {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .btn-presale {
+            background: var(--gold);
+            color: var(--deep-blue);
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(212, 175, 85, 0.3);
+        }
+
+        .btn-presale:hover {
+            background: var(--gold-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 85, 0.4);
+        }
+
+        .presale-wallet {
+            color: var(--gold-light);
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .presale-wallet strong {
+            color: var(--white);
+        }
+
         .quick-links {
             display: flex;
             gap: 15px;
@@ -200,6 +324,27 @@
             .iframe-container { height: 500px; }
 
             .btn { padding: 8px 16px; font-size: 0.85rem; }
+
+            .presale-banner { padding: 20px; }
+
+            .presale-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .presale-action {
+                align-items: center;
+                width: 100%;
+            }
+
+            .btn-presale {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .presale-features {
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -216,6 +361,43 @@
         <div class="page-header">
             <h1 class="page-title">My Profile</h1>
             <p class="page-subtitle">View your WalletTwo balance and manage your VIP tokens</p>
+        </div>
+
+        <!-- Presale Banner - Shows when wallet is connected -->
+        <div class="presale-banner" id="presaleBanner">
+            <div class="presale-content">
+                <div class="presale-info">
+                    <h2 class="presale-title">
+                        VIP Token Presale
+                        <span class="presale-badge">Now Live</span>
+                    </h2>
+                    <p class="presale-description">
+                        Exclusive access for connected wallets. Purchase VIP tokens at the presale price before public launch!
+                    </p>
+                    <div class="presale-features">
+                        <div class="presale-feature">
+                            <span>💳</span> Card Payment
+                        </div>
+                        <div class="presale-feature">
+                            <span>🔷</span> POL Accepted
+                        </div>
+                        <div class="presale-feature">
+                            <span>💵</span> USDC Accepted
+                        </div>
+                    </div>
+                </div>
+                <div class="presale-action">
+                    <a href="/presale" class="btn-presale">
+                        Join Presale
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                    <div class="presale-wallet" id="presaleWalletInfo">
+                        Connected: <strong id="presaleWalletAddress">...</strong>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="info-banner">
@@ -258,6 +440,9 @@
     </footer>
 
     <script>
+        const STORAGE_KEY = 'walletTwoSession';
+        let walletAddress = null;
+
         function hideLoading() {
             const loader = document.getElementById('loadingIndicator');
             if (loader) {
@@ -267,6 +452,85 @@
 
         // Fallback: hide loading after 5 seconds even if iframe doesn't trigger onload
         setTimeout(hideLoading, 5000);
+
+        // Check for wallet connection and show presale banner
+        function checkWalletAndShowPresale() {
+            // Try WalletTwo session first
+            const session = localStorage.getItem(STORAGE_KEY);
+            if (session) {
+                try {
+                    const sessionData = JSON.parse(session);
+                    if (sessionData.address) {
+                        walletAddress = sessionData.address;
+                        showPresaleBanner(walletAddress);
+                        return;
+                    }
+                } catch (e) {
+                    console.log('Error parsing WalletTwo session');
+                }
+            }
+
+            // Fallback: check other storage locations
+            walletAddress = localStorage.getItem('walletAddress') || sessionStorage.getItem('walletAddress');
+            if (walletAddress && walletAddress.length === 42) {
+                showPresaleBanner(walletAddress);
+            }
+        }
+
+        function showPresaleBanner(address) {
+            const banner = document.getElementById('presaleBanner');
+            const walletDisplay = document.getElementById('presaleWalletAddress');
+            
+            if (banner) {
+                banner.classList.add('visible');
+            }
+            
+            if (walletDisplay && address) {
+                walletDisplay.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+            }
+        }
+
+        // Listen for wallet connection events from WalletTwo iframe
+        window.addEventListener('message', (event) => {
+            // Accept messages from WalletTwo
+            if (event.origin.includes('wallettwo.com')) {
+                const data = event.data;
+                
+                // Check for AUTH_SUCCESS or similar messages
+                if (data?.type === 'AUTH_SUCCESS' || data?.type === 'WALLET_CONNECTED') {
+                    const address = data.address || data.wallet_address || data.walletAddress;
+                    if (address) {
+                        // Store the address
+                        const sessionData = { address, timestamp: Date.now() };
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
+                        localStorage.setItem('walletAddress', address);
+                        
+                        // Show presale banner
+                        showPresaleBanner(address);
+                    }
+                }
+
+                // Also check for user info messages
+                if (data?.user?.walletAddress || data?.walletAddress) {
+                    const address = data.user?.walletAddress || data.walletAddress;
+                    if (address) {
+                        const sessionData = { address, timestamp: Date.now() };
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
+                        localStorage.setItem('walletAddress', address);
+                        showPresaleBanner(address);
+                    }
+                }
+            }
+        });
+
+        // Check on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            checkWalletAndShowPresale();
+            
+            // Also check periodically in case iframe updates session
+            setTimeout(checkWalletAndShowPresale, 3000);
+            setTimeout(checkWalletAndShowPresale, 6000);
+        });
     </script>
 </body>
 </html>
