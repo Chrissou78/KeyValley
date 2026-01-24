@@ -1392,6 +1392,32 @@ app.post('/api/presale/purchase', async (req, res) => {
     }
 });
 
+// GET /api/presale/purchases/:address - Get purchases for a wallet
+app.get('/api/presale/purchases/:address', async (req, res) => {
+    try {
+        const { address } = req.params;
+        
+        if (!address || !ethers.isAddress(address)) {
+            return res.json([]);
+        }
+        
+        const normalizedAddress = address.toLowerCase();
+        
+        let purchases = [];
+        try {
+            purchases = await db.getPresalePurchases(normalizedAddress);
+        } catch (e) {
+            console.log('No purchases found:', e.message);
+        }
+        
+        // Return array directly (as the frontend expects)
+        res.json(purchases || []);
+    } catch (error) {
+        console.error('Error fetching presale purchases:', error);
+        res.json([]);
+    }
+});
+
 // GET /api/presale/admin/stats
 app.get('/api/presale/admin/stats', requireAuth, checkPasswordChange, async (req, res) => {
     try {
