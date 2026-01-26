@@ -120,9 +120,9 @@
                 <p class="text-slate-400 font-light mb-6">Get VIP tokens at the best price before public launch.</p>
                 
                 <!-- Status Badge -->
-                <div id="statusBadge" class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10">
-                    <span id="statusDot" class="w-2 h-2 rounded-full bg-primary pulse-dot"></span>
-                    <span id="statusText" class="text-xs font-bold uppercase tracking-widest text-primary">Presale Live</span>
+                <div id="statusBadge" class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-green-500/30 bg-green-500/10">
+                    <span id="statusDot" class="w-2 h-2 rounded-full bg-green-500 pulse-dot"></span>
+                    <span id="statusText" class="text-xs font-bold uppercase tracking-widest text-green-400">Presale Live</span>
                 </div>
             </div>
 
@@ -446,15 +446,17 @@
             const notConnectedOverlay = document.getElementById('notConnectedOverlay');
             
             if (enabled) {
-                statusBadge.className = 'inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10';
-                statusDot.className = 'w-2 h-2 rounded-full bg-primary pulse-dot';
-                statusText.className = 'text-xs font-bold uppercase tracking-widest text-primary';
+                // GREEN when active
+                statusBadge.className = 'inline-flex items-center gap-2 px-4 py-2 rounded-full border border-green-500/30 bg-green-500/10';
+                statusDot.className = 'w-2 h-2 rounded-full bg-green-500 pulse-dot';
+                statusText.className = 'text-xs font-bold uppercase tracking-widest text-green-400';
                 statusText.textContent = 'Presale Live';
                 
                 if (currentWallet) {
                     inactiveOverlay.classList.add('hidden');
                 }
             } else {
+                // RED when inactive
                 statusBadge.className = 'inline-flex items-center gap-2 px-4 py-2 rounded-full border border-red-500/30 bg-red-500/10';
                 statusDot.className = 'w-2 h-2 rounded-full bg-red-500';
                 statusText.className = 'text-xs font-bold uppercase tracking-widest text-red-400';
@@ -466,7 +468,6 @@
                 }
             }
         }
-
         function updateUI() {
             document.getElementById('tokenPriceDisplay').textContent = CONFIG.tokenPriceEUR.toFixed(2);
             document.getElementById('tokenPriceUSD').textContent = `≈ $${(CONFIG.tokenPriceEUR * CONFIG.eurUsdRate).toFixed(2)} USD`;
