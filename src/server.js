@@ -1191,16 +1191,17 @@ app.get('/api/presale/config', async (req, res) => {
             console.log('Using default EUR/USD rate');
         }
 
-        // Fetch POL price in USD
-        let polPrice = 0.50;
+        // Fetch POL price in USD (correct CoinGecko endpoint)
+        let polPrice = 0.12; // Default to current ~$0.12
         try {
-            const polRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd');
+            const polRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=polygon-ecosystem-token&vs_currencies=usd');
             if (polRes.ok) {
                 const polData = await polRes.json();
-                polPrice = polData['matic-network']?.usd || 0.50;
+                polPrice = polData['polygon-ecosystem-token']?.usd || 0.12;
+                console.log('POL price fetched:', polPrice);
             }
         } catch (e) {
-            console.log('Using default POL price');
+            console.log('Using default POL price:', polPrice);
         }
 
         res.json({
