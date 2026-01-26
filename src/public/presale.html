@@ -85,6 +85,11 @@
             animation: pulse-glow 2s ease-in-out infinite;
         }
         
+        .live-indicator.inactive {
+            animation: none;
+            box-shadow: none;
+        }
+        
         .not-connected-overlay {
             background: rgba(10, 10, 10, 0.95);
             backdrop-filter: blur(10px);
@@ -124,9 +129,10 @@
             
             <!-- Hero Section -->
             <div class="text-center mb-12">
-                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 mb-6">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    <span class="text-primary text-sm font-bold uppercase tracking-widest">Presale Live</span>
+                <!-- Dynamic Status Badge -->
+                <div id="presaleStatusBadge" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 mb-6">
+                    <span id="statusDot" class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <span id="statusText" class="text-primary text-sm font-bold uppercase tracking-widest">Presale Live</span>
                 </div>
                 <h1 class="text-4xl md:text-6xl font-serif italic mb-4">
                     <span class="text-white">VIP Token</span>
@@ -255,7 +261,7 @@
                 </div>
                 
                 <!-- Right: Purchase Form -->
-                <div class="glass-card rounded-2xl p-6 lg:p-8 live-indicator relative">
+                <div id="purchaseCard" class="glass-card rounded-2xl p-6 lg:p-8 live-indicator relative">
                     
                     <!-- Not Connected Overlay -->
                     <div id="notConnectedOverlay" class="absolute inset-0 not-connected-overlay rounded-2xl flex flex-col items-center justify-center z-10 hidden">
@@ -269,6 +275,23 @@
                                class="inline-flex items-center gap-3 bg-primary text-background-dark px-8 py-4 rounded-xl font-bold uppercase tracking-widest text-sm gold-glow hover:scale-[1.02] transition-all">
                                 <span class="material-symbols-outlined">person</span>
                                 Go to Profile
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Presale Inactive Overlay -->
+                    <div id="presaleInactiveOverlay" class="absolute inset-0 not-connected-overlay rounded-2xl flex flex-col items-center justify-center z-20 hidden">
+                        <div class="text-center px-8">
+                            <div class="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <span class="material-symbols-outlined text-red-400 text-4xl">block</span>
+                            </div>
+                            <h3 class="text-2xl font-serif text-white mb-3">Presale Not Active</h3>
+                            <p class="text-gray-400 mb-4">The presale is currently paused or has not started yet.</p>
+                            <p class="text-gray-500 text-sm mb-6">Please check back later or follow our announcements.</p>
+                            <a href="/" 
+                               class="inline-flex items-center gap-2 text-primary hover:underline">
+                                <span class="material-symbols-outlined text-sm">arrow_back</span>
+                                Back to Home
                             </a>
                         </div>
                     </div>
@@ -564,15 +587,15 @@
         // Configuration
         // ============================================
         const CONFIG = {
-            tokenPriceEUR: 1.00,      // Base price in EUR
-            eurUsdRate: 1.19,          // EUR to USD conversion rate
+            tokenPriceEUR: 1.00,
+            eurUsdRate: 1.19,
             totalTokens: 1000000,
             tokensSold: 0,
             minPurchase: 10,
             maxPurchase: 10000,
             presaleWallet: '',
+            presaleEnabled: true, // Track if presale is enabled
             
-            // Storage keys
             STORAGE_KEYS: [
                 'keavalley_profile',
                 'walletTwoSession',
@@ -583,7 +606,6 @@
             USDC_ADDRESS: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'
         };
         
-        // Computed USD price
         function getTokenPriceUSD() {
             return CONFIG.tokenPriceEUR * CONFIG.eurUsdRate;
         }
@@ -591,30 +613,77 @@
         // State
         let connectedWallet = null;
         let selectedPayment = 'POL';
-        let polPrice = 0.50; // POL price in USD
+        let polPrice = 0.50;
         let userBalances = { POL: 0, USDC: 0 };
+        
+        // ============================================
+        // Presale Status UI
+        // ============================================
+        function updatePresaleStatus(enabled) {
+            const statusBadge = document.getElementById('presaleStatusBadge');
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            const inactiveOverlay = document.getElementById('presaleInactiveOverlay');
+            const purchaseCard = document.getElementById('purchaseCard');
+            
+            if (enabled) {
+                // Presale is LIVE
+                statusBadge.classList.remove('bg-red-500/10', 'border-red-500/30');
+                statusBadge.classList.add('bg-primary/10', 'border-primary/30');
+                statusDot.classList.remove('bg-red-500');
+                statusDot.classList.add('bg-green-500', 'animate-pulse');
+                statusText.classList.remove('text-red-400');
+                statusText.classList.add('text-primary');
+                statusText.textContent = 'Presale Live';
+                
+                // Hide inactive overlay
+                if (inactiveOverlay) {
+                    inactiveOverlay.classList.add('hidden');
+                }
+                
+                // Enable card glow
+                if (purchaseCard) {
+                    purchaseCard.classList.remove('inactive');
+                }
+            } else {
+                // Presale is NOT ACTIVE
+                statusBadge.classList.remove('bg-primary/10', 'border-primary/30');
+                statusBadge.classList.add('bg-red-500/10', 'border-red-500/30');
+                statusDot.classList.remove('bg-green-500', 'animate-pulse');
+                statusDot.classList.add('bg-red-500');
+                statusText.classList.remove('text-primary');
+                statusText.classList.add('text-red-400');
+                statusText.textContent = 'Presale Not Active';
+                
+                // Show inactive overlay if wallet is connected
+                if (inactiveOverlay && connectedWallet) {
+                    inactiveOverlay.classList.remove('hidden');
+                }
+                
+                // Disable card glow
+                if (purchaseCard) {
+                    purchaseCard.classList.add('inactive');
+                }
+            }
+        }
         
         // ============================================
         // Initialize
         // ============================================
         async function init() {
-            // Fetch EUR/USD rate
             await fetchEurUsdRate();
-            
-            // Load presale config
             await loadPresaleConfig();
             
-            // Check wallet connection
-            checkWalletConnection();
+            // Update presale status indicator
+            updatePresaleStatus(CONFIG.presaleEnabled);
             
-            // Update UI
+            checkWalletConnection();
             updatePresaleUI();
             updateTotals();
         }
         
         async function fetchEurUsdRate() {
             try {
-                // Try multiple sources for EUR/USD rate
                 const response = await fetch('https://api.exchangerate-api.com/v4/latest/EUR');
                 if (response.ok) {
                     const data = await response.json();
@@ -623,7 +692,6 @@
                 }
             } catch (e) {
                 console.log('Using default EUR/USD rate:', CONFIG.eurUsdRate);
-                // Try fallback
                 try {
                     const fallback = await fetch('https://open.er-api.com/v6/latest/EUR');
                     if (fallback.ok) {
@@ -641,15 +709,15 @@
                 const response = await fetch('/api/presale/config');
                 if (response.ok) {
                     const data = await response.json();
-                    CONFIG.tokenPriceEUR = data.tokenPrice || CONFIG.tokenPriceEUR; // Now in EUR
+                    CONFIG.tokenPriceEUR = data.tokenPrice || CONFIG.tokenPriceEUR;
                     CONFIG.totalTokens = data.totalTokens || CONFIG.totalTokens;
                     CONFIG.tokensSold = data.tokensSold || CONFIG.tokensSold;
                     CONFIG.minPurchase = data.minPurchase || CONFIG.minPurchase;
                     CONFIG.maxPurchase = data.maxPurchase || CONFIG.maxPurchase;
                     CONFIG.presaleWallet = data.presaleWallet || '';
+                    CONFIG.presaleEnabled = data.enabled !== false; // Default to true if not specified
                     polPrice = data.polPrice || polPrice;
                     
-                    // Use server EUR/USD rate if provided
                     if (data.eurUsdRate) {
                         CONFIG.eurUsdRate = data.eurUsdRate;
                     }
@@ -657,6 +725,9 @@
                     if (CONFIG.presaleWallet) {
                         document.getElementById('presaleWalletAddress').textContent = CONFIG.presaleWallet;
                     }
+                    
+                    // Update status after loading config
+                    updatePresaleStatus(CONFIG.presaleEnabled);
                 }
             } catch (e) {
                 console.log('Using default config');
@@ -670,7 +741,6 @@
             document.getElementById('tokensSold').textContent = `${CONFIG.tokensSold.toLocaleString()} VIP`;
             document.getElementById('totalTokens').textContent = `${CONFIG.totalTokens.toLocaleString()} VIP`;
             
-            // Price display - EUR and USD
             document.getElementById('tokenPriceEUR').textContent = `€${CONFIG.tokenPriceEUR.toFixed(2)}`;
             document.getElementById('tokenPriceUSD').textContent = `$${getTokenPriceUSD().toFixed(2)}`;
             document.getElementById('eurUsdRate').textContent = CONFIG.eurUsdRate.toFixed(4);
@@ -726,9 +796,21 @@
         async function setWalletConnected(address) {
             connectedWallet = address;
             
+            // Hide not connected overlay
             document.getElementById('notConnectedOverlay').classList.add('hidden');
-            document.getElementById('walletHeader').classList.remove('hidden');
-            document.getElementById('purchaseFormSection').classList.remove('hidden');
+            
+            // Check if presale is enabled
+            if (!CONFIG.presaleEnabled) {
+                // Show inactive overlay instead of purchase form
+                document.getElementById('presaleInactiveOverlay').classList.remove('hidden');
+                document.getElementById('walletHeader').classList.add('hidden');
+                document.getElementById('purchaseFormSection').classList.add('hidden');
+            } else {
+                // Show normal purchase form
+                document.getElementById('presaleInactiveOverlay').classList.add('hidden');
+                document.getElementById('walletHeader').classList.remove('hidden');
+                document.getElementById('purchaseFormSection').classList.remove('hidden');
+            }
             
             document.getElementById('walletAddressDisplay').textContent = 
                 `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -740,6 +822,7 @@
         
         function showNotConnected() {
             document.getElementById('notConnectedOverlay').classList.remove('hidden');
+            document.getElementById('presaleInactiveOverlay').classList.add('hidden');
             document.getElementById('walletHeader').classList.add('hidden');
             document.getElementById('purchaseHistory').innerHTML = 
                 '<p class="text-center py-4">Connect wallet to view purchase history</p>';
@@ -913,14 +996,12 @@
             const totalEUR = amount * CONFIG.tokenPriceEUR;
             const totalUSD = totalEUR * CONFIG.eurUsdRate;
             
-            // Display prices
             document.getElementById('displayPriceEUR').textContent = `€${CONFIG.tokenPriceEUR.toFixed(2)}`;
             document.getElementById('displayPriceUSD').textContent = `$${getTokenPriceUSD().toFixed(2)}`;
             document.getElementById('displayQuantity').textContent = `${amount.toLocaleString()} VIP`;
             document.getElementById('displayTotalEUR').textContent = `€${totalEUR.toFixed(2)}`;
             document.getElementById('displayTotalUSD').textContent = `≈ $${totalUSD.toFixed(2)} USD`;
             
-            // Update crypto equivalents (in USD value)
             const totalPOL = polPrice > 0 ? totalUSD / polPrice : 0;
             document.getElementById('polEquivalent').textContent = `≈ ${totalPOL.toFixed(4)} POL ($${totalUSD.toFixed(2)})`;
             document.getElementById('usdcEquivalent').textContent = `≈ ${totalUSD.toFixed(2)} USDC`;
@@ -930,6 +1011,12 @@
         // Purchase Execution
         // ============================================
         async function executePurchase() {
+            // Check if presale is enabled
+            if (!CONFIG.presaleEnabled) {
+                alert('The presale is currently not active. Please check back later.');
+                return;
+            }
+            
             const amount = parseInt(document.getElementById('tokenAmount').value) || 0;
             
             if (amount < CONFIG.minPurchase) {
@@ -956,7 +1043,6 @@
         async function payWithCrypto(tokenAmount, method, totalEUR, totalUSD) {
             const totalPOL = polPrice > 0 ? totalUSD / polPrice : 0;
             
-            // Check balance
             if (method === 'POL' && userBalances.POL < totalPOL) {
                 alert(`Insufficient POL balance. You have ${userBalances.POL.toFixed(4)} POL but need ${totalPOL.toFixed(4)} POL`);
                 return;
@@ -1033,7 +1119,7 @@
         function resetPurchase() {
             document.getElementById('tokenAmount').value = '';
             
-            if (connectedWallet) {
+            if (connectedWallet && CONFIG.presaleEnabled) {
                 document.getElementById('walletHeader').classList.remove('hidden');
                 document.getElementById('purchaseFormSection').classList.remove('hidden');
             }
