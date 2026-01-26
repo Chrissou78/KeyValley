@@ -29,12 +29,51 @@ try {
 // Presale Configuration
 // ===========================================
 const PRESALE_CONFIG = {
-    tokenPrice: parseFloat(process.env.PRESALE_TOKEN_PRICE) || 1.00,
+    enabled: process.env.PRESALE_ENABLED !== 'false',
+    tokenPrice: parseFloat(process.env.PRESALE_TOKEN_PRICE) || 1.00, // EUR
     totalTokens: parseInt(process.env.PRESALE_TOTAL_TOKENS) || 1000000,
     minPurchase: parseInt(process.env.PRESALE_MIN_PURCHASE) || 10,
     maxPurchase: parseInt(process.env.PRESALE_MAX_PURCHASE) || 10000,
-    enabled: process.env.PRESALE_ENABLED !== 'false'
+    presaleWallet: process.env.PRESALE_WALLET || '',
+    tokenAddress: '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F',
+    tokenDecimals: 18
 };
+
+// Load presale settings from DB on startup
+async function loadPresaleSettings() {
+    try {
+        const result = await db.pool.query(
+            "SELECT value FROM app_settings WHERE key = 'presale_config'"
+        );
+        if (result.rows.length > 0) {
+            const saved = JSON.parse(result.rows[0].value);
+            Object.assign(PRESALE_CONFIG, saved);
+            console.log('✅ Loaded presale settings from DB');
+        }
+    } catch (e) {
+        console.log('ℹ️ No saved presale settings, using defaults');
+    }
+}
+
+// ===========================================
+// Blockchain Constants
+// ===========================================
+const POLYGON_RPC = process.env.POLYGON_RPC || 'https://polygon-rpc.com';
+const VIP_TOKEN_ADDRESS = '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F';
+const USDC_ADDRESS = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
+
+// Minimal ABIs
+const VIP_TOKEN_ABI = [
+    'function mint(address to, uint256 amount) external',
+    'function balanceOf(address account) view returns (uint256)',
+    'function decimals() view returns (uint8)'
+];
+
+const ERC20_ABI = [
+    'function balanceOf(address account) view returns (uint256)',
+    'function decimals() view returns (uint8)',
+    'event Transfer(address indexed from, address indexed to, uint256 value)'
+];
 
 // ===========================================
 // Express App Setup
@@ -1126,22 +1165,34 @@ app.post('/api/mint-manual', requireAdminAuth, async (req, res) => {
 // Presale API Endpoints
 // ===========================================
 
+// Get presale config (public)
 app.get('/api/presale/config', async (req, res) => {
     try {
+        // Get tokens sold from DB
+        let tokensSold = 0;
+        try {
+            const soldResult = await db.pool.query(
+                "SELECT COALESCE(SUM(token_amount), 0) as sold FROM presale_purchases WHERE status IN ('paid', 'minted', 'completed')"
+            );
+            tokensSold = parseInt(soldResult.rows[0].sold) || 0;
+        } catch (e) {
+            console.log('Could not fetch tokens sold:', e.message);
+        }
+
         // Fetch live EUR/USD rate
-        let eurUsdRate = 1.08; // Default
+        let eurUsdRate = 1.19;
         try {
             const rateRes = await fetch('https://api.exchangerate-api.com/v4/latest/EUR');
             if (rateRes.ok) {
                 const rateData = await rateRes.json();
-                eurUsdRate = rateData.rates?.USD || 1.08;
+                eurUsdRate = rateData.rates?.USD || 1.19;
             }
         } catch (e) {
             console.log('Using default EUR/USD rate');
         }
 
         // Fetch POL price in USD
-        let polPrice = 0.50; // Default
+        let polPrice = 0.50;
         try {
             const polRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd');
             if (polRes.ok) {
@@ -1154,15 +1205,14 @@ app.get('/api/presale/config', async (req, res) => {
 
         res.json({
             enabled: PRESALE_CONFIG.enabled,
-            tokenPrice: PRESALE_CONFIG.tokenPrice, // Now in EUR
+            tokenPrice: PRESALE_CONFIG.tokenPrice,
             totalTokens: PRESALE_CONFIG.totalTokens,
-            tokensSold: PRESALE_CONFIG.tokensSold || 0,
+            tokensSold: tokensSold,
             minPurchase: PRESALE_CONFIG.minPurchase,
             maxPurchase: PRESALE_CONFIG.maxPurchase,
             presaleWallet: PRESALE_CONFIG.presaleWallet || process.env.PRESALE_WALLET || '',
             eurUsdRate: eurUsdRate,
-            polPrice: polPrice,
-            stripePublicKey: null // Stripe disabled
+            polPrice: polPrice
         });
     } catch (error) {
         console.error('Config error:', error);
@@ -1170,148 +1220,240 @@ app.get('/api/presale/config', async (req, res) => {
     }
 });
 
-app.post('/api/presale/create-checkout', async (req, res) => {
-    if (!stripe) {
-        return res.status(503).json({ error: 'Card payments not configured.' });
+// ===========================================
+// Presale Payment Verification & Auto-Mint
+// ===========================================
+
+// Verify payment transaction on-chain
+async function verifyTransaction(txHash, expectedFrom, expectedUSD, paymentMethod) {
+    try {
+        const provider = new ethers.JsonRpcProvider(POLYGON_RPC);
+        const tx = await provider.getTransaction(txHash);
+        const receipt = await provider.getTransactionReceipt(txHash);
+        
+        if (!tx || !receipt) {
+            return { success: false, error: 'Transaction not found' };
+        }
+        
+        if (receipt.status !== 1) {
+            return { success: false, error: 'Transaction failed on-chain' };
+        }
+        
+        // Verify sender
+        if (tx.from.toLowerCase() !== expectedFrom.toLowerCase()) {
+            return { success: false, error: 'Transaction sender mismatch' };
+        }
+        
+        // Verify recipient is presale wallet
+        const presaleWallet = (PRESALE_CONFIG.presaleWallet || process.env.PRESALE_WALLET || '').toLowerCase();
+        
+        if (!presaleWallet) {
+            console.log('⚠️ No presale wallet configured, skipping recipient check');
+            return { success: true };
+        }
+        
+        if (paymentMethod === 'POL') {
+            // Native transfer - check tx.to and tx.value
+            if (tx.to && tx.to.toLowerCase() !== presaleWallet) {
+                return { success: false, error: 'Payment not sent to presale wallet' };
+            }
+        } else if (paymentMethod === 'USDC') {
+            // ERC20 transfer - check logs for Transfer event
+            const erc20Interface = new ethers.Interface(ERC20_ABI);
+            let foundTransfer = false;
+            
+            for (const log of receipt.logs) {
+                if (log.address.toLowerCase() === USDC_ADDRESS.toLowerCase()) {
+                    try {
+                        const parsed = erc20Interface.parseLog({
+                            topics: log.topics,
+                            data: log.data
+                        });
+                        if (parsed && parsed.name === 'Transfer') {
+                            const to = parsed.args[1].toLowerCase();
+                            if (to === presaleWallet) {
+                                foundTransfer = true;
+                                break;
+                            }
+                        }
+                    } catch (e) {
+                        // Not a Transfer event, continue
+                    }
+                }
+            }
+            
+            if (!foundTransfer) {
+                return { success: false, error: 'USDC transfer to presale wallet not found' };
+            }
+        }
+        
+        return { success: true };
+    } catch (error) {
+        console.error('TX verification error:', error);
+        return { success: false, error: 'Verification failed: ' + error.message };
+    }
+}
+
+// Mint tokens using owner wallet
+async function mintPresaleTokens(toAddress, amount) {
+    const PRIVATE_KEY = process.env.PRIVATE_KEY;
+    
+    if (!PRIVATE_KEY) {
+        console.error('❌ PRIVATE_KEY not configured for presale minting');
+        return { success: false, error: 'Minting not configured' };
     }
     
     try {
-        const { wallet_address, token_amount, amount_usd } = req.body;
+        const provider = new ethers.JsonRpcProvider(POLYGON_RPC);
+        const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+        const tokenContract = new ethers.Contract(VIP_TOKEN_ADDRESS, VIP_TOKEN_ABI, wallet);
         
-        if (!wallet_address || !ethers.isAddress(wallet_address)) {
-            return res.status(400).json({ error: 'Invalid wallet address' });
-        }
+        // Convert amount to wei (18 decimals)
+        const amountWei = ethers.parseUnits(amount.toString(), 18);
         
-        if (!token_amount || token_amount < PRESALE_CONFIG.minPurchase) {
-            return res.status(400).json({ error: `Minimum purchase is ${PRESALE_CONFIG.minPurchase} tokens` });
-        }
+        console.log(`🎯 Presale minting ${amount} VIP tokens to ${toAddress}`);
         
-        if (token_amount > PRESALE_CONFIG.maxPurchase) {
-            return res.status(400).json({ error: `Maximum purchase is ${PRESALE_CONFIG.maxPurchase} tokens` });
-        }
+        // Estimate gas
+        const gasEstimate = await tokenContract.mint.estimateGas(toAddress, amountWei);
+        const feeData = await provider.getFeeData();
         
-        if (!PRESALE_CONFIG.enabled) {
-            return res.status(400).json({ error: 'Presale is not active' });
-        }
-        
-        let stats = { tokensSold: 0 };
-        try {
-            stats = await db.getPresaleStats() || { tokensSold: 0 };
-        } catch (e) {}
-        
-        const remaining = PRESALE_CONFIG.totalTokens - (stats?.tokensSold || 0);
-        if (token_amount > remaining) {
-            return res.status(400).json({ error: `Only ${remaining} tokens remaining` });
-        }
-        
-        const normalizedAddress = wallet_address.toLowerCase();
-        const totalCents = Math.round(amount_usd * 100);
-        
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            line_items: [{
-                price_data: {
-                    currency: 'usd',
-                    product_data: {
-                        name: 'VIP Token Presale',
-                        description: `${token_amount.toLocaleString()} VIP Tokens`
-                    },
-                    unit_amount: totalCents
-                },
-                quantity: 1
-            }],
-            mode: 'payment',
-            success_url: `${process.env.BASE_URL || 'https://kea-valley.com'}/presale?success=true&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.BASE_URL || 'https://kea-valley.com'}/presale?canceled=true`,
-            metadata: {
-                wallet_address: normalizedAddress,
-                token_amount: token_amount.toString(),
-                price_per_token: PRESALE_CONFIG.tokenPrice.toString()
-            },
-            billing_address_collection: 'auto'
+        // Send mint transaction
+        const tx = await tokenContract.mint(toAddress, amountWei, {
+            gasLimit: gasEstimate * 120n / 100n, // 20% buffer
+            maxFeePerGas: feeData.maxFeePerGas,
+            maxPriorityFeePerGas: feeData.maxPriorityFeePerGas
         });
         
-        try {
-            await db.addPresalePurchase({
-                wallet_address: normalizedAddress,
-                token_amount: token_amount,
-                payment_method: 'card',
-                payment_amount: amount_usd,
-                usd_amount: amount_usd,
-                status: 'pending',
-                stripe_session_id: session.id
-            });
-        } catch (e) {}
+        console.log(`📤 Presale mint TX sent: ${tx.hash}`);
         
-        res.json({ sessionId: session.id, url: session.url });
+        // Wait for confirmation
+        const receipt = await tx.wait();
         
+        if (receipt.status === 1) {
+            console.log(`✅ Presale mint confirmed: ${tx.hash}`);
+            return { success: true, txHash: tx.hash };
+        } else {
+            return { success: false, error: 'Mint transaction failed' };
+        }
     } catch (error) {
-        console.error('Stripe checkout error:', error);
-        res.status(500).json({ error: error.message || 'Failed to create checkout' });
+        console.error('❌ Presale mint error:', error);
+        return { success: false, error: error.message };
     }
-});
+}
 
-app.post('/api/presale/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-    if (!stripe) {
-        return res.status(503).json({ error: 'Stripe not configured' });
+// Verify payment and mint tokens endpoint
+app.post('/api/presale/verify-payment', async (req, res) => {
+    const { txHash, walletAddress, tokenAmount, totalEUR, totalUSD, paymentMethod } = req.body;
+    
+    console.log('💰 Presale payment verification:', { txHash, walletAddress, tokenAmount, paymentMethod });
+    
+    if (!txHash || !walletAddress || !tokenAmount) {
+        return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
     
-    const sig = req.headers['stripe-signature'];
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    
-    if (!webhookSecret) {
-        return res.status(500).json({ error: 'Webhook not configured' });
+    if (!ethers.isAddress(walletAddress)) {
+        return res.status(400).json({ success: false, error: 'Invalid wallet address' });
     }
-    
-    let event;
     
     try {
-        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-    } catch (err) {
-        return res.status(400).send(`Webhook Error: ${err.message}`);
+        // Check if TX already processed
+        const existing = await db.pool.query(
+            'SELECT id FROM presale_purchases WHERE payment_tx_hash = $1',
+            [txHash]
+        );
+        if (existing.rows.length > 0) {
+            return res.status(400).json({ success: false, error: 'Transaction already processed' });
+        }
+        
+        // Verify transaction on-chain
+        console.log('🔍 Verifying transaction on-chain...');
+        const txVerified = await verifyTransaction(txHash, walletAddress, totalUSD, paymentMethod);
+        
+        if (!txVerified.success) {
+            console.log('❌ TX verification failed:', txVerified.error);
+            return res.status(400).json({ success: false, error: txVerified.error || 'Transaction verification failed' });
+        }
+        
+        console.log('✅ Transaction verified successfully');
+        
+        // Record purchase as paid
+        const purchaseResult = await db.pool.query(`
+            INSERT INTO presale_purchases 
+            (wallet_address, token_amount, eur_amount, usd_amount, payment_method, payment_tx_hash, status, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, 'paid', NOW())
+            RETURNING id
+        `, [walletAddress.toLowerCase(), tokenAmount, totalEUR || 0, totalUSD || 0, paymentMethod, txHash]);
+        
+        const purchaseId = purchaseResult.rows[0].id;
+        console.log('📝 Purchase recorded with ID:', purchaseId);
+        
+        // Mint tokens to user
+        console.log('🎯 Initiating token mint...');
+        const mintResult = await mintPresaleTokens(walletAddress, tokenAmount);
+        
+        if (mintResult.success) {
+            // Update purchase with mint TX
+            await db.pool.query(`
+                UPDATE presale_purchases 
+                SET status = 'completed', mint_tx_hash = $1, minted_at = NOW()
+                WHERE id = $2
+            `, [mintResult.txHash, purchaseId]);
+            
+            console.log('✅ Presale purchase completed successfully');
+            
+            res.json({
+                success: true,
+                mintTxHash: mintResult.txHash,
+                message: 'Tokens minted successfully'
+            });
+        } else {
+            // Update status to pending_mint for manual retry
+            await db.pool.query(`
+                UPDATE presale_purchases SET status = 'pending_mint' WHERE id = $1
+            `, [purchaseId]);
+            
+            console.log('⚠️ Minting failed, marked for manual retry');
+            
+            res.status(500).json({
+                success: false,
+                error: 'Minting failed. Payment received - tokens will be sent manually.',
+                purchaseId
+            });
+        }
+    } catch (error) {
+        console.error('❌ Verify payment error:', error);
+        res.status(500).json({ success: false, error: 'Server error during verification' });
     }
-    
-    switch (event.type) {
-        case 'checkout.session.completed':
-            const session = event.data.object;
-            
-            try {
-                await db.updatePresalePurchaseByStripeSession(session.id, {
-                    status: 'paid',
-                    stripe_payment_intent: session.payment_intent
-                });
-            } catch (e) {}
-            
-            const walletAddress = session.metadata.wallet_address;
-            const tokenAmount = parseInt(session.metadata.token_amount);
-            
-            try {
-                await minter.initialize();
-                const networkConfig = getNetworkConfig();
-                
-                const result = await minter.mintToAddress(walletAddress, tokenAmount);
-                
-                if (result.receipt?.hash) {
-                    await db.updatePresalePurchaseByStripeSession(session.id, {
-                        status: 'minted',
-                        tx_hash: result.receipt.hash
-                    });
-                }
-            } catch (mintError) {
-                await db.updatePresalePurchaseByStripeSession(session.id, {
-                    status: 'paid_pending_mint'
-                });
-            }
-            break;
-            
-        case 'checkout.session.expired':
-            await db.updatePresalePurchaseByStripeSession(event.data.object.id, { status: 'expired' });
-            break;
-    }
-    
-    res.json({ received: true });
 });
 
+// Get purchases for a wallet (JSON)
+app.get('/api/presale/purchases/:address', async (req, res) => {
+    try {
+        const { address } = req.params;
+        
+        if (!address || !ethers.isAddress(address)) {
+            return res.json({ success: true, purchases: [] });
+        }
+        
+        const result = await db.pool.query(`
+            SELECT id, token_amount, eur_amount, usd_amount, payment_method, 
+                   payment_tx_hash, mint_tx_hash, status, created_at, minted_at
+            FROM presale_purchases 
+            WHERE LOWER(wallet_address) = LOWER($1)
+            ORDER BY created_at DESC
+        `, [address]);
+        
+        res.json({
+            success: true,
+            purchases: result.rows
+        });
+    } catch (error) {
+        console.error('Error fetching purchases:', error);
+        res.json({ success: true, purchases: [] });
+    }
+});
+
+// Legacy endpoint for backward compatibility
 app.post('/api/presale/purchase', async (req, res) => {
     try {
         const { wallet_address, token_amount, payment_method, payment_amount } = req.body;
@@ -1337,13 +1479,15 @@ app.post('/api/presale/purchase', async (req, res) => {
                 usd_amount: usdAmount,
                 status: 'pending_payment'
             });
-        } catch (e) {}
+        } catch (e) {
+            console.log('Could not save purchase:', e.message);
+        }
         
         res.json({
             success: true,
             purchase_id: purchase.id,
             message: 'Purchase recorded.',
-            payment_wallet: process.env.PRESALE_WALLET || 'Contact support'
+            payment_wallet: PRESALE_CONFIG.presaleWallet || process.env.PRESALE_WALLET || 'Contact support'
         });
         
     } catch (error) {
@@ -1351,88 +1495,158 @@ app.post('/api/presale/purchase', async (req, res) => {
     }
 });
 
-app.get('/api/presale/purchases/:address', async (req, res) => {
-    try {
-        const { address } = req.params;
-        if (!address || !ethers.isAddress(address)) {
-            return res.json([]);
+// Stripe checkout (disabled but kept for compatibility)
+app.post('/api/presale/create-checkout', async (req, res) => {
+    return res.status(503).json({ error: 'Card payments not available. Please use crypto (POL or USDC).' });
+});
+
+// ===========================================
+// Admin Presale Endpoints
+// ===========================================
+
+// Get admin settings
+app.get('/api/presale/admin/settings', requireAdminAuth, async (req, res) => {
+    res.json({
+        success: true,
+        settings: {
+            enabled: PRESALE_CONFIG.enabled,
+            tokenPrice: PRESALE_CONFIG.tokenPrice,
+            totalTokens: PRESALE_CONFIG.totalTokens,
+            minPurchase: PRESALE_CONFIG.minPurchase,
+            maxPurchase: PRESALE_CONFIG.maxPurchase,
+            presaleWallet: PRESALE_CONFIG.presaleWallet || process.env.PRESALE_WALLET || ''
         }
-        const purchases = await db.getPresalePurchases(address.toLowerCase()) || [];
-        res.json(purchases);
-    } catch (error) {
-        res.json([]);
-    }
+    });
 });
 
-app.get('/api/presale/admin/stats', requireAdminAuth, async (req, res) => {
-    try {
-        const stats = await db.getPresaleStats();
-        const pendingResult = await db.pool.query(
-            `SELECT COUNT(*) FROM presale_purchases WHERE status IN ('paid', 'paid_pending_mint')`
-        );
-        res.json({
-            ...stats,
-            pendingMint: parseInt(pendingResult.rows[0]?.count || 0)
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
+// Update admin settings
 app.post('/api/presale/admin/settings', requireAdminAuth, async (req, res) => {
     try {
-        const { enabled, tokenPrice, totalTokens, minPurchase, maxPurchase } = req.body;
-        PRESALE_CONFIG.enabled = enabled;
-        PRESALE_CONFIG.tokenPrice = tokenPrice;
-        PRESALE_CONFIG.totalTokens = totalTokens;
-        PRESALE_CONFIG.minPurchase = minPurchase;
-        PRESALE_CONFIG.maxPurchase = maxPurchase;
-        res.json({ success: true });
+        const { enabled, tokenPrice, totalTokens, minPurchase, maxPurchase, presaleWallet } = req.body;
+        
+        // Update in-memory config
+        if (typeof enabled === 'boolean') PRESALE_CONFIG.enabled = enabled;
+        if (tokenPrice !== undefined) PRESALE_CONFIG.tokenPrice = parseFloat(tokenPrice);
+        if (totalTokens !== undefined) PRESALE_CONFIG.totalTokens = parseInt(totalTokens);
+        if (minPurchase !== undefined) PRESALE_CONFIG.minPurchase = parseInt(minPurchase);
+        if (maxPurchase !== undefined) PRESALE_CONFIG.maxPurchase = parseInt(maxPurchase);
+        if (presaleWallet !== undefined) PRESALE_CONFIG.presaleWallet = presaleWallet;
+        
+        // Persist to DB
+        try {
+            await db.pool.query(`
+                INSERT INTO app_settings (key, value, updated_at) 
+                VALUES ('presale_config', $1, NOW())
+                ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()
+            `, [JSON.stringify({
+                enabled: PRESALE_CONFIG.enabled,
+                tokenPrice: PRESALE_CONFIG.tokenPrice,
+                totalTokens: PRESALE_CONFIG.totalTokens,
+                minPurchase: PRESALE_CONFIG.minPurchase,
+                maxPurchase: PRESALE_CONFIG.maxPurchase,
+                presaleWallet: PRESALE_CONFIG.presaleWallet
+            })]);
+            console.log('✅ Presale settings saved to DB');
+        } catch (dbError) {
+            console.log('⚠️ Could not persist settings to DB:', dbError.message);
+        }
+        
+        console.log('✅ Presale settings updated:', PRESALE_CONFIG);
+        
+        res.json({ success: true, settings: PRESALE_CONFIG });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error saving settings:', error);
+        res.status(500).json({ error: 'Failed to save settings' });
     }
 });
 
+// Admin stats
+app.get('/api/presale/admin/stats', requireAdminAuth, async (req, res) => {
+    try {
+        const stats = await db.pool.query(`
+            SELECT 
+                COUNT(*) as total_purchases,
+                COUNT(DISTINCT wallet_address) as unique_buyers,
+                COALESCE(SUM(token_amount), 0) as total_tokens,
+                COALESCE(SUM(usd_amount), 0) as total_usd,
+                COALESCE(SUM(eur_amount), 0) as total_eur,
+                COUNT(CASE WHEN status = 'pending_mint' THEN 1 END) as pending_mint
+            FROM presale_purchases
+            WHERE status IN ('paid', 'pending_mint', 'completed', 'minted')
+        `);
+        
+        res.json({
+            success: true,
+            stats: stats.rows[0]
+        });
+    } catch (error) {
+        console.error('Error fetching stats:', error);
+        res.status(500).json({ error: 'Failed to fetch stats' });
+    }
+});
+
+// Admin purchases list
 app.get('/api/presale/admin/purchases', requireAdminAuth, async (req, res) => {
     try {
-        const purchases = await db.getAllPresalePurchases() || [];
-        const stats = await db.getPresaleStats() || {};
-        res.json({ purchases, stats, config: PRESALE_CONFIG });
+        const result = await db.pool.query(`
+            SELECT p.*, r.email
+            FROM presale_purchases p
+            LEFT JOIN registrants r ON LOWER(p.wallet_address) = LOWER(r.address)
+            ORDER BY p.created_at DESC
+            LIMIT 100
+        `);
+        
+        res.json({
+            success: true,
+            purchases: result.rows,
+            config: PRESALE_CONFIG
+        });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch presale data' });
+        console.error('Error fetching purchases:', error);
+        res.status(500).json({ error: 'Failed to fetch purchases' });
     }
 });
 
+// Admin fulfill (manual mint for pending purchases)
 app.post('/api/presale/admin/fulfill', requireAdminAuth, async (req, res) => {
     try {
         const { purchase_id } = req.body;
-        const purchase = await db.getPresalePurchaseById(purchase_id);
         
-        if (!purchase) {
+        const purchaseResult = await db.pool.query(
+            'SELECT * FROM presale_purchases WHERE id = $1',
+            [purchase_id]
+        );
+        
+        if (purchaseResult.rows.length === 0) {
             return res.status(404).json({ error: 'Purchase not found' });
         }
-        if (purchase.status === 'minted') {
+        
+        const purchase = purchaseResult.rows[0];
+        
+        if (purchase.status === 'completed' || purchase.status === 'minted') {
             return res.status(400).json({ error: 'Already fulfilled' });
         }
         
-        await minter.initialize();
-        const networkConfig = getNetworkConfig();
-        const result = await minter.mintToAddress(purchase.wallet_address, purchase.token_amount);
+        // Mint tokens
+        const mintResult = await mintPresaleTokens(purchase.wallet_address, purchase.token_amount);
         
-        if (result.receipt?.hash) {
-            await db.updatePresalePurchase(purchase_id, {
-                status: 'minted',
-                tx_hash: result.receipt.hash
-            });
+        if (mintResult.success) {
+            await db.pool.query(`
+                UPDATE presale_purchases 
+                SET status = 'completed', mint_tx_hash = $1, minted_at = NOW()
+                WHERE id = $2
+            `, [mintResult.txHash, purchase_id]);
+            
             res.json({
                 success: true,
-                tx_hash: result.receipt.hash,
-                explorer_url: `${networkConfig.explorer}/tx/${result.receipt.hash}`
+                tx_hash: mintResult.txHash,
+                explorer_url: `https://polygonscan.com/tx/${mintResult.txHash}`
             });
         } else {
-            res.status(500).json({ error: 'Minting failed' });
+            res.status(500).json({ error: mintResult.error || 'Minting failed' });
         }
     } catch (error) {
+        console.error('Fulfill error:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -1447,10 +1661,16 @@ app.get('/api/health', async (req, res) => {
         timestamp: new Date().toISOString(),
         network: process.env.NETWORK || 'not set',
         stripe: stripe ? 'configured' : 'not configured',
+        presale: {
+            enabled: PRESALE_CONFIG.enabled,
+            tokenPrice: PRESALE_CONFIG.tokenPrice + ' EUR',
+            presaleWallet: PRESALE_CONFIG.presaleWallet ? 'configured' : 'not set'
+        },
         env: {
             NETWORK: process.env.NETWORK ? 'SET' : 'NOT SET',
             TOKEN_ADDRESS_POLYGON: process.env.TOKEN_ADDRESS_POLYGON ? 'SET' : 'NOT SET',
             PRIVATE_KEY: process.env.PRIVATE_KEY ? 'SET' : 'NOT SET',
+            PRESALE_WALLET: process.env.PRESALE_WALLET ? 'SET' : 'NOT SET',
             MINT_AMOUNT: process.env.MINT_AMOUNT || '2 (default)',
             DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'NOT SET'
         }
@@ -1499,6 +1719,9 @@ async function startServer() {
         await db.initDb();
         console.log('✅ PostgreSQL database initialized');
         
+        // Load presale settings from DB
+        await loadPresaleSettings();
+        
         return new Promise((resolve) => {
             const server = app.listen(PORT, () => {
                 console.log('\n' + '='.repeat(50));
@@ -1510,6 +1733,9 @@ async function startServer() {
                 console.log(`  👤 Profile:   http://localhost:${PORT}/profile`);
                 console.log(`  💰 Presale:   http://localhost:${PORT}/presale`);
                 console.log(`  🔐 Login:     http://localhost:${PORT}/login`);
+                console.log('='.repeat(50));
+                console.log(`  💎 Presale:   ${PRESALE_CONFIG.enabled ? 'ENABLED' : 'DISABLED'}`);
+                console.log(`  💵 Price:     €${PRESALE_CONFIG.tokenPrice}`);
                 console.log('='.repeat(50) + '\n');
                 resolve(server);
             });
