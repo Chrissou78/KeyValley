@@ -142,15 +142,19 @@ app.get('/presale', (req, res) => {
 app.get('/login', async (req, res) => {
     const sessionId = req.cookies?.admin_session;
     if (sessionId) {
-        const session = await db.getSession(sessionId);
-        if (session) {
-            const admin = await db.getAdminByEmail(session.username);
-            if (admin) {
-                return res.redirect('/dashboard');
+        try {
+            const session = await db.getSession(sessionId);
+            if (session) {
+                const admin = await db.getAdminByEmail(session.username);
+                if (admin) {
+                    return res.redirect('/dashboard');
+                }
             }
+        } catch (err) {
+            console.error('Session check error:', err);
         }
     }
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+    res.sendFile(path.join(__dirname, 'public', 'login', 'index.html'));
 });
 
 // ===========================================
