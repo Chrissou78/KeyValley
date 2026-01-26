@@ -1128,32 +1128,44 @@ app.post('/api/mint-manual', requireAdminAuth, async (req, res) => {
 
 app.get('/api/presale/config', async (req, res) => {
     try {
-        let stats = { tokensSold: 0 };
+        // Fetch live EUR/USD rate
+        let eurUsdRate = 1.08; // Default
         try {
-            stats = await db.getPresaleStats() || { tokensSold: 0 };
-        } catch (e) {}
-        
-        let polPrice = 0.50;
-        try {
-            const priceRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd');
-            if (priceRes.ok) {
-                const priceData = await priceRes.json();
-                polPrice = priceData['matic-network']?.usd || 0.50;
+            const rateRes = await fetch('https://api.exchangerate-api.com/v4/latest/EUR');
+            if (rateRes.ok) {
+                const rateData = await rateRes.json();
+                eurUsdRate = rateData.rates?.USD || 1.08;
             }
-        } catch (e) {}
-        
+        } catch (e) {
+            console.log('Using default EUR/USD rate');
+        }
+
+        // Fetch POL price in USD
+        let polPrice = 0.50; // Default
+        try {
+            const polRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd');
+            if (polRes.ok) {
+                const polData = await polRes.json();
+                polPrice = polData['matic-network']?.usd || 0.50;
+            }
+        } catch (e) {
+            console.log('Using default POL price');
+        }
+
         res.json({
-            tokenPrice: PRESALE_CONFIG.tokenPrice,
+            enabled: PRESALE_CONFIG.enabled,
+            tokenPrice: PRESALE_CONFIG.tokenPrice, // Now in EUR
             totalTokens: PRESALE_CONFIG.totalTokens,
-            tokensSold: stats?.tokensSold || 0,
+            tokensSold: PRESALE_CONFIG.tokensSold || 0,
             minPurchase: PRESALE_CONFIG.minPurchase,
             maxPurchase: PRESALE_CONFIG.maxPurchase,
-            enabled: PRESALE_CONFIG.enabled,
-            polPrice,
-            stripePublicKey: process.env.STRIPE_PUBLIC_KEY || null
+            presaleWallet: PRESALE_CONFIG.presaleWallet || process.env.PRESALE_WALLET || '',
+            eurUsdRate: eurUsdRate,
+            polPrice: polPrice,
+            stripePublicKey: null // Stripe disabled
         });
     } catch (error) {
-        console.error('Presale config error:', error);
+        console.error('Config error:', error);
         res.status(500).json({ error: 'Failed to load config' });
     }
 });

@@ -89,6 +89,12 @@
             background: rgba(10, 10, 10, 0.95);
             backdrop-filter: blur(10px);
         }
+        
+        .currency-badge {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body class="min-h-screen text-white">
@@ -127,7 +133,7 @@
                     <span class="text-primary"> Presale</span>
                 </h1>
                 <p class="text-gray-400 text-lg max-w-2xl mx-auto">
-                    Get early access to VIP tokens at an exclusive presale price. Pay with crypto.
+                    Get early access to VIP tokens at an exclusive presale price. Pay with crypto (POL or USDC).
                 </p>
             </div>
 
@@ -164,14 +170,26 @@
                     <div class="glass-card rounded-2xl p-6">
                         <h3 class="text-xs font-bold uppercase tracking-widest text-primary mb-4">Token Price</h3>
                         
-                        <div class="flex items-end gap-4 mb-6">
+                        <div class="flex items-end gap-4 mb-4">
                             <div>
-                                <p class="text-4xl font-serif text-white" id="tokenPrice">$0.00</p>
+                                <p class="text-4xl font-serif text-white" id="tokenPriceEUR">€0.00</p>
                                 <p class="text-gray-500 text-sm">per VIP token</p>
                             </div>
                             <div class="px-3 py-1 bg-green-500/10 border border-green-500/30 rounded text-green-400 text-xs font-bold">
                                 PRESALE PRICE
                             </div>
+                        </div>
+                        
+                        <!-- USD Equivalent -->
+                        <div class="bg-surface rounded-lg p-3 mb-6">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-500 text-sm">USD Equivalent</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-white font-semibold" id="tokenPriceUSD">$0.00</span>
+                                    <span class="currency-badge bg-blue-500/20 text-blue-400">Live Rate</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-xs mt-1">EUR/USD: <span id="eurUsdRate">1.00</span></p>
                         </div>
                         
                         <div class="grid grid-cols-2 gap-4">
@@ -204,8 +222,8 @@
                             </div>
                         </div>
                         <div class="mt-4 flex items-center gap-2 text-xs text-gray-500">
-                            <span class="material-symbols-outlined text-sm">lock</span>
-                            Crypto payments on Polygon network
+                            <span class="material-symbols-outlined text-sm">info</span>
+                            Crypto payments converted at live EUR/USD rate
                         </div>
                     </div>
                     
@@ -309,16 +327,22 @@
                         <div class="bg-surface rounded-xl p-4 mb-6">
                             <div class="flex justify-between mb-2">
                                 <span class="text-gray-500">Token Price</span>
-                                <span class="text-white" id="displayPrice">$0.10</span>
+                                <div class="text-right">
+                                    <span class="text-white" id="displayPriceEUR">€0.10</span>
+                                    <span class="text-gray-500 text-xs ml-1">(<span id="displayPriceUSD">$0.11</span>)</span>
+                                </div>
                             </div>
                             <div class="flex justify-between mb-2">
                                 <span class="text-gray-500">Quantity</span>
                                 <span class="text-white" id="displayQuantity">0 VIP</span>
                             </div>
                             <div class="border-t border-white/10 my-3"></div>
-                            <div class="flex justify-between">
+                            <div class="flex justify-between items-center">
                                 <span class="text-white font-bold text-lg">Total</span>
-                                <span class="text-primary text-2xl font-bold" id="displayTotal">$0.00</span>
+                                <div class="text-right">
+                                    <p class="text-primary text-2xl font-bold" id="displayTotalEUR">€0.00</p>
+                                    <p class="text-gray-400 text-sm" id="displayTotalUSD">≈ $0.00 USD</p>
+                                </div>
                             </div>
                         </div>
                         
@@ -398,7 +422,7 @@
                             <div class="flex items-start gap-3">
                                 <span class="material-symbols-outlined text-primary">info</span>
                                 <div class="text-sm">
-                                    <p class="text-gray-400 mb-2">For crypto payments, send funds to:</p>
+                                    <p class="text-gray-400 mb-2">Send payment in USD equivalent to:</p>
                                     <p class="text-white font-mono text-xs bg-black/50 p-2 rounded break-all" id="presaleWalletAddress">Loading...</p>
                                     <p class="text-gray-500 text-xs mt-2">Tokens will be sent after payment confirmation.</p>
                                 </div>
@@ -504,7 +528,7 @@
                             <span class="text-primary font-bold text-xl">3</span>
                         </div>
                         <h3 class="text-white font-semibold mb-2">Send Crypto</h3>
-                        <p class="text-gray-500 text-sm">POL or USDC payment</p>
+                        <p class="text-gray-500 text-sm">POL or USDC (USD value)</p>
                     </div>
                     <div class="glass-card rounded-xl p-6 text-center">
                         <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -540,14 +564,15 @@
         // Configuration
         // ============================================
         const CONFIG = {
-            tokenPrice: 0.10,
+            tokenPriceEUR: 0.10,      // Base price in EUR
+            eurUsdRate: 1.08,          // EUR to USD conversion rate
             totalTokens: 1000000,
             tokensSold: 0,
             minPurchase: 10,
             maxPurchase: 10000,
             presaleWallet: '',
             
-            // Storage keys - check multiple sources for wallet
+            // Storage keys
             STORAGE_KEYS: [
                 'keavalley_profile',
                 'walletTwoSession',
@@ -558,20 +583,28 @@
             USDC_ADDRESS: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'
         };
         
+        // Computed USD price
+        function getTokenPriceUSD() {
+            return CONFIG.tokenPriceEUR * CONFIG.eurUsdRate;
+        }
+        
         // State
         let connectedWallet = null;
-        let selectedPayment = 'POL'; // Default to POL (crypto only)
-        let polPrice = 0.50;
+        let selectedPayment = 'POL';
+        let polPrice = 0.50; // POL price in USD
         let userBalances = { POL: 0, USDC: 0 };
         
         // ============================================
         // Initialize
         // ============================================
         async function init() {
+            // Fetch EUR/USD rate
+            await fetchEurUsdRate();
+            
             // Load presale config
             await loadPresaleConfig();
             
-            // Check existing session from profile
+            // Check wallet connection
             checkWalletConnection();
             
             // Update UI
@@ -579,12 +612,36 @@
             updateTotals();
         }
         
+        async function fetchEurUsdRate() {
+            try {
+                // Try multiple sources for EUR/USD rate
+                const response = await fetch('https://api.exchangerate-api.com/v4/latest/EUR');
+                if (response.ok) {
+                    const data = await response.json();
+                    CONFIG.eurUsdRate = data.rates?.USD || 1.08;
+                    console.log('EUR/USD rate:', CONFIG.eurUsdRate);
+                }
+            } catch (e) {
+                console.log('Using default EUR/USD rate:', CONFIG.eurUsdRate);
+                // Try fallback
+                try {
+                    const fallback = await fetch('https://open.er-api.com/v6/latest/EUR');
+                    if (fallback.ok) {
+                        const data = await fallback.json();
+                        CONFIG.eurUsdRate = data.rates?.USD || 1.08;
+                    }
+                } catch (e2) {
+                    console.log('Fallback also failed, using default rate');
+                }
+            }
+        }
+        
         async function loadPresaleConfig() {
             try {
                 const response = await fetch('/api/presale/config');
                 if (response.ok) {
                     const data = await response.json();
-                    CONFIG.tokenPrice = data.tokenPrice || CONFIG.tokenPrice;
+                    CONFIG.tokenPriceEUR = data.tokenPrice || CONFIG.tokenPriceEUR; // Now in EUR
                     CONFIG.totalTokens = data.totalTokens || CONFIG.totalTokens;
                     CONFIG.tokensSold = data.tokensSold || CONFIG.tokensSold;
                     CONFIG.minPurchase = data.minPurchase || CONFIG.minPurchase;
@@ -592,7 +649,11 @@
                     CONFIG.presaleWallet = data.presaleWallet || '';
                     polPrice = data.polPrice || polPrice;
                     
-                    // Update presale wallet display
+                    // Use server EUR/USD rate if provided
+                    if (data.eurUsdRate) {
+                        CONFIG.eurUsdRate = data.eurUsdRate;
+                    }
+                    
                     if (CONFIG.presaleWallet) {
                         document.getElementById('presaleWalletAddress').textContent = CONFIG.presaleWallet;
                     }
@@ -609,39 +670,37 @@
             document.getElementById('tokensSold').textContent = `${CONFIG.tokensSold.toLocaleString()} VIP`;
             document.getElementById('totalTokens').textContent = `${CONFIG.totalTokens.toLocaleString()} VIP`;
             
-            document.getElementById('tokenPrice').textContent = `$${CONFIG.tokenPrice.toFixed(2)}`;
+            // Price display - EUR and USD
+            document.getElementById('tokenPriceEUR').textContent = `€${CONFIG.tokenPriceEUR.toFixed(2)}`;
+            document.getElementById('tokenPriceUSD').textContent = `$${getTokenPriceUSD().toFixed(2)}`;
+            document.getElementById('eurUsdRate').textContent = CONFIG.eurUsdRate.toFixed(4);
+            
             document.getElementById('minPurchase').textContent = `${CONFIG.minPurchase.toLocaleString()} VIP`;
             document.getElementById('maxPurchase').textContent = `${CONFIG.maxPurchase.toLocaleString()} VIP`;
         }
         
         // ============================================
-        // Wallet Connection (from Profile session)
+        // Wallet Connection
         // ============================================
         function checkWalletConnection() {
             let walletAddress = null;
             
-            // Check multiple storage locations for wallet address
             for (const key of CONFIG.STORAGE_KEYS) {
                 const stored = localStorage.getItem(key);
                 if (stored) {
                     try {
-                        // Try parsing as JSON first
                         const data = JSON.parse(stored);
-                        
-                        // Check various possible address fields
                         const address = data.wallet || data.address || data.walletAddress || data.user?.walletAddress;
                         
                         if (address && address.length === 42 && address.startsWith('0x')) {
-                            // Check if session is still valid (24h)
                             const timestamp = data.timestamp || data.created || 0;
                             if (timestamp && Date.now() - timestamp > 24 * 60 * 60 * 1000) {
-                                continue; // Session expired
+                                continue;
                             }
                             walletAddress = address;
                             break;
                         }
                     } catch (e) {
-                        // Not JSON, check if it's a raw address
                         if (stored.length === 42 && stored.startsWith('0x')) {
                             walletAddress = stored;
                             break;
@@ -650,7 +709,6 @@
                 }
             }
             
-            // Also check sessionStorage
             if (!walletAddress) {
                 const sessionWallet = sessionStorage.getItem('walletAddress');
                 if (sessionWallet && sessionWallet.length === 42 && sessionWallet.startsWith('0x')) {
@@ -668,22 +726,15 @@
         async function setWalletConnected(address) {
             connectedWallet = address;
             
-            // Hide overlay, show form
             document.getElementById('notConnectedOverlay').classList.add('hidden');
             document.getElementById('walletHeader').classList.remove('hidden');
             document.getElementById('purchaseFormSection').classList.remove('hidden');
             
-            // Display wallet address
             document.getElementById('walletAddressDisplay').textContent = 
                 `${address.slice(0, 6)}...${address.slice(-4)}`;
             
-            // Fetch balances
             await fetchUserBalances();
-            
-            // Load purchase history
             await loadPurchaseHistory();
-            
-            // Update totals
             updateTotals();
         }
         
@@ -698,7 +749,6 @@
             if (!connectedWallet) return;
             
             try {
-                // Try WalletTwo API first
                 try {
                     const polRes = await fetch(`https://api.wallettwo.com/blockchain/balance/137/${connectedWallet}/native`);
                     if (polRes.ok) {
@@ -706,13 +756,11 @@
                         userBalances.POL = parseFloat(polData.balance || 0);
                     }
                 } catch (e) {
-                    // Fallback to direct RPC
                     const provider = new ethers.JsonRpcProvider(CONFIG.POLYGON_RPC);
                     const balance = await provider.getBalance(connectedWallet);
                     userBalances.POL = parseFloat(ethers.formatEther(balance));
                 }
                 
-                // USDC balance
                 try {
                     const usdcRes = await fetch(`https://api.wallettwo.com/blockchain/balance/137/${connectedWallet}/${CONFIG.USDC_ADDRESS}`);
                     if (usdcRes.ok) {
@@ -720,7 +768,6 @@
                         userBalances.USDC = parseFloat(usdcData.balance || 0);
                     }
                 } catch (e) {
-                    // Fallback: set to 0
                     userBalances.USDC = 0;
                 }
             } catch (e) {
@@ -770,7 +817,8 @@
                             </div>
                         </div>
                         <div class="text-right">
-                            <p class="text-white">$${parseFloat(p.usd_amount).toFixed(2)}</p>
+                            <p class="text-white">€${parseFloat(p.eur_amount || p.usd_amount / CONFIG.eurUsdRate).toFixed(2)}</p>
+                            <p class="text-gray-500 text-xs">$${parseFloat(p.usd_amount).toFixed(2)}</p>
                             <span class="text-xs px-2 py-1 rounded-full ${getStatusClass(p.status)}">${formatStatus(p.status)}</span>
                         </div>
                     </div>
@@ -834,12 +882,10 @@
         }
         
         function selectPayment(method) {
-            // Only allow POL and USDC
             if (method === 'card') return;
             
             selectedPayment = method;
             
-            // Update selection UI
             ['POL', 'USDC'].forEach(m => {
                 const el = document.getElementById(`pay${m}`);
                 const radio = document.getElementById(`${m.toLowerCase()}Radio`);
@@ -857,35 +903,35 @@
                 }
             });
             
-            // Update button text
             document.getElementById('buyButtonText').textContent = `Buy with ${method}`;
-            
-            // Update balance display
             updateBalanceDisplay();
             updateTotals();
         }
         
         function updateTotals() {
             const amount = parseInt(document.getElementById('tokenAmount').value) || 0;
-            const totalUSD = amount * CONFIG.tokenPrice;
+            const totalEUR = amount * CONFIG.tokenPriceEUR;
+            const totalUSD = totalEUR * CONFIG.eurUsdRate;
             
-            document.getElementById('displayPrice').textContent = `$${CONFIG.tokenPrice.toFixed(2)}`;
+            // Display prices
+            document.getElementById('displayPriceEUR').textContent = `€${CONFIG.tokenPriceEUR.toFixed(2)}`;
+            document.getElementById('displayPriceUSD').textContent = `$${getTokenPriceUSD().toFixed(2)}`;
             document.getElementById('displayQuantity').textContent = `${amount.toLocaleString()} VIP`;
-            document.getElementById('displayTotal').textContent = `$${totalUSD.toFixed(2)}`;
+            document.getElementById('displayTotalEUR').textContent = `€${totalEUR.toFixed(2)}`;
+            document.getElementById('displayTotalUSD').textContent = `≈ $${totalUSD.toFixed(2)} USD`;
             
-            // Update crypto equivalents
+            // Update crypto equivalents (in USD value)
             const totalPOL = polPrice > 0 ? totalUSD / polPrice : 0;
-            document.getElementById('polEquivalent').textContent = `≈ ${totalPOL.toFixed(4)} POL`;
+            document.getElementById('polEquivalent').textContent = `≈ ${totalPOL.toFixed(4)} POL ($${totalUSD.toFixed(2)})`;
             document.getElementById('usdcEquivalent').textContent = `≈ ${totalUSD.toFixed(2)} USDC`;
         }
         
         // ============================================
-        // Purchase Execution (Crypto Only)
+        // Purchase Execution
         // ============================================
         async function executePurchase() {
             const amount = parseInt(document.getElementById('tokenAmount').value) || 0;
             
-            // Validation
             if (amount < CONFIG.minPurchase) {
                 alert(`Minimum purchase is ${CONFIG.minPurchase} VIP tokens`);
                 return;
@@ -901,14 +947,13 @@
                 return;
             }
             
-            const totalUSD = amount * CONFIG.tokenPrice;
+            const totalEUR = amount * CONFIG.tokenPriceEUR;
+            const totalUSD = totalEUR * CONFIG.eurUsdRate;
             
-            // Crypto payment only
-            await payWithCrypto(amount, selectedPayment);
+            await payWithCrypto(amount, selectedPayment, totalEUR, totalUSD);
         }
         
-        async function payWithCrypto(tokenAmount, method) {
-            const totalUSD = tokenAmount * CONFIG.tokenPrice;
+        async function payWithCrypto(tokenAmount, method, totalEUR, totalUSD) {
             const totalPOL = polPrice > 0 ? totalUSD / polPrice : 0;
             
             // Check balance
@@ -932,7 +977,9 @@
                         token_amount: tokenAmount,
                         payment_method: method,
                         payment_amount: method === 'POL' ? totalPOL : totalUSD,
-                        usd_amount: totalUSD
+                        eur_amount: totalEUR,
+                        usd_amount: totalUSD,
+                        eur_usd_rate: CONFIG.eurUsdRate
                     })
                 });
                 
@@ -942,7 +989,7 @@
                     const paymentAmount = method === 'POL' ? `${totalPOL.toFixed(4)} POL` : `${totalUSD.toFixed(2)} USDC`;
                     const walletDisplay = CONFIG.presaleWallet ? 
                         `\n\nSend to:\n${CONFIG.presaleWallet}` : '';
-                    showSuccess(`Purchase recorded!\n\nPlease send ${paymentAmount} to complete your order.${walletDisplay}\n\nTokens will be sent after payment confirmation.`);
+                    showSuccess(`Purchase recorded!\n\nTotal: €${totalEUR.toFixed(2)} (≈ $${totalUSD.toFixed(2)})\n\nPlease send ${paymentAmount} to complete your order.${walletDisplay}\n\nTokens will be sent after payment confirmation.`);
                     await loadPurchaseHistory();
                 } else {
                     showError(data.error || 'Purchase failed');
