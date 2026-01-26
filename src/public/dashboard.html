@@ -71,6 +71,7 @@
         .badge-warning { background: rgba(234, 179, 8, 0.2); color: #eab308; }
         .badge-pending { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
         .badge-error { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .badge-purple { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
         
         /* Input field fixes - ensure visibility on dark background */
         .input-field {
@@ -134,6 +135,11 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(238, 157, 43, 0.4);
         }
+        .btn-gold:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
         
         .btn-outline {
             background: transparent;
@@ -147,6 +153,20 @@
         .btn-outline:hover {
             border-color: #ee9d2b;
             color: #ee9d2b;
+        }
+        
+        .btn-danger {
+            background: transparent;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
         }
         
         /* Modal styles */
@@ -218,6 +238,25 @@
         .toggle-switch.active::after {
             transform: translateX(24px);
         }
+        
+        /* Admin card */
+        .admin-card {
+            background: rgba(26, 26, 26, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+        .admin-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        .admin-card.super-admin {
+            border-color: rgba(238, 157, 43, 0.3);
+            background: rgba(238, 157, 43, 0.05);
+        }
     </style>
 </head>
 <body class="text-white">
@@ -230,6 +269,7 @@
                 <span class="text-white/60">Admin Dashboard</span>
             </div>
             <div class="flex items-center gap-4">
+                <span id="adminInfo" class="text-white/60 text-sm"></span>
                 <a href="/" class="btn-outline text-sm">Back to Site</a>
                 <button onclick="logout()" class="btn-outline text-sm text-red-400 border-red-400/30 hover:border-red-400">Logout</button>
             </div>
@@ -239,7 +279,7 @@
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 py-8">
         <!-- Main Tabs -->
-        <div class="flex gap-2 mb-8">
+        <div class="flex flex-wrap gap-2 mb-8">
             <button class="main-tab active" data-tab="claims" onclick="switchMainTab('claims')">
                 <span class="flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,6 +294,14 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
                     </svg>
                     Presale
+                </span>
+            </button>
+            <button class="main-tab" data-tab="admins" onclick="switchMainTab('admins')">
+                <span class="flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    Admins
                 </span>
             </button>
             <button class="main-tab" data-tab="settings" onclick="switchMainTab('settings')">
@@ -407,6 +455,86 @@
             </div>
         </div>
         
+        <!-- Admins Tab Panel -->
+        <div id="admins-panel" class="tab-panel">
+            <!-- Admin Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div class="stat-card">
+                    <div class="stat-label">Total Admins</div>
+                    <div class="stat-value" id="admins-total">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Super Admins</div>
+                    <div class="stat-value gold-text" id="admins-super">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Regular Admins</div>
+                    <div class="stat-value text-blue-400" id="admins-regular">--</div>
+                </div>
+            </div>
+            
+            <!-- Add Admin Form (only visible to super_admin) -->
+            <div id="add-admin-section" class="glass-card rounded-xl p-6 mb-8 hidden">
+                <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
+                    <svg class="w-5 h-5 gold-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                    </svg>
+                    Add New Admin
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="text-white/60 text-sm block mb-2">Email Address *</label>
+                        <input type="email" id="new-admin-email" class="input-field" placeholder="admin@example.com">
+                    </div>
+                    <div>
+                        <label class="text-white/60 text-sm block mb-2">Name</label>
+                        <input type="text" id="new-admin-name" class="input-field" placeholder="John Doe">
+                    </div>
+                    <div>
+                        <label class="text-white/60 text-sm block mb-2">Role</label>
+                        <select id="new-admin-role" class="input-field">
+                            <option value="admin">Admin</option>
+                            <option value="super_admin">Super Admin</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mt-4 flex items-center gap-4">
+                    <button onclick="addAdmin()" class="btn-gold">Add Admin</button>
+                    <span id="add-admin-status" class="text-sm"></span>
+                </div>
+                
+                <p class="text-white/40 text-xs mt-4">
+                    * The email must match the WalletTwo account email. The user will be able to login after being added.
+                </p>
+            </div>
+            
+            <!-- Not Super Admin Notice -->
+            <div id="not-super-admin-notice" class="glass-card rounded-xl p-6 mb-8 hidden">
+                <div class="flex items-center gap-4 text-yellow-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <div>
+                        <p class="font-semibold">View Only Access</p>
+                        <p class="text-white/60 text-sm">Only super admins can add or remove other admins.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Admin List -->
+            <div class="glass-card rounded-xl overflow-hidden">
+                <div class="p-4 border-b border-white/10 flex items-center justify-between">
+                    <h3 class="font-semibold">Admin Whitelist</h3>
+                    <button onclick="loadAdmins()" class="btn-outline text-sm">Refresh</button>
+                </div>
+                <div id="admins-list" class="p-4 space-y-3">
+                    <div class="text-center text-white/40 py-8">Loading...</div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Settings Tab Panel -->
         <div id="settings-panel" class="tab-panel">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -552,12 +680,29 @@
         <div class="modal-content">
             <div class="p-6 border-b border-white/10 flex items-center justify-between">
                 <h3 class="font-semibold text-lg">Full Sync Results</h3>
-                <button onclick="closeFullSyncModal()" class="text-white/40 hover:text-white">&times;</button>
+                <button onclick="closeFullSyncModal()" class="text-white/40 hover:text-white text-2xl">&times;</button>
             </div>
             <div id="fullsync-content" class="p-6">
                 <div class="text-center text-white/40 py-8">
                     <div class="animate-spin w-8 h-8 border-2 border-white/20 border-t-gold-text rounded-full mx-auto mb-4"></div>
                     Running sync...
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirm Remove Admin Modal -->
+    <div id="confirm-remove-modal" class="modal-overlay">
+        <div class="modal-content max-w-md">
+            <div class="p-6 border-b border-white/10">
+                <h3 class="font-semibold text-lg">Remove Admin</h3>
+            </div>
+            <div class="p-6">
+                <p class="text-white/80 mb-4">Are you sure you want to remove this admin?</p>
+                <p id="remove-admin-email" class="font-mono text-sm bg-white/5 p-3 rounded mb-6"></p>
+                <div class="flex gap-4">
+                    <button onclick="closeRemoveModal()" class="btn-outline flex-1">Cancel</button>
+                    <button onclick="confirmRemoveAdmin()" class="btn-danger flex-1">Remove</button>
                 </div>
             </div>
         </div>
@@ -576,6 +721,10 @@
         let currentFilter = 'all';
         let registrantsData = [];
         let presaleData = [];
+        let adminsData = [];
+        let currentAdminRole = 'admin';
+        let currentAdminEmail = '';
+        let adminToRemove = null;
         
         // ==========================================
         // TAB SWITCHING - MUST BE IN GLOBAL SCOPE
@@ -601,8 +750,186 @@
             } else if (tabName === 'presale') {
                 loadPresaleStats();
                 loadPresalePurchases();
+            } else if (tabName === 'admins') {
+                loadAdmins();
             } else if (tabName === 'settings') {
                 loadSettings();
+            }
+        }
+        
+        // ==========================================
+        // ADMIN MANAGEMENT
+        // ==========================================
+        async function loadAdmins() {
+            const listContainer = document.getElementById('admins-list');
+            const addSection = document.getElementById('add-admin-section');
+            const notSuperNotice = document.getElementById('not-super-admin-notice');
+            
+            // Show/hide add section based on role
+            if (currentAdminRole === 'super_admin') {
+                addSection.classList.remove('hidden');
+                notSuperNotice.classList.add('hidden');
+            } else {
+                addSection.classList.add('hidden');
+                notSuperNotice.classList.remove('hidden');
+            }
+            
+            try {
+                const response = await fetch('/api/admin/whitelist', { credentials: 'include' });
+                
+                if (response.status === 403) {
+                    // Not a super admin, but can still see the list
+                    listContainer.innerHTML = `
+                        <div class="text-center text-white/40 py-8">
+                            <p>Only super admins can view the full admin list.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const data = await response.json();
+                adminsData = data.admins || [];
+                
+                // Update stats
+                const total = adminsData.length;
+                const superAdmins = adminsData.filter(a => a.role === 'super_admin').length;
+                const regularAdmins = total - superAdmins;
+                
+                document.getElementById('admins-total').textContent = total;
+                document.getElementById('admins-super').textContent = superAdmins;
+                document.getElementById('admins-regular').textContent = regularAdmins;
+                
+                renderAdmins(adminsData);
+            } catch (error) {
+                console.error('Error loading admins:', error);
+                listContainer.innerHTML = `
+                    <div class="text-center text-red-400 py-8">Error loading admins</div>
+                `;
+            }
+        }
+        
+        function renderAdmins(admins) {
+            const listContainer = document.getElementById('admins-list');
+            
+            if (!admins || admins.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center text-white/40 py-8">No admins found</div>
+                `;
+                return;
+            }
+            
+            listContainer.innerHTML = admins.map(admin => {
+                const isSuperAdmin = admin.role === 'super_admin';
+                const isCurrentUser = admin.email.toLowerCase() === currentAdminEmail.toLowerCase();
+                const lastLogin = admin.last_login ? new Date(admin.last_login).toLocaleDateString() : 'Never';
+                const createdAt = admin.created_at ? new Date(admin.created_at).toLocaleDateString() : '--';
+                
+                return `
+                    <div class="admin-card ${isSuperAdmin ? 'super-admin' : ''}">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-lg font-bold ${isSuperAdmin ? 'gold-text' : 'text-white/60'}">
+                                ${(admin.name || admin.email).charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-semibold">${admin.name || admin.email.split('@')[0]}</span>
+                                    ${isCurrentUser ? '<span class="badge badge-success text-xs">You</span>' : ''}
+                                </div>
+                                <p class="text-white/60 text-sm">${admin.email}</p>
+                                <div class="flex items-center gap-4 mt-1 text-xs text-white/40">
+                                    <span>Added: ${createdAt}</span>
+                                    <span>Last login: ${lastLogin}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="badge ${isSuperAdmin ? 'badge-purple' : 'badge-pending'}">
+                                ${isSuperAdmin ? 'Super Admin' : 'Admin'}
+                            </span>
+                            ${currentAdminRole === 'super_admin' && !isSuperAdmin && !isCurrentUser ? `
+                                <button onclick="promptRemoveAdmin('${admin.email}')" class="btn-danger text-sm px-3 py-1">
+                                    Remove
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        async function addAdmin() {
+            const email = document.getElementById('new-admin-email').value.trim();
+            const name = document.getElementById('new-admin-name').value.trim();
+            const role = document.getElementById('new-admin-role').value;
+            const statusEl = document.getElementById('add-admin-status');
+            
+            if (!email || !email.includes('@')) {
+                statusEl.innerHTML = '<span class="text-red-400">Please enter a valid email</span>';
+                return;
+            }
+            
+            statusEl.innerHTML = '<span class="text-white/60">Adding admin...</span>';
+            
+            try {
+                const response = await fetch('/api/admin/whitelist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, name, role })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusEl.innerHTML = '<span class="text-green-400">Admin added successfully!</span>';
+                    document.getElementById('new-admin-email').value = '';
+                    document.getElementById('new-admin-name').value = '';
+                    document.getElementById('new-admin-role').value = 'admin';
+                    loadAdmins();
+                    
+                    setTimeout(() => {
+                        statusEl.innerHTML = '';
+                    }, 3000);
+                } else {
+                    statusEl.innerHTML = `<span class="text-red-400">${data.error || 'Failed to add admin'}</span>`;
+                }
+            } catch (error) {
+                console.error('Error adding admin:', error);
+                statusEl.innerHTML = '<span class="text-red-400">Error adding admin</span>';
+            }
+        }
+        
+        function promptRemoveAdmin(email) {
+            adminToRemove = email;
+            document.getElementById('remove-admin-email').textContent = email;
+            document.getElementById('confirm-remove-modal').classList.add('active');
+        }
+        
+        function closeRemoveModal() {
+            adminToRemove = null;
+            document.getElementById('confirm-remove-modal').classList.remove('active');
+        }
+        
+        async function confirmRemoveAdmin() {
+            if (!adminToRemove) return;
+            
+            try {
+                const response = await fetch(`/api/admin/whitelist/${encodeURIComponent(adminToRemove)}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    closeRemoveModal();
+                    loadAdmins();
+                } else {
+                    alert(data.error || 'Failed to remove admin');
+                }
+            } catch (error) {
+                console.error('Error removing admin:', error);
+                alert('Error removing admin');
             }
         }
         
@@ -1043,7 +1370,7 @@
         // ==========================================
         async function logout() {
             try {
-                await fetch('/api/admin/logout', { method: 'POST' });
+                await fetch('/api/admin/logout', { method: 'POST', credentials: 'include' });
                 localStorage.removeItem('keavalley_admin');
                 window.location.href = '/login';
             } catch (error) {
@@ -1053,7 +1380,7 @@
 
         async function checkAdminSession() {
             try {
-                const response = await fetch('/api/admin/session');
+                const response = await fetch('/api/admin/session', { credentials: 'include' });
                 const data = await response.json();
                 
                 if (!data.authenticated) {
@@ -1061,8 +1388,11 @@
                     return false;
                 }
                 
-                // Update UI with admin info
+                // Store admin info
                 if (data.admin) {
+                    currentAdminRole = data.admin.role || 'admin';
+                    currentAdminEmail = data.admin.email || '';
+                    
                     const adminInfo = document.getElementById('adminInfo');
                     if (adminInfo) {
                         adminInfo.textContent = data.admin.email;
