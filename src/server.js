@@ -29,7 +29,7 @@ try {
 // Presale Configuration
 // ===========================================
 const PRESALE_CONFIG = {
-    tokenPrice: parseFloat(process.env.PRESALE_TOKEN_PRICE) || 0.10,
+    tokenPrice: parseFloat(process.env.PRESALE_TOKEN_PRICE) || 1.00,
     totalTokens: parseInt(process.env.PRESALE_TOTAL_TOKENS) || 1000000,
     minPurchase: parseInt(process.env.PRESALE_MIN_PURCHASE) || 10,
     maxPurchase: parseInt(process.env.PRESALE_MAX_PURCHASE) || 10000,
