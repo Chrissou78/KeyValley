@@ -1041,17 +1041,50 @@
         // ==========================================
         // AUTH / LOGOUT
         // ==========================================
-        function logout() {
-            localStorage.removeItem('adminToken');
-            sessionStorage.removeItem('adminToken');
-            window.location.href = '/admin/login';
+        async function logout() {
+            try {
+                await fetch('/api/admin/logout', { method: 'POST' });
+                localStorage.removeItem('keavalley_admin');
+                window.location.href = '/login';
+            } catch (error) {
+                window.location.href = '/login';
+            }
+        }
+
+        async function checkAdminSession() {
+            try {
+                const response = await fetch('/api/admin/session');
+                const data = await response.json();
+                
+                if (!data.authenticated) {
+                    window.location.href = '/login';
+                    return false;
+                }
+                
+                // Update UI with admin info
+                if (data.admin) {
+                    const adminInfo = document.getElementById('adminInfo');
+                    if (adminInfo) {
+                        adminInfo.textContent = data.admin.email;
+                    }
+                }
+                
+                return data;
+            } catch (error) {
+                console.error('Session check failed:', error);
+                window.location.href = '/login';
+                return false;
+            }
         }
         
         // ==========================================
         // INIT
         // ==========================================
-        document.addEventListener('DOMContentLoaded', () => {
-            loadRegistrants();
+        document.addEventListener('DOMContentLoaded', async () => {
+            const session = await checkAdminSession();
+            if (session) {
+                loadRegistrants();
+            }
         });
     </script>
 </body>

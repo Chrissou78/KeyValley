@@ -7,7 +7,9 @@
     "start": "node src/index.js",
     "start:amoy": "NETWORK=amoy node src/index.js",
     "start:polygon": "NETWORK=polygon node src/index.js",
-    "build:profile": "esbuild src/profile-app/index.jsx --bundle --outfile=src/public/profile/bundle.js --loader:.jsx=jsx"
+    "build:profile": "esbuild src/profile-app/index.jsx --bundle --outfile=src/public/profile/bundle.js --loader:.jsx=jsx",
+    "build:login": "esbuild src/login-app/index.jsx --bundle --outfile=src/public/login/bundle.js --loader:.jsx=jsx",
+    "build": "npm run build:profile && npm run build:login"
   },
   "dependencies": {
     "cookie-parser": "^1.4.6",

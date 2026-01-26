@@ -110,6 +110,29 @@ async function initDb() {
         // Clean up expired sessions
         await client.query(`DELETE FROM sessions WHERE expires_at < CURRENT_TIMESTAMP`);
 
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS admin_whitelist (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                wallet_address VARCHAR(42),
+                name VARCHAR(255),
+                role VARCHAR(50) DEFAULT 'admin',
+                added_by VARCHAR(255),
+                created_at TIMESTAMP DEFAULT NOW(),
+                last_login TIMESTAMP
+            )
+        `);
+
+        await pool.query(`
+            INSERT INTO admin_whitelist (email, name, role)
+            VALUES ('christopher.fourquier@onchainlabs.ch', 'Christopher Fourquier', 'super_admin')
+            ON CONFLICT (email) DO NOTHING
+        `);
+
+        await pool.query(`
+            CREATE INDEX IF NOT EXISTS idx_admin_whitelist_email ON admin_whitelist(LOWER(email))
+        `);
+
         isInitialized = true;
         console.log('✅ PostgreSQL database initialized');
     } catch (error) {
@@ -605,6 +628,134 @@ async function updatePresalePurchaseByStripeSession(sessionId, updates) {
     }
 }
 
+// ============================================
+// Admin Whitelist Operations
+// ============================================
+
+// Check if email is whitelisted admin
+async function isAdminWhitelisted(email) {
+    if (!email) return false;
+    try {
+        const result = await pool.query(
+            'SELECT * FROM admin_whitelist WHERE LOWER(email) = LOWER($1)',
+            [email]
+        );
+        return result.rows.length > 0;
+    } catch (error) {
+        console.error('Error checking admin whitelist:', error);
+        return false;
+    }
+}
+
+// Get admin by email
+async function getAdminByEmail(email) {
+    if (!email) return null;
+    try {
+        const result = await pool.query(
+            'SELECT * FROM admin_whitelist WHERE LOWER(email) = LOWER($1)',
+            [email]
+        );
+        return result.rows[0] || null;
+    } catch (error) {
+        console.error('Error getting admin:', error);
+        return null;
+    }
+}
+
+// Get admin by wallet address
+async function getAdminByWallet(walletAddress) {
+    if (!walletAddress) return null;
+    try {
+        const result = await pool.query(
+            'SELECT * FROM admin_whitelist WHERE LOWER(wallet_address) = LOWER($1)',
+            [walletAddress.toLowerCase()]
+        );
+        return result.rows[0] || null;
+    } catch (error) {
+        console.error('Error getting admin by wallet:', error);
+        return null;
+    }
+}
+
+// Get all admins
+async function getAllAdmins() {
+    try {
+        const result = await pool.query(
+            'SELECT id, email, wallet_address, name, role, created_at, last_login FROM admin_whitelist ORDER BY created_at ASC'
+        );
+        return result.rows;
+    } catch (error) {
+        console.error('Error getting all admins:', error);
+        return [];
+    }
+}
+
+// Add admin to whitelist
+async function addAdmin(email, name = null, role = 'admin', addedBy = null) {
+    try {
+        const result = await pool.query(
+            `INSERT INTO admin_whitelist (email, name, role, added_by, created_at) 
+             VALUES (LOWER($1), $2, $3, $4, NOW())
+             ON CONFLICT (email) DO UPDATE SET name = COALESCE($2, admin_whitelist.name)
+             RETURNING *`,
+            [email, name, role, addedBy]
+        );
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error adding admin:', error);
+        throw error;
+    }
+}
+
+// Remove admin from whitelist
+async function removeAdmin(email) {
+    try {
+        // Prevent removing super_admin
+        const admin = await getAdminByEmail(email);
+        if (admin && admin.role === 'super_admin') {
+            throw new Error('Cannot remove super admin');
+        }
+        
+        const result = await pool.query(
+            'DELETE FROM admin_whitelist WHERE LOWER(email) = LOWER($1) RETURNING *',
+            [email]
+        );
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error removing admin:', error);
+        throw error;
+    }
+}
+
+// Update admin wallet address
+async function updateAdminWallet(email, walletAddress) {
+    try {
+        const result = await pool.query(
+            `UPDATE admin_whitelist 
+             SET wallet_address = $1, last_login = NOW() 
+             WHERE LOWER(email) = LOWER($2)
+             RETURNING *`,
+            [walletAddress.toLowerCase(), email]
+        );
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error updating admin wallet:', error);
+        throw error;
+    }
+}
+
+// Update admin last login
+async function updateAdminLastLogin(email) {
+    try {
+        await pool.query(
+            'UPDATE admin_whitelist SET last_login = NOW() WHERE LOWER(email) = LOWER($1)',
+            [email]
+        );
+    } catch (error) {
+        console.error('Error updating last login:', error);
+    }
+}
+
 /**
  * Helper Functions
  */
@@ -671,10 +822,14 @@ module.exports = {
     upsertRegistrant,
     
     // Admin operations
-    getAdminUser,
-    createAdminUser,
-    updateAdminPassword,
-    updateLastLogin,
+    isAdminWhitelisted,
+    getAdminByEmail,
+    getAdminByWallet,
+    getAllAdmins,
+    addAdmin,
+    removeAdmin,
+    updateAdminWallet,
+    updateAdminLastLogin,
     
     // Session operations
     createSession,

@@ -4,9 +4,8 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Admin Login | Kea Valley</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -14,7 +13,6 @@
                 extend: {
                     colors: {
                         "primary": "#ee9d2b",
-                        "primary-light": "#fbdea6",
                         "background-dark": "#0a0a0a",
                         "surface": "#121212",
                     },
@@ -27,202 +25,152 @@
         }
     </script>
     <style>
-        body { font-family: 'Manrope', sans-serif; }
-        h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
-        .gold-glow:hover {
-            box-shadow: 0 0 25px rgba(238, 157, 43, 0.3);
+        body { 
+            font-family: 'Manrope', sans-serif; 
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
         }
-        .input-field {
-            background: rgba(255, 255, 255, 0.03);
+        
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .login-card {
+            background: #121212;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 3rem;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .login-card h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.75rem;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+        
+        .login-card p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .auth-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #ee9d2b 0%, #d4a543 100%);
+            color: #000 !important;
+            padding: 0.875rem 2rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            border: none;
             transition: all 0.3s ease;
         }
-        .input-field:focus {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: #ee9d2b;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(238, 157, 43, 0.1);
+        
+        .auth-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(238, 157, 43, 0.4);
         }
-        .input-field::placeholder {
-            color: rgba(255, 255, 255, 0.3);
+        
+        .login-footer {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .login-footer p {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.75rem;
+            margin: 0;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(238, 157, 43, 0.2);
+            border-top-color: #ee9d2b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error-card {
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        
+        .error-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .error-message {
+            color: #f87171 !important;
+        }
+        
+        .error-email {
+            color: rgba(255, 255, 255, 0.4) !important;
+            font-size: 0.75rem !important;
+            margin-top: 0.5rem;
+        }
+        
+        .retry-button {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+        
+        .retry-button:hover {
+            border-color: #ee9d2b;
+            color: #ee9d2b;
         }
     </style>
 </head>
-<body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
+<body class="bg-background-dark text-white">
 
-    <!-- Main Content -->
-    <main class="flex-1 flex items-center justify-center px-6 py-12">
-        <div class="w-full max-w-md">
-            
-            <!-- Logo -->
-            <div class="text-center mb-12">
-                <a href="/" class="inline-flex items-center gap-3 group">
-                    <div class="size-12 text-primary transition-transform duration-500 group-hover:rotate-180">
-                        <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
-                        </svg>
-                    </div>
-                    <div class="text-left">
-                        <h2 class="text-2xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
-                        <p class="text-[0.65rem] text-primary uppercase tracking-[0.3em] font-sans">Estates</p>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Login Card -->
-            <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
-                <div class="px-8 py-5 border-b border-white/5 flex items-center justify-between">
-                    <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Admin Login</h3>
-                    <span class="material-symbols-outlined text-primary/50">admin_panel_settings</span>
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-50 border-b border-white/5 bg-background-dark/80 backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-3">
+                <div class="size-8 text-primary">
+                    <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
+                    </svg>
                 </div>
-                <div class="p-8">
-                    
-                    <!-- Title -->
-                    <div class="text-center mb-8">
-                        <h1 class="text-2xl font-serif italic font-medium text-white mb-2">Welcome Back</h1>
-                        <p class="text-slate-500 text-sm">Sign in to access the dashboard</p>
-                    </div>
-
-                    <!-- Error Message -->
-                    <div id="errorMessage" class="hidden mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-sm">
-                        <p id="errorText" class="text-red-400 text-sm text-center"></p>
-                    </div>
-
-                    <!-- Login Form -->
-                    <form id="loginForm" class="space-y-6">
-                        <div>
-                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Username</label>
-                            <div class="relative">
-                                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">person</span>
-                                <input 
-                                    type="text" 
-                                    id="username" 
-                                    name="username"
-                                    required
-                                    class="input-field w-full pl-12 pr-4 py-4 rounded-sm text-white"
-                                    placeholder="Enter username"
-                                >
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Password</label>
-                            <div class="relative">
-                                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">lock</span>
-                                <input 
-                                    type="password" 
-                                    id="password" 
-                                    name="password"
-                                    required
-                                    class="input-field w-full pl-12 pr-4 py-4 rounded-sm text-white"
-                                    placeholder="Enter password"
-                                >
-                            </div>
-                        </div>
-
-                        <button 
-                            type="submit" 
-                            id="submitBtn"
-                            class="w-full bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-all flex items-center justify-center gap-2"
-                        >
-                            <span id="btnText">Sign In</span>
-                            <span id="btnLoader" class="hidden">
-                                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            </span>
-                        </button>
-                    </form>
-
-                    <div class="mt-8 text-center">
-                        <a href="/" class="text-slate-500 hover:text-primary transition-colors text-xs font-bold uppercase tracking-widest">
-                            ← Back to Home
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer -->
-            <p class="text-center text-slate-600 text-xs mt-8">
-                © 2026 Kea Valley. All rights reserved.
-            </p>
+                <span class="text-lg font-bold tracking-widest uppercase">Kea Valley</span>
+            </a>
+            <a href="/" class="text-slate-500 text-sm hover:text-primary transition-colors">← Back to Home</a>
         </div>
-    </main>
+    </header>
 
-    <script>
-        const form = document.getElementById('loginForm');
-        const errorMessage = document.getElementById('errorMessage');
-        const errorText = document.getElementById('errorText');
-        const submitBtn = document.getElementById('submitBtn');
-        const btnText = document.getElementById('btnText');
-        const btnLoader = document.getElementById('btnLoader');
+    <!-- React App Mount Point -->
+    <div id="login-root"></div>
 
-        // Check if already logged in
-        async function checkAuth() {
-            try {
-                const res = await fetch('/api/auth-status');
-                const data = await res.json();
-                if (data.authenticated) {
-                    if (data.mustChangePassword) {
-                        window.location.href = '/change-password';
-                    } else {
-                        window.location.href = '/dashboard';
-                    }
-                }
-            } catch (e) {
-                console.log('Not authenticated');
-            }
-        }
-        checkAuth();
+    <!-- Load React App Bundle -->
+    <script src="/js/login-app.bundle.js"></script>
 
-        function showError(message) {
-            errorText.textContent = message;
-            errorMessage.classList.remove('hidden');
-        }
-
-        function hideError() {
-            errorMessage.classList.add('hidden');
-        }
-
-        function setLoading(loading) {
-            submitBtn.disabled = loading;
-            btnText.textContent = loading ? 'Signing in...' : 'Sign In';
-            btnLoader.classList.toggle('hidden', !loading);
-        }
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            hideError();
-            setLoading(true);
-
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value;
-
-            try {
-                const res = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-
-                const data = await res.json();
-
-                if (res.ok && data.success) {
-                    if (data.mustChangePassword) {
-                        window.location.href = '/change-password';
-                    } else {
-                        window.location.href = '/dashboard';
-                    }
-                } else {
-                    showError(data.error || 'Invalid credentials');
-                }
-            } catch (err) {
-                showError('Connection error. Please try again.');
-            } finally {
-                setLoading(false);
-            }
-        });
-    </script>
 </body>
 </html>

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Admin Login | Kea Valley</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ee9d2b",
+                        "primary-light": "#fbdea6",
+                        "background-dark": "#0a0a0a",
+                        "surface": "#121212",
+                    },
+                    fontFamily: {
+                        "sans": ["Manrope", "sans-serif"],
+                        "serif": ["Playfair Display", "serif"],
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Manrope', sans-serif; }
+        h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
+        .gold-glow:hover {
+            box-shadow: 0 0 25px rgba(238, 157, 43, 0.3);
+            border-color: #ee9d2b;
+        }
+        .glass-nav {
+            backdrop-filter: blur(12px);
+            background-color: rgba(10, 10, 10, 0.7);
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
+        
+        .wallet-iframe-container {
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .wallet-iframe {
+            width: 100%;
+            height: 500px;
+            border: none;
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
+            <a href="/" class="flex items-center gap-4 group cursor-pointer">
+                <div class="size-10 text-primary transition-transform duration-500 group-hover:rotate-180">
+                    <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
+                    <p class="text-[0.6rem] text-primary uppercase tracking-[0.3em] font-sans">Estates</p>
+                </div>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 pt-32 pb-20 px-6 flex items-center justify-center">
+        <div class="max-w-md mx-auto w-full">
+            
+            <!-- Page Title -->
+            <div class="text-center mb-12">
+                <div class="flex items-center justify-center gap-4 mb-6">
+                    <div class="h-[1px] w-8 bg-primary"></div>
+                    <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Admin Access</span>
+                    <div class="h-[1px] w-8 bg-primary"></div>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-serif italic font-medium text-white mb-4">Dashboard Login</h1>
+                <p class="text-slate-400 font-light">Sign in with your authorized WalletTwo account.</p>
+            </div>
+
+            <!-- Card -->
+            <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
+                <div class="px-8 py-5 border-b border-white/5 flex items-center justify-between">
+                    <h3 id="cardTitle" class="text-xs font-bold uppercase tracking-widest text-primary">Sign In</h3>
+                    <span class="material-symbols-outlined text-primary/50">admin_panel_settings</span>
+                </div>
+                <div class="p-6">
+                    
+                    <!-- Login Container -->
+                    <div id="loginContainer">
+                        <p class="text-slate-400 text-sm text-center mb-6">Connect with your whitelisted email to access the admin dashboard.</p>
+                        <div class="wallet-iframe-container">
+                            <iframe 
+                                id="walletIframe"
+                                src="https://wallet.wallettwo.com/auth/login?action=auth&iframe=true"
+                                class="wallet-iframe"
+                                allow="clipboard-write"
+                            ></iframe>
+                        </div>
+                        <p class="text-slate-500 text-xs text-center mt-4">Only whitelisted admin emails can access the dashboard.</p>
+                    </div>
+
+                    <!-- Loading Container -->
+                    <div id="loadingContainer" class="hidden text-center py-12">
+                        <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+                        <p id="loadingText" class="text-slate-400 text-sm">Verifying admin access...</p>
+                    </div>
+
+                    <!-- Error Container -->
+                    <div id="errorContainer" class="hidden text-center py-8">
+                        <div class="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <span class="material-symbols-outlined text-red-400 text-3xl">block</span>
+                        </div>
+                        <h3 class="text-xl font-serif text-white mb-2">Access Denied</h3>
+                        <p id="errorMessage" class="text-red-400 text-sm mb-4">Your email is not on the admin whitelist.</p>
+                        <p id="errorEmail" class="text-slate-500 text-sm mb-6 font-mono bg-white/5 px-4 py-2 rounded inline-block"></p>
+                        <p class="text-slate-500 text-xs mb-6">Contact the super admin to request access.</p>
+                        <button id="tryAgainBtn" class="border border-white/10 text-slate-400 px-6 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-primary/50 hover:text-primary transition-all">
+                            Try Another Account
+                        </button>
+                    </div>
+
+                    <!-- Success Container -->
+                    <div id="successContainer" class="hidden text-center py-12">
+                        <div class="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <span class="material-symbols-outlined text-green-400 text-3xl">check_circle</span>
+                        </div>
+                        <h3 class="text-xl font-serif text-white mb-2">Welcome Back!</h3>
+                        <p id="welcomeEmail" class="text-primary text-sm mb-4"></p>
+                        <p class="text-slate-400 text-sm">Redirecting to dashboard...</p>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Back to Home -->
+            <div class="text-center mt-8">
+                <a href="/" class="text-slate-500 text-sm hover:text-primary transition-colors">
+                    ← Back to Home
+                </a>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-background-dark py-8 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <a href="/" class="flex items-center gap-2">
+                    <div class="size-6 text-primary">
+                        <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
+                        </svg>
+                    </div>
+                    <span class="text-xs font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
+                </a>
+                <div class="text-slate-600 text-xs font-light">
+                    © 2025 Kea Valley
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Hidden logout iframe -->
+    <iframe id="logoutIframe" style="display:none;"></iframe>
+
+    <script>
+        // ============================================
+        // Configuration
+        // ============================================
+        const CONFIG = {
+            WALLETTWO_ORIGIN: 'https://wallet.wallettwo.com',
+            ADMIN_STORAGE_KEY: 'keavalley_admin'
+        };
+
+        // ============================================
+        // DOM Elements
+        // ============================================
+        const loginContainer = document.getElementById('loginContainer');
+        const loadingContainer = document.getElementById('loadingContainer');
+        const errorContainer = document.getElementById('errorContainer');
+        const successContainer = document.getElementById('successContainer');
+        const cardTitle = document.getElementById('cardTitle');
+        const loadingText = document.getElementById('loadingText');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorEmail = document.getElementById('errorEmail');
+        const welcomeEmail = document.getElementById('welcomeEmail');
+        const tryAgainBtn = document.getElementById('tryAgainBtn');
+        const walletIframe = document.getElementById('walletIframe');
+        const logoutIframe = document.getElementById('logoutIframe');
+
+        // ============================================
+        // State
+        // ============================================
+        let acceptMessages = true;
+
+        // ============================================
+        // UI Functions
+        // ============================================
+        function showLogin() {
+            loginContainer.classList.remove('hidden');
+            loadingContainer.classList.add('hidden');
+            errorContainer.classList.add('hidden');
+            successContainer.classList.add('hidden');
+            cardTitle.textContent = 'Sign In';
+            acceptMessages = true;
+        }
+
+        function showLoading(text = 'Verifying admin access...') {
+            loginContainer.classList.add('hidden');
+            loadingContainer.classList.remove('hidden');
+            errorContainer.classList.add('hidden');
+            successContainer.classList.add('hidden');
+            loadingText.textContent = text;
+            cardTitle.textContent = 'Verifying';
+        }
+
+        function showError(message, email) {
+            loginContainer.classList.add('hidden');
+            loadingContainer.classList.add('hidden');
+            errorContainer.classList.remove('hidden');
+            successContainer.classList.add('hidden');
+            errorMessage.textContent = message;
+            errorEmail.textContent = email || '';
+            errorEmail.classList.toggle('hidden', !email);
+            cardTitle.textContent = 'Access Denied';
+        }
+
+        function showSuccess(email) {
+            loginContainer.classList.add('hidden');
+            loadingContainer.classList.add('hidden');
+            errorContainer.classList.add('hidden');
+            successContainer.classList.remove('hidden');
+            welcomeEmail.textContent = email;
+            cardTitle.textContent = 'Welcome';
+        }
+
+        // ============================================
+        // Auth Functions
+        // ============================================
+        async function checkExistingSession() {
+            try {
+                const response = await fetch('/api/admin/session', { 
+                    credentials: 'include' 
+                });
+                const data = await response.json();
+                
+                if (data.authenticated && data.admin) {
+                    console.log('Existing session found:', data.admin.email);
+                    localStorage.setItem(CONFIG.ADMIN_STORAGE_KEY, JSON.stringify(data.admin));
+                    showSuccess(data.admin.email);
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1000);
+                    return true;
+                }
+            } catch (error) {
+                console.error('Session check failed:', error);
+            }
+            return false;
+        }
+
+        async function authenticateAdmin(email, walletAddress, name) {
+            showLoading('Checking admin whitelist...');
+            
+            try {
+                const response = await fetch('/api/admin/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: email,
+                        walletAddress: walletAddress,
+                        name: name
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Auth response:', data);
+
+                if (data.success && data.admin) {
+                    localStorage.setItem(CONFIG.ADMIN_STORAGE_KEY, JSON.stringify(data.admin));
+                    showSuccess(data.admin.email);
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1500);
+                } else {
+                    showError(data.error || 'Your email is not on the admin whitelist.', email);
+                }
+            } catch (error) {
+                console.error('Auth error:', error);
+                showError('Authentication failed. Please try again.', email);
+            }
+        }
+
+        async function exchangeCodeAndAuth(code, wallet) {
+            showLoading('Exchanging credentials...');
+            
+            try {
+                // Exchange code for user info
+                const response = await fetch('/api/wallettwo/exchange', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+
+                const data = await response.json();
+                console.log('Exchange response:', data);
+
+                const email = data.user?.email;
+                const name = data.user?.name || data.user?.given_name || 
+                             (data.user?.given_name && data.user?.family_name ? 
+                              `${data.user.given_name} ${data.user.family_name}` : null);
+
+                if (!email) {
+                    showError('No email found in your WalletTwo account. Admin login requires an email.', null);
+                    return;
+                }
+
+                // Now authenticate with our backend
+                await authenticateAdmin(email, wallet, name);
+
+            } catch (error) {
+                console.error('Exchange failed:', error);
+                showError('Failed to verify your account. Please try again.', null);
+            }
+        }
+
+        function logoutAndRetry() {
+            showLoading('Logging out...');
+            acceptMessages = false;
+            
+            // Clear local storage
+            localStorage.removeItem(CONFIG.ADMIN_STORAGE_KEY);
+            
+            // Trigger WalletTwo logout
+            logoutIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true`;
+            
+            // Reload iframe after short delay
+            setTimeout(() => {
+                walletIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=auth&iframe=true`;
+                setTimeout(() => {
+                    showLogin();
+                }, 500);
+            }, 1500);
+        }
+
+        // ============================================
+        // WalletTwo Message Handler
+        // ============================================
+        function handleWalletTwoMessage(event) {
+            if (!event.origin.includes('wallettwo.com')) {
+                return;
+            }
+
+            const data = event.data;
+            console.log('Message from WalletTwo:', data);
+
+            if (!acceptMessages) {
+                console.log('Ignoring message - not accepting');
+                return;
+            }
+
+            if (data && (data.type === 'wallet_login' || data.event === 'wallet_login')) {
+                const wallet = data.wallet || data.wlt || data.address;
+                const code = data.code;
+                
+                if (wallet && code) {
+                    console.log('Wallet login received:', wallet);
+                    acceptMessages = false;
+                    exchangeCodeAndAuth(code, wallet);
+                } else if (wallet) {
+                    // No code - can't get email without exchange
+                    showError('Could not retrieve account details. Please try again.', null);
+                }
+            }
+        }
+
+        // ============================================
+        // Event Listeners
+        // ============================================
+        window.addEventListener('message', handleWalletTwoMessage);
+        tryAgainBtn.addEventListener('click', logoutAndRetry);
+
+        // ============================================
+        // Initialize
+        // ============================================
+        async function init() {
+            console.log('Admin login page initialized');
+
+            // Check if already logged in
+            const hasSession = await checkExistingSession();
+            if (hasSession) {
+                return; // Will redirect to dashboard
+            }
+
+            // Show login
+            showLogin();
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>
