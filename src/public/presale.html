@@ -1,1020 +1,379 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIP Token Presale - Kea Valley</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>VIP Token Presale | Kea Valley</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ee9d2b",
+                        "primary-light": "#fbdea6",
+                        "background-dark": "#0a0a0a",
+                        "surface": "#121212",
+                    },
+                    fontFamily: {
+                        "sans": ["Manrope", "sans-serif"],
+                        "serif": ["Playfair Display", "serif"],
+                    },
+                },
+            },
+        }
+    </script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        body { font-family: 'Manrope', sans-serif; }
+        h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
+        .gold-glow:hover {
+            box-shadow: 0 0 25px rgba(238, 157, 43, 0.3);
+            border-color: #ee9d2b;
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f1f15 100%);
-            min-height: 100vh;
-            color: #ffffff;
+        .glass-nav {
+            backdrop-filter: blur(12px);
+            background-color: rgba(10, 10, 10, 0.7);
         }
-
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 20px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Header */
-        .header {
-            text-align: center;
-            padding: 30px 0;
-        }
-
-        .logo {
-            font-size: 28px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 8px;
-        }
-
-        .subtitle {
-            color: #a0a0a0;
-            font-size: 14px;
-        }
-
-        /* Status Badge */
-        .presale-status-badge {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin: 15px 0;
-            padding: 8px 16px;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            border-radius: 20px;
-            width: fit-content;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .presale-status-badge.inactive {
-            background: rgba(239, 68, 68, 0.1);
-            border-color: rgba(239, 68, 68, 0.3);
-        }
-
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #10b981;
-            animation: pulse 2s infinite;
-        }
-
-        .status-dot.inactive {
-            background: #ef4444;
-            animation: none;
-        }
-
-        @keyframes pulse {
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
+        
+        /* Status pulse animation */
+        @keyframes pulse-dot {
             0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
         }
-
-        .status-text {
-            font-size: 14px;
-            font-weight: 500;
-            color: #10b981;
+        .pulse-dot {
+            animation: pulse-dot 2s infinite;
         }
-
-        .status-text.inactive {
-            color: #ef4444;
-        }
-
-        /* Wallet Header */
-        .wallet-header {
-            display: none;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-
-        .wallet-header.visible {
-            display: flex;
-        }
-
-        .wallet-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .wallet-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, #10b981, #34d399);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-        }
-
-        .wallet-details {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .wallet-label {
-            font-size: 11px;
-            color: #a0a0a0;
-            text-transform: uppercase;
-        }
-
-        .wallet-address {
-            font-size: 14px;
-            font-weight: 500;
-            font-family: monospace;
-            color: #10b981;
-        }
-
-        .wallet-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .wallet-action-btn {
-            padding: 6px 12px;
-            font-size: 12px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-decoration: none;
-        }
-
-        .profile-btn {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-        }
-
-        .disconnect-btn {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-        }
-
-        /* Progress Card */
-        .progress-card {
-            background: rgba(16, 185, 129, 0.05);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(16, 185, 129, 0.2);
-        }
-
-        .progress-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 16px;
-        }
-
-        .progress-title {
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .progress-percent {
-            font-size: 16px;
-            font-weight: 600;
-            color: #10b981;
-        }
-
-        .progress-bar-container {
-            height: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 6px;
-            overflow: hidden;
-            margin-bottom: 16px;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #10b981, #34d399);
-            border-radius: 6px;
+        
+        /* Progress bar animation */
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #ee9d2b, #fbdea6);
             transition: width 0.5s ease;
-            width: 0%;
         }
-
-        .progress-stats {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            color: #a0a0a0;
-        }
-
-        /* Purchase Card */
-        .purchase-card {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Overlays */
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(10, 10, 10, 0.95);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-            border-radius: 16px;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .overlay.hidden {
-            display: none;
-        }
-
-        .overlay-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-
-        .overlay-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .overlay-text {
-            color: #a0a0a0;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-
-        .connect-btn {
-            padding: 14px 32px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            background: linear-gradient(135deg, #10b981, #34d399);
-            color: white;
-            transition: all 0.3s;
-        }
-
-        .connect-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
-        }
-
-        /* Inactive overlay */
-        .inactive-overlay .overlay-icon {
-            color: #ef4444;
-        }
-
-        /* Price Display */
-        .price-display {
-            text-align: center;
-            margin-bottom: 24px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .price-label {
-            font-size: 12px;
-            color: #a0a0a0;
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-
-        .price-value {
-            font-size: 32px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #10b981, #34d399);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .price-usd {
-            font-size: 14px;
-            color: #a0a0a0;
-            margin-top: 4px;
-        }
-
-        /* Token Input */
-        .input-section {
-            margin-bottom: 20px;
-        }
-
-        .input-label {
-            font-size: 14px;
-            color: #a0a0a0;
-            margin-bottom: 8px;
-            display: block;
-        }
-
-        .token-input-wrapper {
-            display: flex;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            border-radius: 12px;
-            padding: 4px;
-        }
-
-        .token-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            padding: 14px 16px;
-            font-size: 18px;
-            color: white;
-            outline: none;
-        }
-
-        .token-input::placeholder {
-            color: #666;
-        }
-
-        .token-symbol {
-            padding: 10px 16px;
-            background: rgba(16, 185, 129, 0.2);
-            border-radius: 8px;
-            font-weight: 600;
-            color: #10b981;
-            margin-right: 4px;
-        }
-
-        /* Quick Amount Buttons */
-        .quick-amounts {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .quick-btn {
-            flex: 1;
-            min-width: 60px;
-            padding: 10px 8px;
-            font-size: 13px;
-            font-weight: 500;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            background: rgba(16, 185, 129, 0.1);
-            color: #10b981;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .quick-btn:hover {
-            background: rgba(16, 185, 129, 0.2);
-            border-color: #10b981;
-        }
-
-        /* Min/Max Info */
-        .limits-info {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: #a0a0a0;
-            margin-bottom: 20px;
-        }
-
-        /* Payment Methods */
-        .payment-section {
-            margin-bottom: 20px;
-        }
-
-        .payment-label {
-            font-size: 14px;
-            color: #a0a0a0;
-            margin-bottom: 12px;
-            display: block;
-        }
-
-        .payment-methods {
-            display: flex;
-            gap: 10px;
-        }
-
-        .payment-option {
-            flex: 1;
-            padding: 16px 12px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-        }
-
-        .payment-option:hover:not(.disabled) {
-            border-color: rgba(16, 185, 129, 0.5);
-        }
-
+        
+        /* Payment option selected state */
         .payment-option.selected {
-            border-color: #10b981;
-            background: rgba(16, 185, 129, 0.1);
+            border-color: #ee9d2b;
+            background: rgba(238, 157, 43, 0.1);
         }
-
-        .payment-option.disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
+        
+        /* Quick amount buttons */
+        .quick-btn:hover {
+            background: rgba(238, 157, 43, 0.2);
+            border-color: #ee9d2b;
         }
-
-        .payment-icon {
-            font-size: 24px;
-            margin-bottom: 6px;
+        
+        /* Overlay styles */
+        .overlay-backdrop {
+            background: rgba(10, 10, 10, 0.95);
         }
-
-        .payment-name {
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .payment-coming-soon {
-            font-size: 10px;
-            color: #a0a0a0;
-        }
-
-        /* Total Display */
-        .total-section {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(16, 185, 129, 0.1);
-        }
-
-        .total-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        .total-row:last-child {
-            margin-bottom: 0;
-            padding-top: 8px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .total-label {
-            color: #a0a0a0;
-        }
-
-        .crypto-equivalent {
-            font-size: 13px;
-            color: #10b981;
-            text-align: right;
-            margin-top: 8px;
-        }
-
-        /* Balance Display */
-        .balance-display {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px;
-            background: rgba(16, 185, 129, 0.1);
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            border: 1px solid rgba(16, 185, 129, 0.2);
-        }
-
-        .balance-label {
-            color: #a0a0a0;
-        }
-
-        .balance-value {
-            font-weight: 600;
-            color: #10b981;
-        }
-
-        .balance-insufficient {
-            color: #ef4444 !important;
-        }
-
-        /* Buy Button */
-        .buy-btn {
-            width: 100%;
-            padding: 18px;
-            font-size: 18px;
-            font-weight: 600;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            transition: all 0.3s;
-        }
-
-        .buy-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
-        }
-
-        .buy-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Processing State */
-        .processing-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(10, 10, 10, 0.98);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .processing-overlay.hidden {
-            display: none;
-        }
-
+        
+        /* Spinner */
         .spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(16, 185, 129, 0.2);
-            border-top-color: #10b981;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 24px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .processing-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .processing-text {
-            color: #a0a0a0;
-            font-size: 14px;
-            max-width: 300px;
-        }
-
-        .processing-step {
-            margin-top: 20px;
-            padding: 12px 20px;
-            background: rgba(16, 185, 129, 0.1);
-            border-radius: 8px;
-            font-size: 14px;
-            color: #10b981;
-        }
-
-        /* Success/Error States */
-        .result-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(10, 10, 10, 0.98);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .result-overlay.hidden {
-            display: none;
-        }
-
-        .result-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-        }
-
-        .result-icon.success {
-            color: #10b981;
-        }
-
-        .result-icon.error {
-            color: #ef4444;
-        }
-
-        .result-title {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 12px;
-        }
-
-        .result-message {
-            color: #a0a0a0;
-            font-size: 14px;
-            margin-bottom: 24px;
-            max-width: 350px;
-        }
-
-        .result-details {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 24px;
-            width: 100%;
-            max-width: 350px;
-        }
-
-        .result-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        .result-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .tx-link {
-            color: #10b981;
-            text-decoration: none;
-            font-family: monospace;
-            font-size: 13px;
-        }
-
-        .tx-link:hover {
-            text-decoration: underline;
-        }
-
-        .result-btn {
-            padding: 14px 32px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .result-btn.primary {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-        }
-
-        .result-btn.secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            margin-top: 10px;
-        }
-
-        /* Purchase History */
-        .history-card {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .history-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            color: #10b981;
-        }
-
-        .history-empty {
-            text-align: center;
-            color: #a0a0a0;
-            padding: 20px;
-            font-size: 14px;
-        }
-
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .history-item:last-child {
-            border-bottom: none;
-        }
-
-        .history-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .history-tokens {
-            font-weight: 600;
-        }
-
-        .history-date {
-            font-size: 12px;
-            color: #a0a0a0;
-        }
-
-        .history-status {
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .history-status.completed {
-            background: rgba(16, 185, 129, 0.2);
-            color: #10b981;
-        }
-
-        .history-status.pending {
-            background: rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
-        }
-
-        .history-status.minting {
-            background: rgba(59, 130, 246, 0.2);
-            color: #3b82f6;
-        }
-
-        /* Token Info */
-        .token-info {
-            text-align: center;
-            padding: 20px;
-            font-size: 13px;
-            color: #a0a0a0;
-        }
-
-        .token-info a {
-            color: #10b981;
-            text-decoration: none;
-        }
-
-        .token-info a:hover {
-            text-decoration: underline;
-        }
-
-        /* Responsive */
-        @media (max-width: 480px) {
-            .container {
-                padding: 16px;
-            }
-
-            .quick-amounts {
-                flex-wrap: wrap;
-            }
-
-            .quick-btn {
-                min-width: calc(33% - 6px);
-            }
+            border: 3px solid rgba(238, 157, 43, 0.2);
+            border-top-color: #ee9d2b;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="logo">Kea Valley VIP</div>
-            <div class="subtitle">Exclusive Token Presale</div>
-            <div class="presale-status-badge" id="presaleStatusBadge">
-                <div class="status-dot" id="statusDot"></div>
-                <span class="status-text" id="statusText">Presale Live</span>
-            </div>
-        </div>
+<body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
 
-        <!-- Wallet Header (shown when connected) -->
-        <div class="wallet-header" id="walletHeader">
-            <div class="wallet-info">
-                <div class="wallet-icon">🦊</div>
-                <div class="wallet-details">
-                    <span class="wallet-label">Connected</span>
-                    <span class="wallet-address" id="walletAddressDisplay">0x...</span>
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
+            <a href="/" class="flex items-center gap-4 group cursor-pointer">
+                <div class="size-10 text-primary transition-transform duration-500 group-hover:rotate-180">
+                    <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
+                    </svg>
                 </div>
-            </div>
-            <div class="wallet-actions">
-                <a href="/profile" class="wallet-action-btn profile-btn">Profile</a>
-                <button class="wallet-action-btn disconnect-btn" onclick="disconnectWallet()">Disconnect</button>
-            </div>
-        </div>
-
-        <!-- Progress Card -->
-        <div class="progress-card">
-            <div class="progress-header">
-                <span class="progress-title">Presale Progress</span>
-                <span class="progress-percent" id="progressPercent">0%</span>
-            </div>
-            <div class="progress-bar-container">
-                <div class="progress-bar" id="progressBar"></div>
-            </div>
-            <div class="progress-stats">
-                <span><span id="tokensSold">0</span> VIP sold</span>
-                <span><span id="totalTokens">1,000,000</span> VIP total</span>
-            </div>
-        </div>
-
-        <!-- Purchase Card -->
-        <div class="purchase-card" id="purchaseCard">
-            <!-- Not Connected Overlay -->
-            <div class="overlay" id="notConnectedOverlay">
-                <div class="overlay-icon">🔗</div>
-                <div class="overlay-title">Connect Wallet</div>
-                <div class="overlay-text">Connect your WalletTwo to participate in the presale</div>
-                <button class="connect-btn" onclick="connectWallet()">Connect WalletTwo</button>
-            </div>
-
-            <!-- Presale Inactive Overlay -->
-            <div class="overlay inactive-overlay hidden" id="presaleInactiveOverlay">
-                <div class="overlay-icon">⏸️</div>
-                <div class="overlay-title">Presale Not Active</div>
-                <div class="overlay-text">The presale is currently paused. Please check back later.</div>
-            </div>
-
-            <!-- Price Display -->
-            <div class="price-display">
-                <div class="price-label">Token Price</div>
-                <div class="price-value" id="tokenPriceDisplay">€1.00</div>
-                <div class="price-usd" id="tokenPriceUSD">≈ $1.19 USD</div>
-            </div>
-
-            <!-- Token Amount Input -->
-            <div class="input-section">
-                <label class="input-label">Amount to Purchase</label>
-                <div class="token-input-wrapper">
-                    <input type="number" class="token-input" id="tokenAmount" placeholder="0" min="10" max="10000" oninput="updateTotals()">
-                    <span class="token-symbol">VIP</span>
+                <div>
+                    <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
+                    <p class="text-[0.6rem] text-primary uppercase tracking-[0.3em] font-sans">Estates</p>
                 </div>
-            </div>
-
-            <!-- Quick Amount Buttons -->
-            <div class="quick-amounts">
-                <button class="quick-btn" onclick="setAmount(100)">100</button>
-                <button class="quick-btn" onclick="setAmount(500)">500</button>
-                <button class="quick-btn" onclick="setAmount(1000)">1,000</button>
-                <button class="quick-btn" onclick="setAmount(5000)">5,000</button>
-                <button class="quick-btn" onclick="setAmount(CONFIG.maxPurchase)">MAX</button>
-            </div>
-
-            <!-- Limits Info -->
-            <div class="limits-info">
-                <span>Min: <span id="minPurchase">10</span> VIP</span>
-                <span>Max: <span id="maxPurchase">10,000</span> VIP</span>
-            </div>
-
-            <!-- Payment Methods -->
-            <div class="payment-section">
-                <label class="payment-label">Payment Method</label>
-                <div class="payment-methods">
-                    <div class="payment-option selected" id="paymentPOL" onclick="selectPayment('POL')">
-                        <div class="payment-icon">💜</div>
-                        <div class="payment-name">POL</div>
-                    </div>
-                    <div class="payment-option" id="paymentUSDC" onclick="selectPayment('USDC')">
-                        <div class="payment-icon">💵</div>
-                        <div class="payment-name">USDC</div>
-                    </div>
-                    <div class="payment-option disabled" id="paymentCard">
-                        <div class="payment-icon">💳</div>
-                        <div class="payment-name">Card</div>
-                        <div class="payment-coming-soon">Coming Soon</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Balance Display -->
-            <div class="balance-display" id="balanceDisplay">
-                <span class="balance-label">Your Balance:</span>
-                <span class="balance-value" id="balanceValue">-- POL</span>
-            </div>
-
-            <!-- Total Section -->
-            <div class="total-section">
-                <div class="total-row">
-                    <span class="total-label">Tokens</span>
-                    <span id="totalTokensDisplay">0 VIP</span>
-                </div>
-                <div class="total-row">
-                    <span class="total-label">Price (EUR)</span>
-                    <span id="totalEUR">€0.00</span>
-                </div>
-                <div class="total-row">
-                    <span class="total-label">Total (USD)</span>
-                    <span id="totalUSD">$0.00</span>
-                </div>
-                <div class="crypto-equivalent" id="cryptoEquivalent">
-                    ≈ 0 POL
-                </div>
-            </div>
-
-            <!-- Buy Button -->
-            <button class="buy-btn" id="buyButton" onclick="executePurchase()" disabled>
-                Enter Amount
-            </button>
-        </div>
-
-        <!-- Purchase History -->
-        <div class="history-card" id="historyCard" style="display: none;">
-            <div class="history-title">Your Purchases</div>
-            <div id="historyList">
-                <div class="history-empty">No purchases yet</div>
-            </div>
-        </div>
-
-        <!-- Token Info -->
-        <div class="token-info">
-            <p>VIP Token on Polygon Network</p>
-            <a href="https://polygonscan.com/token/0x6860c34db140DB7B589DaDA38859a1d3736bbE3F" target="_blank">
-                View Contract ↗
             </a>
+            <nav class="hidden md:flex items-center gap-8 lg:gap-12">
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/">Home</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/profile">Profile</a>
+            </nav>
         </div>
-    </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 pt-32 pb-20 px-6">
+        <div class="max-w-lg mx-auto w-full">
+            
+            <!-- Page Title -->
+            <div class="text-center mb-12">
+                <div class="flex items-center justify-center gap-4 mb-6">
+                    <div class="h-[1px] w-8 bg-primary"></div>
+                    <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Exclusive Offer</span>
+                    <div class="h-[1px] w-8 bg-primary"></div>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-serif italic font-medium text-white mb-4">VIP Token Presale</h1>
+                <p class="text-slate-400 font-light mb-6">Get VIP tokens at the best price before public launch.</p>
+                
+                <!-- Status Badge -->
+                <div id="statusBadge" class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10">
+                    <span id="statusDot" class="w-2 h-2 rounded-full bg-primary pulse-dot"></span>
+                    <span id="statusText" class="text-xs font-bold uppercase tracking-widest text-primary">Presale Live</span>
+                </div>
+            </div>
+
+            <!-- Progress Card -->
+            <div class="bg-surface border border-white/5 rounded-sm p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Progress</span>
+                    <span id="progressPercent" class="text-sm font-bold text-primary">0%</span>
+                </div>
+                <div class="h-3 bg-background-dark rounded-full overflow-hidden mb-4">
+                    <div id="progressBar" class="h-full progress-bar-fill rounded-full" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between text-xs text-slate-500">
+                    <span><span id="tokensSold" class="text-white">0</span> VIP sold</span>
+                    <span><span id="totalTokens" class="text-white">1,000,000</span> VIP total</span>
+                </div>
+            </div>
+
+            <!-- Wallet Header (shown when connected) -->
+            <div id="walletHeader" class="hidden bg-surface border border-primary/20 rounded-sm p-4 mb-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="size-10 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-primary">account_balance_wallet</span>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 uppercase tracking-widest">Connected</p>
+                            <p id="walletAddressDisplay" class="text-sm font-mono text-primary">0x...</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <a href="/profile" class="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-primary transition-colors">Profile</a>
+                        <button onclick="disconnectWallet()" class="text-xs font-bold uppercase tracking-widest text-red-400 hover:text-red-300 transition-colors ml-4">Disconnect</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Purchase Card -->
+            <div class="bg-surface border border-white/5 rounded-sm overflow-hidden relative">
+                <div class="px-8 py-5 border-b border-white/5 flex items-center justify-between">
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Purchase Tokens</h3>
+                    <span class="material-symbols-outlined text-primary/50">shopping_cart</span>
+                </div>
+                
+                <div class="p-6 relative">
+                    
+                    <!-- Not Connected Overlay -->
+                    <div id="notConnectedOverlay" class="absolute inset-0 overlay-backdrop flex flex-col items-center justify-center z-10 p-8 text-center">
+                        <span class="material-symbols-outlined text-6xl text-primary/50 mb-4">link</span>
+                        <h3 class="text-lg font-serif text-white mb-2">Connect Wallet</h3>
+                        <p class="text-slate-400 text-sm mb-6">Connect your WalletTwo to participate in the presale</p>
+                        <button onclick="connectWallet()" class="bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-all">
+                            Connect WalletTwo
+                        </button>
+                    </div>
+
+                    <!-- Presale Inactive Overlay -->
+                    <div id="presaleInactiveOverlay" class="hidden absolute inset-0 overlay-backdrop flex flex-col items-center justify-center z-10 p-8 text-center">
+                        <span class="material-symbols-outlined text-6xl text-red-400/50 mb-4">pause_circle</span>
+                        <h3 class="text-lg font-serif text-white mb-2">Presale Not Active</h3>
+                        <p class="text-slate-400 text-sm">The presale is currently paused. Please check back later.</p>
+                    </div>
+
+                    <!-- Price Display -->
+                    <div class="text-center mb-8 pb-6 border-b border-white/5">
+                        <p class="text-xs text-slate-500 uppercase tracking-widest mb-2">Token Price</p>
+                        <p class="text-4xl font-serif text-primary mb-1">
+                            €<span id="tokenPriceDisplay">1.00</span>
+                        </p>
+                        <p id="tokenPriceUSD" class="text-sm text-slate-500">≈ $1.19 USD</p>
+                    </div>
+
+                    <!-- Token Amount Input -->
+                    <div class="mb-6">
+                        <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 block">Amount to Purchase</label>
+                        <div class="flex items-center bg-background-dark border border-white/10 rounded-sm overflow-hidden focus-within:border-primary/50 transition-colors">
+                            <input 
+                                type="number" 
+                                id="tokenAmount" 
+                                class="flex-1 bg-transparent border-none px-4 py-4 text-xl text-white focus:outline-none focus:ring-0" 
+                                placeholder="0"
+                                min="10"
+                                max="10000"
+                                oninput="updateTotals()"
+                            >
+                            <span class="px-4 py-4 text-primary font-bold text-sm border-l border-white/10 bg-white/5">VIP</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Amount Buttons -->
+                    <div class="grid grid-cols-5 gap-2 mb-6">
+                        <button class="quick-btn py-3 text-xs font-bold text-slate-400 border border-white/10 rounded-sm hover:text-primary transition-all" onclick="setAmount(100)">100</button>
+                        <button class="quick-btn py-3 text-xs font-bold text-slate-400 border border-white/10 rounded-sm hover:text-primary transition-all" onclick="setAmount(500)">500</button>
+                        <button class="quick-btn py-3 text-xs font-bold text-slate-400 border border-white/10 rounded-sm hover:text-primary transition-all" onclick="setAmount(1000)">1K</button>
+                        <button class="quick-btn py-3 text-xs font-bold text-slate-400 border border-white/10 rounded-sm hover:text-primary transition-all" onclick="setAmount(5000)">5K</button>
+                        <button class="quick-btn py-3 text-xs font-bold text-slate-400 border border-white/10 rounded-sm hover:text-primary transition-all" onclick="setAmount(CONFIG.maxPurchase)">MAX</button>
+                    </div>
+
+                    <!-- Limits Info -->
+                    <div class="flex justify-between text-xs text-slate-500 mb-6">
+                        <span>Min: <span id="minPurchase" class="text-slate-300">10</span> VIP</span>
+                        <span>Max: <span id="maxPurchase" class="text-slate-300">10,000</span> VIP</span>
+                    </div>
+
+                    <!-- Payment Methods -->
+                    <div class="mb-6">
+                        <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3 block">Payment Method</label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <button id="paymentPOL" class="payment-option selected flex flex-col items-center py-4 border border-white/10 rounded-sm hover:border-primary/50 transition-all" onclick="selectPayment('POL')">
+                                <span class="text-2xl mb-1">💜</span>
+                                <span class="text-xs font-bold text-white">POL</span>
+                            </button>
+                            <button id="paymentUSDC" class="payment-option flex flex-col items-center py-4 border border-white/10 rounded-sm hover:border-primary/50 transition-all" onclick="selectPayment('USDC')">
+                                <span class="text-2xl mb-1">💵</span>
+                                <span class="text-xs font-bold text-white">USDC</span>
+                            </button>
+                            <button class="payment-option flex flex-col items-center py-4 border border-white/10 rounded-sm opacity-40 cursor-not-allowed" disabled>
+                                <span class="text-2xl mb-1">💳</span>
+                                <span class="text-xs font-bold text-white">Card</span>
+                                <span class="text-[10px] text-slate-500">Soon</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Balance Display -->
+                    <div id="balanceDisplay" class="flex justify-between items-center bg-background-dark border border-white/5 rounded-sm p-4 mb-6">
+                        <span class="text-xs text-slate-500 uppercase tracking-widest">Your Balance</span>
+                        <span id="balanceValue" class="text-sm font-bold text-primary">-- POL</span>
+                    </div>
+
+                    <!-- Total Section -->
+                    <div class="bg-background-dark border border-white/5 rounded-sm p-4 mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs text-slate-500">Tokens</span>
+                            <span id="totalTokensDisplay" class="text-sm text-white">0 VIP</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs text-slate-500">Price (EUR)</span>
+                            <span id="totalEUR" class="text-sm text-white">€0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center pb-3 mb-3 border-b border-white/5">
+                            <span class="text-xs text-slate-500">Total (USD)</span>
+                            <span id="totalUSD" class="text-sm text-white">$0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-slate-500">You Pay</span>
+                            <span id="cryptoEquivalent" class="text-lg font-bold text-primary">≈ 0 POL</span>
+                        </div>
+                    </div>
+
+                    <!-- Buy Button -->
+                    <button id="buyButton" onclick="executePurchase()" disabled class="w-full bg-primary text-background-dark px-8 py-5 rounded-sm font-bold uppercase tracking-widest text-sm gold-glow hover:translate-y-[-2px] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none">
+                        Enter Amount
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- Purchase History -->
+            <div id="historyCard" class="hidden bg-surface border border-white/5 rounded-sm overflow-hidden mt-6">
+                <div class="px-8 py-5 border-b border-white/5 flex items-center justify-between">
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-primary">Your Purchases</h3>
+                    <span class="material-symbols-outlined text-primary/50">history</span>
+                </div>
+                <div id="historyList" class="p-6">
+                    <p class="text-slate-500 text-sm text-center py-4">No purchases yet</p>
+                </div>
+            </div>
+
+            <!-- Token Info -->
+            <div class="text-center mt-8 text-xs text-slate-500">
+                <p class="mb-2">VIP Token on Polygon Network</p>
+                <a href="https://polygonscan.com/token/0x6860c34db140DB7B589DaDA38859a1d3736bbE3F" target="_blank" class="inline-flex items-center gap-1 text-primary hover:underline">
+                    View Contract <span class="material-symbols-outlined text-sm">open_in_new</span>
+                </a>
+            </div>
+
+        </div>
+    </main>
 
     <!-- Processing Overlay -->
-    <div class="processing-overlay hidden" id="processingOverlay">
-        <div class="spinner"></div>
-        <div class="processing-title" id="processingTitle">Processing Purchase</div>
-        <div class="processing-text" id="processingText">Please confirm the transaction in WalletTwo</div>
-        <div class="processing-step" id="processingStep">Step 1: Payment</div>
+    <div id="processingOverlay" class="hidden fixed inset-0 bg-background-dark/98 flex flex-col items-center justify-center z-50 p-8">
+        <div class="spinner w-16 h-16 rounded-full animate-spin mb-6"></div>
+        <h3 id="processingTitle" class="text-xl font-serif text-white mb-2">Processing Purchase</h3>
+        <p id="processingText" class="text-slate-400 text-sm mb-6 text-center max-w-xs">Please confirm the transaction in WalletTwo</p>
+        <div id="processingStep" class="px-4 py-2 bg-primary/10 border border-primary/30 rounded-full text-xs font-bold text-primary uppercase tracking-widest">
+            Step 1: Payment
+        </div>
     </div>
 
     <!-- Result Overlay -->
-    <div class="result-overlay hidden" id="resultOverlay">
-        <div class="result-icon" id="resultIcon">✓</div>
-        <div class="result-title" id="resultTitle">Purchase Complete!</div>
-        <div class="result-message" id="resultMessage">Your VIP tokens have been sent to your wallet.</div>
-        <div class="result-details" id="resultDetails">
-            <div class="result-row">
-                <span>Tokens</span>
-                <span id="resultTokens">0 VIP</span>
+    <div id="resultOverlay" class="hidden fixed inset-0 bg-background-dark/98 flex flex-col items-center justify-center z-50 p-8">
+        <span id="resultIcon" class="material-symbols-outlined text-7xl mb-6 text-primary">check_circle</span>
+        <h3 id="resultTitle" class="text-2xl font-serif text-white mb-2">Purchase Complete!</h3>
+        <p id="resultMessage" class="text-slate-400 text-sm mb-8 text-center max-w-xs">Your VIP tokens have been sent to your wallet.</p>
+        
+        <div id="resultDetails" class="w-full max-w-xs bg-surface border border-white/5 rounded-sm p-4 mb-8">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-xs text-slate-500">Tokens</span>
+                <span id="resultTokens" class="text-sm font-bold text-white">0 VIP</span>
             </div>
-            <div class="result-row">
-                <span>Payment TX</span>
-                <a class="tx-link" id="resultPaymentTx" href="#" target="_blank">View ↗</a>
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-xs text-slate-500">Payment TX</span>
+                <a id="resultPaymentTx" href="#" target="_blank" class="text-xs font-mono text-primary hover:underline">View ↗</a>
             </div>
-            <div class="result-row">
-                <span>Mint TX</span>
-                <a class="tx-link" id="resultMintTx" href="#" target="_blank">View ↗</a>
+            <div class="flex justify-between items-center">
+                <span class="text-xs text-slate-500">Mint TX</span>
+                <a id="resultMintTx" href="#" target="_blank" class="text-xs font-mono text-primary hover:underline">View ↗</a>
             </div>
         </div>
-        <button class="result-btn primary" onclick="closeResult()">Done</button>
-        <button class="result-btn secondary" onclick="viewInWallet()">View in Wallet</button>
+        
+        <button onclick="closeResult()" class="bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-all mb-3">
+            Done
+        </button>
+        <button onclick="viewInWallet()" class="text-slate-400 text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors">
+            View in Wallet
+        </button>
     </div>
 
-    <!-- WalletTwo Iframe (hidden) -->
-    <iframe id="walletTwoFrame" style="display: none;"></iframe>
+    <!-- Footer -->
+    <footer class="bg-background-dark py-8 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <a href="/" class="flex items-center gap-2">
+                    <div class="size-6 text-primary">
+                        <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
+                        </svg>
+                    </div>
+                    <span class="text-xs font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
+                </a>
+                <div class="text-slate-600 text-xs font-light">
+                    © 2025 Kea Valley
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <script>
         // ============================================
         // CONFIGURATION
         // ============================================
         const CONFIG = {
-            // Token
             tokenAddress: '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F',
             tokenSymbol: 'VIP',
             tokenDecimals: 18,
             
-            // Pricing (loaded from server)
             tokenPriceEUR: 1.00,
             eurUsdRate: 1.19,
-            polPrice: 0.12, // Correct POL price ~$0.12
+            polPrice: 0.12,
             
-            // Presale limits
             totalTokens: 1000000,
             tokensSold: 0,
             minPurchase: 10,
@@ -1022,18 +381,16 @@
             presaleEnabled: true,
             presaleWallet: '',
             
-            // Network
             chainId: 137,
             rpcUrl: 'https://polygon-rpc.com',
             explorerUrl: 'https://polygonscan.com',
             
-            // Contracts
             usdcAddress: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
             usdcDecimals: 6,
             
-            // WalletTwo
             walletTwoOrigin: 'https://wallet.wallettwo.com',
-            companyId: '6a27c2f8-894c-46c7-bf9f-f5af11d4e092'
+            companyId: '6a27c2f8-894c-46c7-bf9f-f5af11d4e092',
+            storageKey: 'keavalley_profile'
         };
 
         // ============================================
@@ -1059,7 +416,7 @@
                 const response = await fetch('/api/presale/config');
                 const data = await response.json();
                 
-                console.log('Presale config loaded:', data);
+                console.log('Presale config:', data);
                 
                 if (data.success !== false) {
                     CONFIG.tokenPriceEUR = data.tokenPrice || CONFIG.tokenPriceEUR;
@@ -1073,8 +430,6 @@
                     CONFIG.presaleWallet = data.presaleWallet || '';
                 }
                 
-                console.log('Presale enabled:', CONFIG.presaleEnabled);
-                
                 updateUI();
                 updatePresaleStatus(CONFIG.presaleEnabled);
             } catch (error) {
@@ -1084,31 +439,27 @@
         }
 
         function updatePresaleStatus(enabled) {
-            const statusBadge = document.getElementById('presaleStatusBadge');
+            const statusBadge = document.getElementById('statusBadge');
             const statusDot = document.getElementById('statusDot');
             const statusText = document.getElementById('statusText');
             const inactiveOverlay = document.getElementById('presaleInactiveOverlay');
             const notConnectedOverlay = document.getElementById('notConnectedOverlay');
             
-            console.log('Updating presale status:', enabled);
-            
             if (enabled) {
-                statusBadge.classList.remove('inactive');
-                statusDot.classList.remove('inactive');
-                statusText.classList.remove('inactive');
+                statusBadge.className = 'inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/10';
+                statusDot.className = 'w-2 h-2 rounded-full bg-primary pulse-dot';
+                statusText.className = 'text-xs font-bold uppercase tracking-widest text-primary';
                 statusText.textContent = 'Presale Live';
                 
-                // Only hide inactive overlay if connected
                 if (currentWallet) {
                     inactiveOverlay.classList.add('hidden');
                 }
             } else {
-                statusBadge.classList.add('inactive');
-                statusDot.classList.add('inactive');
-                statusText.classList.add('inactive');
+                statusBadge.className = 'inline-flex items-center gap-2 px-4 py-2 rounded-full border border-red-500/30 bg-red-500/10';
+                statusDot.className = 'w-2 h-2 rounded-full bg-red-500';
+                statusText.className = 'text-xs font-bold uppercase tracking-widest text-red-400';
                 statusText.textContent = 'Presale Not Active';
                 
-                // Show inactive overlay if wallet is connected
                 if (currentWallet) {
                     notConnectedOverlay.classList.add('hidden');
                     inactiveOverlay.classList.remove('hidden');
@@ -1117,22 +468,18 @@
         }
 
         function updateUI() {
-            // Update price display
-            document.getElementById('tokenPriceDisplay').textContent = `€${CONFIG.tokenPriceEUR.toFixed(2)}`;
+            document.getElementById('tokenPriceDisplay').textContent = CONFIG.tokenPriceEUR.toFixed(2);
             document.getElementById('tokenPriceUSD').textContent = `≈ $${(CONFIG.tokenPriceEUR * CONFIG.eurUsdRate).toFixed(2)} USD`;
             
-            // Update limits
             document.getElementById('minPurchase').textContent = CONFIG.minPurchase.toLocaleString();
             document.getElementById('maxPurchase').textContent = CONFIG.maxPurchase.toLocaleString();
             
-            // Update progress
             const percent = CONFIG.totalTokens > 0 ? (CONFIG.tokensSold / CONFIG.totalTokens * 100) : 0;
             document.getElementById('progressPercent').textContent = `${percent.toFixed(1)}%`;
             document.getElementById('progressBar').style.width = `${percent}%`;
             document.getElementById('tokensSold').textContent = CONFIG.tokensSold.toLocaleString();
             document.getElementById('totalTokens').textContent = CONFIG.totalTokens.toLocaleString();
             
-            // Update input limits
             const tokenInput = document.getElementById('tokenAmount');
             tokenInput.min = CONFIG.minPurchase;
             tokenInput.max = CONFIG.maxPurchase;
@@ -1142,20 +489,20 @@
         // WALLET CONNECTION
         // ============================================
         function checkExistingSession() {
-            const session = localStorage.getItem('keavalley_profile');
+            const session = localStorage.getItem(CONFIG.storageKey);
             if (session) {
                 try {
                     const data = JSON.parse(session);
                     const sessionAge = Date.now() - (data.timestamp || 0);
-                    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+                    const maxAge = 24 * 60 * 60 * 1000;
                     
                     if (sessionAge < maxAge && data.wallet) {
                         setWalletConnected(data.wallet);
                     } else {
-                        localStorage.removeItem('keavalley_profile');
+                        localStorage.removeItem(CONFIG.storageKey);
                     }
                 } catch (e) {
-                    localStorage.removeItem('keavalley_profile');
+                    localStorage.removeItem(CONFIG.storageKey);
                 }
             }
         }
@@ -1167,37 +514,33 @@
 
         function disconnectWallet() {
             currentWallet = null;
-            localStorage.removeItem('keavalley_profile');
+            localStorage.removeItem(CONFIG.storageKey);
             localStorage.removeItem('walletTwoSession');
             localStorage.removeItem('walletAddress');
             
-            document.getElementById('walletHeader').classList.remove('visible');
+            document.getElementById('walletHeader').classList.add('hidden');
             document.getElementById('notConnectedOverlay').classList.remove('hidden');
             document.getElementById('presaleInactiveOverlay').classList.add('hidden');
-            document.getElementById('historyCard').style.display = 'none';
+            document.getElementById('historyCard').classList.add('hidden');
         }
 
         function setWalletConnected(address) {
             currentWallet = address;
             
-            // Update UI
-            document.getElementById('walletHeader').classList.add('visible');
+            document.getElementById('walletHeader').classList.remove('hidden');
             document.getElementById('walletAddressDisplay').textContent = shortenAddress(address);
             document.getElementById('notConnectedOverlay').classList.add('hidden');
             
-            // Check presale status - show inactive overlay if presale is disabled
             if (!CONFIG.presaleEnabled) {
                 document.getElementById('presaleInactiveOverlay').classList.remove('hidden');
             } else {
                 document.getElementById('presaleInactiveOverlay').classList.add('hidden');
             }
             
-            // Load balances and history
             loadUserBalances(address);
             loadPurchaseHistory(address);
             
-            // Show history card
-            document.getElementById('historyCard').style.display = 'block';
+            document.getElementById('historyCard').classList.remove('hidden');
         }
 
         function shortenAddress(address) {
@@ -1210,14 +553,12 @@
         function handleUrlParams() {
             const params = new URLSearchParams(window.location.search);
             
-            // Handle wallet from URL
             const wallet = params.get('wlt') || params.get('wallet') || params.get('address');
             if (wallet) {
                 saveSession({ wallet });
                 setWalletConnected(wallet);
             }
             
-            // Handle purchase completion
             const purchaseComplete = params.get('purchase');
             const txHash = params.get('txhash');
             const success = params.get('success');
@@ -1226,7 +567,6 @@
                 handlePurchaseCallback(txHash, success === 'true');
             }
             
-            // Clean URL
             if (wallet || purchaseComplete) {
                 window.history.replaceState({}, '', window.location.pathname);
             }
@@ -1261,7 +601,7 @@
                 userId: data.usr || data.userId,
                 timestamp: Date.now()
             };
-            localStorage.setItem('keavalley_profile', JSON.stringify(session));
+            localStorage.setItem(CONFIG.storageKey, JSON.stringify(session));
             if (session.wallet) {
                 localStorage.setItem('walletAddress', session.wallet);
             }
@@ -1272,7 +612,6 @@
         // ============================================
         async function loadUserBalances(address) {
             try {
-                // Try WalletTwo API first
                 const [polBalance, usdcBalance] = await Promise.all([
                     fetchBalance(address, 'native'),
                     fetchBalance(address, CONFIG.usdcAddress)
@@ -1289,13 +628,11 @@
 
         async function fetchBalance(address, token) {
             try {
-                // Try WalletTwo API
                 const tokenAddr = token === 'native' ? '0x0000000000000000000000000000000000000000' : token;
                 const response = await fetch(`https://api.wallettwo.com/blockchain/balance/137/${address}/${tokenAddr}`);
                 const data = await response.json();
                 return parseFloat(data.balance || 0);
             } catch (e) {
-                // Fallback to RPC
                 return await fetchBalanceRPC(address, token);
             }
         }
@@ -1316,7 +653,6 @@
                     const data = await response.json();
                     return parseInt(data.result, 16) / 1e18;
                 } else {
-                    // ERC20 balanceOf
                     const balanceOfData = '0x70a08231000000000000000000000000' + address.slice(2);
                     const response = await fetch(CONFIG.rpcUrl, {
                         method: 'POST',
@@ -1344,15 +680,16 @@
             
             balanceValue.textContent = `${balance.toFixed(4)} ${symbol}`;
             
-            // Check if sufficient
             const tokenAmount = parseInt(document.getElementById('tokenAmount').value) || 0;
             const totalUSD = tokenAmount * CONFIG.tokenPriceEUR * CONFIG.eurUsdRate;
             const required = selectedPayment === 'POL' ? totalUSD / CONFIG.polPrice : totalUSD;
             
             if (balance < required && tokenAmount > 0) {
-                balanceValue.classList.add('balance-insufficient');
+                balanceValue.classList.add('text-red-400');
+                balanceValue.classList.remove('text-primary');
             } else {
-                balanceValue.classList.remove('balance-insufficient');
+                balanceValue.classList.remove('text-red-400');
+                balanceValue.classList.add('text-primary');
             }
         }
 
@@ -1385,7 +722,6 @@
             document.getElementById('totalEUR').textContent = `€${totalEUR.toFixed(2)}`;
             document.getElementById('totalUSD').textContent = `$${totalUSD.toFixed(2)}`;
             
-            // Crypto equivalent
             const cryptoEquiv = document.getElementById('cryptoEquivalent');
             if (selectedPayment === 'POL') {
                 const polAmount = totalUSD / CONFIG.polPrice;
@@ -1394,7 +730,6 @@
                 cryptoEquiv.textContent = `≈ ${totalUSD.toFixed(2)} USDC`;
             }
             
-            // Update button state
             updateBuyButton(tokenAmount, totalUSD);
             updateBalanceDisplay();
         }
@@ -1429,25 +764,17 @@
         // PURCHASE EXECUTION
         // ============================================
         async function executePurchase() {
-            if (!currentWallet) {
-                return connectWallet();
-            }
-            
-            if (!CONFIG.presaleEnabled) {
-                alert('Presale is not active');
-                return;
-            }
+            if (!currentWallet) return connectWallet();
+            if (!CONFIG.presaleEnabled) return alert('Presale is not active');
             
             const tokenAmount = parseInt(document.getElementById('tokenAmount').value);
             if (tokenAmount < CONFIG.minPurchase || tokenAmount > CONFIG.maxPurchase) {
-                alert(`Please enter an amount between ${CONFIG.minPurchase} and ${CONFIG.maxPurchase}`);
-                return;
+                return alert(`Please enter an amount between ${CONFIG.minPurchase} and ${CONFIG.maxPurchase}`);
             }
             
             const totalEUR = tokenAmount * CONFIG.tokenPriceEUR;
             const totalUSD = totalEUR * CONFIG.eurUsdRate;
             
-            // Store pending purchase
             pendingPurchase = {
                 tokenAmount,
                 totalEUR,
@@ -1458,15 +785,12 @@
             };
             localStorage.setItem('pendingPurchase', JSON.stringify(pendingPurchase));
             
-            // Show processing
             showProcessing('Initiating Payment', 'Redirecting to WalletTwo...', 'Step 1: Confirm Payment');
             
-            // Build WalletTwo transaction URL
             const redirectUri = `${window.location.origin}/presale?purchase=complete`;
             
             if (selectedPayment === 'USDC') {
-                // USDC Transfer (ERC20)
-                const usdcAmount = Math.ceil(totalUSD * 1e6); // 6 decimals
+                const usdcAmount = Math.ceil(totalUSD * 1e6);
                 
                 const txUrl = new URL(`${CONFIG.walletTwoOrigin}/auth/login`);
                 txUrl.searchParams.set('action', 'transaction');
@@ -1477,13 +801,10 @@
                 txUrl.searchParams.set('external_ids', `presale-${Date.now()}`);
                 
                 window.location.href = txUrl.toString();
-                
             } else {
-                // POL Transfer (native)
                 const polAmount = totalUSD / CONFIG.polPrice;
                 const polWei = BigInt(Math.ceil(polAmount * 1e18)).toString();
                 
-                // For native transfers, use the send action or value parameter
                 const txUrl = new URL(`${CONFIG.walletTwoOrigin}/auth/login`);
                 txUrl.searchParams.set('action', 'transaction');
                 txUrl.searchParams.set('redirect_uri', redirectUri);
@@ -1496,7 +817,6 @@
         }
 
         async function handlePurchaseCallback(txHash, success) {
-            // Retrieve pending purchase
             const stored = localStorage.getItem('pendingPurchase');
             if (!stored) {
                 showError('Purchase Error', 'Could not find purchase details. Please try again.');
@@ -1511,11 +831,9 @@
                 return;
             }
             
-            // Show processing - verifying
             showProcessing('Verifying Payment', 'Checking transaction on blockchain...', 'Step 2: Verification');
             
             try {
-                // Call server to verify and mint
                 const response = await fetch('/api/presale/verify-payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1532,20 +850,15 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    // Update processing to minting
                     showProcessing('Minting Tokens', 'Sending VIP tokens to your wallet...', 'Step 3: Minting');
-                    
-                    // Wait a moment for visual feedback
                     await new Promise(r => setTimeout(r, 1500));
                     
-                    // Show success
                     showSuccess({
                         tokenAmount: pendingPurchase.tokenAmount,
                         paymentTxHash: txHash,
                         mintTxHash: result.mintTxHash
                     });
                     
-                    // Refresh data
                     loadPresaleConfig();
                     loadPurchaseHistory(currentWallet);
                 } else {
@@ -1560,7 +873,7 @@
         }
 
         // ============================================
-        // PROCESSING & RESULT OVERLAYS
+        // OVERLAYS
         // ============================================
         function showProcessing(title, text, step) {
             document.getElementById('processingTitle').textContent = title;
@@ -1577,8 +890,8 @@
             hideProcessing();
             
             const resultOverlay = document.getElementById('resultOverlay');
-            document.getElementById('resultIcon').textContent = '✓';
-            document.getElementById('resultIcon').className = 'result-icon success';
+            document.getElementById('resultIcon').textContent = 'check_circle';
+            document.getElementById('resultIcon').className = 'material-symbols-outlined text-7xl mb-6 text-primary';
             document.getElementById('resultTitle').textContent = 'Purchase Complete!';
             document.getElementById('resultMessage').textContent = `${data.tokenAmount.toLocaleString()} VIP tokens have been sent to your wallet.`;
             
@@ -1597,6 +910,7 @@
                 mintLink.parentElement.style.display = 'none';
             }
             
+            document.getElementById('resultDetails').style.display = 'block';
             resultOverlay.classList.remove('hidden');
         }
 
@@ -1604,8 +918,8 @@
             hideProcessing();
             
             const resultOverlay = document.getElementById('resultOverlay');
-            document.getElementById('resultIcon').textContent = '✗';
-            document.getElementById('resultIcon').className = 'result-icon error';
+            document.getElementById('resultIcon').textContent = 'error';
+            document.getElementById('resultIcon').className = 'material-symbols-outlined text-7xl mb-6 text-red-400';
             document.getElementById('resultTitle').textContent = title;
             document.getElementById('resultMessage').textContent = message;
             document.getElementById('resultDetails').style.display = 'none';
@@ -1615,7 +929,6 @@
 
         function closeResult() {
             document.getElementById('resultOverlay').classList.add('hidden');
-            document.getElementById('resultDetails').style.display = 'block';
             document.getElementById('tokenAmount').value = '';
             updateTotals();
         }
@@ -1635,17 +948,21 @@
                 const historyList = document.getElementById('historyList');
                 
                 if (!data.purchases || data.purchases.length === 0) {
-                    historyList.innerHTML = '<div class="history-empty">No purchases yet</div>';
+                    historyList.innerHTML = '<p class="text-slate-500 text-sm text-center py-4">No purchases yet</p>';
                     return;
                 }
                 
                 historyList.innerHTML = data.purchases.map(purchase => `
-                    <div class="history-item">
-                        <div class="history-info">
-                            <span class="history-tokens">${Number(purchase.token_amount).toLocaleString()} VIP</span>
-                            <span class="history-date">${new Date(purchase.created_at).toLocaleDateString()}</span>
+                    <div class="flex justify-between items-center py-3 border-b border-white/5 last:border-0">
+                        <div>
+                            <p class="text-sm font-bold text-white">${Number(purchase.token_amount).toLocaleString()} VIP</p>
+                            <p class="text-xs text-slate-500">${new Date(purchase.created_at).toLocaleDateString()}</p>
                         </div>
-                        <span class="history-status ${purchase.status}">${purchase.status}</span>
+                        <span class="px-3 py-1 text-xs font-bold uppercase rounded-full ${
+                            purchase.status === 'completed' ? 'bg-primary/20 text-primary' :
+                            purchase.status === 'pending' || purchase.status === 'pending_mint' ? 'bg-yellow-500/20 text-yellow-400' :
+                            'bg-slate-500/20 text-slate-400'
+                        }">${purchase.status}</span>
                     </div>
                 `).join('');
             } catch (error) {
