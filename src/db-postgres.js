@@ -820,6 +820,7 @@ module.exports = {
 
     updateRegistrantEmail,
     upsertRegistrant,
+    getAdminUser,
     
     // Admin operations
     isAdminWhitelisted,
