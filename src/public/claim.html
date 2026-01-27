@@ -147,6 +147,72 @@
         }
 
         // ============================================
+        // Referral Handling
+        // ============================================
+        let referrerCode = null;
+        let referrerWallet = null;
+
+        function checkReferralCode() {
+            const params = new URLSearchParams(window.location.search);
+            const ref = params.get('ref') || params.get('referrer') || params.get('r');
+            
+            if (ref) {
+                validateReferralCode(ref);
+            }
+        }
+
+        async function validateReferralCode(code) {
+            try {
+                const response = await fetch(`/api/referral/validate/${code}`);
+                const data = await response.json();
+                
+                if (data.valid) {
+                    referrerCode = code;
+                    referrerWallet = data.referrerWallet;
+                    showReferralBadge(code);
+                    console.log('Valid referral code:', code);
+                }
+            } catch (error) {
+                console.error('Failed to validate referral code:', error);
+            }
+        }
+
+        function showReferralBadge(code) {
+            // Add a badge showing referral is active
+            const badge = document.createElement('div');
+            badge.className = 'fixed top-24 right-4 bg-primary/20 border border-primary/30 rounded-full px-4 py-2 text-xs text-primary font-bold z-40';
+            badge.innerHTML = `🎁 Referral: ${code}`;
+            document.body.appendChild(badge);
+        }
+
+        // In your claim submission function, add:
+        async function submitClaim() {
+            // ... existing code ...
+            
+            // After successful claim, track referral
+            if (referrerCode && walletAddress) {
+                try {
+                    await fetch('/api/referral/track', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            referralCode: referrerCode,
+                            referredWallet: walletAddress,
+                            referredEmail: null,
+                            source: 'claim'
+                        })
+                    });
+                    console.log('Referral tracked');
+                } catch (e) {
+                    console.error('Failed to track referral:', e);
+                }
+            }
+        }
+
+        // Call on page load
+        checkReferralCode();
+
+        // ============================================
         // LocalStorage Functions
         // ============================================
         function getWalletFromStorage() {

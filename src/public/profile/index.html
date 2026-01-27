@@ -70,6 +70,12 @@
             0%, 100% { border-color: rgba(238, 157, 43, 0.5); }
             50% { border-color: rgba(238, 157, 43, 0.9); }
         }
+        
+        /* Referral Section */
+        .referral-link-box {
+            background: linear-gradient(135deg, rgba(238, 157, 43, 0.1) 0%, rgba(212, 165, 67, 0.05) 100%);
+            border: 1px solid rgba(238, 157, 43, 0.3);
+        }
     </style>
 </head>
 <body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
@@ -186,7 +192,7 @@
                         </div>
 
                         <!-- VIP Token Balance -->
-                        <div class="mb-8">
+                        <div class="mb-6">
                             <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">VIP Token Balance</label>
                             <div class="bg-background-dark border border-white/5 rounded-sm p-6 text-center">
                                 <div id="balanceLoading" class="flex items-center justify-center gap-2">
@@ -205,6 +211,57 @@
                             </div>
                         </div>
 
+                        <!-- ============================================ -->
+                        <!-- REFERRAL SECTION -->
+                        <!-- ============================================ -->
+                        <div id="referralSection" class="mb-6 hidden">
+                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">
+                                <span class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-sm text-primary">share</span>
+                                    Your Referral Link
+                                </span>
+                            </label>
+                            <div class="bg-background-dark border border-white/5 rounded-sm p-4">
+                                
+                                <!-- Generate Code Button (shown if no code) -->
+                                <div id="referralGenerate" class="text-center py-4">
+                                    <p class="text-slate-400 text-sm mb-4">Invite friends and earn VIP tokens!</p>
+                                    <button onclick="generateReferralCode()" class="bg-primary/20 text-primary px-6 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/30 transition-colors border border-primary/30">
+                                        Generate Referral Code
+                                    </button>
+                                </div>
+                                
+                                <!-- Referral Display (shown if has code) -->
+                                <div id="referralDisplay" class="hidden">
+                                    <!-- Referral Link -->
+                                    <div class="referral-link-box rounded-sm p-3 mb-4">
+                                        <div class="flex items-center gap-2">
+                                            <span id="referralLink" class="text-primary font-mono text-xs flex-1 truncate"></span>
+                                            <button onclick="copyReferralLink()" id="copyReferralBtn" class="text-slate-500 hover:text-primary transition-colors" title="Copy link">
+                                                <span class="material-symbols-outlined text-xl">content_copy</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Referral Stats -->
+                                    <div class="grid grid-cols-2 gap-3 mb-4">
+                                        <div class="bg-surface rounded-sm p-3 text-center border border-white/5">
+                                            <p id="referralCount" class="text-2xl font-serif text-primary">0</p>
+                                            <p class="text-xs text-slate-500 uppercase tracking-widest">Referrals</p>
+                                        </div>
+                                        <div class="bg-surface rounded-sm p-3 text-center border border-white/5">
+                                            <p id="referralEarned" class="text-2xl font-serif text-primary">0</p>
+                                            <p class="text-xs text-slate-500 uppercase tracking-widest">VIP Earned</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Bonus Info -->
+                                    <p id="referralBonusInfo" class="text-xs text-slate-500 text-center"></p>
+                                </div>
+                                
+                            </div>
+                        </div>
+
                         <!-- Presale Button (always shown when connected) -->
                         <div class="mb-4">
                             <a href="/presale" class="block w-full bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs text-center gold-glow hover:translate-y-[-2px] transition-transform">
@@ -214,7 +271,7 @@
 
                         <!-- Claim Button (shown if balance < 2) -->
                         <div id="claimButtonContainer" class="hidden mb-4">
-                            <a href="/claim" class="block w-full border border-primary/50 text-primary px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs text-center hover:bg-primary/10 transition-colors">
+                            <a id="claimLink" href="/claim" class="block w-full border border-primary/50 text-primary px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs text-center hover:bg-primary/10 transition-colors">
                                 🎁 Claim Free Tokens
                             </a>
                         </div>
@@ -305,6 +362,7 @@
         let acceptMessages = true;
         let isDisconnecting = false;
         let savedToDatabase = false;
+        let userReferralCode = null;
 
         // ============================================
         // URL Parameter Handling
@@ -478,6 +536,9 @@
             
             // Save to database
             saveToDatabase(user.wallet, user.email, user.name);
+            
+            // Load referral info
+            loadReferralInfo();
         }
 
         function showDisconnecting() {
@@ -553,9 +614,135 @@
             
             if (balance < CONFIG.MIN_BALANCE_TO_HIDE_CLAIM) {
                 claimButtonContainer.classList.remove('hidden');
+                // Add referral code to claim link if user has one
+                if (userReferralCode) {
+                    document.getElementById('claimLink').href = `/claim?ref=${userReferralCode}`;
+                }
             } else {
                 claimButtonContainer.classList.add('hidden');
             }
+        }
+
+        // ============================================
+        // Referral System
+        // ============================================
+        async function loadReferralInfo() {
+            if (!currentUser || !currentUser.wallet) return;
+            
+            const referralSection = document.getElementById('referralSection');
+            referralSection.classList.remove('hidden');
+            
+            try {
+                // Get referral settings
+                const settingsRes = await fetch('/api/referral/settings');
+                const settingsData = await settingsRes.json();
+                
+                if (!settingsData.enabled) {
+                    referralSection.classList.add('hidden');
+                    return;
+                }
+                
+                // Check if user has a code
+                const codeRes = await fetch(`/api/referral/code/${currentUser.wallet}`);
+                const codeData = await codeRes.json();
+                
+                if (codeData.hasCode) {
+                    userReferralCode = codeData.referralCode;
+                    showReferralCode(codeData, settingsData);
+                } else {
+                    document.getElementById('referralGenerate').classList.remove('hidden');
+                    document.getElementById('referralDisplay').classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Failed to load referral info:', error);
+                referralSection.classList.add('hidden');
+            }
+        }
+
+        async function generateReferralCode() {
+            if (!currentUser || !currentUser.wallet) return;
+            
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+            
+            try {
+                const response = await fetch('/api/referral/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        walletAddress: currentUser.wallet,
+                        email: currentUser.email
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    userReferralCode = data.referralCode;
+                    
+                    // Reload to show the code
+                    const settingsRes = await fetch('/api/referral/settings');
+                    const settingsData = await settingsRes.json();
+                    
+                    showReferralCode({
+                        referralCode: data.referralCode,
+                        stats: data.stats
+                    }, settingsData);
+                } else {
+                    alert('Failed to generate referral code: ' + (data.error || 'Unknown error'));
+                    btn.disabled = false;
+                    btn.textContent = 'Generate Referral Code';
+                }
+            } catch (error) {
+                console.error('Failed to generate referral code:', error);
+                alert('Failed to generate referral code');
+                btn.disabled = false;
+                btn.textContent = 'Generate Referral Code';
+            }
+        }
+
+        function showReferralCode(codeData, settingsData) {
+            document.getElementById('referralGenerate').classList.add('hidden');
+            document.getElementById('referralDisplay').classList.remove('hidden');
+            
+            const referralUrl = `${window.location.origin}/claim?ref=${codeData.referralCode}`;
+            document.getElementById('referralLink').textContent = referralUrl;
+            
+            document.getElementById('referralCount').textContent = codeData.stats?.totalReferrals || 0;
+            document.getElementById('referralEarned').textContent = (codeData.stats?.totalBonusEarned || 0).toFixed(2);
+            
+            // Show bonus info
+            let bonusText = 'Earn ';
+            if (settingsData.claimBonus) {
+                if (settingsData.claimBonus.type === 'fixed') {
+                    bonusText += `${settingsData.claimBonus.amount} VIP per claim`;
+                } else {
+                    bonusText += `${settingsData.claimBonus.amount}% per claim`;
+                }
+            }
+            if (settingsData.presaleBonus) {
+                bonusText += ' • ';
+                if (settingsData.presaleBonus.type === 'fixed') {
+                    bonusText += `${settingsData.presaleBonus.amount} VIP per presale`;
+                } else {
+                    bonusText += `${settingsData.presaleBonus.amount}% of presale purchases`;
+                }
+            }
+            document.getElementById('referralBonusInfo').textContent = bonusText;
+        }
+
+        function copyReferralLink() {
+            const link = document.getElementById('referralLink').textContent;
+            navigator.clipboard.writeText(link).then(() => {
+                const btn = document.getElementById('copyReferralBtn');
+                btn.innerHTML = '<span class="material-symbols-outlined text-xl text-green-400">check</span>';
+                setTimeout(() => {
+                    btn.innerHTML = '<span class="material-symbols-outlined text-xl">content_copy</span>';
+                }, 2000);
+            }).catch(err => {
+                console.error('Copy failed:', err);
+            });
         }
 
         // ============================================
@@ -587,6 +774,7 @@
             currentUser = null;
             acceptMessages = false;
             savedToDatabase = false;
+            userReferralCode = null;
 
             showDisconnecting();
 

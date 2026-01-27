@@ -72,6 +72,7 @@
         .badge-pending { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
         .badge-error { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
         .badge-purple { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+        .badge-pink { background: rgba(236, 72, 153, 0.2); color: #ec4899; }
         
         /* Input field fixes - ensure visibility on dark background */
         .input-field {
@@ -169,6 +170,20 @@
             border-color: #ef4444;
         }
         
+        .btn-success {
+            background: transparent;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-success:hover {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: #22c55e;
+        }
+        
         /* Modal styles */
         .modal-overlay {
             position: fixed;
@@ -257,6 +272,19 @@
             border-color: rgba(238, 157, 43, 0.3);
             background: rgba(238, 157, 43, 0.05);
         }
+        
+        /* Referral code card */
+        .referral-code-display {
+            background: rgba(238, 157, 43, 0.1);
+            border: 1px solid rgba(238, 157, 43, 0.3);
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-family: monospace;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #ee9d2b;
+            letter-spacing: 0.1em;
+        }
     </style>
 </head>
 <body class="text-white">
@@ -294,6 +322,14 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
                     </svg>
                     Presale
+                </span>
+            </button>
+            <button class="main-tab" data-tab="referrals" onclick="switchMainTab('referrals')">
+                <span class="flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                    </svg>
+                    Referrals
                 </span>
             </button>
             <button class="main-tab" data-tab="admins" onclick="switchMainTab('admins')">
@@ -441,13 +477,175 @@
                                 <th>Amount</th>
                                 <th>Payment</th>
                                 <th>Status</th>
+                                <th>Referrer</th>
                                 <th>Date</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="presale-table">
                             <tr>
-                                <td colspan="8" class="text-center text-white/40 py-8">Loading...</td>
+                                <td colspan="9" class="text-center text-white/40 py-8">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Referrals Tab Panel -->
+        <div id="referrals-panel" class="tab-panel">
+            <!-- Referral Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div class="stat-card">
+                    <div class="stat-label">Active Codes</div>
+                    <div class="stat-value gold-text" id="referral-codes-total">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Referrals</div>
+                    <div class="stat-value text-pink-400" id="referral-total">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Signup Bonuses Paid</div>
+                    <div class="stat-value text-green-400" id="referral-signup-bonus">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Presale Bonuses Paid</div>
+                    <div class="stat-value text-blue-400" id="referral-presale-bonus">--</div>
+                </div>
+            </div>
+            
+            <!-- Referral Settings -->
+            <div class="glass-card rounded-xl p-6 mb-8">
+                <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
+                    <svg class="w-5 h-5 gold-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Referral Program Settings
+                </h3>
+                
+                <div class="space-y-6">
+                    <!-- Enable Toggle -->
+                    <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                        <div>
+                            <p class="font-medium">Referral Program Enabled</p>
+                            <p class="text-white/40 text-sm">Allow users to generate and share referral codes</p>
+                        </div>
+                        <div id="referral-enabled-toggle" class="toggle-switch" onclick="toggleReferralEnabled()"></div>
+                    </div>
+                    
+                    <!-- Signup Bonus -->
+                    <div class="p-4 bg-white/5 rounded-lg">
+                        <p class="font-medium mb-4">Signup Bonus (when referee registers)</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-white/60 text-sm block mb-2">Bonus Type</label>
+                                <select id="referral-bonus-type" class="input-field">
+                                    <option value="percentage">Percentage (%)</option>
+                                    <option value="fixed">Fixed (VIP tokens)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-white/60 text-sm block mb-2">Bonus Amount</label>
+                                <input type="number" id="referral-bonus-amount" class="input-field" value="5" step="0.01" min="0">
+                            </div>
+                        </div>
+                        <p id="referral-bonus-explanation" class="text-white/40 text-sm mt-2">Referrer receives 5% of referee's first purchase</p>
+                    </div>
+                    
+                    <!-- Presale Bonus -->
+                    <div class="p-4 bg-white/5 rounded-lg">
+                        <p class="font-medium mb-4">Presale Purchase Bonus (when referee buys)</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-white/60 text-sm block mb-2">Bonus Type</label>
+                                <select id="referral-presale-bonus-type" class="input-field">
+                                    <option value="percentage">Percentage (%)</option>
+                                    <option value="fixed">Fixed (VIP tokens)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-white/60 text-sm block mb-2">Bonus Amount</label>
+                                <input type="number" id="referral-presale-bonus-amount" class="input-field" value="5" step="0.01" min="0">
+                            </div>
+                        </div>
+                        <p id="referral-presale-bonus-explanation" class="text-white/40 text-sm mt-2">Referrer receives 5% of referee's presale purchase in VIP tokens</p>
+                    </div>
+                    
+                    <!-- Minimum Purchase -->
+                    <div>
+                        <label class="text-white/60 text-sm block mb-2">Minimum Purchase for Bonus (EUR)</label>
+                        <input type="number" id="referral-min-purchase" class="input-field" value="10" step="1" min="0">
+                        <p class="text-white/40 text-xs mt-1">Referee must spend at least this amount for referrer to earn presale bonus</p>
+                    </div>
+                    
+                    <!-- Save Button -->
+                    <div class="pt-4">
+                        <button onclick="saveReferralSettings()" class="btn-gold">Save Referral Settings</button>
+                        <span id="referral-settings-status" class="ml-4 text-sm"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Referral Actions -->
+            <div class="flex gap-4 mb-6">
+                <button onclick="loadReferralData()" class="btn-gold">Refresh Data</button>
+                <button onclick="exportReferralCodesCSV()" class="btn-outline">Export Codes CSV</button>
+                <button onclick="exportReferralsCSV()" class="btn-outline">Export Referrals CSV</button>
+            </div>
+            
+            <!-- Referral Codes Table -->
+            <div class="glass-card rounded-xl overflow-hidden mb-8">
+                <div class="p-4 border-b border-white/10 flex items-center justify-between">
+                    <h3 class="font-semibold">Referral Codes</h3>
+                    <div class="flex gap-2">
+                        <button onclick="filterReferralCodes('all')" class="sub-tab active" data-code-filter="all">All</button>
+                        <button onclick="filterReferralCodes('active')" class="sub-tab" data-code-filter="active">Active</button>
+                        <button onclick="filterReferralCodes('disabled')" class="sub-tab" data-code-filter="disabled">Disabled</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Owner Wallet</th>
+                                <th>Referrals</th>
+                                <th>Total Bonus Earned</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="referral-codes-table">
+                            <tr>
+                                <td colspan="7" class="text-center text-white/40 py-8">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Referrals Activity Table -->
+            <div class="glass-card rounded-xl overflow-hidden">
+                <div class="p-4 border-b border-white/10">
+                    <h3 class="font-semibold">Referral Activity</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Referrer</th>
+                                <th>Code Used</th>
+                                <th>Referee</th>
+                                <th>Signup Bonus</th>
+                                <th>Presale Bonus</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="referrals-activity-table">
+                            <tr>
+                                <td colspan="6" class="text-center text-white/40 py-8">Loading...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -720,9 +918,13 @@
         // Configuration
         const EXPLORER_URL = 'https://polygonscan.com';
         let currentFilter = 'all';
+        let currentCodeFilter = 'all';
         let registrantsData = [];
         let presaleData = [];
         let adminsData = [];
+        let referralCodesData = [];
+        let referralsData = [];
+        let referralSettings = {};
         let currentAdminRole = 'admin';
         let currentAdminEmail = '';
         let adminToRemove = null;
@@ -751,11 +953,318 @@
             } else if (tabName === 'presale') {
                 loadPresaleStats();
                 loadPresalePurchases();
+            } else if (tabName === 'referrals') {
+                loadReferralData();
             } else if (tabName === 'admins') {
                 loadAdmins();
             } else if (tabName === 'settings') {
                 loadSettings();
             }
+        }
+        
+        // ==========================================
+        // REFERRAL MANAGEMENT
+        // ==========================================
+        async function loadReferralData() {
+            await Promise.all([
+                loadReferralSettings(),
+                loadReferralStats(),
+                loadReferralCodes(),
+                loadReferralsActivity()
+            ]);
+        }
+        
+        async function loadReferralSettings() {
+            try {
+                const response = await fetch('/api/referral/settings');
+                const data = await response.json();
+                referralSettings = data;
+                
+                // Update toggle
+                const toggle = document.getElementById('referral-enabled-toggle');
+                if (data.enabled) {
+                    toggle.classList.add('active');
+                } else {
+                    toggle.classList.remove('active');
+                }
+                
+                // Update form fields
+                document.getElementById('referral-bonus-type').value = data.bonusType || 'percentage';
+                document.getElementById('referral-bonus-amount').value = data.bonusAmount || 5;
+                document.getElementById('referral-presale-bonus-type').value = data.presaleBonusType || 'percentage';
+                document.getElementById('referral-presale-bonus-amount').value = data.presaleBonusAmount || 5;
+                document.getElementById('referral-min-purchase').value = data.minPurchaseForBonus || 10;
+                
+                updateBonusExplanations();
+            } catch (error) {
+                console.error('Error loading referral settings:', error);
+            }
+        }
+        
+        function updateBonusExplanations() {
+            const bonusType = document.getElementById('referral-bonus-type').value;
+            const bonusAmount = document.getElementById('referral-bonus-amount').value;
+            const presaleBonusType = document.getElementById('referral-presale-bonus-type').value;
+            const presaleBonusAmount = document.getElementById('referral-presale-bonus-amount').value;
+            
+            document.getElementById('referral-bonus-explanation').textContent = bonusType === 'percentage'
+                ? `Referrer receives ${bonusAmount}% of referee's first purchase in VIP tokens`
+                : `Referrer receives ${bonusAmount} VIP tokens when referee signs up`;
+                
+            document.getElementById('referral-presale-bonus-explanation').textContent = presaleBonusType === 'percentage'
+                ? `Referrer receives ${presaleBonusAmount}% of referee's presale purchase in VIP tokens`
+                : `Referrer receives ${presaleBonusAmount} VIP tokens per presale purchase by referee`;
+        }
+        
+        // Add event listeners for real-time explanation updates
+        document.getElementById('referral-bonus-type')?.addEventListener('change', updateBonusExplanations);
+        document.getElementById('referral-bonus-amount')?.addEventListener('input', updateBonusExplanations);
+        document.getElementById('referral-presale-bonus-type')?.addEventListener('change', updateBonusExplanations);
+        document.getElementById('referral-presale-bonus-amount')?.addEventListener('input', updateBonusExplanations);
+        
+        async function loadReferralStats() {
+            try {
+                const response = await fetch('/api/admin/referral/stats', { credentials: 'include' });
+                const data = await response.json();
+                
+                document.getElementById('referral-codes-total').textContent = (data.totalCodes || 0).toLocaleString();
+                document.getElementById('referral-total').textContent = (data.totalReferrals || 0).toLocaleString();
+                document.getElementById('referral-signup-bonus').textContent = (data.totalSignupBonus || 0).toFixed(2) + ' VIP';
+                document.getElementById('referral-presale-bonus').textContent = (data.totalPresaleBonus || 0).toFixed(2) + ' VIP';
+            } catch (error) {
+                console.error('Error loading referral stats:', error);
+            }
+        }
+        
+        async function loadReferralCodes() {
+            try {
+                const response = await fetch('/api/admin/referral/codes', { credentials: 'include' });
+                const data = await response.json();
+                referralCodesData = data || [];
+                renderReferralCodes(referralCodesData);
+            } catch (error) {
+                console.error('Error loading referral codes:', error);
+                document.getElementById('referral-codes-table').innerHTML = `
+                    <tr><td colspan="7" class="text-center text-red-400 py-8">Error loading referral codes</td></tr>
+                `;
+            }
+        }
+        
+        function filterReferralCodes(filter) {
+            currentCodeFilter = filter;
+            document.querySelectorAll('[data-code-filter]').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.codeFilter === filter) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            let filtered = referralCodesData;
+            if (filter === 'active') {
+                filtered = referralCodesData.filter(c => c.enabled);
+            } else if (filter === 'disabled') {
+                filtered = referralCodesData.filter(c => !c.enabled);
+            }
+            
+            renderReferralCodes(filtered);
+        }
+        
+        function renderReferralCodes(codes) {
+            const tbody = document.getElementById('referral-codes-table');
+            
+            if (!codes || codes.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-white/40 py-8">No referral codes found</td></tr>`;
+                return;
+            }
+            
+            tbody.innerHTML = codes.map(c => {
+                const wallet = c.wallet_address || c.walletAddress || '--';
+                const referralCount = c.referral_count || c.referralCount || 0;
+                const totalBonus = parseFloat(c.total_bonus_earned || c.totalBonusEarned || 0);
+                const createdAt = c.created_at || c.createdAt;
+                
+                return `
+                    <tr>
+                        <td>
+                            <span class="referral-code-display">${c.code}</span>
+                        </td>
+                        <td>
+                            <a href="${EXPLORER_URL}/address/${wallet}" target="_blank" class="text-blue-400 hover:underline font-mono text-sm">
+                                ${wallet.substring(0, 6)}...${wallet.substring(wallet.length - 4)}
+                            </a>
+                        </td>
+                        <td class="font-semibold">${referralCount}</td>
+                        <td class="text-green-400">${totalBonus.toFixed(2)} VIP</td>
+                        <td>
+                            <span class="badge ${c.enabled ? 'badge-success' : 'badge-error'}">
+                                ${c.enabled ? 'Active' : 'Disabled'}
+                            </span>
+                        </td>
+                        <td class="text-white/60 text-sm">${createdAt ? new Date(createdAt).toLocaleDateString() : '--'}</td>
+                        <td>
+                            <button onclick="toggleReferralCode('${c.code}', ${!c.enabled})" class="${c.enabled ? 'btn-danger' : 'btn-success'} text-sm px-3 py-1">
+                                ${c.enabled ? 'Disable' : 'Enable'}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        async function loadReferralsActivity() {
+            try {
+                const response = await fetch('/api/admin/referral/list', { credentials: 'include' });
+                const data = await response.json();
+                referralsData = data || [];
+                renderReferralsActivity(referralsData);
+            } catch (error) {
+                console.error('Error loading referrals activity:', error);
+                document.getElementById('referrals-activity-table').innerHTML = `
+                    <tr><td colspan="6" class="text-center text-red-400 py-8">Error loading referrals</td></tr>
+                `;
+            }
+        }
+        
+        function renderReferralsActivity(referrals) {
+            const tbody = document.getElementById('referrals-activity-table');
+            
+            if (!referrals || referrals.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-white/40 py-8">No referrals yet</td></tr>`;
+                return;
+            }
+            
+            tbody.innerHTML = referrals.map(r => {
+                const referrerWallet = r.referrer_wallet || r.referrerWallet || '--';
+                const refereeWallet = r.referee_wallet || r.refereeWallet || '--';
+                const code = r.referrer_code || r.referrerCode || '--';
+                const signupBonus = parseFloat(r.bonus_earned || r.bonusEarned || 0);
+                const presaleBonus = parseFloat(r.presale_bonus_earned || r.presaleBonusEarned || 0);
+                const createdAt = r.created_at || r.createdAt;
+                
+                return `
+                    <tr>
+                        <td>
+                            <a href="${EXPLORER_URL}/address/${referrerWallet}" target="_blank" class="text-blue-400 hover:underline font-mono text-sm">
+                                ${referrerWallet.substring(0, 6)}...${referrerWallet.substring(referrerWallet.length - 4)}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="font-mono text-sm gold-text">${code}</span>
+                        </td>
+                        <td>
+                            <a href="${EXPLORER_URL}/address/${refereeWallet}" target="_blank" class="text-blue-400 hover:underline font-mono text-sm">
+                                ${refereeWallet.substring(0, 6)}...${refereeWallet.substring(refereeWallet.length - 4)}
+                            </a>
+                        </td>
+                        <td class="${signupBonus > 0 ? 'text-green-400' : 'text-white/40'}">${signupBonus.toFixed(2)} VIP</td>
+                        <td class="${presaleBonus > 0 ? 'text-blue-400' : 'text-white/40'}">${presaleBonus.toFixed(2)} VIP</td>
+                        <td class="text-white/60 text-sm">${createdAt ? new Date(createdAt).toLocaleDateString() : '--'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function toggleReferralEnabled() {
+            const toggle = document.getElementById('referral-enabled-toggle');
+            toggle.classList.toggle('active');
+        }
+        
+        async function toggleReferralCode(code, enable) {
+            try {
+                const response = await fetch(`/api/admin/referral/code/${code}/toggle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ enabled: enable })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    loadReferralCodes();
+                    loadReferralStats();
+                } else {
+                    alert(data.error || 'Failed to toggle referral code');
+                }
+            } catch (error) {
+                console.error('Error toggling referral code:', error);
+                alert('Error toggling referral code');
+            }
+        }
+        
+        async function saveReferralSettings() {
+            const statusEl = document.getElementById('referral-settings-status');
+            statusEl.innerHTML = '<span class="text-white/60">Saving...</span>';
+            
+            const settings = {
+                enabled: document.getElementById('referral-enabled-toggle').classList.contains('active'),
+                bonusType: document.getElementById('referral-bonus-type').value,
+                bonusAmount: parseFloat(document.getElementById('referral-bonus-amount').value),
+                presaleBonusType: document.getElementById('referral-presale-bonus-type').value,
+                presaleBonusAmount: parseFloat(document.getElementById('referral-presale-bonus-amount').value),
+                minPurchaseForBonus: parseFloat(document.getElementById('referral-min-purchase').value)
+            };
+            
+            try {
+                const response = await fetch('/api/referral/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(settings)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusEl.innerHTML = '<span class="text-green-400">Settings saved!</span>';
+                    setTimeout(() => { statusEl.innerHTML = ''; }, 3000);
+                } else {
+                    statusEl.innerHTML = `<span class="text-red-400">${data.error || 'Failed to save'}</span>`;
+                }
+            } catch (error) {
+                console.error('Error saving referral settings:', error);
+                statusEl.innerHTML = '<span class="text-red-400">Error saving settings</span>';
+            }
+        }
+        
+        function exportReferralCodesCSV() {
+            if (!referralCodesData.length) {
+                alert('No data to export');
+                return;
+            }
+            
+            const headers = ['Code', 'Wallet Address', 'Referrals', 'Total Bonus Earned', 'Status', 'Created'];
+            const rows = referralCodesData.map(c => [
+                c.code,
+                c.wallet_address || c.walletAddress || '',
+                c.referral_count || c.referralCount || 0,
+                c.total_bonus_earned || c.totalBonusEarned || 0,
+                c.enabled ? 'Active' : 'Disabled',
+                c.created_at || c.createdAt || ''
+            ]);
+            
+            const csv = [headers, ...rows].map(row => row.map(c => `"${c}"`).join(',')).join('\n');
+            downloadCSV(csv, 'kea-valley-referral-codes.csv');
+        }
+        
+        function exportReferralsCSV() {
+            if (!referralsData.length) {
+                alert('No data to export');
+                return;
+            }
+            
+            const headers = ['Referrer Wallet', 'Code', 'Referee Wallet', 'Signup Bonus', 'Presale Bonus', 'Date'];
+            const rows = referralsData.map(r => [
+                r.referrer_wallet || r.referrerWallet || '',
+                r.referrer_code || r.referrerCode || '',
+                r.referee_wallet || r.refereeWallet || '',
+                r.bonus_earned || r.bonusEarned || 0,
+                r.presale_bonus_earned || r.presaleBonusEarned || 0,
+                r.created_at || r.createdAt || ''
+            ]);
+            
+            const csv = [headers, ...rows].map(row => row.map(c => `"${c}"`).join(',')).join('\n');
+            downloadCSV(csv, 'kea-valley-referrals.csv');
         }
         
         // ==========================================
@@ -1071,7 +1580,7 @@
             }
             
             if (!filtered || filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-white/40 py-8">No purchases found</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center text-white/40 py-8">No purchases found</td></tr>`;
                 return;
             }
             
@@ -1082,6 +1591,7 @@
                 const amount = p.amount_usd || p.amountUsd || p.amount || 0;
                 const payment = p.payment_method || p.paymentMethod || 'card';
                 const status = p.status || 'pending';
+                const referrer = p.referrer_wallet || p.referrerWallet || '';
                 const date = p.created_at || p.createdAt;
                 
                 let statusClass = 'badge-warning';
@@ -1104,9 +1614,16 @@
                             </a>
                         </td>
                         <td class="font-semibold">${tokens.toLocaleString()}</td>
-                        <td class="text-green-400">$${parseFloat(amount).toFixed(2)}</td>
+                        <td class="text-green-400">€${parseFloat(amount).toFixed(2)}</td>
                         <td class="capitalize text-white/60">${payment}</td>
                         <td><span class="badge ${statusClass}">${status}</span></td>
+                        <td>
+                            ${referrer ? `
+                                <a href="${EXPLORER_URL}/address/${referrer}" target="_blank" class="text-pink-400 hover:underline font-mono text-xs">
+                                    ${referrer.substring(0, 6)}...${referrer.substring(referrer.length - 4)}
+                                </a>
+                            ` : '<span class="text-white/40">--</span>'}
+                        </td>
                         <td class="text-white/60 text-sm">${date ? new Date(date).toLocaleDateString() : '--'}</td>
                         <td>
                             <button onclick="viewPurchase('${p.id}')" class="text-white/40 hover:text-white text-sm">View</button>
@@ -1341,7 +1858,7 @@
                 return;
             }
             
-            const headers = ['Email', 'Wallet', 'Tokens', 'Amount EUR', 'Payment Method', 'Status', 'Date'];
+            const headers = ['Email', 'Wallet', 'Tokens', 'Amount EUR', 'Payment Method', 'Status', 'Referrer', 'Date'];
             const rows = presaleData.map(p => [
                 p.email || p.metadata?.email || '',
                 p.wallet_address || p.walletAddress || '',
@@ -1349,6 +1866,7 @@
                 p.amount_usd || p.amountUsd || p.amount || 0,
                 p.payment_method || p.paymentMethod || 'card',
                 p.status || 'pending',
+                p.referrer_wallet || p.referrerWallet || '',
                 p.created_at || p.createdAt || ''
             ]);
             

@@ -394,6 +394,71 @@
         };
 
         // ============================================
+        // Referral Handling
+        // ============================================
+        let referrerCode = null;
+        let referrerWallet = null;
+
+        function checkReferralCode() {
+            const params = new URLSearchParams(window.location.search);
+            const ref = params.get('ref') || params.get('referrer') || params.get('r');
+            
+            if (ref) {
+                validateReferralCode(ref);
+            }
+        }
+
+        async function validateReferralCode(code) {
+            try {
+                const response = await fetch(`/api/referral/validate/${code}`);
+                const data = await response.json();
+                
+                if (data.valid) {
+                    referrerCode = code;
+                    referrerWallet = data.referrerWallet;
+                    showReferralBadge(code);
+                }
+            } catch (error) {
+                console.error('Failed to validate referral code:', error);
+            }
+        }
+
+        function showReferralBadge(code) {
+            const badge = document.createElement('div');
+            badge.className = 'fixed top-24 right-4 bg-green-500/20 border border-green-500/30 rounded-full px-4 py-2 text-xs text-green-400 font-bold z-40';
+            badge.innerHTML = `🎁 Referral Active: ${code}`;
+            document.body.appendChild(badge);
+        }
+
+        // In executePurchase(), store referral info:
+        pendingPurchase = {
+            // ... existing fields ...
+            referrerCode: referrerCode,
+            referrerWallet: referrerWallet
+        };
+
+        // In handlePurchaseCallback(), after successful verification:
+        if (referrerCode) {
+            try {
+                await fetch('/api/referral/track', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        referralCode: referrerCode,
+                        referredWallet: pendingPurchase.wallet,
+                        source: 'presale',
+                        purchaseAmount: pendingPurchase.tokenAmount
+                    })
+                });
+            } catch (e) {
+                console.error('Failed to track referral:', e);
+            }
+        }
+
+        // Call on page load
+        checkReferralCode();
+
+        // ============================================
         // STATE
         // ============================================
         let currentWallet = null;
