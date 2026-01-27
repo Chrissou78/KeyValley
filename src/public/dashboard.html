@@ -376,6 +376,7 @@
             <!-- Claims Actions -->
             <div class="flex gap-4 mb-6">
                 <button onclick="loadRegistrants()" class="btn-gold">Refresh Data</button>
+                <button onclick="syncMembers()" class="btn-outline">Sync from WalletTwo</button>
                 <button onclick="openFullSyncModal()" class="btn-outline">Full Sync</button>
                 <button onclick="exportClaimsCSV()" class="btn-outline">Export CSV</button>
             </div>
@@ -959,6 +960,24 @@
                 loadAdmins();
             } else if (tabName === 'settings') {
                 loadSettings();
+            }
+        }
+
+        async function syncMembers() {
+            try {
+                const response = await fetch('/api/members/sync', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`Synced: ${data.synced} new, ${data.updated} updated`);
+                    loadRegistrants(); // Refresh the table
+                } else {
+                    alert('Sync failed: ' + data.error);
+                }
+            } catch (error) {
+                alert('Sync error: ' + error.message);
             }
         }
         
