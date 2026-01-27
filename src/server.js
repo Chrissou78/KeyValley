@@ -1822,74 +1822,56 @@ app.post('/api/referral/settings', requireAdminAuth, async (req, res) => {
 // GET /api/referral/status/:wallet - Get referral status for a user
 app.get('/api/referral/status/:wallet', async (req, res) => {
     try {
-        const wallet = req.params.wallet.toLowerCase();
+        const { wallet } = req.params;
         
-        console.log('📋 Getting referral status for:', wallet);
-        
-        // Step 1: Get referral settings FIRST (most important)
-        let settings = { enabled: false };
-        try {
-            const settingsResult = await db.pool.query('SELECT * FROM referral_settings WHERE id = 1');
-            console.log('📋 Settings query result:', settingsResult.rows);
-            if (settingsResult.rows.length > 0) {
-                settings = settingsResult.rows[0];
-            }
-        } catch (e) {
-            console.error('❌ Error fetching settings:', e.message);
+        if (!wallet || !ethers.isAddress(wallet)) {
+            return res.status(400).json({ error: 'Invalid wallet address' });
         }
         
-        // Step 2: Check if user has referrer
-        let hasReferrer = false;
-        let referrerWallet = null;
-        let referrerCode = null;
-        try {
-            const userResult = await db.pool.query(
-                `SELECT referrer_wallet, referrer_code FROM registrants WHERE LOWER(address) = $1`,
-                [wallet]
-            );
-            if (userResult.rows.length > 0 && userResult.rows[0].referrer_wallet) {
-                hasReferrer = true;
-                referrerWallet = userResult.rows[0].referrer_wallet;
-                referrerCode = userResult.rows[0].referrer_code;
-            }
-        } catch (e) {
-            console.error('❌ Error fetching user referrer:', e.message);
-        }
+        const normalizedAddress = wallet.toLowerCase();
+        console.log('📋 Getting referral status for:', normalizedAddress);
+
+        // Get settings
+        const settingsResult = await db.pool.query(
+            'SELECT * FROM referral_settings WHERE id = 1'
+        );
         
-        // Step 3: Get user's own code
-        let myCode = null;
-        let stats = { totalReferrals: 0, totalBonusEarned: 0 };
-        try {
-            const codeResult = await db.pool.query(
-                'SELECT code, enabled FROM referral_codes WHERE LOWER(wallet_address) = $1',
-                [wallet]
-            );
-            if (codeResult.rows.length > 0) {
-                myCode = codeResult.rows[0].code;
-                
-                // Get stats
-                const statsResult = await db.pool.query(
-                    `SELECT COUNT(*) as total_referrals, 
-                            COALESCE(SUM(signup_bonus_paid), 0) + COALESCE(SUM(presale_bonus_paid), 0) as total_bonus
-                     FROM referrals WHERE LOWER(referrer_wallet) = $1`,
-                    [wallet]
-                );
-                if (statsResult.rows.length > 0) {
-                    stats.totalReferrals = parseInt(statsResult.rows[0].total_referrals) || 0;
-                    stats.totalBonusEarned = parseFloat(statsResult.rows[0].total_bonus) || 0;
-                }
-            }
-        } catch (e) {
-            console.error('❌ Error fetching user code:', e.message);
-        }
+        const settings = settingsResult.rows[0] || { enabled: false };
+        const programEnabled = settings.enabled === true;
         
+        console.log('📋 Program enabled:', programEnabled);
+
+        // Check if user has a referrer set
+        const registrantResult = await db.pool.query(
+            'SELECT referrer_wallet, referrer_code, referrer_set_at FROM registrants WHERE address = $1',
+            [normalizedAddress]
+        );
+        
+        const registrant = registrantResult.rows[0];
+        const hasReferrer = !!(registrant?.referrer_wallet);
+
+        // Get user's own referral code
+        const codeResult = await db.pool.query(
+            'SELECT code, enabled, created_at, total_referrals, total_bonus_earned FROM referral_codes WHERE owner_wallet = $1',
+            [normalizedAddress]
+        );
+        
+        const myCodeData = codeResult.rows[0];
+
+        // Build response
         const response = {
             hasReferrer,
-            referrerWallet,
-            referrerCode,
-            myCode,
-            stats,
-            programEnabled: settings.enabled === true,
+            referrerWallet: registrant?.referrer_wallet || null,
+            referrerCode: registrant?.referrer_code || null,
+            referrerSetAt: registrant?.referrer_set_at || null,
+            myCode: myCodeData?.code || null,
+            myCodeEnabled: myCodeData?.enabled ?? null,
+            myCodeCreatedAt: myCodeData?.created_at || null,
+            stats: {
+                totalReferrals: myCodeData?.total_referrals || 0,
+                totalBonusEarned: parseFloat(myCodeData?.total_bonus_earned) || 0
+            },
+            programEnabled,
             bonusInfo: {
                 signupType: settings.bonus_type || 'fixed',
                 signupAmount: parseFloat(settings.bonus_amount) || 0,
@@ -1897,13 +1879,12 @@ app.get('/api/referral/status/:wallet', async (req, res) => {
                 presaleAmount: parseFloat(settings.presale_bonus_amount) || 0
             }
         };
-        
-        console.log('✅ Sending referral status:', response);
+
         res.json(response);
-        
+
     } catch (error) {
-        console.error('❌ Referral status error:', error);
-        res.status(500).json({ error: 'Failed to get referral status', details: error.message });
+        console.error('❌ Referral status error:', error.message);
+        res.status(500).json({ error: 'Failed to get referral status' });
     }
 });
 
@@ -1912,115 +1893,100 @@ app.post('/api/referral/set', async (req, res) => {
     try {
         const { walletAddress, referralCode } = req.body;
         
-        if (!walletAddress || !referralCode) {
-            return res.status(400).json({ error: 'Wallet address and referral code required' });
+        console.log('\n🔗 SET REFERRER:', { walletAddress, referralCode });
+
+        if (!walletAddress || !ethers.isAddress(walletAddress)) {
+            return res.status(400).json({ success: false, error: 'Invalid wallet address' });
         }
+
+        if (!referralCode || referralCode.length < 6) {
+            return res.status(400).json({ success: false, error: 'Invalid referral code' });
+        }
+
+        const normalizedAddress = walletAddress.toLowerCase();
+        const code = referralCode.toUpperCase();
+
+        // Check if program enabled
+        const settingsResult = await db.pool.query(
+            'SELECT * FROM referral_settings WHERE id = 1'
+        );
         
-        const wallet = walletAddress.toLowerCase();
-        const code = referralCode.toUpperCase().trim();
-        
+        if (!settingsResult.rows[0]?.enabled) {
+            return res.status(400).json({ success: false, error: 'Referral program is currently disabled' });
+        }
+
+        const settings = settingsResult.rows[0];
+
         // Check if user already has a referrer
         const existingReferrer = await db.pool.query(
-            'SELECT referrer_wallet FROM registrants WHERE LOWER(address) = $1 AND referrer_wallet IS NOT NULL',
-            [wallet]
+            'SELECT referrer_wallet FROM registrants WHERE address = $1 AND referrer_wallet IS NOT NULL',
+            [normalizedAddress]
         );
-        
+
         if (existingReferrer.rows.length > 0 && existingReferrer.rows[0].referrer_wallet) {
-            return res.status(400).json({ error: 'You have already set a referrer. This cannot be changed.' });
+            return res.status(400).json({ success: false, error: 'You already have a referrer set. This cannot be changed.' });
         }
-        
+
         // Validate the referral code exists and is active
         const codeResult = await db.pool.query(
-            'SELECT wallet_address, enabled FROM referral_codes WHERE code = $1',
+            'SELECT owner_wallet, enabled FROM referral_codes WHERE code = $1',
             [code]
         );
-        
+
         if (codeResult.rows.length === 0) {
-            return res.status(400).json({ error: 'Invalid referral code' });
+            return res.status(400).json({ success: false, error: 'Invalid referral code' });
         }
-        
+
+        const referrerWallet = codeResult.rows[0].owner_wallet;
+
         if (!codeResult.rows[0].enabled) {
-            return res.status(400).json({ error: 'This referral code is no longer active' });
+            return res.status(400).json({ success: false, error: 'This referral code is no longer active' });
         }
-        
-        const referrerWallet = codeResult.rows[0].wallet_address.toLowerCase();
-        
+
         // Prevent self-referral
-        if (referrerWallet === wallet) {
-            return res.status(400).json({ error: 'You cannot use your own referral code' });
+        if (referrerWallet.toLowerCase() === normalizedAddress) {
+            return res.status(400).json({ success: false, error: 'You cannot use your own referral code' });
         }
-        
-        // Get user's email if available
-        const userResult = await db.pool.query(
-            'SELECT email FROM registrants WHERE LOWER(address) = $1',
-            [wallet]
-        );
-        const userEmail = userResult.rows[0]?.email || null;
-        
+
         // Update registrant with referrer info
-        await db.pool.query(
-            `UPDATE registrants 
-             SET referrer_wallet = $1, referrer_code = $2, referrer_set_at = NOW(), updated_at = NOW()
-             WHERE LOWER(address) = $3`,
-            [referrerWallet, code, wallet]
-        );
-        
-        // Get referral settings for signup bonus
-        const settingsResult = await db.pool.query('SELECT * FROM referral_settings WHERE id = 1');
-        const settings = settingsResult.rows[0] || {};
-        
-        let signupBonus = 0;
-        let mintTxHash = null;
-        
-        if (settings.enabled) {
-            // Calculate signup bonus
-            if (settings.bonus_type === 'fixed') {
-                signupBonus = parseFloat(settings.bonus_amount) || 0;
-            }
-            // For percentage type on signup, we could give a flat minimum or skip
-            // Since there's no purchase yet, percentage doesn't make sense for signup
-            // So we only give fixed bonus on signup
-            
-            if (signupBonus > 0) {
-                console.log(`🎁 Minting signup bonus: ${signupBonus} VIP to referrer ${referrerWallet}`);
-                
-                // Actually mint the bonus tokens to the referrer
-                const mintResult = await mintPresaleTokens(referrerWallet, signupBonus);
-                
-                if (mintResult.success) {
-                    mintTxHash = mintResult.txHash;
-                    console.log(`✅ Signup bonus minted: ${mintTxHash}`);
-                } else {
-                    console.error(`❌ Failed to mint signup bonus: ${mintResult.error}`);
-                    // Don't fail the whole request, just log the error
-                    // The referral is still recorded, bonus can be paid manually
-                }
-            }
-        }
-        
+        await db.pool.query(`
+            UPDATE registrants 
+            SET referrer_wallet = $1, referrer_code = $2, referrer_set_at = NOW()
+            WHERE address = $3
+        `, [referrerWallet, code, normalizedAddress]);
+
+        // Update referral_codes stats
+        await db.pool.query(`
+            UPDATE referral_codes 
+            SET total_referrals = total_referrals + 1, updated_at = NOW()
+            WHERE code = $1
+        `, [code]);
+
         // Create referral record
-        await db.pool.query(
-            `INSERT INTO referrals (referrer_wallet, referrer_code, referee_wallet, referee_email, signup_bonus_paid, signup_bonus_tx, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, NOW())
-             ON CONFLICT (referee_wallet) DO NOTHING`,
-            [referrerWallet, code, wallet, userEmail, signupBonus, mintTxHash]
-        );
-        
-        console.log(`✅ Referrer set: ${wallet} -> ${referrerWallet} (code: ${code}), bonus: ${signupBonus} VIP`);
-        
-        res.json({ 
-            success: true, 
-            message: signupBonus > 0 
-                ? `Referrer linked! They received ${signupBonus} VIP bonus.`
-                : 'Referrer linked successfully!',
-            referrerWallet: referrerWallet.substring(0, 6) + '...' + referrerWallet.substring(referrerWallet.length - 4),
-            signupBonus: signupBonus,
-            bonusTxHash: mintTxHash
+        await db.pool.query(`
+            INSERT INTO referrals (referrer_wallet, referrer_code, referee_wallet, signup_bonus_paid, presale_bonus_paid, created_at)
+            VALUES ($1, $2, $3, 0, 0, NOW())
+            ON CONFLICT (referee_wallet) DO NOTHING
+        `, [referrerWallet, code, normalizedAddress]);
+
+        // Calculate and apply signup bonus if applicable
+        let signupBonus = 0;
+        if (settings.bonus_type === 'fixed') {
+            signupBonus = parseFloat(settings.bonus_amount) || 0;
+        }
+
+        console.log('✅ Referrer set successfully:', referrerWallet);
+
+        return res.json({
+            success: true,
+            message: 'Referrer linked successfully!',
+            referrerWallet: `${referrerWallet.slice(0, 6)}...${referrerWallet.slice(-4)}`,
+            signupBonus
         });
-        
+
     } catch (error) {
-        console.error('Error setting referrer:', error);
-        res.status(500).json({ error: 'Failed to set referrer' });
+        console.error('❌ SET REFERRER ERROR:', error.message);
+        return res.status(500).json({ success: false, error: 'Failed to set referrer' });
     }
 });
 
@@ -2029,42 +1995,31 @@ app.post('/api/referral/generate', async (req, res) => {
     try {
         const { walletAddress } = req.body;
         
-        console.log('\n🎫 GENERATE REFERRAL CODE REQUEST:', { walletAddress });
+        console.log('\n🎫 GENERATE REFERRAL CODE:', { walletAddress });
 
-        // ==================== VALIDATION ====================
         if (!walletAddress || !ethers.isAddress(walletAddress)) {
-            console.log('❌ Invalid wallet address');
-            return res.status(400).json({ 
-                success: false,
-                error: 'Invalid wallet address' 
-            });
+            return res.status(400).json({ success: false, error: 'Invalid wallet address' });
         }
 
         const normalizedAddress = walletAddress.toLowerCase();
 
-        // ==================== CHECK IF PROGRAM ENABLED ====================
+        // Check if program enabled
         const settingsResult = await db.pool.query(
             'SELECT enabled FROM referral_settings WHERE id = 1'
         );
         
-        const programEnabled = settingsResult.rows.length > 0 ? settingsResult.rows[0].enabled : false;
-        
-        if (!programEnabled) {
-            console.log('❌ Referral program is disabled');
-            return res.status(400).json({ 
-                success: false,
-                error: 'Referral program is currently disabled' 
-            });
+        if (!settingsResult.rows[0]?.enabled) {
+            return res.status(400).json({ success: false, error: 'Referral program is currently disabled' });
         }
 
-        // ==================== CHECK EXISTING CODE ====================
+        // Check existing code
         const existingCode = await db.pool.query(
             'SELECT code, enabled FROM referral_codes WHERE owner_wallet = $1',
             [normalizedAddress]
         );
 
         if (existingCode.rows.length > 0) {
-            console.log('📋 User already has a code:', existingCode.rows[0].code);
+            console.log('📋 Code already exists:', existingCode.rows[0].code);
             return res.json({
                 success: true,
                 code: existingCode.rows[0].code,
@@ -2073,7 +2028,7 @@ app.post('/api/referral/generate', async (req, res) => {
             });
         }
 
-        // ==================== GENERATE UNIQUE CODE ====================
+        // Generate unique code
         const generateCode = () => {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
             let code = '';
@@ -2085,9 +2040,8 @@ app.post('/api/referral/generate', async (req, res) => {
 
         let newCode;
         let attempts = 0;
-        const maxAttempts = 10;
 
-        while (attempts < maxAttempts) {
+        while (attempts < 10) {
             newCode = generateCode();
             const duplicate = await db.pool.query(
                 'SELECT id FROM referral_codes WHERE code = $1',
@@ -2097,21 +2051,18 @@ app.post('/api/referral/generate', async (req, res) => {
             attempts++;
         }
 
-        if (attempts >= maxAttempts) {
-            return res.status(500).json({ 
-                success: false,
-                error: 'Failed to generate unique code. Please try again.' 
-            });
+        if (attempts >= 10) {
+            return res.status(500).json({ success: false, error: 'Failed to generate unique code' });
         }
 
-        // ==================== SAVE CODE ====================
+        // Insert new code
         await db.pool.query(`
             INSERT INTO referral_codes 
             (owner_wallet, code, enabled, total_referrals, total_claims, total_presale_purchases, total_bonus_earned, created_at, updated_at) 
             VALUES ($1, $2, true, 0, 0, 0, 0, NOW(), NOW())
         `, [normalizedAddress, newCode]);
 
-        console.log('✅ Referral code generated:', newCode);
+        console.log('✅ Code generated:', newCode);
 
         return res.json({
             success: true,
@@ -2122,10 +2073,7 @@ app.post('/api/referral/generate', async (req, res) => {
 
     } catch (error) {
         console.error('❌ GENERATE CODE ERROR:', error.message);
-        return res.status(500).json({ 
-            success: false,
-            error: 'Failed to generate referral code'
-        });
+        return res.status(500).json({ success: false, error: 'Failed to generate referral code' });
     }
 });
 
