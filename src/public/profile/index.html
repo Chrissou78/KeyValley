@@ -72,9 +72,20 @@
         }
         
         /* Referral Section */
-        .referral-link-box {
+        .referral-code-box {
             background: linear-gradient(135deg, rgba(238, 157, 43, 0.1) 0%, rgba(212, 165, 67, 0.05) 100%);
-            border: 1px solid rgba(238, 157, 43, 0.3);
+            border: 2px dashed rgba(238, 157, 43, 0.4);
+        }
+        
+        .referral-input {
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-family: monospace;
+        }
+        
+        .referral-input::placeholder {
+            text-transform: none;
+            letter-spacing: normal;
         }
     </style>
 </head>
@@ -218,45 +229,104 @@
                             <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">
                                 <span class="flex items-center gap-2">
                                     <span class="material-symbols-outlined text-sm text-primary">share</span>
-                                    Your Referral Link
+                                    Referral Program
                                 </span>
                             </label>
                             <div class="bg-background-dark border border-white/5 rounded-sm p-4">
                                 
-                                <!-- Generate Code Button (shown if no code) -->
-                                <div id="referralGenerate" class="text-center py-4">
-                                    <p class="text-slate-400 text-sm mb-4">Invite friends and earn VIP tokens!</p>
-                                    <button onclick="generateReferralCode()" class="bg-primary/20 text-primary px-6 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/30 transition-colors border border-primary/30">
-                                        Generate Referral Code
-                                    </button>
-                                </div>
-                                
-                                <!-- Referral Display (shown if has code) -->
-                                <div id="referralDisplay" class="hidden">
-                                    <!-- Referral Link -->
-                                    <div class="referral-link-box rounded-sm p-3 mb-4">
-                                        <div class="flex items-center gap-2">
-                                            <span id="referralLink" class="text-primary font-mono text-xs flex-1 truncate"></span>
-                                            <button onclick="copyReferralLink()" id="copyReferralBtn" class="text-slate-500 hover:text-primary transition-colors" title="Copy link">
-                                                <span class="material-symbols-outlined text-xl">content_copy</span>
+                                <!-- ======================================== -->
+                                <!-- PART 1: SET YOUR REFERRER (if not set) -->
+                                <!-- ======================================== -->
+                                <div id="setReferrerSection" class="mb-6 hidden">
+                                    <div class="p-4 bg-surface rounded-sm border border-white/5">
+                                        <p class="text-white font-medium mb-2">Have a referral code?</p>
+                                        <p class="text-slate-400 text-sm mb-4">Enter it below to link your account to your referrer.</p>
+                                        <div class="flex gap-2">
+                                            <input 
+                                                type="text" 
+                                                id="referralCodeInput" 
+                                                class="referral-input flex-1 bg-background-dark border border-white/10 rounded-sm px-4 py-3 text-primary text-center text-lg focus:border-primary focus:outline-none"
+                                                placeholder="Enter code"
+                                                maxlength="8"
+                                            >
+                                            <button 
+                                                onclick="setReferrer()" 
+                                                id="setReferrerBtn"
+                                                class="bg-primary text-background-dark px-5 py-3 rounded-sm font-bold text-sm uppercase tracking-wider hover:opacity-90 transition-opacity"
+                                            >
+                                                Apply
                                             </button>
                                         </div>
+                                        <p id="setReferrerError" class="text-red-400 text-xs mt-2 hidden"></p>
+                                        <p class="text-slate-500 text-xs mt-3 flex items-center gap-1">
+                                            <span class="material-symbols-outlined text-sm text-yellow-500">warning</span>
+                                            This can only be set once and cannot be changed.
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Referrer Already Set -->
+                                <div id="referrerSetSection" class="mb-6 hidden">
+                                    <div class="p-4 bg-green-500/10 border border-green-500/20 rounded-sm">
+                                        <div class="flex items-center gap-2 text-green-400 mb-2">
+                                            <span class="material-symbols-outlined text-lg">check_circle</span>
+                                            <span class="font-medium">Referrer Linked</span>
+                                        </div>
+                                        <p class="text-slate-400 text-sm">
+                                            Referred by: <span id="referrerDisplay" class="font-mono text-white"></span>
+                                        </p>
+                                        <p class="text-slate-500 text-xs mt-1">
+                                            Code used: <span id="referrerCodeDisplay" class="text-primary font-mono"></span>
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <!-- ======================================== -->
+                                <!-- PART 2: YOUR REFERRAL CODE -->
+                                <!-- ======================================== -->
+                                <div class="border-t border-white/5 pt-4">
+                                    <p class="text-white font-medium mb-3">Your Referral Code</p>
+                                    
+                                    <!-- Generate Code Button (shown if no code) -->
+                                    <div id="referralGenerate" class="text-center py-4 hidden">
+                                        <p class="text-slate-400 text-sm mb-4">Generate your code and invite friends to earn VIP tokens!</p>
+                                        <button 
+                                            onclick="generateReferralCode()" 
+                                            id="generateCodeBtn"
+                                            class="bg-primary/20 text-primary px-6 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/30 transition-colors border border-primary/30"
+                                        >
+                                            Generate Referral Code
+                                        </button>
                                     </div>
                                     
-                                    <!-- Referral Stats -->
-                                    <div class="grid grid-cols-2 gap-3 mb-4">
-                                        <div class="bg-surface rounded-sm p-3 text-center border border-white/5">
-                                            <p id="referralCount" class="text-2xl font-serif text-primary">0</p>
-                                            <p class="text-xs text-slate-500 uppercase tracking-widest">Referrals</p>
+                                    <!-- Referral Code Display (shown if has code) -->
+                                    <div id="referralDisplay" class="hidden">
+                                        <!-- The Code -->
+                                        <div class="referral-code-box rounded-sm p-4 mb-4 text-center">
+                                            <p class="text-slate-500 text-xs mb-2 uppercase tracking-widest">Share this code with friends</p>
+                                            <div class="flex items-center justify-center gap-3">
+                                                <span id="myReferralCode" class="text-primary text-3xl font-mono font-bold tracking-widest"></span>
+                                                <button onclick="copyReferralCode()" id="copyCodeBtn" class="text-slate-500 hover:text-primary transition-colors" title="Copy code">
+                                                    <span class="material-symbols-outlined text-xl">content_copy</span>
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div class="bg-surface rounded-sm p-3 text-center border border-white/5">
-                                            <p id="referralEarned" class="text-2xl font-serif text-primary">0</p>
-                                            <p class="text-xs text-slate-500 uppercase tracking-widest">VIP Earned</p>
+                                        
+                                        <!-- Referral Stats -->
+                                        <div class="grid grid-cols-2 gap-3 mb-4">
+                                            <div class="bg-surface rounded-sm p-3 text-center border border-white/5">
+                                                <p id="referralCount" class="text-2xl font-serif text-primary">0</p>
+                                                <p class="text-xs text-slate-500 uppercase tracking-widest">Friends Referred</p>
+                                            </div>
+                                            <div class="bg-surface rounded-sm p-3 text-center border border-white/5">
+                                                <p id="referralEarned" class="text-2xl font-serif text-primary">0</p>
+                                                <p class="text-xs text-slate-500 uppercase tracking-widest">VIP Earned</p>
+                                            </div>
                                         </div>
+                                        
+                                        <!-- Bonus Info -->
+                                        <p id="referralBonusInfo" class="text-xs text-slate-500 text-center"></p>
                                     </div>
-                                    
-                                    <!-- Bonus Info -->
-                                    <p id="referralBonusInfo" class="text-xs text-slate-500 text-center"></p>
                                 </div>
                                 
                             </div>
@@ -362,7 +432,7 @@
         let acceptMessages = true;
         let isDisconnecting = false;
         let savedToDatabase = false;
-        let userReferralCode = null;
+        let referralStatus = null;
 
         // ============================================
         // URL Parameter Handling
@@ -458,7 +528,6 @@
             acceptMessages = true;
             isDisconnecting = false;
 
-            // Hide presale banner when not connected
             if (presaleBanner) {
                 presaleBanner.classList.add('hidden');
             }
@@ -471,7 +540,6 @@
             disconnectingContainer.classList.add('hidden');
             cardTitle.textContent = 'Loading';
 
-            // Hide presale banner while loading
             if (presaleBanner) {
                 presaleBanner.classList.add('hidden');
             }
@@ -487,7 +555,6 @@
             disconnectingContainer.classList.add('hidden');
             cardTitle.textContent = 'Profile';
 
-            // Show presale banner when connected
             if (presaleBanner) {
                 presaleBanner.classList.remove('hidden');
             }
@@ -538,7 +605,7 @@
             saveToDatabase(user.wallet, user.email, user.name);
             
             // Load referral info
-            loadReferralInfo();
+            loadReferralStatus();
         }
 
         function showDisconnecting() {
@@ -548,7 +615,6 @@
             disconnectingContainer.classList.remove('hidden');
             cardTitle.textContent = 'Disconnecting';
 
-            // Hide presale banner while disconnecting
             if (presaleBanner) {
                 presaleBanner.classList.add('hidden');
             }
@@ -614,55 +680,159 @@
             
             if (balance < CONFIG.MIN_BALANCE_TO_HIDE_CLAIM) {
                 claimButtonContainer.classList.remove('hidden');
-                // Add referral code to claim link if user has one
-                if (userReferralCode) {
-                    document.getElementById('claimLink').href = `/claim?ref=${userReferralCode}`;
-                }
             } else {
                 claimButtonContainer.classList.add('hidden');
             }
         }
 
         // ============================================
-        // Referral System
+        // REFERRAL SYSTEM (Simplified)
         // ============================================
-        async function loadReferralInfo() {
+        async function loadReferralStatus() {
             if (!currentUser || !currentUser.wallet) return;
             
             const referralSection = document.getElementById('referralSection');
-            referralSection.classList.remove('hidden');
             
             try {
-                // Get referral settings
-                const settingsRes = await fetch('/api/referral/settings');
-                const settingsData = await settingsRes.json();
+                const response = await fetch(`/api/referral/status/${currentUser.wallet}`);
+                referralStatus = await response.json();
                 
-                if (!settingsData.enabled) {
+                console.log('Referral status:', referralStatus);
+                
+                // Check if program is enabled
+                if (!referralStatus.programEnabled) {
                     referralSection.classList.add('hidden');
                     return;
                 }
                 
-                // Check if user has a code
-                const codeRes = await fetch(`/api/referral/code/${currentUser.wallet}`);
-                const codeData = await codeRes.json();
+                referralSection.classList.remove('hidden');
                 
-                if (codeData.hasCode) {
-                    userReferralCode = codeData.referralCode;
-                    showReferralCode(codeData, settingsData);
+                // ========================================
+                // PART 1: Set Referrer Section
+                // ========================================
+                const setReferrerSection = document.getElementById('setReferrerSection');
+                const referrerSetSection = document.getElementById('referrerSetSection');
+                
+                if (referralStatus.hasReferrer) {
+                    // User already has a referrer - show confirmation
+                    setReferrerSection.classList.add('hidden');
+                    referrerSetSection.classList.remove('hidden');
+                    
+                    const shortWallet = referralStatus.referrerWallet 
+                        ? `${referralStatus.referrerWallet.substring(0, 6)}...${referralStatus.referrerWallet.substring(referralStatus.referrerWallet.length - 4)}`
+                        : 'Unknown';
+                    document.getElementById('referrerDisplay').textContent = shortWallet;
+                    document.getElementById('referrerCodeDisplay').textContent = referralStatus.referrerCode || '--';
                 } else {
-                    document.getElementById('referralGenerate').classList.remove('hidden');
-                    document.getElementById('referralDisplay').classList.add('hidden');
+                    // User can still set a referrer
+                    setReferrerSection.classList.remove('hidden');
+                    referrerSetSection.classList.add('hidden');
                 }
+                
+                // ========================================
+                // PART 2: User's Own Referral Code
+                // ========================================
+                const referralGenerate = document.getElementById('referralGenerate');
+                const referralDisplay = document.getElementById('referralDisplay');
+                
+                if (referralStatus.myCode) {
+                    // User has a code - show it
+                    referralGenerate.classList.add('hidden');
+                    referralDisplay.classList.remove('hidden');
+                    
+                    document.getElementById('myReferralCode').textContent = referralStatus.myCode;
+                    document.getElementById('referralCount').textContent = referralStatus.stats?.totalReferrals || 0;
+                    document.getElementById('referralEarned').textContent = (referralStatus.stats?.totalBonusEarned || 0).toFixed(2);
+                    
+                    // Build bonus info text
+                    let bonusText = '';
+                    const info = referralStatus.bonusInfo;
+                    if (info) {
+                        if (info.signupType === 'fixed' && info.signupAmount > 0) {
+                            bonusText = `Earn ${info.signupAmount} VIP per friend signup`;
+                        } else if (info.signupType === 'percentage' && info.signupAmount > 0) {
+                            bonusText = `Earn ${info.signupAmount}% of friend's first purchase`;
+                        }
+                        
+                        if (info.presaleAmount > 0) {
+                            if (bonusText) bonusText += ' • ';
+                            if (info.presaleType === 'fixed') {
+                                bonusText += `${info.presaleAmount} VIP per presale purchase`;
+                            } else {
+                                bonusText += `${info.presaleAmount}% of presale purchases`;
+                            }
+                        }
+                    }
+                    document.getElementById('referralBonusInfo').textContent = bonusText || 'Invite friends to earn rewards!';
+                } else {
+                    // User doesn't have a code yet
+                    referralGenerate.classList.remove('hidden');
+                    referralDisplay.classList.add('hidden');
+                }
+                
             } catch (error) {
-                console.error('Failed to load referral info:', error);
+                console.error('Failed to load referral status:', error);
                 referralSection.classList.add('hidden');
             }
         }
 
+        // Set referrer (one-time only)
+        async function setReferrer() {
+            const codeInput = document.getElementById('referralCodeInput');
+            const errorEl = document.getElementById('setReferrerError');
+            const btn = document.getElementById('setReferrerBtn');
+            
+            const code = codeInput.value.trim().toUpperCase();
+            
+            if (!code || code.length < 6) {
+                errorEl.textContent = 'Please enter a valid referral code (6-8 characters)';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.textContent = 'Applying...';
+            errorEl.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/api/referral/set', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        walletAddress: currentUser.wallet,
+                        referralCode: code
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Reload referral status to update UI
+                    await loadReferralStatus();
+                    
+                    // Show success
+                    if (data.signupBonus > 0) {
+                        alert(`Success! Your referrer will receive ${data.signupBonus} VIP as a bonus.`);
+                    }
+                } else {
+                    errorEl.textContent = data.error || 'Failed to set referrer';
+                    errorEl.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error setting referrer:', error);
+                errorEl.textContent = 'Network error. Please try again.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Apply';
+            }
+        }
+
+        // Generate own referral code
         async function generateReferralCode() {
             if (!currentUser || !currentUser.wallet) return;
             
-            const btn = event.target;
+            const btn = document.getElementById('generateCodeBtn');
             btn.disabled = true;
             btn.textContent = 'Generating...';
             
@@ -671,71 +841,33 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        walletAddress: currentUser.wallet,
-                        email: currentUser.email
+                        walletAddress: currentUser.wallet
                     })
                 });
                 
                 const data = await response.json();
                 
                 if (data.success) {
-                    userReferralCode = data.referralCode;
-                    
-                    // Reload to show the code
-                    const settingsRes = await fetch('/api/referral/settings');
-                    const settingsData = await settingsRes.json();
-                    
-                    showReferralCode({
-                        referralCode: data.referralCode,
-                        stats: data.stats
-                    }, settingsData);
+                    // Reload to show the new code
+                    await loadReferralStatus();
                 } else {
-                    alert('Failed to generate referral code: ' + (data.error || 'Unknown error'));
+                    alert(data.error || 'Failed to generate referral code');
                     btn.disabled = false;
                     btn.textContent = 'Generate Referral Code';
                 }
             } catch (error) {
                 console.error('Failed to generate referral code:', error);
-                alert('Failed to generate referral code');
+                alert('Network error. Please try again.');
                 btn.disabled = false;
                 btn.textContent = 'Generate Referral Code';
             }
         }
 
-        function showReferralCode(codeData, settingsData) {
-            document.getElementById('referralGenerate').classList.add('hidden');
-            document.getElementById('referralDisplay').classList.remove('hidden');
-            
-            const referralUrl = `${window.location.origin}/claim?ref=${codeData.referralCode}`;
-            document.getElementById('referralLink').textContent = referralUrl;
-            
-            document.getElementById('referralCount').textContent = codeData.stats?.totalReferrals || 0;
-            document.getElementById('referralEarned').textContent = (codeData.stats?.totalBonusEarned || 0).toFixed(2);
-            
-            // Show bonus info
-            let bonusText = 'Earn ';
-            if (settingsData.claimBonus) {
-                if (settingsData.claimBonus.type === 'fixed') {
-                    bonusText += `${settingsData.claimBonus.amount} VIP per claim`;
-                } else {
-                    bonusText += `${settingsData.claimBonus.amount}% per claim`;
-                }
-            }
-            if (settingsData.presaleBonus) {
-                bonusText += ' • ';
-                if (settingsData.presaleBonus.type === 'fixed') {
-                    bonusText += `${settingsData.presaleBonus.amount} VIP per presale`;
-                } else {
-                    bonusText += `${settingsData.presaleBonus.amount}% of presale purchases`;
-                }
-            }
-            document.getElementById('referralBonusInfo').textContent = bonusText;
-        }
-
-        function copyReferralLink() {
-            const link = document.getElementById('referralLink').textContent;
-            navigator.clipboard.writeText(link).then(() => {
-                const btn = document.getElementById('copyReferralBtn');
+        // Copy referral code
+        function copyReferralCode() {
+            const code = document.getElementById('myReferralCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = document.getElementById('copyCodeBtn');
                 btn.innerHTML = '<span class="material-symbols-outlined text-xl text-green-400">check</span>';
                 setTimeout(() => {
                     btn.innerHTML = '<span class="material-symbols-outlined text-xl">content_copy</span>';
@@ -746,7 +878,7 @@
         }
 
         // ============================================
-        // Copy Address
+        // Copy Wallet Address
         // ============================================
         function copyAddress() {
             if (currentUser && currentUser.wallet) {
@@ -774,7 +906,7 @@
             currentUser = null;
             acceptMessages = false;
             savedToDatabase = false;
-            userReferralCode = null;
+            referralStatus = null;
 
             showDisconnecting();
 
@@ -896,6 +1028,11 @@
         copyBtn.addEventListener('click', copyAddress);
         disconnectBtn.addEventListener('click', disconnect);
         window.addEventListener('message', handleWalletTwoMessage);
+        
+        // Auto-uppercase referral code input
+        document.getElementById('referralCodeInput')?.addEventListener('input', function(e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
 
         // ============================================
         // Initialize
