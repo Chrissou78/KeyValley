@@ -1024,13 +1024,16 @@
         
         async function loadReferralStats() {
             try {
-                const response = await fetch('/api/admin/referral/stats', { credentials: 'include' });
+                const response = await fetch('/api/admin/referral/stats', {
+                    credentials: 'include'
+                });
                 const data = await response.json();
+                console.log('Referral stats response:', data);
                 
-                document.getElementById('referral-codes-total').textContent = (data.totalCodes || 0).toLocaleString();
-                document.getElementById('referral-total').textContent = (data.totalReferrals || 0).toLocaleString();
-                document.getElementById('referral-signup-bonus').textContent = (data.totalSignupBonus || 0).toFixed(2) + ' VIP';
-                document.getElementById('referral-presale-bonus').textContent = (data.totalPresaleBonus || 0).toFixed(2) + ' VIP';
+                document.getElementById('statActiveCodes').textContent = data.active_codes || 0;
+                document.getElementById('statTotalReferrals').textContent = data.total_referrals || 0;
+                document.getElementById('statTotalBonus').textContent = (parseFloat(data.total_bonus_earned) || 0).toFixed(2);
+                document.getElementById('statTotalClaims').textContent = data.total_claims || 0;
             } catch (error) {
                 console.error('Error loading referral stats:', error);
             }
@@ -1038,15 +1041,26 @@
         
         async function loadReferralCodes() {
             try {
-                const response = await fetch('/api/admin/referral/codes', { credentials: 'include' });
+                const response = await fetch('/api/admin/referral/codes', {
+                    credentials: 'include'
+                });
                 const data = await response.json();
-                referralCodesData = data || [];
-                renderReferralCodes(referralCodesData);
+                console.log('Referral codes response:', data);
+                
+                // Handle all possible formats
+                let codes = [];
+                if (Array.isArray(data)) {
+                    codes = data;
+                } else if (data && Array.isArray(data.codes)) {
+                    codes = data.codes;
+                } else if (data && Array.isArray(data.rows)) {
+                    codes = data.rows;
+                }
+                
+                renderReferralCodes(codes);
             } catch (error) {
                 console.error('Error loading referral codes:', error);
-                document.getElementById('referral-codes-table').innerHTML = `
-                    <tr><td colspan="7" class="text-center text-red-400 py-8">Error loading referral codes</td></tr>
-                `;
+                renderReferralCodes([]);
             }
         }
         
@@ -1113,17 +1127,29 @@
         
         async function loadReferralsActivity() {
             try {
-                const response = await fetch('/api/admin/referral/list', { credentials: 'include' });
+                const response = await fetch('/api/admin/referral/list', {
+                    credentials: 'include'
+                });
                 const data = await response.json();
-                referralsData = data || [];
-                renderReferralsActivity(referralsData);
+                console.log('Referrals activity response:', data);
+                
+                // Handle all possible formats
+                let referrals = [];
+                if (Array.isArray(data)) {
+                    referrals = data;
+                } else if (data && Array.isArray(data.referrals)) {
+                    referrals = data.referrals;
+                } else if (data && Array.isArray(data.rows)) {
+                    referrals = data.rows;
+                }
+                
+                renderReferralsActivity(referrals);
             } catch (error) {
                 console.error('Error loading referrals activity:', error);
-                document.getElementById('referrals-activity-table').innerHTML = `
-                    <tr><td colspan="6" class="text-center text-red-400 py-8">Error loading referrals</td></tr>
-                `;
+                renderReferralsActivity([]);
             }
         }
+
         
         function renderReferralsActivity(referrals) {
             const tbody = document.getElementById('referrals-activity-table');
@@ -1229,7 +1255,7 @@
                 statusEl.innerHTML = '<span class="text-red-400">Network error</span>';
             }
         }
-        
+
         function exportReferralCodesCSV() {
             if (!referralCodesData.length) {
                 alert('No data to export');
