@@ -2163,94 +2163,102 @@ app.post('/api/referral/generate', async (req, res) => {
 // GET /api/admin/referral/stats - Get referral statistics
 app.get('/api/admin/referral/stats', requireAdminAuth, async (req, res) => {
     try {
-        const codesResult = await db.pool.query('SELECT COUNT(*) as count FROM referral_codes WHERE enabled = true');
-        const referralsResult = await db.pool.query('SELECT COUNT(*) as count FROM referrals');
-        const signupBonusResult = await db.pool.query('SELECT COALESCE(SUM(signup_bonus_paid), 0) as total FROM referrals');
-        const presaleBonusResult = await db.pool.query('SELECT COALESCE(SUM(presale_bonus_paid), 0) as total FROM referrals');
+        const stats = await db.pool.query(`
+            SELECT 
+                (SELECT COUNT(*) FROM referral_codes WHERE enabled = true) as active_codes,
+                (SELECT COUNT(*) FROM referral_codes) as total_codes,
+                (SELECT COALESCE(SUM(total_referrals), 0) FROM referral_codes) as total_referrals,
+                (SELECT COALESCE(SUM(total_bonus_earned), 0) FROM referral_codes) as total_bonus_earned,
+                (SELECT COALESCE(SUM(total_claims), 0) FROM referral_codes) as total_claims,
+                (SELECT COALESCE(SUM(total_presale_purchases), 0) FROM referral_codes) as total_presale_purchases
+        `);
         
-        res.json({
-            totalCodes: parseInt(codesResult.rows[0]?.count) || 0,
-            totalReferrals: parseInt(referralsResult.rows[0]?.count) || 0,
-            totalSignupBonus: parseFloat(signupBonusResult.rows[0]?.total) || 0,
-            totalPresaleBonus: parseFloat(presaleBonusResult.rows[0]?.total) || 0
-        });
+        res.json(stats.rows[0]);
     } catch (error) {
-        console.error('Error fetching referral stats:', error);
-        res.status(500).json({ error: 'Failed to fetch referral stats' });
+        console.error('❌ Admin referral stats error:', error.message);
+        res.status(500).json({ error: 'Failed to get referral stats' });
     }
 });
 
-// GET /api/admin/referral/codes - Get all referral codes with stats
+
+// GET /api/admin/referral/codes
 app.get('/api/admin/referral/codes', requireAdminAuth, async (req, res) => {
     try {
         const result = await db.pool.query(`
             SELECT 
-                rc.code,
-                rc.wallet_address,
-                rc.enabled,
-                rc.created_at,
-                COUNT(r.id) as referral_count,
-                COALESCE(SUM(r.signup_bonus_paid), 0) + COALESCE(SUM(r.presale_bonus_paid), 0) as total_bonus_earned
-            FROM referral_codes rc
-            LEFT JOIN referrals r ON r.referrer_code = rc.code
-            GROUP BY rc.id, rc.code, rc.wallet_address, rc.enabled, rc.created_at
-            ORDER BY rc.created_at DESC
+                id,
+                code,
+                owner_wallet,
+                owner_email,
+                enabled,
+                total_referrals,
+                total_claims,
+                total_presale_purchases,
+                total_bonus_earned,
+                created_at,
+                updated_at
+            FROM referral_codes
+            ORDER BY created_at DESC
         `);
         
-        res.json(result.rows);
+        res.json({ codes: result.rows });
     } catch (error) {
-        console.error('Error fetching referral codes:', error);
-        res.status(500).json({ error: 'Failed to fetch referral codes' });
+        console.error('❌ Admin referral codes error:', error.message);
+        res.status(500).json({ error: 'Failed to get referral codes' });
     }
 });
 
-// GET /api/admin/referral/list - Get all referrals
+
+// GET /api/admin/referral/list (referrals activity)
 app.get('/api/admin/referral/list', requireAdminAuth, async (req, res) => {
     try {
         const result = await db.pool.query(`
             SELECT 
-                referrer_wallet,
-                referrer_code,
-                referee_wallet,
-                referee_email,
-                signup_bonus_paid,
-                presale_bonus_paid,
-                created_at
-            FROM referrals 
-            ORDER BY created_at DESC
-            LIMIT 500
+                r.id,
+                r.referrer_wallet,
+                r.referrer_code,
+                r.referee_wallet,
+                r.signup_bonus_paid,
+                r.presale_bonus_paid,
+                r.created_at,
+                rc.owner_email as referrer_email
+            FROM referrals r
+            LEFT JOIN referral_codes rc ON r.referrer_code = rc.code
+            ORDER BY r.created_at DESC
+            LIMIT 100
         `);
         
-        res.json(result.rows);
+        res.json({ referrals: result.rows });
     } catch (error) {
-        console.error('Error fetching referrals:', error);
-        res.status(500).json({ error: 'Failed to fetch referrals' });
+        console.error('❌ Admin referral list error:', error.message);
+        res.status(500).json({ error: 'Failed to get referrals' });
     }
 });
 
-// POST /api/admin/referral/code/:code/toggle - Enable/disable a referral code
+
+// POST /api/admin/referral/code/:code/toggle
 app.post('/api/admin/referral/code/:code/toggle', requireAdminAuth, async (req, res) => {
     try {
         const { code } = req.params;
-        const { enabled } = req.body;
         
-        const result = await db.pool.query(
-            'UPDATE referral_codes SET enabled = $1 WHERE code = $2 RETURNING *',
-            [enabled, code]
-        );
+        const result = await db.pool.query(`
+            UPDATE referral_codes 
+            SET enabled = NOT enabled, updated_at = NOW()
+            WHERE code = $1
+            RETURNING code, enabled
+        `, [code]);
         
         if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Referral code not found' });
+            return res.status(404).json({ error: 'Code not found' });
         }
         
-        console.log(`Referral code ${code} ${enabled ? 'enabled' : 'disabled'}`);
-        res.json({ success: true, message: `Referral code ${enabled ? 'enabled' : 'disabled'}` });
+        console.log(`🔄 Referral code ${code} toggled to:`, result.rows[0].enabled);
+        res.json({ success: true, code: result.rows[0].code, enabled: result.rows[0].enabled });
     } catch (error) {
-        console.error('Error toggling referral code:', error);
-        res.status(500).json({ error: 'Failed to toggle referral code' });
+        console.error('❌ Toggle referral code error:', error.message);
+        res.status(500).json({ error: 'Failed to toggle code' });
     }
 });
-
 
 // ===========================================
 // Presale Payment Verification & Auto-Mint
