@@ -1266,76 +1266,6 @@ async function getReferralSettings() {
     }
 }
 
-// Get or create referral code for a wallet
-app.post('/api/referral/generate', async (req, res) => {
-    try {
-        const { walletAddress, email } = req.body;
-        
-        if (!walletAddress || !ethers.isAddress(walletAddress)) {
-            return res.status(400).json({ success: false, error: 'Invalid wallet address' });
-        }
-        
-        const normalizedWallet = walletAddress.toLowerCase();
-        
-        // Check if user already has a code
-        const existing = await db.pool.query(
-            'SELECT * FROM referral_codes WHERE LOWER(owner_wallet) = $1',
-            [normalizedWallet]
-        );
-        
-        if (existing.rows.length > 0) {
-            return res.json({
-                success: true,
-                referralCode: existing.rows[0].code,
-                stats: {
-                    totalReferrals: existing.rows[0].total_referrals,
-                    totalClaims: existing.rows[0].total_claims,
-                    totalPresalePurchases: existing.rows[0].total_presale_purchases,
-                    totalBonusEarned: parseFloat(existing.rows[0].total_bonus_earned) || 0,
-                    enabled: existing.rows[0].enabled
-                }
-            });
-        }
-        
-        // Generate new code
-        let code = generateReferralCode();
-        let attempts = 0;
-        
-        // Ensure uniqueness
-        while (attempts < 10) {
-            const check = await db.pool.query('SELECT id FROM referral_codes WHERE code = $1', [code]);
-            if (check.rows.length === 0) break;
-            code = generateReferralCode();
-            attempts++;
-        }
-        
-        // Insert new referral code
-        await db.pool.query(
-            `INSERT INTO referral_codes (code, owner_wallet, owner_email, created_at)
-             VALUES ($1, $2, $3, NOW())`,
-            [code, normalizedWallet, email || null]
-        );
-        
-        console.log(`[Referral] Generated code ${code} for ${normalizedWallet}`);
-        
-        res.json({
-            success: true,
-            referralCode: code,
-            stats: {
-                totalReferrals: 0,
-                totalClaims: 0,
-                totalPresalePurchases: 0,
-                totalBonusEarned: 0,
-                enabled: true
-            }
-        });
-        
-    } catch (error) {
-        console.error('[Referral] Generate error:', error);
-        res.status(500).json({ success: false, error: 'Failed to generate referral code' });
-    }
-});
-
 // Get referral code info (for displaying in profile)
 app.get('/api/referral/code/:wallet', async (req, res) => {
     try {
@@ -1696,8 +1626,141 @@ app.post('/api/admin/referrals/payout', requireAdminAuth, async (req, res) => {
 });
 
 // ============================================
-// SIMPLIFIED REFERRAL SYSTEM
+// SIMPLIFIED REFERRAL SYSTEM (v2)
 // ============================================
+
+// GET /api/referral/settings - Get referral settings (public)
+app.get('/api/referral/settings', async (req, res) => {
+    try {
+        const result = await db.pool.query('SELECT * FROM referral_settings WHERE id = 1');
+        
+        if (result.rows.length === 0) {
+            // Return defaults if no settings exist
+            return res.json({
+                enabled: false,
+                bonusType: 'fixed',
+                bonusAmount: 5,
+                presaleBonusType: 'percentage',
+                presaleBonusAmount: 5,
+                minPurchaseForBonus: 10
+            });
+        }
+        
+        const settings = result.rows[0];
+        res.json({
+            enabled: settings.enabled,
+            bonusType: settings.bonus_type,
+            bonusAmount: parseFloat(settings.bonus_amount) || 0,
+            presaleBonusType: settings.presale_bonus_type,
+            presaleBonusAmount: parseFloat(settings.presale_bonus_amount) || 0,
+            minPurchaseForBonus: parseFloat(settings.min_purchase_for_bonus) || 10
+        });
+    } catch (error) {
+        console.error('Error fetching referral settings:', error);
+        res.status(500).json({ error: 'Failed to fetch referral settings' });
+    }
+});
+
+// POST /api/referral/settings - Update referral settings (admin)
+app.post('/api/referral/settings', requireAdminAuth, async (req, res) => {
+    try {
+        const { enabled, bonusType, bonusAmount, presaleBonusType, presaleBonusAmount, minPurchaseForBonus } = req.body;
+        
+        console.log('Saving referral settings:', req.body);
+        
+        // Check if settings exist
+        const existing = await db.pool.query('SELECT id FROM referral_settings WHERE id = 1');
+        
+        if (existing.rows.length === 0) {
+            // Insert new settings
+            await db.pool.query(`
+                INSERT INTO referral_settings (id, enabled, bonus_type, bonus_amount, presale_bonus_type, presale_bonus_amount, min_purchase_for_bonus, updated_at)
+                VALUES (1, $1, $2, $3, $4, $5, $6, NOW())
+            `, [enabled, bonusType, bonusAmount, presaleBonusType, presaleBonusAmount, minPurchaseForBonus]);
+        } else {
+            // Update existing
+            await db.pool.query(`
+                UPDATE referral_settings 
+                SET enabled = $1, bonus_type = $2, bonus_amount = $3, 
+                    presale_bonus_type = $4, presale_bonus_amount = $5,
+                    min_purchase_for_bonus = $6, updated_at = NOW()
+                WHERE id = 1
+            `, [enabled, bonusType, bonusAmount, presaleBonusType, presaleBonusAmount, minPurchaseForBonus]);
+        }
+        
+        console.log('✅ Referral settings saved');
+        res.json({ success: true, message: 'Referral settings updated' });
+    } catch (error) {
+        console.error('Error updating referral settings:', error);
+        res.status(500).json({ error: 'Failed to update referral settings' });
+    }
+});
+
+// GET /api/referral/status/:wallet - Get referral status for a user
+app.get('/api/referral/status/:wallet', async (req, res) => {
+    try {
+        const wallet = req.params.wallet.toLowerCase();
+        
+        // Get user's referrer info from registrants
+        const userResult = await db.pool.query(
+            `SELECT referrer_wallet, referrer_code, referrer_set_at 
+             FROM registrants WHERE LOWER(address) = $1`,
+            [wallet]
+        );
+        
+        // Get user's own referral code
+        const codeResult = await db.pool.query(
+            'SELECT code, enabled, created_at FROM referral_codes WHERE LOWER(wallet_address) = $1',
+            [wallet]
+        );
+        
+        // Get referral stats if user has a code
+        let stats = { totalReferrals: 0, totalBonusEarned: 0 };
+        if (codeResult.rows.length > 0) {
+            const statsResult = await db.pool.query(
+                `SELECT COUNT(*) as total_referrals, 
+                        COALESCE(SUM(signup_bonus_paid), 0) + COALESCE(SUM(presale_bonus_paid), 0) as total_bonus
+                 FROM referrals WHERE LOWER(referrer_wallet) = $1`,
+                [wallet]
+            );
+            if (statsResult.rows.length > 0) {
+                stats = {
+                    totalReferrals: parseInt(statsResult.rows[0].total_referrals) || 0,
+                    totalBonusEarned: parseFloat(statsResult.rows[0].total_bonus) || 0
+                };
+            }
+        }
+        
+        // Get referral settings
+        const settingsResult = await db.pool.query('SELECT * FROM referral_settings WHERE id = 1');
+        const settings = settingsResult.rows[0] || {};
+        
+        const user = userResult.rows[0] || {};
+        const code = codeResult.rows[0] || {};
+        
+        res.json({
+            hasReferrer: !!(user.referrer_wallet),
+            referrerWallet: user.referrer_wallet || null,
+            referrerCode: user.referrer_code || null,
+            referrerSetAt: user.referrer_set_at || null,
+            myCode: code.code || null,
+            myCodeEnabled: code.enabled ?? null,
+            myCodeCreatedAt: code.created_at || null,
+            stats: stats,
+            programEnabled: settings.enabled ?? false,
+            bonusInfo: {
+                signupType: settings.bonus_type || 'fixed',
+                signupAmount: parseFloat(settings.bonus_amount) || 0,
+                presaleType: settings.presale_bonus_type || 'percentage',
+                presaleAmount: parseFloat(settings.presale_bonus_amount) || 0
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error getting referral status:', error);
+        res.status(500).json({ error: 'Failed to get referral status' });
+    }
+});
 
 // POST /api/referral/set - Set referrer for a user (one-time only)
 app.post('/api/referral/set', async (req, res) => {
@@ -1712,7 +1775,7 @@ app.post('/api/referral/set', async (req, res) => {
         const code = referralCode.toUpperCase().trim();
         
         // Check if user already has a referrer
-        const existingReferrer = await db.query(
+        const existingReferrer = await db.pool.query(
             'SELECT referrer_wallet FROM registrants WHERE LOWER(address) = $1 AND referrer_wallet IS NOT NULL',
             [wallet]
         );
@@ -1722,7 +1785,7 @@ app.post('/api/referral/set', async (req, res) => {
         }
         
         // Validate the referral code exists and is active
-        const codeResult = await db.query(
+        const codeResult = await db.pool.query(
             'SELECT wallet_address, enabled FROM referral_codes WHERE code = $1',
             [code]
         );
@@ -1743,14 +1806,14 @@ app.post('/api/referral/set', async (req, res) => {
         }
         
         // Get user's email if available
-        const userResult = await db.query(
+        const userResult = await db.pool.query(
             'SELECT email FROM registrants WHERE LOWER(address) = $1',
             [wallet]
         );
         const userEmail = userResult.rows[0]?.email || null;
         
         // Update registrant with referrer info
-        await db.query(
+        await db.pool.query(
             `UPDATE registrants 
              SET referrer_wallet = $1, referrer_code = $2, referrer_set_at = NOW(), updated_at = NOW()
              WHERE LOWER(address) = $3`,
@@ -1758,7 +1821,7 @@ app.post('/api/referral/set', async (req, res) => {
         );
         
         // Create referral record
-        await db.query(
+        await db.pool.query(
             `INSERT INTO referrals (referrer_wallet, referrer_code, referee_wallet, referee_email, created_at)
              VALUES ($1, $2, $3, $4, NOW())
              ON CONFLICT (referee_wallet) DO NOTHING`,
@@ -1766,22 +1829,24 @@ app.post('/api/referral/set', async (req, res) => {
         );
         
         // Check referral settings for signup bonus
-        const settingsResult = await db.query('SELECT * FROM referral_settings WHERE id = 1');
+        const settingsResult = await db.pool.query('SELECT * FROM referral_settings WHERE id = 1');
         const settings = settingsResult.rows[0];
         
         let signupBonus = 0;
         if (settings && settings.enabled && settings.bonus_type === 'fixed') {
-            signupBonus = parseFloat(settings.bonus_amount);
+            signupBonus = parseFloat(settings.bonus_amount) || 0;
             
-            // Record the signup bonus
-            await db.query(
-                'UPDATE referrals SET signup_bonus_paid = $1 WHERE referee_wallet = $2',
-                [signupBonus, wallet]
-            );
-            
-            // TODO: Actually mint/transfer the bonus tokens to referrer
-            console.log(`Signup bonus of ${signupBonus} VIP to be paid to ${referrerWallet}`);
+            if (signupBonus > 0) {
+                // Record the signup bonus
+                await db.pool.query(
+                    'UPDATE referrals SET signup_bonus_paid = $1 WHERE referee_wallet = $2',
+                    [signupBonus, wallet]
+                );
+                console.log(`Signup bonus of ${signupBonus} VIP recorded for referrer ${referrerWallet}`);
+            }
         }
+        
+        console.log(`Referrer set: ${wallet} -> ${referrerWallet} (code: ${code})`);
         
         res.json({ 
             success: true, 
@@ -1793,67 +1858,6 @@ app.post('/api/referral/set', async (req, res) => {
     } catch (error) {
         console.error('Error setting referrer:', error);
         res.status(500).json({ error: 'Failed to set referrer' });
-    }
-});
-
-// GET /api/referral/status/:wallet - Get referral status for a user
-app.get('/api/referral/status/:wallet', async (req, res) => {
-    try {
-        const wallet = req.params.wallet.toLowerCase();
-        
-        // Get user's referrer info
-        const userResult = await db.query(
-            `SELECT referrer_wallet, referrer_code, referrer_set_at 
-             FROM registrants WHERE LOWER(address) = $1`,
-            [wallet]
-        );
-        
-        // Get user's own referral code if they have one
-        const codeResult = await db.query(
-            'SELECT code, enabled, created_at FROM referral_codes WHERE LOWER(wallet_address) = $1',
-            [wallet]
-        );
-        
-        // Get referral stats if user has a code
-        let referralStats = { totalReferrals: 0, totalBonusEarned: 0 };
-        if (codeResult.rows.length > 0) {
-            const statsResult = await db.query(
-                `SELECT COUNT(*) as total_referrals, 
-                        COALESCE(SUM(signup_bonus_paid + presale_bonus_paid), 0) as total_bonus
-                 FROM referrals WHERE referrer_wallet = $1`,
-                [wallet]
-            );
-            referralStats = {
-                totalReferrals: parseInt(statsResult.rows[0].total_referrals),
-                totalBonusEarned: parseFloat(statsResult.rows[0].total_bonus)
-            };
-        }
-        
-        // Get referral settings for display
-        const settingsResult = await db.query('SELECT * FROM referral_settings WHERE id = 1');
-        const settings = settingsResult.rows[0] || {};
-        
-        res.json({
-            hasReferrer: !!(userResult.rows[0]?.referrer_wallet),
-            referrerWallet: userResult.rows[0]?.referrer_wallet || null,
-            referrerCode: userResult.rows[0]?.referrer_code || null,
-            referrerSetAt: userResult.rows[0]?.referrer_set_at || null,
-            myCode: codeResult.rows[0]?.code || null,
-            myCodeEnabled: codeResult.rows[0]?.enabled ?? null,
-            myCodeCreatedAt: codeResult.rows[0]?.created_at || null,
-            stats: referralStats,
-            programEnabled: settings.enabled ?? false,
-            bonusInfo: {
-                signupType: settings.bonus_type || 'fixed',
-                signupAmount: parseFloat(settings.bonus_amount) || 0,
-                presaleType: settings.presale_bonus_type || 'percentage',
-                presaleAmount: parseFloat(settings.presale_bonus_amount) || 0
-            }
-        });
-        
-    } catch (error) {
-        console.error('Error getting referral status:', error);
-        res.status(500).json({ error: 'Failed to get referral status' });
     }
 });
 
@@ -1869,13 +1873,13 @@ app.post('/api/referral/generate', async (req, res) => {
         const wallet = walletAddress.toLowerCase();
         
         // Check if referral program is enabled
-        const settingsResult = await db.query('SELECT enabled FROM referral_settings WHERE id = 1');
-        if (!settingsResult.rows[0]?.enabled) {
+        const settingsResult = await db.pool.query('SELECT enabled FROM referral_settings WHERE id = 1');
+        if (settingsResult.rows.length > 0 && !settingsResult.rows[0].enabled) {
             return res.status(400).json({ error: 'Referral program is currently disabled' });
         }
         
         // Check if user already has a code
-        const existingCode = await db.query(
+        const existingCode = await db.pool.query(
             'SELECT code FROM referral_codes WHERE LOWER(wallet_address) = $1',
             [wallet]
         );
@@ -1902,7 +1906,7 @@ app.post('/api/referral/generate', async (req, res) => {
         let attempts = 0;
         while (attempts < 10) {
             code = generateCode();
-            const exists = await db.query('SELECT 1 FROM referral_codes WHERE code = $1', [code]);
+            const exists = await db.pool.query('SELECT 1 FROM referral_codes WHERE code = $1', [code]);
             if (exists.rows.length === 0) break;
             attempts++;
         }
@@ -1912,10 +1916,12 @@ app.post('/api/referral/generate', async (req, res) => {
         }
         
         // Insert the code
-        await db.query(
+        await db.pool.query(
             'INSERT INTO referral_codes (wallet_address, code, enabled, created_at) VALUES ($1, $2, true, NOW())',
             [wallet, code]
         );
+        
+        console.log(`Referral code generated: ${code} for ${wallet}`);
         
         res.json({ 
             success: true, 
@@ -1929,25 +1935,101 @@ app.post('/api/referral/generate', async (req, res) => {
     }
 });
 
-// Update admin stats endpoint to include separated bonuses
+// ============================================
+// ADMIN REFERRAL ENDPOINTS (Simplified v2)
+// ============================================
+
+// GET /api/admin/referral/stats - Get referral statistics
 app.get('/api/admin/referral/stats', requireAdminAuth, async (req, res) => {
     try {
-        const codesResult = await db.query('SELECT COUNT(*) as count FROM referral_codes WHERE enabled = true');
-        const referralsResult = await db.query('SELECT COUNT(*) as count FROM referrals');
-        const signupBonusResult = await db.query('SELECT COALESCE(SUM(signup_bonus_paid), 0) as total FROM referrals');
-        const presaleBonusResult = await db.query('SELECT COALESCE(SUM(presale_bonus_paid), 0) as total FROM referrals');
+        const codesResult = await db.pool.query('SELECT COUNT(*) as count FROM referral_codes WHERE enabled = true');
+        const referralsResult = await db.pool.query('SELECT COUNT(*) as count FROM referrals');
+        const signupBonusResult = await db.pool.query('SELECT COALESCE(SUM(signup_bonus_paid), 0) as total FROM referrals');
+        const presaleBonusResult = await db.pool.query('SELECT COALESCE(SUM(presale_bonus_paid), 0) as total FROM referrals');
         
         res.json({
-            totalCodes: parseInt(codesResult.rows[0].count),
-            totalReferrals: parseInt(referralsResult.rows[0].count),
-            totalSignupBonus: parseFloat(signupBonusResult.rows[0].total),
-            totalPresaleBonus: parseFloat(presaleBonusResult.rows[0].total)
+            totalCodes: parseInt(codesResult.rows[0]?.count) || 0,
+            totalReferrals: parseInt(referralsResult.rows[0]?.count) || 0,
+            totalSignupBonus: parseFloat(signupBonusResult.rows[0]?.total) || 0,
+            totalPresaleBonus: parseFloat(presaleBonusResult.rows[0]?.total) || 0
         });
     } catch (error) {
         console.error('Error fetching referral stats:', error);
         res.status(500).json({ error: 'Failed to fetch referral stats' });
     }
 });
+
+// GET /api/admin/referral/codes - Get all referral codes with stats
+app.get('/api/admin/referral/codes', requireAdminAuth, async (req, res) => {
+    try {
+        const result = await db.pool.query(`
+            SELECT 
+                rc.code,
+                rc.wallet_address,
+                rc.enabled,
+                rc.created_at,
+                COUNT(r.id) as referral_count,
+                COALESCE(SUM(r.signup_bonus_paid), 0) + COALESCE(SUM(r.presale_bonus_paid), 0) as total_bonus_earned
+            FROM referral_codes rc
+            LEFT JOIN referrals r ON r.referrer_code = rc.code
+            GROUP BY rc.id, rc.code, rc.wallet_address, rc.enabled, rc.created_at
+            ORDER BY rc.created_at DESC
+        `);
+        
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching referral codes:', error);
+        res.status(500).json({ error: 'Failed to fetch referral codes' });
+    }
+});
+
+// GET /api/admin/referral/list - Get all referrals
+app.get('/api/admin/referral/list', requireAdminAuth, async (req, res) => {
+    try {
+        const result = await db.pool.query(`
+            SELECT 
+                referrer_wallet,
+                referrer_code,
+                referee_wallet,
+                referee_email,
+                signup_bonus_paid,
+                presale_bonus_paid,
+                created_at
+            FROM referrals 
+            ORDER BY created_at DESC
+            LIMIT 500
+        `);
+        
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching referrals:', error);
+        res.status(500).json({ error: 'Failed to fetch referrals' });
+    }
+});
+
+// POST /api/admin/referral/code/:code/toggle - Enable/disable a referral code
+app.post('/api/admin/referral/code/:code/toggle', requireAdminAuth, async (req, res) => {
+    try {
+        const { code } = req.params;
+        const { enabled } = req.body;
+        
+        const result = await db.pool.query(
+            'UPDATE referral_codes SET enabled = $1 WHERE code = $2 RETURNING *',
+            [enabled, code]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Referral code not found' });
+        }
+        
+        console.log(`Referral code ${code} ${enabled ? 'enabled' : 'disabled'}`);
+        res.json({ success: true, message: `Referral code ${enabled ? 'enabled' : 'disabled'}` });
+    } catch (error) {
+        console.error('Error toggling referral code:', error);
+        res.status(500).json({ error: 'Failed to toggle referral code' });
+    }
+});
+
 
 // ===========================================
 // Presale Payment Verification & Auto-Mint
