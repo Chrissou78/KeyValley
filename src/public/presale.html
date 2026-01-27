@@ -430,34 +430,6 @@
             document.body.appendChild(badge);
         }
 
-        // In executePurchase(), store referral info:
-        pendingPurchase = {
-            // ... existing fields ...
-            referrerCode: referrerCode,
-            referrerWallet: referrerWallet
-        };
-
-        // In handlePurchaseCallback(), after successful verification:
-        if (referrerCode) {
-            try {
-                await fetch('/api/referral/track', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        referralCode: referrerCode,
-                        referredWallet: pendingPurchase.wallet,
-                        source: 'presale',
-                        purchaseAmount: pendingPurchase.tokenAmount
-                    })
-                });
-            } catch (e) {
-                console.error('Failed to track referral:', e);
-            }
-        }
-
-        // Call on page load
-        checkReferralCode();
-
         // ============================================
         // STATE
         // ============================================
