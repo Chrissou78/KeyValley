@@ -2165,18 +2165,18 @@ app.get('/api/admin/referral/stats', requireAdminAuth, async (req, res) => {
     try {
         const stats = await db.pool.query(`
             SELECT 
-                (SELECT COUNT(*) FROM referral_codes WHERE enabled = true) as active_codes,
                 (SELECT COUNT(*) FROM referral_codes) as total_codes,
+                (SELECT COUNT(*) FROM referral_codes WHERE enabled = true) as active_codes,
                 (SELECT COALESCE(SUM(total_referrals), 0) FROM referral_codes) as total_referrals,
                 (SELECT COALESCE(SUM(total_bonus_earned), 0) FROM referral_codes) as total_bonus_earned,
-                (SELECT COALESCE(SUM(total_claims), 0) FROM referral_codes) as total_claims,
-                (SELECT COALESCE(SUM(total_presale_purchases), 0) FROM referral_codes) as total_presale_purchases
+                (SELECT COALESCE(SUM(signup_bonus_paid), 0) FROM referrals) as total_signup_bonus,
+                (SELECT COALESCE(SUM(presale_bonus_paid), 0) FROM referrals) as total_presale_bonus
         `);
         
         res.json(stats.rows[0]);
     } catch (error) {
         console.error('❌ Admin referral stats error:', error.message);
-        res.status(500).json({ error: 'Failed to get referral stats' });
+        res.status(500).json({});
     }
 });
 

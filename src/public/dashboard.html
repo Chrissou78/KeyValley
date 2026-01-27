@@ -1030,10 +1030,11 @@
                 const data = await response.json();
                 console.log('Referral stats response:', data);
                 
-                document.getElementById('statActiveCodes').textContent = data.active_codes || 0;
-                document.getElementById('statTotalReferrals').textContent = data.total_referrals || 0;
-                document.getElementById('statTotalBonus').textContent = (parseFloat(data.total_bonus_earned) || 0).toFixed(2);
-                document.getElementById('statTotalClaims').textContent = data.total_claims || 0;
+                // Use correct element IDs
+                document.getElementById('referral-codes-total').textContent = data.total_codes || data.active_codes || 0;
+                document.getElementById('referral-total').textContent = data.total_referrals || 0;
+                document.getElementById('referral-signup-bonus').textContent = (parseFloat(data.total_bonus_earned) || 0).toFixed(2);
+                document.getElementById('referral-presale-bonus').textContent = (parseFloat(data.total_presale_bonus) || 0).toFixed(2);
             } catch (error) {
                 console.error('Error loading referral stats:', error);
             }
