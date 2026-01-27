@@ -1889,6 +1889,7 @@ app.get('/api/referral/status/:wallet', async (req, res) => {
 });
 
 // POST /api/referral/set - Set referrer for a user (one-time only)
+// POST /api/referral/set
 app.post('/api/referral/set', async (req, res) => {
     try {
         const { walletAddress, referralCode } = req.body;
@@ -1948,6 +1949,22 @@ app.post('/api/referral/set', async (req, res) => {
             return res.status(400).json({ success: false, error: 'You cannot use your own referral code' });
         }
 
+        // ==================== CHECK CURRENT BALANCE ====================
+        let currentBalance = 0;
+        let immediateBonus = 0;
+        let bonusTxHash = null;
+        
+        try {
+            await minter.initialize();
+            currentBalance = await minter.getBalance(normalizedAddress);
+            currentBalance = parseFloat(currentBalance) || 0;
+            console.log('💰 Referee current VIP balance:', currentBalance);
+        } catch (balanceError) {
+            console.error('⚠️ Failed to get balance:', balanceError.message);
+        }
+
+        // ==================== UPDATE DATABASE ====================
+        
         // Update registrant with referrer info
         await db.pool.query(`
             UPDATE registrants 
@@ -1962,30 +1979,92 @@ app.post('/api/referral/set', async (req, res) => {
             WHERE code = $1
         `, [code]);
 
-        // Create referral record
+        // Create referral record (track if bonus already paid for existing balance)
         await db.pool.query(`
             INSERT INTO referrals (referrer_wallet, referrer_code, referee_wallet, signup_bonus_paid, presale_bonus_paid, created_at)
             VALUES ($1, $2, $3, 0, 0, NOW())
             ON CONFLICT (referee_wallet) DO NOTHING
         `, [referrerWallet, code, normalizedAddress]);
 
-        // Calculate and apply signup bonus if applicable
-        let signupBonus = 0;
-        if (settings.bonus_type === 'fixed') {
-            signupBonus = parseFloat(settings.bonus_amount) || 0;
+        // ==================== CASE 2: USER HAS EXISTING BALANCE ====================
+        // If user already has VIP tokens, pay bonus immediately based on current balance
+        
+        if (currentBalance > 0) {
+            console.log('🎁 User has existing balance, calculating immediate bonus...');
+            
+            // Calculate bonus based on settings
+            if (settings.bonus_type === 'fixed') {
+                immediateBonus = parseFloat(settings.bonus_amount) || 0;
+            } else if (settings.bonus_type === 'percentage') {
+                // 5% of current balance
+                immediateBonus = (currentBalance * parseFloat(settings.bonus_amount)) / 100;
+            }
+            
+            console.log('🎁 Immediate bonus calculation:', {
+                type: settings.bonus_type,
+                rate: settings.bonus_amount,
+                currentBalance,
+                calculatedBonus: immediateBonus
+            });
+            
+            if (immediateBonus > 0) {
+                try {
+                    console.log(`🎁 Minting ${immediateBonus} VIP to referrer ${referrerWallet}...`);
+                    
+                    const bonusResult = await minter.mintToAddress(referrerWallet, immediateBonus);
+                    bonusTxHash = bonusResult.receipt?.hash || bonusResult.hash || bonusResult.transactionHash;
+                    
+                    // Update referral record with bonus paid
+                    await db.pool.query(`
+                        UPDATE referrals 
+                        SET signup_bonus_paid = $1
+                        WHERE referee_wallet = $2
+                    `, [immediateBonus, normalizedAddress]);
+                    
+                    // Update referral_codes stats
+                    await db.pool.query(`
+                        UPDATE referral_codes 
+                        SET total_bonus_earned = total_bonus_earned + $1,
+                            total_claims = total_claims + 1,
+                            updated_at = NOW()
+                        WHERE code = $2
+                    `, [immediateBonus, code]);
+                    
+                    console.log('✅ Immediate bonus minted! TX:', bonusTxHash);
+                    
+                } catch (mintError) {
+                    console.error('⚠️ Failed to mint immediate bonus:', mintError.message);
+                    // Don't fail the referral set, just log the error
+                }
+            }
+        } else {
+            console.log('ℹ️ User has 0 balance - bonus will be paid on claim or presale purchase');
         }
 
-        console.log('✅ Referrer set successfully:', referrerWallet);
-
-        return res.json({
+        // ==================== SUCCESS RESPONSE ====================
+        const response = {
             success: true,
             message: 'Referrer linked successfully!',
-            referrerWallet: `${referrerWallet.slice(0, 6)}...${referrerWallet.slice(-4)}`,
-            signupBonus
-        });
+            referrerWallet: `${referrerWallet.slice(0, 6)}...${referrerWallet.slice(-4)}`
+        };
+        
+        if (immediateBonus > 0) {
+            response.bonusPaid = {
+                amount: immediateBonus,
+                txHash: bonusTxHash,
+                reason: 'Bonus for existing balance'
+            };
+            response.message = `Referrer linked! They received ${immediateBonus.toFixed(2)} VIP bonus.`;
+        } else {
+            response.message = 'Referrer linked! They will receive bonuses when you claim or purchase.';
+        }
+
+        console.log('✅ Referrer set successfully');
+        return res.json(response);
 
     } catch (error) {
         console.error('❌ SET REFERRER ERROR:', error.message);
+        console.error('   Stack:', error.stack);
         return res.status(500).json({ success: false, error: 'Failed to set referrer' });
     }
 });
