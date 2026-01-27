@@ -2029,33 +2029,51 @@ app.post('/api/referral/generate', async (req, res) => {
     try {
         const { walletAddress } = req.body;
         
-        if (!walletAddress) {
-            return res.status(400).json({ error: 'Wallet address required' });
-        }
-        
-        const wallet = walletAddress.toLowerCase();
-        
-        // Check if referral program is enabled
-        const settingsResult = await db.pool.query('SELECT enabled FROM referral_settings WHERE id = 1');
-        if (settingsResult.rows.length > 0 && !settingsResult.rows[0].enabled) {
-            return res.status(400).json({ error: 'Referral program is currently disabled' });
-        }
-        
-        // Check if user already has a code
-        const existingCode = await db.pool.query(
-            'SELECT code FROM referral_codes WHERE LOWER(wallet_address) = $1',
-            [wallet]
-        );
-        
-        if (existingCode.rows.length > 0) {
-            return res.json({ 
-                success: true, 
-                code: existingCode.rows[0].code,
-                message: 'You already have a referral code'
+        console.log('\n🎫 GENERATE REFERRAL CODE REQUEST:', { walletAddress });
+
+        // ==================== VALIDATION ====================
+        if (!walletAddress || !ethers.isAddress(walletAddress)) {
+            console.log('❌ Invalid wallet address');
+            return res.status(400).json({ 
+                success: false,
+                error: 'Invalid wallet address' 
             });
         }
+
+        const normalizedAddress = walletAddress.toLowerCase();
+
+        // ==================== CHECK IF PROGRAM ENABLED ====================
+        const settingsResult = await db.pool.query(
+            'SELECT enabled FROM referral_settings WHERE id = 1'
+        );
         
-        // Generate unique code
+        const programEnabled = settingsResult.rows.length > 0 ? settingsResult.rows[0].enabled : false;
+        
+        if (!programEnabled) {
+            console.log('❌ Referral program is disabled');
+            return res.status(400).json({ 
+                success: false,
+                error: 'Referral program is currently disabled' 
+            });
+        }
+
+        // ==================== CHECK EXISTING CODE ====================
+        const existingCode = await db.pool.query(
+            'SELECT code, enabled FROM referral_codes WHERE owner_wallet = $1',
+            [normalizedAddress]
+        );
+
+        if (existingCode.rows.length > 0) {
+            console.log('📋 User already has a code:', existingCode.rows[0].code);
+            return res.json({
+                success: true,
+                code: existingCode.rows[0].code,
+                enabled: existingCode.rows[0].enabled,
+                message: 'Referral code already exists'
+            });
+        }
+
+        // ==================== GENERATE UNIQUE CODE ====================
         const generateCode = () => {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
             let code = '';
@@ -2064,37 +2082,50 @@ app.post('/api/referral/generate', async (req, res) => {
             }
             return code;
         };
-        
-        let code;
+
+        let newCode;
         let attempts = 0;
-        while (attempts < 10) {
-            code = generateCode();
-            const exists = await db.pool.query('SELECT 1 FROM referral_codes WHERE code = $1', [code]);
-            if (exists.rows.length === 0) break;
+        const maxAttempts = 10;
+
+        while (attempts < maxAttempts) {
+            newCode = generateCode();
+            const duplicate = await db.pool.query(
+                'SELECT id FROM referral_codes WHERE code = $1',
+                [newCode]
+            );
+            if (duplicate.rows.length === 0) break;
             attempts++;
         }
-        
-        if (attempts >= 10) {
-            return res.status(500).json({ error: 'Failed to generate unique code, please try again' });
+
+        if (attempts >= maxAttempts) {
+            return res.status(500).json({ 
+                success: false,
+                error: 'Failed to generate unique code. Please try again.' 
+            });
         }
-        
-        // Insert the code
-        await db.pool.query(
-            'INSERT INTO referral_codes (wallet_address, code, enabled, created_at) VALUES ($1, $2, true, NOW())',
-            [wallet, code]
-        );
-        
-        console.log(`Referral code generated: ${code} for ${wallet}`);
-        
-        res.json({ 
-            success: true, 
-            code: code,
+
+        // ==================== SAVE CODE ====================
+        await db.pool.query(`
+            INSERT INTO referral_codes 
+            (owner_wallet, code, enabled, total_referrals, total_claims, total_presale_purchases, total_bonus_earned, created_at, updated_at) 
+            VALUES ($1, $2, true, 0, 0, 0, 0, NOW(), NOW())
+        `, [normalizedAddress, newCode]);
+
+        console.log('✅ Referral code generated:', newCode);
+
+        return res.json({
+            success: true,
+            code: newCode,
+            enabled: true,
             message: 'Referral code generated successfully'
         });
-        
+
     } catch (error) {
-        console.error('Error generating referral code:', error);
-        res.status(500).json({ error: 'Failed to generate referral code' });
+        console.error('❌ GENERATE CODE ERROR:', error.message);
+        return res.status(500).json({ 
+            success: false,
+            error: 'Failed to generate referral code'
+        });
     }
 });
 
