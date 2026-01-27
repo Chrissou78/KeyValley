@@ -556,20 +556,32 @@
         // ============================================
         function checkExistingSession() {
             const session = localStorage.getItem(CONFIG.storageKey);
+            console.log('🔍 Checking session:', session);
+            
             if (session) {
                 try {
                     const data = JSON.parse(session);
+                    console.log('🔍 Parsed session data:', data);
+                    
                     const sessionAge = Date.now() - (data.timestamp || 0);
                     const maxAge = 24 * 60 * 60 * 1000;
                     
-                    if (sessionAge < maxAge && data.wallet) {
-                        setWalletConnected(data.wallet);
+                    const wallet = data.wallet || data.wlt || data.address;
+                    console.log('🔍 Found wallet:', wallet, '| Age:', sessionAge, '| Max:', maxAge);
+                    
+                    if (sessionAge < maxAge && wallet) {
+                        console.log('✅ Using existing session');
+                        setWalletConnected(wallet);
                     } else {
+                        console.log('⚠️ Session invalid or expired');
                         localStorage.removeItem(CONFIG.storageKey);
                     }
                 } catch (e) {
+                    console.error('❌ Session parse error:', e);
                     localStorage.removeItem(CONFIG.storageKey);
                 }
+            } else {
+                console.log('⚠️ No session found');
             }
         }
 
