@@ -579,10 +579,6 @@ app.post('/api/claim/register', async (req, res) => {
                 const recoveredAddress = ethers.verifyMessage(message, signature);
                 signatureValid = recoveredAddress.toLowerCase() === normalizedAddress;
                 console.log('🔐 Signature verification:', signatureValid ? '✅ Valid' : '❌ Invalid');
-                
-                if (!signatureValid) {
-                    console.log('⚠️ Signature mismatch - recovered:', recoveredAddress.toLowerCase());
-                }
             } catch (sigError) {
                 console.log('⚠️ Signature verification error:', sigError.message);
             }
@@ -596,8 +592,8 @@ app.post('/api/claim/register', async (req, res) => {
         // ==================== CHECK EXISTING REGISTRATION ====================
         let existingRegistrant = await db.getRegistrant(normalizedAddress);
         
-        // Check if already claimed using the claimed flag
-        if (existingRegistrant && existingRegistrant.claimed) {
+        // Check if already minted
+        if (existingRegistrant && existingRegistrant.minted) {
             console.log('📋 Already claimed - TX:', existingRegistrant.tx_hash);
             return res.status(409).json({
                 status: 'already_claimed',
@@ -606,22 +602,8 @@ app.post('/api/claim/register', async (req, res) => {
                 explorer_url: existingRegistrant.tx_hash 
                     ? `${networkConfig.explorer}/tx/${existingRegistrant.tx_hash}` 
                     : `${networkConfig.explorer}/address/${normalizedAddress}`,
-                claimed_at: existingRegistrant.claimed_at,
-                claim_amount: existingRegistrant.claim_amount
-            });
-        }
-
-        // Fallback: also check minted flag for backwards compatibility
-        if (existingRegistrant && existingRegistrant.minted) {
-            console.log('📋 Already minted (legacy) - TX:', existingRegistrant.tx_hash);
-            return res.status(409).json({
-                status: 'already_claimed',
-                message: 'This wallet has already claimed VIP tokens',
-                tx_hash: existingRegistrant.tx_hash,
-                explorer_url: existingRegistrant.tx_hash 
-                    ? `${networkConfig.explorer}/tx/${existingRegistrant.tx_hash}` 
-                    : `${networkConfig.explorer}/address/${normalizedAddress}`,
-                claimed_at: existingRegistrant.minted_at
+                claimed_at: existingRegistrant.minted_at,
+                claim_amount: existingRegistrant.claim_amount || mintAmount
             });
         }
 
@@ -644,10 +626,10 @@ app.post('/api/claim/register', async (req, res) => {
             if (result.skipped) {
                 console.log('⏭️ Mint skipped - user already has tokens');
                 
-                // Mark as claimed even if skipped (they have tokens)
+                // Mark as minted even if skipped
                 await db.pool.query(`
                     UPDATE registrants 
-                    SET claimed = true, claimed_at = NOW(), claim_amount = 0, minted = true, tx_hash = 'skipped'
+                    SET minted = true, minted_at = NOW(), claim_amount = 0, tx_hash = 'skipped'
                     WHERE address = $1
                 `, [normalizedAddress]);
                 
@@ -663,10 +645,10 @@ app.post('/api/claim/register', async (req, res) => {
             // Successful mint
             const txHash = result.receipt.hash || result.hash || result.transactionHash;
             
-            // Update with claimed flag AND minted flag
+            // Update with minted flag and claim_amount
             await db.pool.query(`
                 UPDATE registrants 
-                SET claimed = true, claimed_at = NOW(), claim_amount = $1, minted = true, minted_at = NOW(), tx_hash = $2
+                SET minted = true, minted_at = NOW(), claim_amount = $1, tx_hash = $2
                 WHERE address = $3
             `, [mintAmount, txHash, normalizedAddress]);
             
@@ -677,7 +659,6 @@ app.post('/api/claim/register', async (req, res) => {
             // ==================== PROCESS REFERRAL BONUS ====================
             let referralBonus = null;
             try {
-                // Check if this user has a referrer
                 const referrerResult = await db.pool.query(
                     'SELECT referrer_wallet, referrer_code FROM registrants WHERE address = $1 AND referrer_wallet IS NOT NULL',
                     [normalizedAddress]
@@ -689,7 +670,6 @@ app.post('/api/claim/register', async (req, res) => {
                     
                     console.log('🎁 User has referrer:', referrerWallet);
                     
-                    // Get referral settings
                     const settingsResult = await db.pool.query(
                         'SELECT * FROM referral_settings WHERE id = 1'
                     );
@@ -698,7 +678,6 @@ app.post('/api/claim/register', async (req, res) => {
                         const settings = settingsResult.rows[0];
                         let bonusAmount = 0;
                         
-                        // Calculate bonus based on type (use claim amount, not balance)
                         if (settings.bonus_type === 'fixed') {
                             bonusAmount = parseFloat(settings.bonus_amount) || 0;
                         } else if (settings.bonus_type === 'percentage') {
@@ -713,7 +692,6 @@ app.post('/api/claim/register', async (req, res) => {
                         });
                         
                         if (bonusAmount > 0) {
-                            // Check if signup bonus already paid for this referral
                             const existingBonus = await db.pool.query(
                                 'SELECT signup_bonus_paid FROM referrals WHERE referee_wallet = $1',
                                 [normalizedAddress]
@@ -723,21 +701,18 @@ app.post('/api/claim/register', async (req, res) => {
                                 parseFloat(existingBonus.rows[0].signup_bonus_paid) > 0;
                             
                             if (!alreadyPaid) {
-                                // Mint bonus tokens to referrer (force = true to skip balance check)
                                 console.log(`🎁 Minting ${bonusAmount} VIP claim bonus to referrer ${referrerWallet}...`);
                                 
                                 try {
                                     const bonusResult = await minter.mintToAddress(referrerWallet, bonusAmount, true);
                                     const bonusTxHash = bonusResult.receipt?.hash || bonusResult.hash || 'bonus-minted';
                                     
-                                    // Update referral record with bonus
                                     await db.pool.query(`
                                         UPDATE referrals 
                                         SET signup_bonus_paid = $1
                                         WHERE referee_wallet = $2
                                     `, [bonusAmount, normalizedAddress]);
                                     
-                                    // Update referral_codes stats
                                     await db.pool.query(`
                                         UPDATE referral_codes 
                                         SET total_claims = total_claims + 1,
@@ -1962,13 +1937,13 @@ app.post('/api/referral/set', async (req, res) => {
 
         // ==================== CHECK IF USER HAS CLAIMED ====================
         const registrantResult = await db.pool.query(
-            'SELECT claimed, claim_amount FROM registrants WHERE address = $1',
+            'SELECT minted, claim_amount FROM registrants WHERE address = $1',
             [normalizedAddress]
         );
-        
-        const hasClaimed = registrantResult.rows[0]?.claimed === true;
-        const claimAmount = parseFloat(registrantResult.rows[0]?.claim_amount) || 0;
-        
+
+        const hasClaimed = registrantResult.rows[0]?.minted === true;
+        const claimAmount = parseFloat(registrantResult.rows[0]?.claim_amount) || 2;
+
         console.log('📋 User claim status:', { hasClaimed, claimAmount });
 
         let immediateBonus = 0;
