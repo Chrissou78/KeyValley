@@ -1093,8 +1093,8 @@
             }
             
             tbody.innerHTML = codes.map(c => {
-                const wallet = c.wallet_address || c.walletAddress || '--';
-                const referralCount = c.referral_count || c.referralCount || 0;
+                const wallet = c.owner_wallet || c.wallet_address || c.walletAddress || '--';
+                const referralCount = c.total_referrals || c.referral_count || c.referralCount || 0;
                 const totalBonus = parseFloat(c.total_bonus_earned || c.totalBonusEarned || 0);
                 const createdAt = c.created_at || c.createdAt;
                 
@@ -1105,7 +1105,7 @@
                         </td>
                         <td>
                             <a href="${EXPLORER_URL}/address/${wallet}" target="_blank" class="text-blue-400 hover:underline font-mono text-sm">
-                                ${wallet.substring(0, 6)}...${wallet.substring(wallet.length - 4)}
+                                ${wallet !== '--' ? wallet.substring(0, 6) + '...' + wallet.substring(wallet.length - 4) : '--'}
                             </a>
                         </td>
                         <td class="font-semibold">${referralCount}</td>
@@ -1164,15 +1164,15 @@
                 const referrerWallet = r.referrer_wallet || r.referrerWallet || '--';
                 const refereeWallet = r.referee_wallet || r.refereeWallet || '--';
                 const code = r.referrer_code || r.referrerCode || '--';
-                const signupBonus = parseFloat(r.bonus_earned || r.bonusEarned || 0);
-                const presaleBonus = parseFloat(r.presale_bonus_earned || r.presaleBonusEarned || 0);
+                const signupBonus = parseFloat(r.signup_bonus_paid || r.bonus_earned || r.bonusEarned || 0);
+                const presaleBonus = parseFloat(r.presale_bonus_paid || r.presale_bonus_earned || r.presaleBonusEarned || 0);
                 const createdAt = r.created_at || r.createdAt;
                 
                 return `
                     <tr>
                         <td>
                             <a href="${EXPLORER_URL}/address/${referrerWallet}" target="_blank" class="text-blue-400 hover:underline font-mono text-sm">
-                                ${referrerWallet.substring(0, 6)}...${referrerWallet.substring(referrerWallet.length - 4)}
+                                ${referrerWallet !== '--' ? referrerWallet.substring(0, 6) + '...' + referrerWallet.substring(referrerWallet.length - 4) : '--'}
                             </a>
                         </td>
                         <td>
@@ -1180,11 +1180,11 @@
                         </td>
                         <td>
                             <a href="${EXPLORER_URL}/address/${refereeWallet}" target="_blank" class="text-blue-400 hover:underline font-mono text-sm">
-                                ${refereeWallet.substring(0, 6)}...${refereeWallet.substring(refereeWallet.length - 4)}
+                                ${refereeWallet !== '--' ? refereeWallet.substring(0, 6) + '...' + refereeWallet.substring(refereeWallet.length - 4) : '--'}
                             </a>
                         </td>
-                        <td class="${signupBonus > 0 ? 'text-green-400' : 'text-white/40'}">${signupBonus.toFixed(2)} VIP</td>
-                        <td class="${presaleBonus > 0 ? 'text-blue-400' : 'text-white/40'}">${presaleBonus.toFixed(2)} VIP</td>
+                        <td class="${signupBonus > 0 ? 'text-green-400' : 'text-white/40'}">${signupBonus.toFixed(4)} VIP</td>
+                        <td class="${presaleBonus > 0 ? 'text-blue-400' : 'text-white/40'}">${presaleBonus.toFixed(4)} VIP</td>
                         <td class="text-white/60 text-sm">${createdAt ? new Date(createdAt).toLocaleDateString() : '--'}</td>
                     </tr>
                 `;

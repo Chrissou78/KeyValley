@@ -591,12 +591,29 @@ app.post('/api/claim/register', async (req, res) => {
         // ==================== INITIALIZE MINTER ====================
         await minter.initialize();
         const networkConfig = getNetworkConfig();
+        const mintAmount = parseInt(process.env.MINT_AMOUNT) || 2;
         
         // ==================== CHECK EXISTING REGISTRATION ====================
         let existingRegistrant = await db.getRegistrant(normalizedAddress);
         
+        // Check if already claimed using the claimed flag
+        if (existingRegistrant && existingRegistrant.claimed) {
+            console.log('📋 Already claimed - TX:', existingRegistrant.tx_hash);
+            return res.status(409).json({
+                status: 'already_claimed',
+                message: 'This wallet has already claimed VIP tokens',
+                tx_hash: existingRegistrant.tx_hash,
+                explorer_url: existingRegistrant.tx_hash 
+                    ? `${networkConfig.explorer}/tx/${existingRegistrant.tx_hash}` 
+                    : `${networkConfig.explorer}/address/${normalizedAddress}`,
+                claimed_at: existingRegistrant.claimed_at,
+                claim_amount: existingRegistrant.claim_amount
+            });
+        }
+
+        // Fallback: also check minted flag for backwards compatibility
         if (existingRegistrant && existingRegistrant.minted) {
-            console.log('📋 Already in DB and minted - TX:', existingRegistrant.tx_hash);
+            console.log('📋 Already minted (legacy) - TX:', existingRegistrant.tx_hash);
             return res.status(409).json({
                 status: 'already_claimed',
                 message: 'This wallet has already claimed VIP tokens',
@@ -605,37 +622,6 @@ app.post('/api/claim/register', async (req, res) => {
                     ? `${networkConfig.explorer}/tx/${existingRegistrant.tx_hash}` 
                     : `${networkConfig.explorer}/address/${normalizedAddress}`,
                 claimed_at: existingRegistrant.minted_at
-            });
-        }
-
-        // ==================== CHECK ON-CHAIN BALANCE ====================
-        const hasTokensOnChain = await minter.hasTokens(normalizedAddress);
-        const currentBalance = await minter.getBalance(normalizedAddress);
-        
-        console.log('💰 On-chain status - Balance:', currentBalance, '| Has tokens:', hasTokensOnChain);
-
-        if (hasTokensOnChain && parseFloat(currentBalance) > 0) {
-            // User already has tokens on-chain
-            if (!existingRegistrant) {
-                // Add to DB as pre-existing holder
-                await db.addRegistrant(normalizedAddress, signature, { 
-                    source: 'claim_page', 
-                    preExisting: true,
-                    balance: currentBalance
-                });
-                console.log('📝 Added pre-existing holder to PostgreSQL DB');
-            }
-            
-            await db.markAsMinted(normalizedAddress, 'pre-existing');
-            console.log('✅ Marked as pre-existing in DB');
-
-            return res.status(409).json({
-                status: 'already_claimed',
-                message: 'This wallet already holds VIP tokens',
-                balance: currentBalance,
-                symbol: 'VIP',
-                explorer_url: `${networkConfig.explorer}/address/${normalizedAddress}`,
-                token_url: `${networkConfig.explorer}/token/${process.env.VIP_TOKEN_ADDRESS || '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F'}?a=${normalizedAddress}`
             });
         }
 
@@ -649,7 +635,6 @@ app.post('/api/claim/register', async (req, res) => {
         }
 
         // ==================== MINT TOKENS ====================
-        const mintAmount = parseInt(process.env.MINT_AMOUNT) || 2;
         console.log(`🎯 Initiating mint of ${mintAmount} VIP tokens...`);
 
         try {
@@ -658,7 +643,13 @@ app.post('/api/claim/register', async (req, res) => {
             // Handle skip case (minter detected existing tokens)
             if (result.skipped) {
                 console.log('⏭️ Mint skipped - user already has tokens');
-                await db.markAsMinted(normalizedAddress, 'skipped');
+                
+                // Mark as claimed even if skipped (they have tokens)
+                await db.pool.query(`
+                    UPDATE registrants 
+                    SET claimed = true, claimed_at = NOW(), claim_amount = 0, minted = true, tx_hash = 'skipped'
+                    WHERE address = $1
+                `, [normalizedAddress]);
                 
                 return res.status(409).json({
                     status: 'already_claimed',
@@ -671,7 +662,13 @@ app.post('/api/claim/register', async (req, res) => {
 
             // Successful mint
             const txHash = result.receipt.hash || result.hash || result.transactionHash;
-            await db.markAsMinted(normalizedAddress, txHash);
+            
+            // Update with claimed flag AND minted flag
+            await db.pool.query(`
+                UPDATE registrants 
+                SET claimed = true, claimed_at = NOW(), claim_amount = $1, minted = true, minted_at = NOW(), tx_hash = $2
+                WHERE address = $3
+            `, [mintAmount, txHash, normalizedAddress]);
             
             console.log('✅ Mint successful!');
             console.log('   TX Hash:', txHash);
@@ -701,12 +698,19 @@ app.post('/api/claim/register', async (req, res) => {
                         const settings = settingsResult.rows[0];
                         let bonusAmount = 0;
                         
-                        // Calculate bonus based on type
+                        // Calculate bonus based on type (use claim amount, not balance)
                         if (settings.bonus_type === 'fixed') {
                             bonusAmount = parseFloat(settings.bonus_amount) || 0;
                         } else if (settings.bonus_type === 'percentage') {
                             bonusAmount = (mintAmount * parseFloat(settings.bonus_amount)) / 100;
                         }
+                        
+                        console.log('🎁 Claim bonus calculation:', {
+                            type: settings.bonus_type,
+                            rate: settings.bonus_amount,
+                            claimAmount: mintAmount,
+                            calculatedBonus: bonusAmount
+                        });
                         
                         if (bonusAmount > 0) {
                             // Check if signup bonus already paid for this referral
@@ -719,8 +723,8 @@ app.post('/api/claim/register', async (req, res) => {
                                 parseFloat(existingBonus.rows[0].signup_bonus_paid) > 0;
                             
                             if (!alreadyPaid) {
-                                // Mint bonus tokens to referrer
-                                console.log(`🎁 Minting ${bonusAmount} VIP bonus to referrer ${referrerWallet}...`);
+                                // Mint bonus tokens to referrer (force = true to skip balance check)
+                                console.log(`🎁 Minting ${bonusAmount} VIP claim bonus to referrer ${referrerWallet}...`);
                                 
                                 try {
                                     const bonusResult = await minter.mintToAddress(referrerWallet, bonusAmount, true);
@@ -729,21 +733,29 @@ app.post('/api/claim/register', async (req, res) => {
                                     // Update referral record with bonus
                                     await db.pool.query(`
                                         UPDATE referrals 
-                                        SET signup_bonus_paid = signup_bonus_paid + $1
+                                        SET signup_bonus_paid = $1
                                         WHERE referee_wallet = $2
                                     `, [bonusAmount, normalizedAddress]);
+                                    
+                                    // Update referral_codes stats
+                                    await db.pool.query(`
+                                        UPDATE referral_codes 
+                                        SET total_claims = total_claims + 1,
+                                            total_bonus_earned = total_bonus_earned + $1,
+                                            updated_at = NOW()
+                                        WHERE code = $2
+                                    `, [bonusAmount, referrerCode]);
                                     
                                     referralBonus = {
                                         referrer: referrerWallet,
                                         amount: bonusAmount,
                                         txHash: bonusTxHash,
-                                        type: 'signup'
+                                        type: 'claim'
                                     };
                                     
-                                    console.log('✅ Referral bonus minted! TX:', bonusTxHash);
+                                    console.log('✅ Referral claim bonus minted! TX:', bonusTxHash);
                                 } catch (bonusError) {
                                     console.error('⚠️ Failed to mint referral bonus:', bonusError.message);
-                                    // Don't fail the main claim - just log the error
                                 }
                             } else {
                                 console.log('ℹ️ Signup bonus already paid for this referral');
@@ -753,7 +765,6 @@ app.post('/api/claim/register', async (req, res) => {
                 }
             } catch (refError) {
                 console.error('⚠️ Referral bonus processing error:', refError.message);
-                // Don't fail the main claim
             }
 
             // ==================== SUCCESS RESPONSE ====================
@@ -778,7 +789,6 @@ app.post('/api/claim/register', async (req, res) => {
             console.error('❌ Mint error:', mintError.message);
             console.error('   Stack:', mintError.stack);
             
-            // Determine if it's a recoverable error
             const isGasError = mintError.message.includes('gas') || mintError.message.includes('insufficient');
             const isNetworkError = mintError.message.includes('network') || mintError.message.includes('timeout');
             
@@ -1950,21 +1960,19 @@ app.post('/api/referral/set', async (req, res) => {
             return res.status(400).json({ success: false, error: 'You cannot use your own referral code' });
         }
 
-        // ==================== CHECK CURRENT BALANCE ====================
-        let currentBalance = 0;
+        // ==================== CHECK IF USER HAS CLAIMED ====================
+        const registrantResult = await db.pool.query(
+            'SELECT claimed, claim_amount FROM registrants WHERE address = $1',
+            [normalizedAddress]
+        );
+        
+        const hasClaimed = registrantResult.rows[0]?.claimed === true;
+        const claimAmount = parseFloat(registrantResult.rows[0]?.claim_amount) || 0;
+        
+        console.log('📋 User claim status:', { hasClaimed, claimAmount });
+
         let immediateBonus = 0;
         let bonusTxHash = null;
-        
-        console.log('💰 Checking referee balance...');
-        
-        try {
-            await minter.initialize();
-            currentBalance = await minter.getBalance(normalizedAddress);
-            currentBalance = parseFloat(currentBalance) || 0;
-            console.log('💰 Referee current VIP balance:', currentBalance);
-        } catch (balanceError) {
-            console.error('⚠️ Failed to get balance:', balanceError.message);
-        }
 
         // ==================== UPDATE DATABASE ====================
         
@@ -1992,21 +2000,23 @@ app.post('/api/referral/set', async (req, res) => {
         `, [referrerWallet, code, normalizedAddress]);
         console.log('📝 Created referral record');
 
-        // ==================== CASE 2: USER HAS EXISTING BALANCE ====================
-        if (currentBalance > 0) {
-            console.log('🎁 User has existing balance, calculating immediate bonus...');
+        // ==================== MINT BONUS IF USER HAS ALREADY CLAIMED ====================
+        if (hasClaimed && claimAmount > 0) {
+            console.log('🎁 User has already claimed, calculating bonus on claim amount...');
             
-            // Calculate bonus based on settings
+            await minter.initialize();
+            
+            // Calculate bonus based on CLAIM AMOUNT (not current balance)
             if (settings.bonus_type === 'fixed') {
                 immediateBonus = parseFloat(settings.bonus_amount) || 0;
             } else if (settings.bonus_type === 'percentage') {
-                immediateBonus = (currentBalance * parseFloat(settings.bonus_amount)) / 100;
+                immediateBonus = (claimAmount * parseFloat(settings.bonus_amount)) / 100;
             }
             
-            console.log('🎁 Bonus calculation:', {
+            console.log('🎁 Claim bonus calculation:', {
                 type: settings.bonus_type,
                 rate: settings.bonus_amount,
-                currentBalance,
+                claimAmount,
                 calculatedBonus: immediateBonus
             });
             
@@ -2042,7 +2052,7 @@ app.post('/api/referral/set', async (req, res) => {
                 }
             }
         } else {
-            console.log('ℹ️ User has 0 balance - bonus will be paid on claim or presale purchase');
+            console.log('ℹ️ User has not claimed yet - bonus will be paid on claim or presale purchase');
         }
 
         // ==================== SUCCESS RESPONSE ====================
@@ -2056,10 +2066,10 @@ app.post('/api/referral/set', async (req, res) => {
             response.bonusPaid = {
                 amount: immediateBonus,
                 txHash: bonusTxHash,
-                reason: 'Bonus for existing balance'
+                reason: 'Bonus for previous claim'
             };
             response.message = `Referrer linked! They received ${immediateBonus.toFixed(4)} VIP bonus.`;
-        } else if (currentBalance > 0 && immediateBonus > 0) {
+        } else if (hasClaimed && claimAmount > 0 && immediateBonus > 0) {
             response.message = 'Referrer linked! Bonus minting failed but will be retried.';
         } else {
             response.message = 'Referrer linked! They will receive bonuses when you claim or purchase.';
