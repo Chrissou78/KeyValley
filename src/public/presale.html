@@ -556,32 +556,33 @@
         // ============================================
         function checkExistingSession() {
             const session = localStorage.getItem(CONFIG.storageKey);
-            console.log('🔍 Checking session:', session);
+            console.log('🔍 Presale - checking session, storageKey:', CONFIG.storageKey);
+            console.log('🔍 Presale - raw session:', session);
             
             if (session) {
                 try {
                     const data = JSON.parse(session);
-                    console.log('🔍 Parsed session data:', data);
+                    console.log('🔍 Presale - parsed data:', data);
                     
                     const sessionAge = Date.now() - (data.timestamp || 0);
                     const maxAge = 24 * 60 * 60 * 1000;
                     
                     const wallet = data.wallet || data.wlt || data.address;
-                    console.log('🔍 Found wallet:', wallet, '| Age:', sessionAge, '| Max:', maxAge);
+                    console.log('🔍 Presale - wallet found:', wallet, '| age:', sessionAge, '| maxAge:', maxAge);
                     
                     if (sessionAge < maxAge && wallet) {
-                        console.log('✅ Using existing session');
+                        console.log('✅ Presale - using existing session');
                         setWalletConnected(wallet);
                     } else {
-                        console.log('⚠️ Session invalid or expired');
+                        console.log('⚠️ Presale - session expired or no wallet');
                         localStorage.removeItem(CONFIG.storageKey);
                     }
                 } catch (e) {
-                    console.error('❌ Session parse error:', e);
+                    console.error('❌ Presale - parse error:', e);
                     localStorage.removeItem(CONFIG.storageKey);
                 }
             } else {
-                console.log('⚠️ No session found');
+                console.log('⚠️ Presale - no session in localStorage');
             }
         }
 
