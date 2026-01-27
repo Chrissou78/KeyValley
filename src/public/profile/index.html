@@ -56,11 +56,8 @@
             display: block;
         }
         
-        .copy-btn:active {
-            transform: scale(0.95);
-        }
+        .copy-btn:active { transform: scale(0.95); }
         
-        /* Presale Banner */
         .presale-banner {
             background: linear-gradient(135deg, rgba(238, 157, 43, 0.15) 0%, rgba(212, 165, 67, 0.1) 100%);
             border: 2px solid rgba(238, 157, 43, 0.5);
@@ -71,7 +68,6 @@
             50% { border-color: rgba(238, 157, 43, 0.9); }
         }
         
-        /* Referral Section */
         .referral-code-box {
             background: linear-gradient(135deg, rgba(238, 157, 43, 0.1) 0%, rgba(212, 165, 67, 0.05) 100%);
             border: 2px dashed rgba(238, 157, 43, 0.4);
@@ -79,13 +75,7 @@
         
         .referral-input {
             text-transform: uppercase;
-            letter-spacing: 0.2em;
-            font-family: monospace;
-        }
-        
-        .referral-input::placeholder {
-            text-transform: none;
-            letter-spacing: normal;
+            letter-spacing: 0.15em;
         }
     </style>
 </head>
@@ -127,9 +117,7 @@
                 <p class="text-slate-400 font-light">View your wallet and token balance.</p>
             </div>
 
-            <!-- ============================================ -->
-            <!-- PRESALE BANNER - ONLY VISIBLE WHEN CONNECTED -->
-            <!-- ============================================ -->
+            <!-- Presale Banner -->
             <div id="presaleBanner" class="presale-banner rounded-lg p-6 mb-8 hidden">
                 <div class="flex flex-col md:flex-row items-center justify-between gap-4">
                     <div class="flex-1">
@@ -138,11 +126,7 @@
                             <h3 class="text-lg font-bold text-primary">VIP Token Presale Now Live!</h3>
                         </div>
                         <p class="text-slate-400 text-sm mb-3">Get VIP tokens at the best price. Pay with POL or USDC.</p>
-                        <div class="flex flex-wrap gap-2 text-xs">
-                            <span class="bg-white/10 px-3 py-1 rounded-full">🪙 POL</span>
-                            <span class="bg-white/10 px-3 py-1 rounded-full">💵 USDC</span>
-                        </div>
-                        <p class="text-slate-500 text-xs mt-3"><strong class="text-primary">€1.00</strong> per token • Min 10 • Max 10,000</p>
+                        <p class="text-slate-500 text-xs"><strong class="text-primary">€1.00</strong> per token • Min 10 • Max 10,000</p>
                     </div>
                     <a href="/presale" class="bg-primary text-background-dark px-6 py-3 rounded font-bold text-sm uppercase tracking-wider hover:scale-105 transition-transform whitespace-nowrap">
                         Join Presale →
@@ -166,23 +150,22 @@
                                 id="walletIframe"
                                 src="https://wallet.wallettwo.com/auth/login?action=auth&iframe=true"
                                 class="wallet-iframe"
-                                style="height: 600px !important; min-height: 600px;"
                                 allow="clipboard-write"
                             ></iframe>
                         </div>
                     </div>
 
-                    <!-- Loading Container (for exchanging code) -->
+                    <!-- Loading Container -->
                     <div id="loadingContainer" class="hidden text-center py-12">
                         <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
                         <p class="text-slate-400 text-sm">Loading your profile...</p>
                     </div>
 
-                    <!-- Profile Container (hidden by default) -->
+                    <!-- Profile Container -->
                     <div id="profileContainer" class="hidden">
                         <!-- Avatar & Name -->
                         <div class="flex items-center gap-4 mb-8">
-                            <div id="avatarCircle" class="size-16 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
+                            <div class="size-16 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
                                 <span id="avatarInitials" class="text-primary text-xl font-bold">--</span>
                             </div>
                             <div>
@@ -225,7 +208,7 @@
                         <!-- ============================================ -->
                         <!-- REFERRAL SECTION -->
                         <!-- ============================================ -->
-                        <div id="referralSection" class="mb-6 hidden">
+                        <div id="referralSection" class="mb-6">
                             <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">
                                 <span class="flex items-center gap-2">
                                     <span class="material-symbols-outlined text-sm text-primary">share</span>
@@ -234,23 +217,35 @@
                             </label>
                             <div class="bg-background-dark border border-white/5 rounded-sm p-4">
                                 
-                                <!-- ======================================== -->
-                                <!-- PART 1: SET YOUR REFERRER (if not set) -->
-                                <!-- ======================================== -->
-                                <div id="setReferrerSection" class="mb-6 hidden">
-                                    <div class="p-4 bg-surface rounded-sm border border-white/5">
-                                        <p class="text-white font-medium mb-2">Have a referral code?</p>
-                                        <p class="text-slate-400 text-sm mb-4">Enter it below to link your account to your referrer.</p>
+                                <!-- Loading state -->
+                                <div id="referralLoading" class="text-center py-4">
+                                    <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                                    <p class="text-slate-500 text-xs">Loading referral info...</p>
+                                </div>
+                                
+                                <!-- Program disabled message -->
+                                <div id="referralDisabled" class="hidden text-center py-4">
+                                    <p class="text-slate-500 text-sm">Referral program is currently inactive.</p>
+                                </div>
+                                
+                                <!-- Referral content (when program is enabled) -->
+                                <div id="referralContent" class="hidden">
+                                    
+                                    <!-- ======================================== -->
+                                    <!-- PART 1: ENTER A REFERRAL CODE (if no referrer yet) -->
+                                    <!-- ======================================== -->
+                                    <div id="setReferrerSection" class="mb-6 pb-6 border-b border-white/10">
+                                        <p class="text-white font-medium mb-2">Were you referred by someone?</p>
+                                        <p class="text-slate-400 text-xs mb-4">Enter their referral code below to link your account.</p>
                                         <div class="flex gap-2">
                                             <input 
                                                 type="text" 
                                                 id="referralCodeInput" 
-                                                class="referral-input flex-1 bg-background-dark border border-white/10 rounded-sm px-4 py-3 text-primary text-center text-lg focus:border-primary focus:outline-none"
-                                                placeholder="Enter code"
+                                                class="referral-input flex-1 bg-surface border border-white/10 rounded-sm px-4 py-3 text-primary text-center font-mono text-lg focus:border-primary focus:outline-none"
+                                                placeholder="XXXXXXXX"
                                                 maxlength="8"
                                             >
                                             <button 
-                                                onclick="setReferrer()" 
                                                 id="setReferrerBtn"
                                                 class="bg-primary text-background-dark px-5 py-3 rounded-sm font-bold text-sm uppercase tracking-wider hover:opacity-90 transition-opacity"
                                             >
@@ -258,81 +253,81 @@
                                             </button>
                                         </div>
                                         <p id="setReferrerError" class="text-red-400 text-xs mt-2 hidden"></p>
-                                        <p class="text-slate-500 text-xs mt-3 flex items-center gap-1">
-                                            <span class="material-symbols-outlined text-sm text-yellow-500">warning</span>
-                                            This can only be set once and cannot be changed.
+                                        <p id="setReferrerSuccess" class="text-green-400 text-xs mt-2 hidden"></p>
+                                        <p class="text-yellow-500/70 text-xs mt-3 flex items-start gap-1">
+                                            <span class="material-symbols-outlined text-sm">warning</span>
+                                            <span>This can only be set once and cannot be changed later.</span>
                                         </p>
-                                    </div>
-                                </div>
-                                
-                                <!-- Referrer Already Set -->
-                                <div id="referrerSetSection" class="mb-6 hidden">
-                                    <div class="p-4 bg-green-500/10 border border-green-500/20 rounded-sm">
-                                        <div class="flex items-center gap-2 text-green-400 mb-2">
-                                            <span class="material-symbols-outlined text-lg">check_circle</span>
-                                            <span class="font-medium">Referrer Linked</span>
-                                        </div>
-                                        <p class="text-slate-400 text-sm">
-                                            Referred by: <span id="referrerDisplay" class="font-mono text-white"></span>
-                                        </p>
-                                        <p class="text-slate-500 text-xs mt-1">
-                                            Code used: <span id="referrerCodeDisplay" class="text-primary font-mono"></span>
-                                        </p>
-                                    </div>
-                                </div>
-                                
-                                <!-- ======================================== -->
-                                <!-- PART 2: YOUR REFERRAL CODE -->
-                                <!-- ======================================== -->
-                                <div class="border-t border-white/5 pt-4">
-                                    <p class="text-white font-medium mb-3">Your Referral Code</p>
-                                    
-                                    <!-- Generate Code Button (shown if no code) -->
-                                    <div id="referralGenerate" class="text-center py-4 hidden">
-                                        <p class="text-slate-400 text-sm mb-4">Generate your code and invite friends to earn VIP tokens!</p>
-                                        <button 
-                                            onclick="generateReferralCode()" 
-                                            id="generateCodeBtn"
-                                            class="bg-primary/20 text-primary px-6 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/30 transition-colors border border-primary/30"
-                                        >
-                                            Generate Referral Code
-                                        </button>
                                     </div>
                                     
-                                    <!-- Referral Code Display (shown if has code) -->
-                                    <div id="referralDisplay" class="hidden">
-                                        <!-- The Code -->
-                                        <div class="referral-code-box rounded-sm p-4 mb-4 text-center">
-                                            <p class="text-slate-500 text-xs mb-2 uppercase tracking-widest">Share this code with friends</p>
-                                            <div class="flex items-center justify-center gap-3">
-                                                <span id="myReferralCode" class="text-primary text-3xl font-mono font-bold tracking-widest"></span>
-                                                <button onclick="copyReferralCode()" id="copyCodeBtn" class="text-slate-500 hover:text-primary transition-colors" title="Copy code">
-                                                    <span class="material-symbols-outlined text-xl">content_copy</span>
-                                                </button>
+                                    <!-- Referrer Already Set (replaces setReferrerSection) -->
+                                    <div id="referrerSetSection" class="mb-6 pb-6 border-b border-white/10 hidden">
+                                        <div class="p-4 bg-green-500/10 border border-green-500/20 rounded-sm">
+                                            <div class="flex items-center gap-2 text-green-400 mb-2">
+                                                <span class="material-symbols-outlined text-lg">check_circle</span>
+                                                <span class="font-medium">Referrer Linked!</span>
                                             </div>
+                                            <p class="text-slate-400 text-sm">
+                                                You were referred by: <span id="referrerDisplay" class="font-mono text-white"></span>
+                                            </p>
+                                            <p class="text-slate-500 text-xs mt-1">
+                                                Code: <span id="referrerCodeDisplay" class="text-primary font-mono"></span>
+                                            </p>
                                         </div>
-                                        
-                                        <!-- Referral Stats -->
-                                        <div class="grid grid-cols-2 gap-3 mb-4">
-                                            <div class="bg-surface rounded-sm p-3 text-center border border-white/5">
-                                                <p id="referralCount" class="text-2xl font-serif text-primary">0</p>
-                                                <p class="text-xs text-slate-500 uppercase tracking-widest">Friends Referred</p>
-                                            </div>
-                                            <div class="bg-surface rounded-sm p-3 text-center border border-white/5">
-                                                <p id="referralEarned" class="text-2xl font-serif text-primary">0</p>
-                                                <p class="text-xs text-slate-500 uppercase tracking-widest">VIP Earned</p>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Bonus Info -->
-                                        <p id="referralBonusInfo" class="text-xs text-slate-500 text-center"></p>
                                     </div>
+                                    
+                                    <!-- ======================================== -->
+                                    <!-- PART 2: YOUR OWN REFERRAL CODE -->
+                                    <!-- ======================================== -->
+                                    <div>
+                                        <p class="text-white font-medium mb-3">Your Referral Code</p>
+                                        
+                                        <!-- No code yet - show generate button -->
+                                        <div id="generateCodeSection" class="text-center py-4">
+                                            <p class="text-slate-400 text-sm mb-4">Generate your referral code and invite friends to earn VIP tokens!</p>
+                                            <button 
+                                                id="generateCodeBtn"
+                                                class="bg-primary/20 text-primary px-6 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/30 transition-colors border border-primary/30"
+                                            >
+                                                Generate My Code
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- Has code - show it -->
+                                        <div id="myCodeSection" class="hidden">
+                                            <!-- The Code Display -->
+                                            <div class="referral-code-box rounded-sm p-4 mb-4 text-center">
+                                                <p class="text-slate-500 text-xs mb-2 uppercase tracking-widest">Share this code with friends</p>
+                                                <div class="flex items-center justify-center gap-3">
+                                                    <span id="myReferralCode" class="text-primary text-3xl font-mono font-bold tracking-widest"></span>
+                                                    <button id="copyCodeBtn" class="text-slate-500 hover:text-primary transition-colors" title="Copy code">
+                                                        <span class="material-symbols-outlined text-xl">content_copy</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Referral Stats -->
+                                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                                <div class="bg-surface rounded-sm p-3 text-center border border-white/5">
+                                                    <p id="referralCount" class="text-2xl font-serif text-primary">0</p>
+                                                    <p class="text-xs text-slate-500 uppercase tracking-widest">Friends Referred</p>
+                                                </div>
+                                                <div class="bg-surface rounded-sm p-3 text-center border border-white/5">
+                                                    <p id="referralEarned" class="text-2xl font-serif text-primary">0</p>
+                                                    <p class="text-xs text-slate-500 uppercase tracking-widest">VIP Earned</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Bonus Info -->
+                                            <p id="referralBonusInfo" class="text-xs text-slate-500 text-center"></p>
+                                        </div>
+                                    </div>
+                                    
                                 </div>
-                                
                             </div>
                         </div>
 
-                        <!-- Presale Button (always shown when connected) -->
+                        <!-- Presale Button -->
                         <div class="mb-4">
                             <a href="/presale" class="block w-full bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs text-center gold-glow hover:translate-y-[-2px] transition-transform">
                                 🚀 Join Presale
@@ -352,7 +347,7 @@
                         </button>
                     </div>
 
-                    <!-- Disconnecting Container (hidden by default) -->
+                    <!-- Disconnecting Container -->
                     <div id="disconnectingContainer" class="hidden text-center py-12">
                         <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
                         <p class="text-slate-400 text-sm">Disconnecting...</p>
@@ -376,14 +371,11 @@
                     </div>
                     <span class="text-xs font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
                 </a>
-                <div class="text-slate-600 text-xs font-light">
-                    © 2025 Kea Valley
-                </div>
+                <div class="text-slate-600 text-xs font-light">© 2025 Kea Valley</div>
             </div>
         </div>
     </footer>
 
-    <!-- Hidden logout iframe -->
     <iframe id="logoutIframe" style="display:none;"></iframe>
 
     <script>
@@ -397,33 +389,10 @@
             WALLETTWO_ORIGIN: 'https://wallet.wallettwo.com',
             STORAGE_KEY: 'keavalley_profile',
             MIN_BALANCE_TO_HIDE_CLAIM: 2,
-            SESSION_DURATION: 24 * 60 * 60 * 1000 // 24 hours
+            SESSION_DURATION: 24 * 60 * 60 * 1000
         };
 
         const ERC20_ABI = ['function balanceOf(address owner) view returns (uint256)'];
-
-        // ============================================
-        // DOM Elements
-        // ============================================
-        const loginContainer = document.getElementById('loginContainer');
-        const loadingContainer = document.getElementById('loadingContainer');
-        const profileContainer = document.getElementById('profileContainer');
-        const disconnectingContainer = document.getElementById('disconnectingContainer');
-        const presaleBanner = document.getElementById('presaleBanner');
-        const cardTitle = document.getElementById('cardTitle');
-        const walletIframe = document.getElementById('walletIframe');
-        const logoutIframe = document.getElementById('logoutIframe');
-        const avatarInitials = document.getElementById('avatarInitials');
-        const displayName = document.getElementById('displayName');
-        const displayEmail = document.getElementById('displayEmail');
-        const walletAddress = document.getElementById('walletAddress');
-        const copyBtn = document.getElementById('copyBtn');
-        const balanceLoading = document.getElementById('balanceLoading');
-        const balanceDisplay = document.getElementById('balanceDisplay');
-        const balanceAmount = document.getElementById('balanceAmount');
-        const explorerLink = document.getElementById('explorerLink');
-        const claimButtonContainer = document.getElementById('claimButtonContainer');
-        const disconnectBtn = document.getElementById('disconnectBtn');
 
         // ============================================
         // State
@@ -435,20 +404,18 @@
         let referralStatus = null;
 
         // ============================================
-        // URL Parameter Handling
+        // DOM Elements
         // ============================================
-        function getDataFromURL() {
-            const params = new URLSearchParams(window.location.search);
-            return {
-                wallet: params.get('wlt') || params.get('wallet') || params.get('address'),
-                signature: params.get('signature') || params.get('sig'),
-                userId: params.get('usr') || params.get('user'),
-                code: params.get('code')
-            };
-        }
+        const loginContainer = document.getElementById('loginContainer');
+        const loadingContainer = document.getElementById('loadingContainer');
+        const profileContainer = document.getElementById('profileContainer');
+        const disconnectingContainer = document.getElementById('disconnectingContainer');
+        const presaleBanner = document.getElementById('presaleBanner');
+        const cardTitle = document.getElementById('cardTitle');
+        const logoutIframe = document.getElementById('logoutIframe');
 
         // ============================================
-        // LocalStorage Functions
+        // Session Management
         // ============================================
         function getStoredSession() {
             try {
@@ -473,29 +440,21 @@
                     ...data,
                     timestamp: Date.now()
                 }));
-                console.log('Session saved:', data.wallet);
             } catch (e) {
                 console.error('Error saving session:', e);
             }
         }
 
         function clearSession() {
-            try {
-                localStorage.removeItem(CONFIG.STORAGE_KEY);
-                console.log('Session cleared');
-            } catch (e) {
-                console.error('Error clearing session:', e);
-            }
+            localStorage.removeItem(CONFIG.STORAGE_KEY);
         }
 
         // ============================================
-        // Save to Database
+        // Database Save
         // ============================================
         async function saveToDatabase(wallet, email, name) {
             if (savedToDatabase || !wallet) return;
-            
             try {
-                console.log('Saving to database:', { wallet, email, name });
                 const response = await fetch('/api/wallet/connect', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -507,17 +466,14 @@
                     })
                 });
                 const result = await response.json();
-                console.log('Database save result:', result);
-                if (result.success) {
-                    savedToDatabase = true;
-                }
+                if (result.success) savedToDatabase = true;
             } catch (error) {
                 console.error('Error saving to database:', error);
             }
         }
 
         // ============================================
-        // UI Functions
+        // UI State Functions
         // ============================================
         function showLogin() {
             loginContainer.classList.remove('hidden');
@@ -525,12 +481,9 @@
             profileContainer.classList.add('hidden');
             disconnectingContainer.classList.add('hidden');
             cardTitle.textContent = 'Connect Wallet';
+            presaleBanner?.classList.add('hidden');
             acceptMessages = true;
             isDisconnecting = false;
-
-            if (presaleBanner) {
-                presaleBanner.classList.add('hidden');
-            }
         }
 
         function showLoading() {
@@ -539,10 +492,16 @@
             profileContainer.classList.add('hidden');
             disconnectingContainer.classList.add('hidden');
             cardTitle.textContent = 'Loading';
+            presaleBanner?.classList.add('hidden');
+        }
 
-            if (presaleBanner) {
-                presaleBanner.classList.add('hidden');
-            }
+        function showDisconnecting() {
+            loginContainer.classList.add('hidden');
+            loadingContainer.classList.add('hidden');
+            profileContainer.classList.add('hidden');
+            disconnectingContainer.classList.remove('hidden');
+            cardTitle.textContent = 'Disconnecting';
+            presaleBanner?.classList.add('hidden');
         }
 
         function showProfile(user) {
@@ -554,246 +513,199 @@
             profileContainer.classList.remove('hidden');
             disconnectingContainer.classList.add('hidden');
             cardTitle.textContent = 'Profile';
+            presaleBanner?.classList.remove('hidden');
 
-            if (presaleBanner) {
-                presaleBanner.classList.remove('hidden');
-            }
-
-            // Set avatar initials
+            // Avatar initials
             let initials = '??';
             if (user.name) {
-                const nameParts = user.name.split(' ');
-                if (nameParts.length >= 2) {
-                    initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
-                } else {
-                    initials = user.name.slice(0, 2).toUpperCase();
-                }
+                const parts = user.name.split(' ');
+                initials = parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : user.name.slice(0, 2).toUpperCase();
             } else if (user.email) {
                 initials = user.email.slice(0, 2).toUpperCase();
             } else if (user.wallet) {
                 initials = user.wallet.slice(2, 4).toUpperCase();
             }
-            avatarInitials.textContent = initials;
+            document.getElementById('avatarInitials').textContent = initials;
 
-            // Set display name
+            // Display name
             if (user.name) {
-                displayName.textContent = user.name;
+                document.getElementById('displayName').textContent = user.name;
             } else if (user.email) {
-                displayName.textContent = user.email.split('@')[0];
+                document.getElementById('displayName').textContent = user.email.split('@')[0];
             } else {
-                displayName.textContent = `User ${initials}`;
+                document.getElementById('displayName').textContent = `User ${initials}`;
             }
 
-            // Set email if available
+            // Email
+            const emailEl = document.getElementById('displayEmail');
             if (user.email) {
-                displayEmail.textContent = user.email;
-                displayEmail.classList.remove('hidden');
+                emailEl.textContent = user.email;
+                emailEl.classList.remove('hidden');
             } else {
-                displayEmail.classList.add('hidden');
+                emailEl.classList.add('hidden');
             }
 
-            // Set wallet address
-            walletAddress.textContent = user.wallet;
+            // Wallet
+            document.getElementById('walletAddress').textContent = user.wallet;
+            document.getElementById('explorerLink').href = `${CONFIG.POLYGON_EXPLORER}/token/${CONFIG.VIP_TOKEN_ADDRESS}?a=${user.wallet}`;
 
-            // Set explorer link
-            explorerLink.href = `${CONFIG.POLYGON_EXPLORER}/token/${CONFIG.VIP_TOKEN_ADDRESS}?a=${user.wallet}`;
-
-            // Fetch balance
+            // Fetch balance and referral
             fetchBalance(user.wallet);
-            
-            // Save to database
             saveToDatabase(user.wallet, user.email, user.name);
-            
-            // Load referral info
             loadReferralStatus();
         }
 
-        function showDisconnecting() {
-            loginContainer.classList.add('hidden');
-            loadingContainer.classList.add('hidden');
-            profileContainer.classList.add('hidden');
-            disconnectingContainer.classList.remove('hidden');
-            cardTitle.textContent = 'Disconnecting';
-
-            if (presaleBanner) {
-                presaleBanner.classList.add('hidden');
-            }
-        }
-
         // ============================================
-        // Balance Fetching
+        // Balance
         // ============================================
         async function fetchBalance(address) {
+            const balanceLoading = document.getElementById('balanceLoading');
+            const balanceDisplay = document.getElementById('balanceDisplay');
+            const claimContainer = document.getElementById('claimButtonContainer');
+            
             balanceLoading.classList.remove('hidden');
             balanceDisplay.classList.add('hidden');
-            claimButtonContainer.classList.add('hidden');
+            claimContainer.classList.add('hidden');
 
             try {
-                const apiUrl = `https://api.wallettwo.com/blockchain/balance/137/${address}/${CONFIG.VIP_TOKEN_ADDRESS}`;
-                console.log('Fetching balance from WalletTwo API...');
-                
-                const response = await fetch(apiUrl);
-                
+                const response = await fetch(`https://api.wallettwo.com/blockchain/balance/137/${address}/${CONFIG.VIP_TOKEN_ADDRESS}`);
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('WalletTwo API response:', data);
-                    
-                    let balance = 0;
-                    if (typeof data === 'number') {
-                        balance = data;
-                    } else if (data.balance !== undefined) {
-                        balance = parseFloat(data.balance);
-                    } else if (data.result !== undefined) {
-                        balance = parseFloat(data.result);
-                    } else if (data.value !== undefined) {
-                        balance = parseFloat(data.value);
-                    }
-                    
-                    displayBalance(balance);
+                    let balance = typeof data === 'number' ? data : (data.balance || data.result || data.value || 0);
+                    displayBalance(parseFloat(balance));
                     return;
                 }
-            } catch (error) {
-                console.log('WalletTwo API failed, trying RPC:', error.message);
+            } catch (e) {
+                console.log('WalletTwo API failed, using RPC');
             }
 
-            await fetchBalanceFromRPC(address);
-        }
-
-        async function fetchBalanceFromRPC(address) {
             try {
                 const provider = new ethers.JsonRpcProvider(CONFIG.POLYGON_RPC);
                 const contract = new ethers.Contract(CONFIG.VIP_TOKEN_ADDRESS, ERC20_ABI, provider);
                 const balance = await contract.balanceOf(address);
-                const formatted = parseFloat(ethers.formatUnits(balance, 18));
-                displayBalance(formatted);
-            } catch (error) {
-                console.error('RPC balance fetch failed:', error);
+                displayBalance(parseFloat(ethers.formatUnits(balance, 18)));
+            } catch (e) {
+                console.error('RPC failed:', e);
                 displayBalance(0);
             }
         }
 
         function displayBalance(balance) {
-            balanceLoading.classList.add('hidden');
-            balanceDisplay.classList.remove('hidden');
-            
-            balanceAmount.textContent = balance.toFixed(2);
+            document.getElementById('balanceLoading').classList.add('hidden');
+            document.getElementById('balanceDisplay').classList.remove('hidden');
+            document.getElementById('balanceAmount').textContent = balance.toFixed(2);
             
             if (balance < CONFIG.MIN_BALANCE_TO_HIDE_CLAIM) {
-                claimButtonContainer.classList.remove('hidden');
-            } else {
-                claimButtonContainer.classList.add('hidden');
+                document.getElementById('claimButtonContainer').classList.remove('hidden');
             }
         }
 
         // ============================================
-        // REFERRAL SYSTEM (Simplified)
+        // REFERRAL SYSTEM
         // ============================================
         async function loadReferralStatus() {
-            if (!currentUser || !currentUser.wallet) return;
+            if (!currentUser?.wallet) return;
+
+            const referralLoading = document.getElementById('referralLoading');
+            const referralDisabled = document.getElementById('referralDisabled');
+            const referralContent = document.getElementById('referralContent');
             
-            const referralSection = document.getElementById('referralSection');
-            
+            referralLoading.classList.remove('hidden');
+            referralDisabled.classList.add('hidden');
+            referralContent.classList.add('hidden');
+
             try {
                 const response = await fetch(`/api/referral/status/${currentUser.wallet}`);
                 referralStatus = await response.json();
                 
-                console.log('Referral status:', referralStatus);
+                console.log('Referral status loaded:', referralStatus);
                 
-                // Check if program is enabled
+                referralLoading.classList.add('hidden');
+
                 if (!referralStatus.programEnabled) {
-                    referralSection.classList.add('hidden');
+                    referralDisabled.classList.remove('hidden');
                     return;
                 }
-                
-                referralSection.classList.remove('hidden');
-                
-                // ========================================
-                // PART 1: Set Referrer Section
-                // ========================================
+
+                referralContent.classList.remove('hidden');
+
+                // Part 1: Set Referrer Section
                 const setReferrerSection = document.getElementById('setReferrerSection');
                 const referrerSetSection = document.getElementById('referrerSetSection');
-                
+
                 if (referralStatus.hasReferrer) {
-                    // User already has a referrer - show confirmation
                     setReferrerSection.classList.add('hidden');
                     referrerSetSection.classList.remove('hidden');
                     
-                    const shortWallet = referralStatus.referrerWallet 
-                        ? `${referralStatus.referrerWallet.substring(0, 6)}...${referralStatus.referrerWallet.substring(referralStatus.referrerWallet.length - 4)}`
-                        : 'Unknown';
+                    const wallet = referralStatus.referrerWallet || '';
+                    const shortWallet = wallet ? `${wallet.slice(0, 6)}...${wallet.slice(-4)}` : 'Unknown';
                     document.getElementById('referrerDisplay').textContent = shortWallet;
                     document.getElementById('referrerCodeDisplay').textContent = referralStatus.referrerCode || '--';
                 } else {
-                    // User can still set a referrer
                     setReferrerSection.classList.remove('hidden');
                     referrerSetSection.classList.add('hidden');
                 }
-                
-                // ========================================
-                // PART 2: User's Own Referral Code
-                // ========================================
-                const referralGenerate = document.getElementById('referralGenerate');
-                const referralDisplay = document.getElementById('referralDisplay');
-                
+
+                // Part 2: My Code Section
+                const generateCodeSection = document.getElementById('generateCodeSection');
+                const myCodeSection = document.getElementById('myCodeSection');
+
                 if (referralStatus.myCode) {
-                    // User has a code - show it
-                    referralGenerate.classList.add('hidden');
-                    referralDisplay.classList.remove('hidden');
+                    generateCodeSection.classList.add('hidden');
+                    myCodeSection.classList.remove('hidden');
                     
                     document.getElementById('myReferralCode').textContent = referralStatus.myCode;
                     document.getElementById('referralCount').textContent = referralStatus.stats?.totalReferrals || 0;
                     document.getElementById('referralEarned').textContent = (referralStatus.stats?.totalBonusEarned || 0).toFixed(2);
-                    
-                    // Build bonus info text
+
+                    // Bonus info
+                    const info = referralStatus.bonusInfo || {};
                     let bonusText = '';
-                    const info = referralStatus.bonusInfo;
-                    if (info) {
-                        if (info.signupType === 'fixed' && info.signupAmount > 0) {
-                            bonusText = `Earn ${info.signupAmount} VIP per friend signup`;
-                        } else if (info.signupType === 'percentage' && info.signupAmount > 0) {
-                            bonusText = `Earn ${info.signupAmount}% of friend's first purchase`;
-                        }
-                        
-                        if (info.presaleAmount > 0) {
-                            if (bonusText) bonusText += ' • ';
-                            if (info.presaleType === 'fixed') {
-                                bonusText += `${info.presaleAmount} VIP per presale purchase`;
-                            } else {
-                                bonusText += `${info.presaleAmount}% of presale purchases`;
-                            }
-                        }
+                    if (info.signupAmount > 0) {
+                        bonusText = info.signupType === 'fixed' 
+                            ? `Earn ${info.signupAmount} VIP per friend` 
+                            : `Earn ${info.signupAmount}% of friend's purchase`;
+                    }
+                    if (info.presaleAmount > 0) {
+                        if (bonusText) bonusText += ' • ';
+                        bonusText += info.presaleType === 'fixed'
+                            ? `${info.presaleAmount} VIP per presale`
+                            : `${info.presaleAmount}% of presale`;
                     }
                     document.getElementById('referralBonusInfo').textContent = bonusText || 'Invite friends to earn rewards!';
                 } else {
-                    // User doesn't have a code yet
-                    referralGenerate.classList.remove('hidden');
-                    referralDisplay.classList.add('hidden');
+                    generateCodeSection.classList.remove('hidden');
+                    myCodeSection.classList.add('hidden');
                 }
-                
+
             } catch (error) {
                 console.error('Failed to load referral status:', error);
-                referralSection.classList.add('hidden');
+                referralLoading.classList.add('hidden');
+                referralDisabled.classList.remove('hidden');
             }
         }
 
-        // Set referrer (one-time only)
+        // Set referrer (apply code)
         async function setReferrer() {
-            const codeInput = document.getElementById('referralCodeInput');
+            const input = document.getElementById('referralCodeInput');
             const errorEl = document.getElementById('setReferrerError');
+            const successEl = document.getElementById('setReferrerSuccess');
             const btn = document.getElementById('setReferrerBtn');
             
-            const code = codeInput.value.trim().toUpperCase();
+            const code = input.value.trim().toUpperCase();
+            
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
             
             if (!code || code.length < 6) {
-                errorEl.textContent = 'Please enter a valid referral code (6-8 characters)';
+                errorEl.textContent = 'Please enter a valid 8-character code';
                 errorEl.classList.remove('hidden');
                 return;
             }
-            
+
             btn.disabled = true;
             btn.textContent = 'Applying...';
-            errorEl.classList.add('hidden');
-            
+
             try {
                 const response = await fetch('/api/referral/set', {
                     method: 'POST',
@@ -803,17 +715,15 @@
                         referralCode: code
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
-                    // Reload referral status to update UI
-                    await loadReferralStatus();
+                    successEl.textContent = 'Referrer linked successfully!';
+                    successEl.classList.remove('hidden');
                     
-                    // Show success
-                    if (data.signupBonus > 0) {
-                        alert(`Success! Your referrer will receive ${data.signupBonus} VIP as a bonus.`);
-                    }
+                    // Reload to update UI
+                    setTimeout(() => loadReferralStatus(), 1000);
                 } else {
                     errorEl.textContent = data.error || 'Failed to set referrer';
                     errorEl.classList.remove('hidden');
@@ -828,42 +738,39 @@
             }
         }
 
-        // Generate own referral code
+        // Generate own code
         async function generateReferralCode() {
-            if (!currentUser || !currentUser.wallet) return;
-            
+            if (!currentUser?.wallet) return;
+
             const btn = document.getElementById('generateCodeBtn');
             btn.disabled = true;
             btn.textContent = 'Generating...';
-            
+
             try {
                 const response = await fetch('/api/referral/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        walletAddress: currentUser.wallet
-                    })
+                    body: JSON.stringify({ walletAddress: currentUser.wallet })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
-                    // Reload to show the new code
                     await loadReferralStatus();
                 } else {
-                    alert(data.error || 'Failed to generate referral code');
+                    alert(data.error || 'Failed to generate code');
                     btn.disabled = false;
-                    btn.textContent = 'Generate Referral Code';
+                    btn.textContent = 'Generate My Code';
                 }
             } catch (error) {
-                console.error('Failed to generate referral code:', error);
+                console.error('Error generating code:', error);
                 alert('Network error. Please try again.');
                 btn.disabled = false;
-                btn.textContent = 'Generate Referral Code';
+                btn.textContent = 'Generate My Code';
             }
         }
 
-        // Copy referral code
+        // Copy code
         function copyReferralCode() {
             const code = document.getElementById('myReferralCode').textContent;
             navigator.clipboard.writeText(code).then(() => {
@@ -872,36 +779,31 @@
                 setTimeout(() => {
                     btn.innerHTML = '<span class="material-symbols-outlined text-xl">content_copy</span>';
                 }, 2000);
-            }).catch(err => {
-                console.error('Copy failed:', err);
             });
         }
 
         // ============================================
-        // Copy Wallet Address
+        // Copy Wallet
         // ============================================
         function copyAddress() {
-            if (currentUser && currentUser.wallet) {
+            if (currentUser?.wallet) {
                 navigator.clipboard.writeText(currentUser.wallet).then(() => {
-                    copyBtn.innerHTML = '<span class="material-symbols-outlined text-xl text-green-400">check</span>';
+                    const btn = document.getElementById('copyBtn');
+                    btn.innerHTML = '<span class="material-symbols-outlined text-xl text-green-400">check</span>';
                     setTimeout(() => {
-                        copyBtn.innerHTML = '<span class="material-symbols-outlined text-xl">content_copy</span>';
+                        btn.innerHTML = '<span class="material-symbols-outlined text-xl">content_copy</span>';
                     }, 2000);
-                }).catch(err => {
-                    console.error('Copy failed:', err);
                 });
             }
         }
 
         // ============================================
-        // Disconnect / Logout
+        // Disconnect
         // ============================================
         function disconnect() {
             if (isDisconnecting) return;
             isDisconnecting = true;
-            
-            console.log('Disconnecting...');
-            
+
             clearSession();
             currentUser = null;
             acceptMessages = false;
@@ -911,112 +813,60 @@
             showDisconnecting();
 
             logoutIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true`;
-            
-            let logoutHandled = false;
-            
-            const handleLogoutMessage = (event) => {
-                if (event.origin.includes('wallettwo.com') && !logoutHandled) {
-                    console.log('Logout message:', event.data);
-                    if (event.data && (event.data.type === 'logout' || event.data.type === 'logoutSuccess' || event.data.event === 'logout')) {
-                        logoutHandled = true;
-                        window.removeEventListener('message', handleLogoutMessage);
-                        completeDisconnect();
-                    }
-                }
-            };
-            
-            window.addEventListener('message', handleLogoutMessage);
-            
-            setTimeout(() => {
-                if (!logoutHandled) {
-                    console.log('Logout timeout, redirecting anyway');
-                    window.removeEventListener('message', handleLogoutMessage);
-                    completeDisconnect();
-                }
-            }, 2000);
-        }
 
-        function completeDisconnect() {
-            console.log('Disconnect complete, redirecting to home');
-            window.location.href = '/';
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
         }
 
         // ============================================
         // WalletTwo Message Handler
         // ============================================
-        function handleWalletTwoMessage(event) {
-            if (!event.origin.includes('wallettwo.com')) {
-                return;
-            }
+        window.addEventListener('message', (event) => {
+            if (!event.origin.includes('wallettwo.com')) return;
+            if (!acceptMessages || isDisconnecting) return;
 
             const data = event.data;
-            console.log('Message from WalletTwo:', data);
-
-            if (!acceptMessages || isDisconnecting) {
-                console.log('Ignoring message - acceptMessages:', acceptMessages, 'isDisconnecting:', isDisconnecting);
-                return;
-            }
+            console.log('WalletTwo message:', data);
 
             if (data && (data.type === 'wallet_login' || data.event === 'wallet_login')) {
                 const wallet = data.wallet || data.wlt || data.address;
-                
                 if (wallet) {
-                    console.log('Wallet login received:', wallet);
                     acceptMessages = false;
-                    
                     if (data.code) {
-                        exchangeCodeForUserInfo(data.code, wallet, data.user);
+                        exchangeCode(data.code, wallet, data.user);
                     } else {
-                        const userData = {
-                            wallet: wallet,
-                            userId: data.user || data.usr,
-                            timestamp: Date.now()
-                        };
+                        const userData = { wallet, userId: data.user || data.usr, timestamp: Date.now() };
                         saveSession(userData);
                         showProfile(userData);
                     }
                 }
             }
-        }
+        });
 
-        // ============================================
-        // Exchange Code for User Info
-        // ============================================
-        async function exchangeCodeForUserInfo(code, wallet, userId) {
+        async function exchangeCode(code, wallet, userId) {
             showLoading();
-            
             try {
-                console.log('Exchanging code for user info...');
-                
                 const response = await fetch('/api/wallettwo/exchange', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code })
                 });
-
                 const data = await response.json();
-                console.log('Exchange response:', data);
-
+                
                 const userData = {
-                    wallet: wallet,
+                    wallet,
                     userId: userId || data.user?.sub || data.user?.id,
                     email: data.user?.email,
-                    name: data.user?.name || data.user?.given_name || 
-                          (data.user?.given_name && data.user?.family_name ? 
-                           `${data.user.given_name} ${data.user.family_name}` : null),
+                    name: data.user?.name || data.user?.given_name,
                     accessToken: data.access_token,
                     timestamp: Date.now()
                 };
-
                 saveSession(userData);
                 showProfile(userData);
             } catch (error) {
                 console.error('Exchange failed:', error);
-                const userData = {
-                    wallet: wallet,
-                    userId: userId,
-                    timestamp: Date.now()
-                };
+                const userData = { wallet, userId, timestamp: Date.now() };
                 saveSession(userData);
                 showProfile(userData);
             }
@@ -1025,74 +875,54 @@
         // ============================================
         // Event Listeners
         // ============================================
-        copyBtn.addEventListener('click', copyAddress);
-        disconnectBtn.addEventListener('click', disconnect);
-        window.addEventListener('message', handleWalletTwoMessage);
+        document.getElementById('copyBtn').addEventListener('click', copyAddress);
+        document.getElementById('disconnectBtn').addEventListener('click', disconnect);
+        document.getElementById('setReferrerBtn').addEventListener('click', setReferrer);
+        document.getElementById('generateCodeBtn').addEventListener('click', generateReferralCode);
+        document.getElementById('copyCodeBtn').addEventListener('click', copyReferralCode);
         
-        // Auto-uppercase referral code input
-        document.getElementById('referralCodeInput')?.addEventListener('input', function(e) {
-            e.target.value = e.target.value.toUpperCase();
+        // Auto-uppercase referral input
+        document.getElementById('referralCodeInput').addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
         });
 
         // ============================================
         // Initialize
         // ============================================
         function init() {
-            console.log('Profile page initialized');
-            console.log('URL:', window.location.href);
+            const params = new URLSearchParams(window.location.search);
+            const wallet = params.get('wlt') || params.get('wallet');
+            const code = params.get('code');
 
-            // 1. Check URL params (coming from claim page or redirect)
-            const urlData = getDataFromURL();
-            
-            // If we have a code, exchange it for user info
-            if (urlData.code && urlData.wallet) {
-                console.log('Have code and wallet from URL, exchanging...');
-                window.history.replaceState({}, document.title, '/profile');
-                exchangeCodeForUserInfo(urlData.code, urlData.wallet, urlData.userId);
+            if (code && wallet) {
+                window.history.replaceState({}, '', '/profile');
+                exchangeCode(code, wallet, params.get('usr'));
                 return;
             }
-            
-            // If we only have wallet from URL (no code), we need to show iframe to get full profile
-            // But first check if we have a stored session with full info
-            if (urlData.wallet) {
-                console.log('Wallet from URL:', urlData.wallet);
-                window.history.replaceState({}, document.title, '/profile');
-                
-                // Check if stored session has more info (email, name)
+
+            if (wallet) {
+                window.history.replaceState({}, '', '/profile');
                 const stored = getStoredSession();
-                if (stored && stored.wallet === urlData.wallet && (stored.email || stored.name)) {
-                    console.log('Found stored session with full info');
+                if (stored?.wallet === wallet && (stored.email || stored.name)) {
                     showProfile(stored);
                     return;
                 }
-                
-                // No full info - show profile with just wallet, but prompt for full login
-                const userData = {
-                    wallet: urlData.wallet,
-                    userId: urlData.userId,
-                    signature: urlData.signature,
-                    timestamp: Date.now()
-                };
+                const userData = { wallet, timestamp: Date.now() };
                 saveSession(userData);
                 showProfile(userData);
                 return;
             }
 
-            // 2. Check localStorage for existing session
             const stored = getStoredSession();
-            if (stored && stored.wallet) {
-                console.log('Using stored session:', stored.wallet);
+            if (stored?.wallet) {
                 acceptMessages = false;
                 showProfile(stored);
                 return;
             }
 
-            // 3. No session - show login
-            console.log('No session found, showing login');
             showLogin();
         }
 
-        // Start
         init();
     </script>
 </body>
