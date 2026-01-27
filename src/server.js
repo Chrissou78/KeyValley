@@ -2186,52 +2186,38 @@ app.get('/api/admin/referral/codes', requireAdminAuth, async (req, res) => {
     try {
         const result = await db.pool.query(`
             SELECT 
-                id,
-                code,
-                owner_wallet,
-                owner_email,
-                enabled,
-                total_referrals,
-                total_claims,
-                total_presale_purchases,
-                total_bonus_earned,
-                created_at,
-                updated_at
+                id, code, owner_wallet, owner_email, enabled,
+                total_referrals, total_claims, total_presale_purchases,
+                total_bonus_earned, created_at, updated_at
             FROM referral_codes
             ORDER BY created_at DESC
         `);
         
-        res.json({ codes: result.rows });
+        res.json(result.rows);
     } catch (error) {
         console.error('❌ Admin referral codes error:', error.message);
-        res.status(500).json({ error: 'Failed to get referral codes' });
+        res.status(500).json([]);
     }
 });
 
 
-// GET /api/admin/referral/list (referrals activity)
+// GET /api/admin/referral/list
 app.get('/api/admin/referral/list', requireAdminAuth, async (req, res) => {
     try {
         const result = await db.pool.query(`
             SELECT 
-                r.id,
-                r.referrer_wallet,
-                r.referrer_code,
-                r.referee_wallet,
-                r.signup_bonus_paid,
-                r.presale_bonus_paid,
-                r.created_at,
-                rc.owner_email as referrer_email
-            FROM referrals r
-            LEFT JOIN referral_codes rc ON r.referrer_code = rc.code
-            ORDER BY r.created_at DESC
+                id, referrer_wallet, referrer_code, referee_wallet,
+                referee_email, signup_bonus_paid, presale_bonus_paid,
+                presale_bonus_tx, created_at
+            FROM referrals
+            ORDER BY created_at DESC
             LIMIT 100
         `);
         
-        res.json({ referrals: result.rows });
+        res.json(result.rows);
     } catch (error) {
         console.error('❌ Admin referral list error:', error.message);
-        res.status(500).json({ error: 'Failed to get referrals' });
+        res.status(500).json([]);
     }
 });
 
