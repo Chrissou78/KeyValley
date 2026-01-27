@@ -723,7 +723,7 @@ app.post('/api/claim/register', async (req, res) => {
                                 console.log(`🎁 Minting ${bonusAmount} VIP bonus to referrer ${referrerWallet}...`);
                                 
                                 try {
-                                    const bonusResult = await minter.mintToAddress(referrerWallet, bonusAmount);
+                                    const bonusResult = await minter.mintToAddress(referrerWallet, bonusAmount, true);
                                     const bonusTxHash = bonusResult.receipt?.hash || bonusResult.hash || 'bonus-minted';
                                     
                                     // Update referral record with bonus
@@ -1889,7 +1889,6 @@ app.get('/api/referral/status/:wallet', async (req, res) => {
 });
 
 // POST /api/referral/set - Set referrer for a user (one-time only)
-// POST /api/referral/set
 app.post('/api/referral/set', async (req, res) => {
     try {
         const { walletAddress, referralCode } = req.body;
@@ -1917,6 +1916,7 @@ app.post('/api/referral/set', async (req, res) => {
         }
 
         const settings = settingsResult.rows[0];
+        console.log('⚙️ Settings:', { bonus_type: settings.bonus_type, bonus_amount: settings.bonus_amount });
 
         // Check if user already has a referrer
         const existingReferrer = await db.pool.query(
@@ -1939,6 +1939,7 @@ app.post('/api/referral/set', async (req, res) => {
         }
 
         const referrerWallet = codeResult.rows[0].owner_wallet;
+        console.log('👤 Referrer wallet:', referrerWallet);
 
         if (!codeResult.rows[0].enabled) {
             return res.status(400).json({ success: false, error: 'This referral code is no longer active' });
@@ -1953,6 +1954,8 @@ app.post('/api/referral/set', async (req, res) => {
         let currentBalance = 0;
         let immediateBonus = 0;
         let bonusTxHash = null;
+        
+        console.log('💰 Checking referee balance...');
         
         try {
             await minter.initialize();
@@ -1971,6 +1974,7 @@ app.post('/api/referral/set', async (req, res) => {
             SET referrer_wallet = $1, referrer_code = $2, referrer_set_at = NOW()
             WHERE address = $3
         `, [referrerWallet, code, normalizedAddress]);
+        console.log('📝 Updated registrant with referrer');
 
         // Update referral_codes stats
         await db.pool.query(`
@@ -1978,17 +1982,17 @@ app.post('/api/referral/set', async (req, res) => {
             SET total_referrals = total_referrals + 1, updated_at = NOW()
             WHERE code = $1
         `, [code]);
+        console.log('📝 Updated referral code stats');
 
-        // Create referral record (track if bonus already paid for existing balance)
+        // Create referral record
         await db.pool.query(`
             INSERT INTO referrals (referrer_wallet, referrer_code, referee_wallet, signup_bonus_paid, presale_bonus_paid, created_at)
             VALUES ($1, $2, $3, 0, 0, NOW())
             ON CONFLICT (referee_wallet) DO NOTHING
         `, [referrerWallet, code, normalizedAddress]);
+        console.log('📝 Created referral record');
 
         // ==================== CASE 2: USER HAS EXISTING BALANCE ====================
-        // If user already has VIP tokens, pay bonus immediately based on current balance
-        
         if (currentBalance > 0) {
             console.log('🎁 User has existing balance, calculating immediate bonus...');
             
@@ -1996,11 +2000,10 @@ app.post('/api/referral/set', async (req, res) => {
             if (settings.bonus_type === 'fixed') {
                 immediateBonus = parseFloat(settings.bonus_amount) || 0;
             } else if (settings.bonus_type === 'percentage') {
-                // 5% of current balance
                 immediateBonus = (currentBalance * parseFloat(settings.bonus_amount)) / 100;
             }
             
-            console.log('🎁 Immediate bonus calculation:', {
+            console.log('🎁 Bonus calculation:', {
                 type: settings.bonus_type,
                 rate: settings.bonus_amount,
                 currentBalance,
@@ -2011,8 +2014,10 @@ app.post('/api/referral/set', async (req, res) => {
                 try {
                     console.log(`🎁 Minting ${immediateBonus} VIP to referrer ${referrerWallet}...`);
                     
-                    const bonusResult = await minter.mintToAddress(referrerWallet, immediateBonus);
+                    const bonusResult = await minter.mintToAddress(referrerWallet, immediateBonus, true);
                     bonusTxHash = bonusResult.receipt?.hash || bonusResult.hash || bonusResult.transactionHash;
+                    
+                    console.log('✅ Bonus minted! TX:', bonusTxHash);
                     
                     // Update referral record with bonus paid
                     await db.pool.query(`
@@ -2030,11 +2035,10 @@ app.post('/api/referral/set', async (req, res) => {
                         WHERE code = $2
                     `, [immediateBonus, code]);
                     
-                    console.log('✅ Immediate bonus minted! TX:', bonusTxHash);
+                    console.log('📝 Updated bonus stats in DB');
                     
                 } catch (mintError) {
-                    console.error('⚠️ Failed to mint immediate bonus:', mintError.message);
-                    // Don't fail the referral set, just log the error
+                    console.error('❌ Failed to mint immediate bonus:', mintError.message);
                 }
             }
         } else {
@@ -2048,13 +2052,15 @@ app.post('/api/referral/set', async (req, res) => {
             referrerWallet: `${referrerWallet.slice(0, 6)}...${referrerWallet.slice(-4)}`
         };
         
-        if (immediateBonus > 0) {
+        if (immediateBonus > 0 && bonusTxHash) {
             response.bonusPaid = {
                 amount: immediateBonus,
                 txHash: bonusTxHash,
                 reason: 'Bonus for existing balance'
             };
-            response.message = `Referrer linked! They received ${immediateBonus.toFixed(2)} VIP bonus.`;
+            response.message = `Referrer linked! They received ${immediateBonus.toFixed(4)} VIP bonus.`;
+        } else if (currentBalance > 0 && immediateBonus > 0) {
+            response.message = 'Referrer linked! Bonus minting failed but will be retried.';
         } else {
             response.message = 'Referrer linked! They will receive bonuses when you claim or purchase.';
         }
@@ -2565,7 +2571,7 @@ app.post('/api/presale/verify-payment', async (req, res) => {
                                 console.log(`🎁 Minting ${bonusAmount} VIP presale bonus to referrer...`);
                                 
                                 try {
-                                    const bonusMintResult = await minter.mintToAddress(referrerWallet, bonusAmount);
+                                    const bonusMintResult = await minter.mintToAddress(referrerWallet, bonusAmount, true);
                                     const bonusTxHash = bonusMintResult.receipt?.hash || bonusMintResult.hash || 'bonus-minted';
                                     
                                     // Update purchase with referral bonus info
