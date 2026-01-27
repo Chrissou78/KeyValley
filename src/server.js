@@ -1443,27 +1443,6 @@ app.post('/api/referral/track', async (req, res) => {
     }
 });
 
-// Get referral settings (public - limited info)
-app.get('/api/referral/settings', async (req, res) => {
-    try {
-        const settings = await getReferralSettings();
-        res.json({
-            success: true,
-            enabled: settings.enabled,
-            claimBonus: {
-                type: settings.claimBonusType,
-                amount: settings.claimBonusAmount
-            },
-            presaleBonus: {
-                type: settings.presaleBonusType,
-                amount: settings.presaleBonusAmount
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, error: 'Failed to get settings' });
-    }
-});
-
 // ===========================================
 // Admin Referral Endpoints
 // ===========================================
@@ -1666,33 +1645,35 @@ app.post('/api/referral/settings', requireAdminAuth, async (req, res) => {
     try {
         const { enabled, bonusType, bonusAmount, presaleBonusType, presaleBonusAmount, minPurchaseForBonus } = req.body;
         
-        console.log('Saving referral settings:', req.body);
+        console.log('📝 Saving referral settings:', { enabled, bonusType, bonusAmount });
         
-        // Check if settings exist
-        const existing = await db.pool.query('SELECT id FROM referral_settings WHERE id = 1');
+        // Update the settings
+        const result = await db.pool.query(`
+            UPDATE referral_settings 
+            SET enabled = $1, 
+                bonus_type = $2, 
+                bonus_amount = $3, 
+                presale_bonus_type = $4, 
+                presale_bonus_amount = $5,
+                min_purchase_for_bonus = $6, 
+                updated_at = NOW()
+            WHERE id = 1
+            RETURNING *
+        `, [enabled, bonusType, bonusAmount, presaleBonusType, presaleBonusAmount, minPurchaseForBonus]);
         
-        if (existing.rows.length === 0) {
-            // Insert new settings
+        if (result.rows.length === 0) {
+            // Insert if doesn't exist
             await db.pool.query(`
                 INSERT INTO referral_settings (id, enabled, bonus_type, bonus_amount, presale_bonus_type, presale_bonus_amount, min_purchase_for_bonus, updated_at)
                 VALUES (1, $1, $2, $3, $4, $5, $6, NOW())
             `, [enabled, bonusType, bonusAmount, presaleBonusType, presaleBonusAmount, minPurchaseForBonus]);
-        } else {
-            // Update existing
-            await db.pool.query(`
-                UPDATE referral_settings 
-                SET enabled = $1, bonus_type = $2, bonus_amount = $3, 
-                    presale_bonus_type = $4, presale_bonus_amount = $5,
-                    min_purchase_for_bonus = $6, updated_at = NOW()
-                WHERE id = 1
-            `, [enabled, bonusType, bonusAmount, presaleBonusType, presaleBonusAmount, minPurchaseForBonus]);
         }
         
-        console.log('✅ Referral settings saved');
+        console.log('✅ Referral settings saved:', { enabled });
         res.json({ success: true, message: 'Referral settings updated' });
     } catch (error) {
-        console.error('Error updating referral settings:', error);
-        res.status(500).json({ error: 'Failed to update referral settings' });
+        console.error('❌ Error updating referral settings:', error);
+        res.status(500).json({ error: 'Failed to update referral settings', details: error.message });
     }
 });
 

@@ -1199,11 +1199,13 @@
             const settings = {
                 enabled: document.getElementById('referral-enabled-toggle').classList.contains('active'),
                 bonusType: document.getElementById('referral-bonus-type').value,
-                bonusAmount: parseFloat(document.getElementById('referral-bonus-amount').value),
+                bonusAmount: parseFloat(document.getElementById('referral-bonus-amount').value) || 5,
                 presaleBonusType: document.getElementById('referral-presale-bonus-type').value,
-                presaleBonusAmount: parseFloat(document.getElementById('referral-presale-bonus-amount').value),
-                minPurchaseForBonus: parseFloat(document.getElementById('referral-min-purchase').value)
+                presaleBonusAmount: parseFloat(document.getElementById('referral-presale-bonus-amount').value) || 5,
+                minPurchaseForBonus: parseFloat(document.getElementById('referral-min-purchase').value) || 10
             };
+            
+            console.log('Saving referral settings:', settings);
             
             try {
                 const response = await fetch('/api/referral/settings', {
@@ -1214,16 +1216,17 @@
                 });
                 
                 const data = await response.json();
+                console.log('Save response:', data);
                 
                 if (data.success) {
-                    statusEl.innerHTML = '<span class="text-green-400">Settings saved!</span>';
+                    statusEl.innerHTML = '<span class="text-green-400">✓ Settings saved!</span>';
                     setTimeout(() => { statusEl.innerHTML = ''; }, 3000);
                 } else {
-                    statusEl.innerHTML = `<span class="text-red-400">${data.error || 'Failed to save'}</span>`;
+                    statusEl.innerHTML = `<span class="text-red-400">Error: ${data.error || 'Failed to save'}</span>`;
                 }
             } catch (error) {
                 console.error('Error saving referral settings:', error);
-                statusEl.innerHTML = '<span class="text-red-400">Error saving settings</span>';
+                statusEl.innerHTML = '<span class="text-red-400">Network error</span>';
             }
         }
         
