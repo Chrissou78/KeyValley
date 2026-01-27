@@ -2208,20 +2208,53 @@ app.get('/api/members/sync', requireAdminAuth, async (req, res) => {
             }
         });
         
+        const data = await response.json();
+        
+        // Debug: log the actual response structure
+        console.log('📋 WalletTwo API response:', JSON.stringify(data, null, 2));
+        console.log('📋 Response type:', typeof data);
+        console.log('📋 Is array:', Array.isArray(data));
+        
         if (!response.ok) {
-            return res.status(response.status).json({ error: 'Failed to fetch members' });
+            console.error('❌ WalletTwo API error:', response.status, data);
+            return res.status(response.status).json({ error: 'Failed to fetch members', details: data });
         }
         
-        const members = await response.json();
+        // Handle different response formats
+        let members = [];
+        if (Array.isArray(data)) {
+            members = data;
+        } else if (data && Array.isArray(data.members)) {
+            members = data.members;
+        } else if (data && Array.isArray(data.data)) {
+            members = data.data;
+        } else if (data && Array.isArray(data.users)) {
+            members = data.users;
+        } else if (data && Array.isArray(data.results)) {
+            members = data.results;
+        } else {
+            console.log('⚠️ Unknown response format, returning raw data');
+            return res.json({ 
+                success: false, 
+                error: 'Unknown response format',
+                rawResponse: data 
+            });
+        }
+        
+        console.log(`📋 Found ${members.length} members`);
+        
         let synced = 0;
         let updated = 0;
         
         for (const member of members) {
-            const wallet = member.wallet?.toLowerCase() || member.walletAddress?.toLowerCase();
-            const email = member.email;
-            const name = member.name || member.displayName;
+            const wallet = (member.wallet || member.walletAddress || member.address || '').toLowerCase();
+            const email = member.email || '';
+            const name = member.name || member.displayName || member.username || '';
             
-            if (!wallet) continue;
+            if (!wallet) {
+                console.log('⚠️ Skipping member without wallet:', member);
+                continue;
+            }
             
             // Check if exists
             const existing = await db.pool.query(
@@ -2233,18 +2266,17 @@ app.get('/api/members/sync', requireAdminAuth, async (req, res) => {
                 // Update existing
                 await db.pool.query(`
                     UPDATE registrants 
-                    SET email = COALESCE($1, email),
-                        metadata = jsonb_set(COALESCE(metadata, '{}'), '{wallettwo_name}', $2),
+                    SET email = COALESCE(NULLIF($1, ''), email),
                         updated_at = NOW()
-                    WHERE address = $3
-                `, [email, JSON.stringify(name || ''), wallet]);
+                    WHERE address = $2
+                `, [email, wallet]);
                 updated++;
             } else {
                 // Insert new
                 await db.pool.query(`
-                    INSERT INTO registrants (address, email, source, metadata, registered_at)
-                    VALUES ($1, $2, 'wallettwo_sync', $3, NOW())
-                `, [wallet, email, JSON.stringify({ wallettwo_name: name })]);
+                    INSERT INTO registrants (address, email, source, registered_at)
+                    VALUES ($1, $2, 'wallettwo_sync', NOW())
+                `, [wallet, email]);
                 synced++;
             }
         }
@@ -2260,7 +2292,7 @@ app.get('/api/members/sync', requireAdminAuth, async (req, res) => {
         
     } catch (error) {
         console.error('❌ Sync error:', error.message);
-        res.status(500).json({ error: 'Sync failed' });
+        res.status(500).json({ error: 'Sync failed', details: error.message });
     }
 });
 
