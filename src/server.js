@@ -553,113 +553,255 @@ app.post('/api/claim/register', async (req, res) => {
     try {
         const { wallet_address, signature, message } = req.body;
         
-        console.log('\n📥 CLAIM REQUEST:', { wallet_address, signature: signature ? 'provided' : 'none', message });
+        console.log('\n📥 CLAIM REQUEST:', { 
+            wallet_address, 
+            signature: signature ? 'provided' : 'none', 
+            message: message ? 'provided' : 'none'
+        });
 
+        // ==================== VALIDATION ====================
         if (!wallet_address || !ethers.isAddress(wallet_address)) {
             console.log('❌ Invalid wallet address');
-            return res.status(400).json({ error: 'Invalid wallet address' });
+            return res.status(400).json({ 
+                status: 'error',
+                error: 'Invalid wallet address',
+                message: 'Please provide a valid Polygon wallet address'
+            });
         }
 
         const normalizedAddress = ethers.getAddress(wallet_address).toLowerCase();
         console.log('📍 Normalized address:', normalizedAddress);
 
+        // ==================== SIGNATURE VERIFICATION (Optional) ====================
+        let signatureValid = false;
         if (signature && message) {
             try {
                 const recoveredAddress = ethers.verifyMessage(message, signature);
-                const isValid = recoveredAddress.toLowerCase() === normalizedAddress.toLowerCase();
-                console.log('🔐 Signature verified:', isValid ? 'Valid' : 'Invalid');
+                signatureValid = recoveredAddress.toLowerCase() === normalizedAddress;
+                console.log('🔐 Signature verification:', signatureValid ? '✅ Valid' : '❌ Invalid');
+                
+                if (!signatureValid) {
+                    console.log('⚠️ Signature mismatch - recovered:', recoveredAddress.toLowerCase());
+                }
             } catch (sigError) {
-                console.log('⚠️ Signature verification failed:', sigError.message);
+                console.log('⚠️ Signature verification error:', sigError.message);
             }
         }
 
+        // ==================== INITIALIZE MINTER ====================
         await minter.initialize();
         const networkConfig = getNetworkConfig();
         
+        // ==================== CHECK EXISTING REGISTRATION ====================
         let existingRegistrant = await db.getRegistrant(normalizedAddress);
         
         if (existingRegistrant && existingRegistrant.minted) {
-            console.log('📋 Already in DB and minted');
+            console.log('📋 Already in DB and minted - TX:', existingRegistrant.tx_hash);
             return res.status(409).json({
                 status: 'already_claimed',
-                message: 'This wallet has already claimed tokens',
-                tx_hash: existingRegistrant.txHash,
-                explorer_url: existingRegistrant.txHash 
-                    ? `${networkConfig.explorer}/tx/${existingRegistrant.txHash}` 
-                    : null
+                message: 'This wallet has already claimed VIP tokens',
+                tx_hash: existingRegistrant.tx_hash,
+                explorer_url: existingRegistrant.tx_hash 
+                    ? `${networkConfig.explorer}/tx/${existingRegistrant.tx_hash}` 
+                    : `${networkConfig.explorer}/address/${normalizedAddress}`,
+                claimed_at: existingRegistrant.minted_at
             });
         }
 
+        // ==================== CHECK ON-CHAIN BALANCE ====================
         const hasTokensOnChain = await minter.hasTokens(normalizedAddress);
         const currentBalance = await minter.getBalance(normalizedAddress);
         
-        console.log('💰 On-chain balance:', currentBalance, '| Has tokens:', hasTokensOnChain);
+        console.log('💰 On-chain status - Balance:', currentBalance, '| Has tokens:', hasTokensOnChain);
 
-        if (hasTokensOnChain) {
+        if (hasTokensOnChain && parseFloat(currentBalance) > 0) {
+            // User already has tokens on-chain
             if (!existingRegistrant) {
-                await db.addRegistrant(normalizedAddress, signature, { source: 'claim_page', preExisting: true });
-                console.log('📝 Added to PostgreSQL DB (pre-existing holder)');
+                // Add to DB as pre-existing holder
+                await db.addRegistrant(normalizedAddress, signature, { 
+                    source: 'claim_page', 
+                    preExisting: true,
+                    balance: currentBalance
+                });
+                console.log('📝 Added pre-existing holder to PostgreSQL DB');
             }
+            
             await db.markAsMinted(normalizedAddress, 'pre-existing');
-            console.log('✅ Marked as minted in DB');
+            console.log('✅ Marked as pre-existing in DB');
 
             return res.status(409).json({
                 status: 'already_claimed',
-                message: 'This wallet already has tokens',
+                message: 'This wallet already holds VIP tokens',
                 balance: currentBalance,
-                explorer_url: `${networkConfig.explorer}/address/${normalizedAddress}`
+                symbol: 'VIP',
+                explorer_url: `${networkConfig.explorer}/address/${normalizedAddress}`,
+                token_url: `${networkConfig.explorer}/token/${process.env.VIP_TOKEN_ADDRESS || '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F'}?a=${normalizedAddress}`
             });
         }
 
+        // ==================== REGISTER NEW USER ====================
         if (!existingRegistrant) {
-            await db.addRegistrant(normalizedAddress, signature, { source: 'claim_page' });
+            await db.addRegistrant(normalizedAddress, signature, { 
+                source: 'claim_page',
+                signatureVerified: signatureValid
+            });
             console.log('📝 Added new wallet to PostgreSQL DB');
         }
 
+        // ==================== MINT TOKENS ====================
         const mintAmount = parseInt(process.env.MINT_AMOUNT) || 2;
-        console.log(`🎯 Minting ${mintAmount} tokens...`);
+        console.log(`🎯 Initiating mint of ${mintAmount} VIP tokens...`);
 
         try {
             const result = await minter.mintToAddress(normalizedAddress, mintAmount);
             
+            // Handle skip case (minter detected existing tokens)
             if (result.skipped) {
+                console.log('⏭️ Mint skipped - user already has tokens');
                 await db.markAsMinted(normalizedAddress, 'skipped');
+                
                 return res.status(409).json({
                     status: 'already_claimed',
-                    message: 'Wallet already has tokens',
-                    balance: result.balance
+                    message: 'Wallet already has VIP tokens',
+                    balance: result.balance,
+                    symbol: 'VIP',
+                    explorer_url: `${networkConfig.explorer}/address/${normalizedAddress}`
                 });
             }
 
-            const txHash = result.receipt.hash;
+            // Successful mint
+            const txHash = result.receipt.hash || result.hash || result.transactionHash;
             await db.markAsMinted(normalizedAddress, txHash);
             
-            console.log('✅ Mint successful! TX:', txHash);
+            console.log('✅ Mint successful!');
+            console.log('   TX Hash:', txHash);
+            console.log('   Amount:', mintAmount, 'VIP');
 
-            return res.status(201).json({
+            // ==================== PROCESS REFERRAL BONUS ====================
+            let referralBonus = null;
+            try {
+                // Check if this user has a referrer
+                const referrerResult = await db.pool.query(
+                    'SELECT referrer_wallet, referrer_code FROM registrants WHERE address = $1 AND referrer_wallet IS NOT NULL',
+                    [normalizedAddress]
+                );
+                
+                if (referrerResult.rows.length > 0 && referrerResult.rows[0].referrer_wallet) {
+                    const referrerWallet = referrerResult.rows[0].referrer_wallet;
+                    const referrerCode = referrerResult.rows[0].referrer_code;
+                    
+                    console.log('🎁 User has referrer:', referrerWallet);
+                    
+                    // Get referral settings
+                    const settingsResult = await db.pool.query(
+                        'SELECT * FROM referral_settings WHERE id = 1'
+                    );
+                    
+                    if (settingsResult.rows.length > 0 && settingsResult.rows[0].enabled) {
+                        const settings = settingsResult.rows[0];
+                        let bonusAmount = 0;
+                        
+                        // Calculate bonus based on type
+                        if (settings.bonus_type === 'fixed') {
+                            bonusAmount = parseFloat(settings.bonus_amount) || 0;
+                        } else if (settings.bonus_type === 'percentage') {
+                            bonusAmount = (mintAmount * parseFloat(settings.bonus_amount)) / 100;
+                        }
+                        
+                        if (bonusAmount > 0) {
+                            // Check if signup bonus already paid for this referral
+                            const existingBonus = await db.pool.query(
+                                'SELECT signup_bonus_paid FROM referrals WHERE referee_wallet = $1',
+                                [normalizedAddress]
+                            );
+                            
+                            const alreadyPaid = existingBonus.rows.length > 0 && 
+                                parseFloat(existingBonus.rows[0].signup_bonus_paid) > 0;
+                            
+                            if (!alreadyPaid) {
+                                // Mint bonus tokens to referrer
+                                console.log(`🎁 Minting ${bonusAmount} VIP bonus to referrer ${referrerWallet}...`);
+                                
+                                try {
+                                    const bonusResult = await minter.mintToAddress(referrerWallet, bonusAmount);
+                                    const bonusTxHash = bonusResult.receipt?.hash || bonusResult.hash || 'bonus-minted';
+                                    
+                                    // Update referral record with bonus
+                                    await db.pool.query(`
+                                        UPDATE referrals 
+                                        SET signup_bonus_paid = signup_bonus_paid + $1
+                                        WHERE referee_wallet = $2
+                                    `, [bonusAmount, normalizedAddress]);
+                                    
+                                    referralBonus = {
+                                        referrer: referrerWallet,
+                                        amount: bonusAmount,
+                                        txHash: bonusTxHash,
+                                        type: 'signup'
+                                    };
+                                    
+                                    console.log('✅ Referral bonus minted! TX:', bonusTxHash);
+                                } catch (bonusError) {
+                                    console.error('⚠️ Failed to mint referral bonus:', bonusError.message);
+                                    // Don't fail the main claim - just log the error
+                                }
+                            } else {
+                                console.log('ℹ️ Signup bonus already paid for this referral');
+                            }
+                        }
+                    }
+                }
+            } catch (refError) {
+                console.error('⚠️ Referral bonus processing error:', refError.message);
+                // Don't fail the main claim
+            }
+
+            // ==================== SUCCESS RESPONSE ====================
+            const response = {
                 status: 'minted',
                 message: `Successfully minted ${mintAmount} VIP tokens!`,
                 tx_hash: txHash,
                 explorer_url: `${networkConfig.explorer}/tx/${txHash}`,
+                token_url: `${networkConfig.explorer}/token/${process.env.VIP_TOKEN_ADDRESS || '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F'}?a=${normalizedAddress}`,
                 amount: mintAmount,
-                symbol: 'VIP'
-            });
+                symbol: 'VIP',
+                network: 'Polygon'
+            };
+            
+            if (referralBonus) {
+                response.referral_bonus = referralBonus;
+            }
+
+            return res.status(201).json(response);
 
         } catch (mintError) {
             console.error('❌ Mint error:', mintError.message);
+            console.error('   Stack:', mintError.stack);
+            
+            // Determine if it's a recoverable error
+            const isGasError = mintError.message.includes('gas') || mintError.message.includes('insufficient');
+            const isNetworkError = mintError.message.includes('network') || mintError.message.includes('timeout');
+            
             return res.status(500).json({
                 status: 'error',
-                message: 'Failed to mint tokens. Please try again later.',
-                error: mintError.message
+                message: isGasError 
+                    ? 'Minting temporarily unavailable due to network congestion. Please try again later.'
+                    : isNetworkError
+                        ? 'Network error occurred. Please try again in a few moments.'
+                        : 'Failed to mint tokens. Please try again later.',
+                error: process.env.NODE_ENV === 'development' ? mintError.message : undefined,
+                retry: true
             });
         }
 
     } catch (error) {
         console.error('❌ CLAIM ERROR:', error.message);
+        console.error('   Stack:', error.stack);
+        
         return res.status(500).json({
             status: 'error',
-            message: 'Server error',
-            error: error.message
+            message: 'Server error occurred. Please try again later.',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 });
@@ -1823,39 +1965,57 @@ app.post('/api/referral/set', async (req, res) => {
             [referrerWallet, code, wallet]
         );
         
-        // Create referral record
-        await db.pool.query(
-            `INSERT INTO referrals (referrer_wallet, referrer_code, referee_wallet, referee_email, created_at)
-             VALUES ($1, $2, $3, $4, NOW())
-             ON CONFLICT (referee_wallet) DO NOTHING`,
-            [referrerWallet, code, wallet, userEmail]
-        );
-        
-        // Check referral settings for signup bonus
+        // Get referral settings for signup bonus
         const settingsResult = await db.pool.query('SELECT * FROM referral_settings WHERE id = 1');
-        const settings = settingsResult.rows[0];
+        const settings = settingsResult.rows[0] || {};
         
         let signupBonus = 0;
-        if (settings && settings.enabled && settings.bonus_type === 'fixed') {
-            signupBonus = parseFloat(settings.bonus_amount) || 0;
+        let mintTxHash = null;
+        
+        if (settings.enabled) {
+            // Calculate signup bonus
+            if (settings.bonus_type === 'fixed') {
+                signupBonus = parseFloat(settings.bonus_amount) || 0;
+            }
+            // For percentage type on signup, we could give a flat minimum or skip
+            // Since there's no purchase yet, percentage doesn't make sense for signup
+            // So we only give fixed bonus on signup
             
             if (signupBonus > 0) {
-                // Record the signup bonus
-                await db.pool.query(
-                    'UPDATE referrals SET signup_bonus_paid = $1 WHERE referee_wallet = $2',
-                    [signupBonus, wallet]
-                );
-                console.log(`Signup bonus of ${signupBonus} VIP recorded for referrer ${referrerWallet}`);
+                console.log(`🎁 Minting signup bonus: ${signupBonus} VIP to referrer ${referrerWallet}`);
+                
+                // Actually mint the bonus tokens to the referrer
+                const mintResult = await mintPresaleTokens(referrerWallet, signupBonus);
+                
+                if (mintResult.success) {
+                    mintTxHash = mintResult.txHash;
+                    console.log(`✅ Signup bonus minted: ${mintTxHash}`);
+                } else {
+                    console.error(`❌ Failed to mint signup bonus: ${mintResult.error}`);
+                    // Don't fail the whole request, just log the error
+                    // The referral is still recorded, bonus can be paid manually
+                }
             }
         }
         
-        console.log(`Referrer set: ${wallet} -> ${referrerWallet} (code: ${code})`);
+        // Create referral record
+        await db.pool.query(
+            `INSERT INTO referrals (referrer_wallet, referrer_code, referee_wallet, referee_email, signup_bonus_paid, signup_bonus_tx, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, NOW())
+             ON CONFLICT (referee_wallet) DO NOTHING`,
+            [referrerWallet, code, wallet, userEmail, signupBonus, mintTxHash]
+        );
+        
+        console.log(`✅ Referrer set: ${wallet} -> ${referrerWallet} (code: ${code}), bonus: ${signupBonus} VIP`);
         
         res.json({ 
             success: true, 
-            message: 'Referrer set successfully',
+            message: signupBonus > 0 
+                ? `Referrer linked! They received ${signupBonus} VIP bonus.`
+                : 'Referrer linked successfully!',
             referrerWallet: referrerWallet.substring(0, 6) + '...' + referrerWallet.substring(referrerWallet.length - 4),
-            signupBonus: signupBonus
+            signupBonus: signupBonus,
+            bonusTxHash: mintTxHash
         });
         
     } catch (error) {
@@ -2157,86 +2317,316 @@ async function mintPresaleTokens(toAddress, amount) {
 
 // Verify payment and mint tokens endpoint
 app.post('/api/presale/verify-payment', async (req, res) => {
-    const { txHash, walletAddress, tokenAmount, totalEUR, totalUSD, paymentMethod } = req.body;
+    const { 
+        txHash, 
+        walletAddress, 
+        tokenAmount, 
+        totalEUR, 
+        totalUSD, 
+        paymentMethod,
+        referrerCode  // Optional: referrer code if provided at purchase
+    } = req.body;
     
-    console.log('💰 Presale payment verification:', { txHash, walletAddress, tokenAmount, paymentMethod });
+    console.log('\n💰 PRESALE PAYMENT VERIFICATION:', { 
+        txHash, 
+        walletAddress, 
+        tokenAmount, 
+        totalEUR,
+        totalUSD,
+        paymentMethod,
+        referrerCode: referrerCode || 'none'
+    });
     
+    // ==================== VALIDATION ====================
     if (!txHash || !walletAddress || !tokenAmount) {
-        return res.status(400).json({ success: false, error: 'Missing required fields' });
+        console.log('❌ Missing required fields');
+        return res.status(400).json({ 
+            success: false, 
+            error: 'Missing required fields',
+            required: ['txHash', 'walletAddress', 'tokenAmount']
+        });
     }
     
     if (!ethers.isAddress(walletAddress)) {
-        return res.status(400).json({ success: false, error: 'Invalid wallet address' });
+        console.log('❌ Invalid wallet address:', walletAddress);
+        return res.status(400).json({ 
+            success: false, 
+            error: 'Invalid wallet address' 
+        });
     }
     
+    const normalizedAddress = ethers.getAddress(walletAddress).toLowerCase();
+    const networkConfig = getNetworkConfig();
+    
     try {
-        // Check if TX already processed
+        // ==================== CHECK DUPLICATE TRANSACTION ====================
         const existing = await db.pool.query(
-            'SELECT id FROM presale_purchases WHERE payment_tx_hash = $1',
+            'SELECT id, status, mint_tx_hash FROM presale_purchases WHERE payment_tx_hash = $1',
             [txHash]
         );
+        
         if (existing.rows.length > 0) {
-            return res.status(400).json({ success: false, error: 'Transaction already processed' });
+            const existingPurchase = existing.rows[0];
+            console.log('⚠️ Transaction already processed - ID:', existingPurchase.id, 'Status:', existingPurchase.status);
+            
+            if (existingPurchase.status === 'completed' && existingPurchase.mint_tx_hash) {
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'Transaction already processed',
+                    status: existingPurchase.status,
+                    mintTxHash: existingPurchase.mint_tx_hash,
+                    explorer_url: `${networkConfig.explorer}/tx/${existingPurchase.mint_tx_hash}`
+                });
+            }
+            
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Transaction already processed',
+                status: existingPurchase.status,
+                purchaseId: existingPurchase.id
+            });
         }
         
-        // Verify transaction on-chain
-        console.log('🔍 Verifying transaction on-chain...');
-        const txVerified = await verifyTransaction(txHash, walletAddress, totalUSD, paymentMethod);
+        // ==================== VERIFY ON-CHAIN TRANSACTION ====================
+        console.log('🔍 Verifying transaction on Polygon...');
+        console.log('   TX Hash:', txHash);
+        console.log('   Expected wallet:', normalizedAddress);
+        console.log('   Expected amount (USD):', totalUSD);
+        
+        const txVerified = await verifyTransaction(txHash, normalizedAddress, totalUSD, paymentMethod);
         
         if (!txVerified.success) {
-            console.log('❌ TX verification failed:', txVerified.error);
-            return res.status(400).json({ success: false, error: txVerified.error || 'Transaction verification failed' });
+            console.log('❌ Transaction verification failed:', txVerified.error);
+            return res.status(400).json({ 
+                success: false, 
+                error: txVerified.error || 'Transaction verification failed',
+                details: txVerified.details || 'Could not verify payment on-chain'
+            });
         }
         
         console.log('✅ Transaction verified successfully');
+        console.log('   Verified amount:', txVerified.amount);
+        console.log('   Block:', txVerified.blockNumber);
         
-        // Record purchase as paid
+        // ==================== GET REFERRER INFO ====================
+        let referrerWallet = null;
+        let usedReferrerCode = null;
+        
+        try {
+            // First check if user already has a referrer set
+            const registrantResult = await db.pool.query(
+                'SELECT referrer_wallet, referrer_code FROM registrants WHERE address = $1',
+                [normalizedAddress]
+            );
+            
+            if (registrantResult.rows.length > 0 && registrantResult.rows[0].referrer_wallet) {
+                referrerWallet = registrantResult.rows[0].referrer_wallet;
+                usedReferrerCode = registrantResult.rows[0].referrer_code;
+                console.log('👥 Found existing referrer:', referrerWallet);
+            }
+        } catch (refLookupError) {
+            console.log('⚠️ Referrer lookup error:', refLookupError.message);
+        }
+        
+        // ==================== RECORD PURCHASE ====================
+        console.log('📝 Recording purchase in database...');
+        
         const purchaseResult = await db.pool.query(`
             INSERT INTO presale_purchases 
-            (wallet_address, token_amount, eur_amount, usd_amount, payment_method, payment_tx_hash, status, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, 'paid', NOW())
+            (wallet_address, token_amount, eur_amount, usd_amount, payment_method, payment_tx_hash, 
+             referrer_wallet, referral_bonus_amount, referral_bonus_paid, status, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 0, false, 'paid', NOW())
             RETURNING id
-        `, [walletAddress.toLowerCase(), tokenAmount, totalEUR || 0, totalUSD || 0, paymentMethod, txHash]);
+        `, [
+            normalizedAddress, 
+            tokenAmount, 
+            totalEUR || 0, 
+            totalUSD || 0, 
+            paymentMethod, 
+            txHash,
+            referrerWallet
+        ]);
         
         const purchaseId = purchaseResult.rows[0].id;
-        console.log('📝 Purchase recorded with ID:', purchaseId);
+        console.log('✅ Purchase recorded - ID:', purchaseId);
         
-        // Mint tokens to user
-        console.log('🎯 Initiating token mint...');
-        const mintResult = await mintPresaleTokens(walletAddress, tokenAmount);
+        // ==================== MINT TOKENS TO BUYER ====================
+        console.log(`🎯 Minting ${tokenAmount} VIP tokens to ${normalizedAddress}...`);
         
-        if (mintResult.success) {
+        await minter.initialize();
+        
+        let mintResult;
+        try {
+            mintResult = await minter.mintToAddress(normalizedAddress, parseFloat(tokenAmount));
+        } catch (mintInitError) {
+            console.error('❌ Minter error:', mintInitError.message);
+            mintResult = { success: false, error: mintInitError.message };
+        }
+        
+        if (mintResult && (mintResult.success || mintResult.receipt || mintResult.hash)) {
+            const mintTxHash = mintResult.receipt?.hash || mintResult.hash || mintResult.transactionHash;
+            
+            console.log('✅ Tokens minted successfully!');
+            console.log('   Mint TX:', mintTxHash);
+            
             // Update purchase with mint TX
             await db.pool.query(`
                 UPDATE presale_purchases 
                 SET status = 'completed', mint_tx_hash = $1, minted_at = NOW()
                 WHERE id = $2
-            `, [mintResult.txHash, purchaseId]);
+            `, [mintTxHash, purchaseId]);
             
-            console.log('✅ Presale purchase completed successfully');
+            // ==================== PROCESS REFERRAL BONUS ====================
+            let referralBonus = null;
             
-            res.json({
+            if (referrerWallet) {
+                try {
+                    // Get referral settings
+                    const settingsResult = await db.pool.query(
+                        'SELECT * FROM referral_settings WHERE id = 1'
+                    );
+                    
+                    if (settingsResult.rows.length > 0 && settingsResult.rows[0].enabled) {
+                        const settings = settingsResult.rows[0];
+                        const purchaseUSD = parseFloat(totalUSD) || 0;
+                        const minPurchase = parseFloat(settings.min_purchase_for_bonus) || 0;
+                        
+                        console.log('🎁 Processing presale referral bonus...');
+                        console.log('   Purchase USD:', purchaseUSD);
+                        console.log('   Min for bonus:', minPurchase);
+                        
+                        if (purchaseUSD >= minPurchase) {
+                            let bonusAmount = 0;
+                            
+                            // Calculate bonus based on type
+                            if (settings.presale_bonus_type === 'fixed') {
+                                bonusAmount = parseFloat(settings.presale_bonus_amount) || 0;
+                            } else if (settings.presale_bonus_type === 'percentage') {
+                                bonusAmount = (parseFloat(tokenAmount) * parseFloat(settings.presale_bonus_amount)) / 100;
+                            }
+                            
+                            console.log('   Bonus type:', settings.presale_bonus_type);
+                            console.log('   Bonus amount:', bonusAmount, 'VIP');
+                            
+                            if (bonusAmount > 0) {
+                                // Mint bonus tokens to referrer
+                                console.log(`🎁 Minting ${bonusAmount} VIP presale bonus to referrer...`);
+                                
+                                try {
+                                    const bonusMintResult = await minter.mintToAddress(referrerWallet, bonusAmount);
+                                    const bonusTxHash = bonusMintResult.receipt?.hash || bonusMintResult.hash || 'bonus-minted';
+                                    
+                                    // Update purchase with referral bonus info
+                                    await db.pool.query(`
+                                        UPDATE presale_purchases 
+                                        SET referral_bonus_amount = $1, referral_bonus_paid = true
+                                        WHERE id = $2
+                                    `, [bonusAmount, purchaseId]);
+                                    
+                                    // Update referrals table
+                                    await db.pool.query(`
+                                        UPDATE referrals 
+                                        SET presale_bonus_paid = presale_bonus_paid + $1
+                                        WHERE referee_wallet = $2
+                                    `, [bonusAmount, normalizedAddress]);
+                                    
+                                    referralBonus = {
+                                        referrer: referrerWallet,
+                                        amount: bonusAmount,
+                                        txHash: bonusTxHash,
+                                        type: 'presale'
+                                    };
+                                    
+                                    console.log('✅ Presale referral bonus minted! TX:', bonusTxHash);
+                                    
+                                } catch (bonusMintError) {
+                                    console.error('⚠️ Failed to mint presale referral bonus:', bonusMintError.message);
+                                    // Log for manual processing but don't fail the purchase
+                                    await db.pool.query(`
+                                        UPDATE presale_purchases 
+                                        SET referral_bonus_amount = $1, referral_bonus_paid = false
+                                        WHERE id = $2
+                                    `, [bonusAmount, purchaseId]);
+                                }
+                            }
+                        } else {
+                            console.log('ℹ️ Purchase below minimum for referral bonus');
+                        }
+                    }
+                } catch (refError) {
+                    console.error('⚠️ Referral bonus processing error:', refError.message);
+                    // Don't fail the purchase
+                }
+            }
+            
+            // ==================== UPDATE PRESALE STATS ====================
+            try {
+                await db.pool.query(`
+                    UPDATE presale_config 
+                    SET tokens_sold = tokens_sold + $1, 
+                        updated_at = NOW()
+                    WHERE id = 1
+                `, [parseFloat(tokenAmount)]);
+                console.log('📊 Presale stats updated');
+            } catch (statsError) {
+                console.error('⚠️ Failed to update presale stats:', statsError.message);
+            }
+            
+            // ==================== SUCCESS RESPONSE ====================
+            console.log('✅ PRESALE PURCHASE COMPLETED SUCCESSFULLY');
+            
+            const response = {
                 success: true,
-                mintTxHash: mintResult.txHash,
-                message: 'Tokens minted successfully'
-            });
+                message: `Successfully purchased ${tokenAmount} VIP tokens!`,
+                purchaseId,
+                tokenAmount: parseFloat(tokenAmount),
+                mintTxHash,
+                paymentTxHash: txHash,
+                explorer_url: `${networkConfig.explorer}/tx/${mintTxHash}`,
+                payment_explorer_url: `${networkConfig.explorer}/tx/${txHash}`,
+                token_url: `${networkConfig.explorer}/token/${process.env.VIP_TOKEN_ADDRESS || '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F'}?a=${normalizedAddress}`
+            };
+            
+            if (referralBonus) {
+                response.referral_bonus = referralBonus;
+            }
+            
+            return res.json(response);
+            
         } else {
-            // Update status to pending_mint for manual retry
+            // ==================== MINTING FAILED ====================
+            console.log('⚠️ Minting failed - marking for manual retry');
+            console.log('   Error:', mintResult?.error || 'Unknown minting error');
+            
             await db.pool.query(`
-                UPDATE presale_purchases SET status = 'pending_mint' WHERE id = $1
-            `, [purchaseId]);
+                UPDATE presale_purchases 
+                SET status = 'pending_mint', 
+                    metadata = jsonb_set(COALESCE(metadata, '{}'), '{mint_error}', $1)
+                WHERE id = $2
+            `, [JSON.stringify(mintResult?.error || 'Minting failed'), purchaseId]);
             
-            console.log('⚠️ Minting failed, marked for manual retry');
-            
-            res.status(500).json({
+            return res.status(500).json({
                 success: false,
-                error: 'Minting failed. Payment received - tokens will be sent manually.',
-                purchaseId
+                error: 'Token minting failed',
+                message: 'Your payment was received successfully. Tokens will be sent to your wallet manually within 24 hours.',
+                purchaseId,
+                paymentTxHash: txHash,
+                payment_explorer_url: `${networkConfig.explorer}/tx/${txHash}`,
+                status: 'pending_mint',
+                support: 'If you have concerns, please contact support with your purchase ID.'
             });
         }
+        
     } catch (error) {
-        console.error('❌ Verify payment error:', error);
-        res.status(500).json({ success: false, error: 'Server error during verification' });
+        console.error('❌ VERIFY PAYMENT ERROR:', error.message);
+        console.error('   Stack:', error.stack);
+        
+        return res.status(500).json({ 
+            success: false, 
+            error: 'Server error during payment verification',
+            message: 'Please contact support if your payment was processed.',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
