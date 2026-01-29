@@ -587,7 +587,18 @@ app.post('/api/claim/register', async (req, res) => {
         // ==================== INITIALIZE MINTER ====================
         await minter.initialize();
         const networkConfig = getNetworkConfig();
-        const mintAmount = parseInt(process.env.MINT_AMOUNT) || 2;
+        
+        let mintAmount = parseInt(process.env.MINT_AMOUNT) || 2;
+        try {
+            const mintSetting = await db.pool.query(
+                "SELECT setting_value FROM app_settings WHERE setting_key = 'mint_amount'"
+            );
+            if (mintSetting.rows.length > 0) {
+                mintAmount = parseInt(mintSetting.rows[0].setting_value) || mintAmount;
+            }
+        } catch (e) {
+            console.log('Using default mint amount');
+        }
         
         // ==================== CHECK EXISTING REGISTRATION ====================
         let existingRegistrant = await db.getRegistrant(normalizedAddress);
@@ -2293,6 +2304,53 @@ app.get('/api/members/sync', requireAdminAuth, async (req, res) => {
     } catch (error) {
         console.error('❌ Sync error:', error.message);
         res.status(500).json({ error: 'Sync failed', details: error.message });
+    }
+});
+
+// ============================================================
+// CLAIM SETTINGS ENDPOINTS
+// ============================================================
+
+// GET /api/admin/claim/settings
+app.get('/api/admin/claim/settings', requireAdminAuth, async (req, res) => {
+    try {
+        const result = await db.pool.query(
+            "SELECT setting_value FROM app_settings WHERE setting_key = 'mint_amount'"
+        );
+        
+        const mintAmount = result.rows.length > 0 
+            ? parseInt(result.rows[0].setting_value) 
+            : parseInt(process.env.MINT_AMOUNT) || 2;
+        
+        res.json({ mintAmount });
+    } catch (error) {
+        console.error('Error getting claim settings:', error);
+        res.json({ mintAmount: parseInt(process.env.MINT_AMOUNT) || 2 });
+    }
+});
+
+// POST /api/admin/claim/settings
+app.post('/api/admin/claim/settings', requireAdminAuth, async (req, res) => {
+    try {
+        const { mintAmount } = req.body;
+        
+        if (!mintAmount || mintAmount < 1 || mintAmount > 100) {
+            return res.status(400).json({ success: false, error: 'Invalid mint amount (1-100)' });
+        }
+        
+        await db.pool.query(`
+            INSERT INTO app_settings (setting_key, setting_value, updated_at)
+            VALUES ('mint_amount', $1, NOW())
+            ON CONFLICT (setting_key) 
+            DO UPDATE SET setting_value = $1, updated_at = NOW()
+        `, [mintAmount.toString()]);
+        
+        console.log('✅ Mint amount updated to:', mintAmount);
+        
+        res.json({ success: true, mintAmount });
+    } catch (error) {
+        console.error('Error saving claim settings:', error);
+        res.status(500).json({ success: false, error: 'Failed to save settings' });
     }
 });
 

@@ -799,8 +799,12 @@
                     <div class="space-y-4">
                         <div>
                             <label class="text-white/60 text-sm block mb-2">Mint Amount per Claim</label>
-                            <input type="text" id="setting-mint-amount" class="input-field" value="2" readonly>
-                            <p class="text-white/40 text-xs mt-1">Set via MINT_AMOUNT env var</p>
+                            <input type="number" id="setting-mint-amount" class="input-field" value="2" min="1" max="100" step="1">
+                            <p class="text-white/40 text-xs mt-1">VIP tokens minted per free claim</p>
+                        </div>
+                        <div class="pt-4">
+                            <button onclick="saveClaimSettings()" class="btn-gold">Save Claim Settings</button>
+                            <span id="claim-settings-status" class="ml-4 text-sm"></span>
                         </div>
                         
                         <div>
@@ -978,6 +982,39 @@
                 }
             } catch (error) {
                 alert('Sync error: ' + error.message);
+            }
+        }
+
+        async function saveClaimSettings() {
+            const statusEl = document.getElementById('claim-settings-status');
+            const mintAmount = parseInt(document.getElementById('setting-mint-amount').value) || 2;
+            
+            if (mintAmount < 1 || mintAmount > 100) {
+                statusEl.innerHTML = '<span class="text-red-400">Amount must be between 1 and 100</span>';
+                return;
+            }
+            
+            statusEl.innerHTML = '<span class="text-white/60">Saving...</span>';
+            
+            try {
+                const response = await fetch('/api/admin/claim/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ mintAmount })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusEl.innerHTML = '<span class="text-green-400">✓ Saved!</span>';
+                    setTimeout(() => { statusEl.innerHTML = ''; }, 3000);
+                } else {
+                    statusEl.innerHTML = `<span class="text-red-400">${data.error || 'Failed to save'}</span>`;
+                }
+            } catch (error) {
+                console.error('Error saving claim settings:', error);
+                statusEl.innerHTML = '<span class="text-red-400">Network error</span>';
             }
         }
         
@@ -1723,6 +1760,15 @@
                     toggle.classList.add('active');
                 } else {
                     toggle.classList.remove('active');
+                }
+
+                // Load claim settings
+                try {
+                    const claimRes = await fetch('/api/admin/claim/settings', { credentials: 'include' });
+                    const claimData = await claimRes.json();
+                    document.getElementById('setting-mint-amount').value = claimData.mintAmount || 2;
+                } catch (e) {
+                    console.log('Could not load claim settings');
                 }
                 
                 // Check Stripe status
