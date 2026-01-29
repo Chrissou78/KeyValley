@@ -591,7 +591,7 @@ app.post('/api/claim/register', async (req, res) => {
         let mintAmount = parseInt(process.env.MINT_AMOUNT) || 2;
         try {
             const mintSetting = await db.pool.query(
-                "SELECT setting_value FROM app_settings WHERE setting_key = 'mint_amount'"
+                "SELECT value FROM app_settings WHERE key = 'mint_amount'"
             );
             if (mintSetting.rows.length > 0) {
                 mintAmount = parseInt(mintSetting.rows[0].setting_value) || mintAmount;
@@ -2315,7 +2315,7 @@ app.get('/api/members/sync', requireAdminAuth, async (req, res) => {
 app.get('/api/admin/claim/settings', requireAdminAuth, async (req, res) => {
     try {
         const result = await db.pool.query(
-            "SELECT setting_value FROM app_settings WHERE setting_key = 'mint_amount'"
+            "SELECT value FROM app_settings WHERE key = 'mint_amount'"
         );
         
         const mintAmount = result.rows.length > 0 
@@ -2339,10 +2339,9 @@ app.post('/api/admin/claim/settings', requireAdminAuth, async (req, res) => {
         }
         
         await db.pool.query(`
-            INSERT INTO app_settings (setting_key, setting_value, updated_at)
+            INSERT INTO app_settings (key, value, updated_at) 
             VALUES ('mint_amount', $1, NOW())
-            ON CONFLICT (setting_key) 
-            DO UPDATE SET setting_value = $1, updated_at = NOW()
+            ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()
         `, [mintAmount.toString()]);
         
         console.log('✅ Mint amount updated to:', mintAmount);
