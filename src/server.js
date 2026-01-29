@@ -594,7 +594,7 @@ app.post('/api/claim/register', async (req, res) => {
                 "SELECT value FROM app_settings WHERE key = 'mint_amount'"
             );
             if (mintSetting.rows.length > 0) {
-                mintAmount = parseInt(mintSetting.rows[0].setting_value) || mintAmount;
+                mintAmount = parseInt(mintSetting.rows[0].value) || mintAmount;
             }
         } catch (e) {
             console.log('Using default mint amount');
@@ -2319,7 +2319,7 @@ app.get('/api/admin/claim/settings', requireAdminAuth, async (req, res) => {
         );
         
         const mintAmount = result.rows.length > 0 
-            ? parseInt(result.rows[0].setting_value) 
+            ? parseInt(result.rows[0].value)  // <-- Change from setting_value to value
             : parseInt(process.env.MINT_AMOUNT) || 2;
         
         res.json({ mintAmount });
