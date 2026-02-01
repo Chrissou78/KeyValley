@@ -158,10 +158,24 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
             console.log('📝 Purchase recorded - ID:', purchaseId);
             
             // Mint tokens
+            console.log('🎯 Starting mint for Stripe payment...');
+            console.log('   Address:', normalizedAddress);
+            console.log('   Amount:', tokenAmount);
+
             await minter.initialize();
-            const mintResult = await minter.mintToAddress(normalizedAddress, parseFloat(tokenAmount));
-            
-            if (mintResult.receipt || mintResult.hash) {
+            console.log('✅ Minter initialized');
+
+            let mintResult;
+            try {
+                mintResult = await minter.mintToAddress(normalizedAddress, parseFloat(tokenAmount));
+                console.log('📋 Mint result:', JSON.stringify(mintResult, null, 2));
+            } catch (mintError) {
+                console.error('❌ Mint error:', mintError.message);
+                console.error('   Stack:', mintError.stack);
+                mintResult = { error: mintError.message };
+            }
+
+            if (mintResult && !mintResult.error && (mintResult.receipt || mintResult.hash)) {
                 const txHash = mintResult.receipt?.hash || mintResult.hash;
                 
                 await db.pool.query(`
