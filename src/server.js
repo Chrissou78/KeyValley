@@ -82,6 +82,147 @@ const app = express();
 const PORT = process.env.API_PORT || 3000;
 const MINT_AMOUNT = parseInt(process.env.MINT_AMOUNT) || 2;
 
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    if (!stripe) {
+        return res.status(503).send('Stripe not configured');
+    }
+    
+    const sig = req.headers['stripe-signature'];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    if (!webhookSecret) {
+        console.error('❌ STRIPE_WEBHOOK_SECRET not configured');
+        return res.status(500).send('Webhook secret not configured');
+    }
+    
+    let event;
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err) {
+        console.error('❌ Webhook signature verification failed:', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+    
+    console.log('📨 Stripe webhook received:', event.type);
+    
+    if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        const { walletAddress, tokenAmount } = session.metadata || {};
+        
+        if (!walletAddress || !tokenAmount) {
+            console.error('❌ Missing metadata in Stripe session');
+            return res.json({ received: true, error: 'Missing metadata' });
+        }
+        
+        console.log('💳 Stripe payment completed:', { walletAddress, tokenAmount, sessionId: session.id });
+        
+        try {
+            const normalizedAddress = walletAddress.toLowerCase();
+            const eurAmount = (session.amount_total || 0) / 100;
+            
+            // Check if already processed
+            const existing = await db.pool.query(
+                'SELECT id FROM presale_purchases WHERE payment_tx_hash = $1',
+                [session.id]
+            );
+            
+            if (existing.rows.length > 0) {
+                console.log('⚠️ Payment already processed:', session.id);
+                return res.json({ received: true, status: 'already_processed' });
+            }
+            
+            // Record purchase
+            const purchaseResult = await db.pool.query(`
+                INSERT INTO presale_purchases 
+                (wallet_address, token_amount, eur_amount, usd_amount, payment_method, payment_tx_hash, status, created_at)
+                VALUES ($1, $2, $3, $4, 'card', $5, 'paid', NOW())
+                RETURNING id
+            `, [normalizedAddress, tokenAmount, eurAmount, eurAmount * 1.19, session.id]);
+            
+            const purchaseId = purchaseResult.rows[0].id;
+            console.log('📝 Purchase recorded - ID:', purchaseId);
+            
+            // Mint tokens
+            await minter.initialize();
+            const mintResult = await minter.mintToAddress(normalizedAddress, parseFloat(tokenAmount));
+            
+            if (mintResult.receipt || mintResult.hash) {
+                const txHash = mintResult.receipt?.hash || mintResult.hash;
+                
+                await db.pool.query(`
+                    UPDATE presale_purchases 
+                    SET status = 'completed', mint_tx_hash = $1, minted_at = NOW()
+                    WHERE id = $2
+                `, [txHash, purchaseId]);
+                
+                console.log('✅ Tokens minted for Stripe payment:', txHash);
+                
+                // Process referral bonus if applicable
+                try {
+                    const registrantResult = await db.pool.query(
+                        'SELECT referrer_wallet, referrer_code FROM registrants WHERE address = $1',
+                        [normalizedAddress]
+                    );
+                    
+                    if (registrantResult.rows.length > 0 && registrantResult.rows[0].referrer_wallet) {
+                        const referrerWallet = registrantResult.rows[0].referrer_wallet;
+                        
+                        const settingsResult = await db.pool.query(
+                            'SELECT * FROM referral_settings WHERE id = 1'
+                        );
+                        
+                        if (settingsResult.rows.length > 0 && settingsResult.rows[0].enabled) {
+                            const settings = settingsResult.rows[0];
+                            let bonusAmount = 0;
+                            
+                            if (settings.presale_bonus_type === 'fixed') {
+                                bonusAmount = parseFloat(settings.presale_bonus_amount) || 0;
+                            } else if (settings.presale_bonus_type === 'percentage') {
+                                bonusAmount = (parseFloat(tokenAmount) * parseFloat(settings.presale_bonus_amount)) / 100;
+                            }
+                            
+                            if (bonusAmount > 0) {
+                                console.log(`🎁 Minting ${bonusAmount} VIP presale bonus to referrer...`);
+                                const bonusMintResult = await minter.mintToAddress(referrerWallet, bonusAmount, true);
+                                const bonusTxHash = bonusMintResult.receipt?.hash || bonusMintResult.hash || 'bonus-minted';
+                                
+                                await db.pool.query(`
+                                    UPDATE presale_purchases 
+                                    SET referral_bonus_amount = $1, referral_bonus_paid = true
+                                    WHERE id = $2
+                                `, [bonusAmount, purchaseId]);
+                                
+                                await db.pool.query(`
+                                    UPDATE referrals 
+                                    SET presale_bonus_paid = presale_bonus_paid + $1
+                                    WHERE referee_wallet = $2
+                                `, [bonusAmount, normalizedAddress]);
+                                
+                                console.log('✅ Presale referral bonus minted! TX:', bonusTxHash);
+                            }
+                        }
+                    }
+                } catch (refError) {
+                    console.error('⚠️ Referral bonus error:', refError.message);
+                }
+                
+            } else {
+                console.log('⚠️ Minting failed, marked as pending_mint');
+                await db.pool.query(`
+                    UPDATE presale_purchases 
+                    SET status = 'pending_mint'
+                    WHERE id = $1
+                `, [purchaseId]);
+            }
+            
+        } catch (error) {
+            console.error('❌ Error processing Stripe payment:', error);
+        }
+    }
+    
+    res.json({ received: true });
+});
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -2951,17 +3092,34 @@ app.post('/api/presale/purchase', async (req, res) => {
 // Stripe checkout (disabled but kept for compatibility)
 app.post('/api/presale/create-checkout', async (req, res) => {
     if (!stripe) {
-        return res.status(503).json({ error: 'Card payments not available. Please use crypto (POL or USDC).' });
+        return res.status(503).json({ 
+            error: 'Card payments not available',
+            message: 'Please use crypto (POL or USDC).'
+        });
     }
     
     try {
         const { walletAddress, tokenAmount, email } = req.body;
         
-        if (!walletAddress || !tokenAmount) {
-            return res.status(400).json({ error: 'Missing wallet address or token amount' });
+        if (!walletAddress || !ethers.isAddress(walletAddress)) {
+            return res.status(400).json({ error: 'Invalid wallet address' });
         }
         
+        if (!tokenAmount || tokenAmount < PRESALE_CONFIG.minPurchase || tokenAmount > PRESALE_CONFIG.maxPurchase) {
+            return res.status(400).json({ 
+                error: `Token amount must be between ${PRESALE_CONFIG.minPurchase} and ${PRESALE_CONFIG.maxPurchase}` 
+            });
+        }
+        
+        const normalizedAddress = walletAddress.toLowerCase();
         const unitPrice = Math.round(PRESALE_CONFIG.tokenPrice * 100); // EUR cents
+        const totalAmount = unitPrice * parseInt(tokenAmount);
+        
+        console.log('💳 Creating Stripe checkout:', { 
+            wallet: normalizedAddress, 
+            tokens: tokenAmount, 
+            total: totalAmount / 100 + ' EUR' 
+        });
         
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -2970,8 +3128,9 @@ app.post('/api/presale/create-checkout', async (req, res) => {
                 price_data: {
                     currency: 'eur',
                     product_data: {
-                        name: 'VIP Token Presale',
-                        description: `${tokenAmount} VIP Tokens`
+                        name: 'Kea Valley VIP Token',
+                        description: `${tokenAmount} VIP Tokens at €${PRESALE_CONFIG.tokenPrice} each`,
+                        images: ['https://kea-valley.com/logo.png'] // Optional: add your logo
                     },
                     unit_amount: unitPrice
                 },
@@ -2981,10 +3140,13 @@ app.post('/api/presale/create-checkout', async (req, res) => {
             success_url: `${req.headers.origin || 'https://kea-valley.com'}/presale?purchase=complete&session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${req.headers.origin || 'https://kea-valley.com'}/presale?purchase=cancelled`,
             metadata: {
-                walletAddress: walletAddress.toLowerCase(),
-                tokenAmount: tokenAmount.toString()
+                walletAddress: normalizedAddress,
+                tokenAmount: tokenAmount.toString(),
+                source: 'presale'
             }
         });
+        
+        console.log('✅ Stripe session created:', session.id);
         
         res.json({ 
             success: true, 
@@ -2993,60 +3155,12 @@ app.post('/api/presale/create-checkout', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Stripe checkout error:', error);
-        res.status(500).json({ error: 'Failed to create checkout session' });
+        console.error('❌ Stripe checkout error:', error);
+        res.status(500).json({ 
+            error: 'Failed to create checkout session',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
-});
-
-app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-    if (!stripe) {
-        return res.status(503).send('Stripe not configured');
-    }
-    
-    const sig = req.headers['stripe-signature'];
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    
-    let event;
-    try {
-        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-    } catch (err) {
-        console.error('Webhook signature verification failed:', err.message);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-    
-    if (event.type === 'checkout.session.completed') {
-        const session = event.data.object;
-        const { walletAddress, tokenAmount } = session.metadata;
-        
-        console.log('💳 Stripe payment completed:', { walletAddress, tokenAmount });
-        
-        try {
-            // Record purchase
-            await db.pool.query(`
-                INSERT INTO presale_purchases 
-                (wallet_address, token_amount, eur_amount, payment_method, payment_tx_hash, status, created_at)
-                VALUES ($1, $2, $3, 'card', $4, 'paid', NOW())
-            `, [walletAddress, tokenAmount, session.amount_total / 100, session.id]);
-            
-            // Mint tokens
-            await minter.initialize();
-            const mintResult = await minter.mintToAddress(walletAddress, parseFloat(tokenAmount));
-            
-            if (mintResult.receipt || mintResult.hash) {
-                const txHash = mintResult.receipt?.hash || mintResult.hash;
-                await db.pool.query(`
-                    UPDATE presale_purchases 
-                    SET status = 'completed', mint_tx_hash = $1, minted_at = NOW()
-                    WHERE payment_tx_hash = $2
-                `, [txHash, session.id]);
-                console.log('✅ Tokens minted for Stripe payment:', txHash);
-            }
-        } catch (error) {
-            console.error('❌ Error processing Stripe payment:', error);
-        }
-    }
-    
-    res.json({ received: true });
 });
 
 // ===========================================
