@@ -74,6 +74,22 @@
             border: 3px solid rgba(238, 157, 43, 0.2);
             border-top-color: #ee9d2b;
         }
+        
+        /* Popup animation */
+        @keyframes animate-in {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        .animate-in {
+            animation: animate-in 0.3s ease-out forwards;
+        }
     </style>
 </head>
 <body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
@@ -297,42 +313,57 @@
     </main>
 
     <!-- Processing Overlay -->
-    <div id="processingOverlay" class="hidden fixed inset-0 bg-background-dark/98 flex flex-col items-center justify-center z-50 p-8">
-        <div class="spinner w-16 h-16 rounded-full animate-spin mb-6"></div>
-        <h3 id="processingTitle" class="text-xl font-serif text-white mb-2">Processing Purchase</h3>
-        <p id="processingText" class="text-slate-400 text-sm mb-6 text-center max-w-xs">Please confirm the transaction in WalletTwo</p>
-        <div id="processingStep" class="px-4 py-2 bg-primary/10 border border-primary/30 rounded-full text-xs font-bold text-primary uppercase tracking-widest">
-            Step 1: Payment
+    <div id="processingOverlay" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-surface border border-white/10 rounded-lg shadow-2xl max-w-sm w-full mx-4 p-8 text-center animate-in">
+            <div class="spinner w-16 h-16 rounded-full animate-spin mx-auto mb-6"></div>
+            <h3 id="processingTitle" class="text-xl font-serif text-white mb-2">Processing Purchase</h3>
+            <p id="processingText" class="text-slate-400 text-sm mb-6">Please confirm the transaction in WalletTwo</p>
+            <div id="processingStep" class="inline-block px-4 py-2 bg-primary/10 border border-primary/30 rounded-full text-xs font-bold text-primary uppercase tracking-widest">
+                Step 1: Payment
+            </div>
         </div>
     </div>
 
     <!-- Result Overlay -->
-    <div id="resultOverlay" class="hidden fixed inset-0 bg-background-dark/98 flex flex-col items-center justify-center z-50 p-8">
-        <span id="resultIcon" class="material-symbols-outlined text-7xl mb-6 text-primary">check_circle</span>
-        <h3 id="resultTitle" class="text-2xl font-serif text-white mb-2">Purchase Complete!</h3>
-        <p id="resultMessage" class="text-slate-400 text-sm mb-8 text-center max-w-xs">Your VIP tokens have been sent to your wallet.</p>
-        
-        <div id="resultDetails" class="w-full max-w-xs bg-surface border border-white/5 rounded-sm p-4 mb-8">
-            <div class="flex justify-between items-center mb-3">
-                <span class="text-xs text-slate-500">Tokens</span>
-                <span id="resultTokens" class="text-sm font-bold text-white">0 VIP</span>
+    <div id="resultOverlay" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-surface border border-white/10 rounded-lg shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-primary/20 to-primary/5 border-b border-white/5 px-6 py-8 text-center">
+                <span id="resultIcon" class="material-symbols-outlined text-6xl mb-4 text-primary">check_circle</span>
+                <h3 id="resultTitle" class="text-2xl font-serif text-white mb-2">Purchase Complete!</h3>
+                <p id="resultMessage" class="text-slate-400 text-sm">Your VIP tokens have been sent to your wallet.</p>
             </div>
-            <div class="flex justify-between items-center mb-3">
-                <span class="text-xs text-slate-500">Payment TX</span>
-                <a id="resultPaymentTx" href="#" target="_blank" class="text-xs font-mono text-primary hover:underline">View ↗</a>
+            
+            <!-- Details -->
+            <div id="resultDetails" class="p-6 space-y-4">
+                <div class="flex justify-between items-center py-3 border-b border-white/5">
+                    <span class="text-sm text-slate-500">Tokens Purchased</span>
+                    <span id="resultTokens" class="text-lg font-bold text-primary">0 VIP</span>
+                </div>
+                <div id="paymentTxRow" class="flex justify-between items-center py-3 border-b border-white/5">
+                    <span class="text-sm text-slate-500">Payment Transaction</span>
+                    <a id="resultPaymentTx" href="#" target="_blank" class="text-sm font-mono text-primary hover:underline flex items-center gap-1">
+                        View <span class="material-symbols-outlined text-sm">open_in_new</span>
+                    </a>
+                </div>
+                <div id="mintTxRow" class="flex justify-between items-center py-3">
+                    <span class="text-sm text-slate-500">Mint Transaction</span>
+                    <a id="resultMintTx" href="#" target="_blank" class="text-sm font-mono text-primary hover:underline flex items-center gap-1">
+                        View <span class="material-symbols-outlined text-sm">open_in_new</span>
+                    </a>
+                </div>
             </div>
-            <div class="flex justify-between items-center">
-                <span class="text-xs text-slate-500">Mint TX</span>
-                <a id="resultMintTx" href="#" target="_blank" class="text-xs font-mono text-primary hover:underline">View ↗</a>
+            
+            <!-- Actions -->
+            <div class="px-6 pb-6 space-y-3">
+                <button onclick="closeResult()" class="w-full bg-primary text-background-dark px-6 py-4 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary-light transition-all">
+                    Done
+                </button>
+                <button onclick="viewInWallet()" class="w-full bg-transparent border border-white/10 text-slate-300 px-6 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-primary/50 hover:text-primary transition-all">
+                    View in Wallet
+                </button>
             </div>
         </div>
-        
-        <button onclick="closeResult()" class="bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-all mb-3">
-            Done
-        </button>
-        <button onclick="viewInWallet()" class="text-slate-400 text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors">
-            View in Wallet
-        </button>
     </div>
 
     <!-- Footer -->
@@ -522,18 +553,14 @@
         function checkExistingSession() {
             const session = localStorage.getItem(CONFIG.storageKey);
             console.log('🔍 Presale - checking session, storageKey:', CONFIG.storageKey);
-            console.log('🔍 Presale - raw session:', session);
             
             if (session) {
                 try {
                     const data = JSON.parse(session);
-                    console.log('🔍 Presale - parsed data:', data);
-                    
                     const sessionAge = Date.now() - (data.timestamp || 0);
                     const maxAge = 24 * 60 * 60 * 1000;
                     
                     const wallet = data.wallet || data.wlt || data.address;
-                    console.log('🔍 Presale - wallet found:', wallet, '| age:', sessionAge, '| maxAge:', maxAge);
                     
                     if (sessionAge < maxAge && wallet) {
                         console.log('✅ Presale - using existing session');
@@ -546,8 +573,6 @@
                     console.error('❌ Presale - parse error:', e);
                     localStorage.removeItem(CONFIG.storageKey);
                 }
-            } else {
-                console.log('⚠️ Presale - no session in localStorage');
             }
         }
 
@@ -613,9 +638,9 @@
                 showSuccess({
                     tokenAmount: purchase.tokenAmount || 'Your',
                     paymentTxHash: sessionId,
-                    mintTxHash: null
+                    mintTxHash: null,
+                    isCard: true
                 });
-                document.getElementById('resultMessage').textContent = 'Payment received! Your VIP tokens will be sent to your wallet shortly.';
                 localStorage.removeItem('pendingPurchase');
                 window.history.replaceState({}, '', window.location.pathname);
                 return;
@@ -632,7 +657,7 @@
             
             // Handle cancelled Stripe payment
             if (purchaseComplete === 'cancelled') {
-                alert('Payment was cancelled. Please try again.');
+                showError('Payment Cancelled', 'Your payment was cancelled. Please try again.');
                 localStorage.removeItem('pendingPurchase');
             }
             
@@ -829,11 +854,9 @@
                 buyButton.textContent = `Max ${CONFIG.maxPurchase} VIP`;
                 buyButton.disabled = true;
             } else if (selectedPayment === 'Card') {
-                // Card payment - no balance check needed
                 buyButton.textContent = `Pay €${(tokenAmount * CONFIG.tokenPriceEUR).toFixed(2)}`;
                 buyButton.disabled = false;
             } else {
-                // Crypto payment - check balance
                 const balance = selectedPayment === 'POL' ? userBalances.POL : userBalances.USDC;
                 const required = selectedPayment === 'POL' ? totalUSD / CONFIG.polPrice : totalUSD;
                 
@@ -852,11 +875,11 @@
         // ============================================
         async function executePurchase() {
             if (!currentWallet) return connectWallet();
-            if (!CONFIG.presaleEnabled) return alert('Presale is not active');
+            if (!CONFIG.presaleEnabled) return showError('Presale Not Active', 'The presale is currently paused.');
             
             const tokenAmount = parseInt(document.getElementById('tokenAmount').value);
             if (tokenAmount < CONFIG.minPurchase || tokenAmount > CONFIG.maxPurchase) {
-                return alert(`Please enter an amount between ${CONFIG.minPurchase} and ${CONFIG.maxPurchase}`);
+                return showError('Invalid Amount', `Please enter an amount between ${CONFIG.minPurchase} and ${CONFIG.maxPurchase}`);
             }
             
             const totalEUR = tokenAmount * CONFIG.tokenPriceEUR;
@@ -896,12 +919,12 @@
                         window.location.href = data.url;
                     } else {
                         hideProcessing();
-                        alert(data.error || 'Failed to create checkout session. Please try crypto payment.');
+                        showError('Checkout Failed', data.error || 'Failed to create checkout session. Please try crypto payment.');
                     }
                 } catch (error) {
                     console.error('Stripe checkout error:', error);
                     hideProcessing();
-                    alert('Card payment is currently unavailable. Please try POL or USDC.');
+                    showError('Card Payment Unavailable', 'Card payment is currently unavailable. Please try POL or USDC.');
                 }
                 return;
             }
@@ -1013,33 +1036,39 @@
             
             const resultOverlay = document.getElementById('resultOverlay');
             document.getElementById('resultIcon').textContent = 'check_circle';
-            document.getElementById('resultIcon').className = 'material-symbols-outlined text-7xl mb-6 text-primary';
+            document.getElementById('resultIcon').className = 'material-symbols-outlined text-6xl mb-4 text-primary';
             document.getElementById('resultTitle').textContent = 'Purchase Complete!';
-            document.getElementById('resultMessage').textContent = `${data.tokenAmount.toLocaleString()} VIP tokens have been sent to your wallet.`;
+            
+            if (data.isCard) {
+                document.getElementById('resultMessage').textContent = 'Payment received! Your VIP tokens will be sent to your wallet shortly.';
+            } else {
+                document.getElementById('resultMessage').textContent = `${data.tokenAmount.toLocaleString()} VIP tokens have been sent to your wallet.`;
+            }
             
             document.getElementById('resultTokens').textContent = `${data.tokenAmount.toLocaleString()} VIP`;
             
             const paymentLink = document.getElementById('resultPaymentTx');
+            const paymentRow = document.getElementById('paymentTxRow');
             if (data.paymentTxHash && data.paymentTxHash.startsWith('0x')) {
                 paymentLink.href = `${CONFIG.explorerUrl}/tx/${data.paymentTxHash}`;
-                paymentLink.textContent = shortenAddress(data.paymentTxHash);
-                paymentLink.parentElement.style.display = 'flex';
+                paymentLink.innerHTML = `${shortenAddress(data.paymentTxHash)} <span class="material-symbols-outlined text-sm">open_in_new</span>`;
+                paymentRow.style.display = 'flex';
             } else if (data.paymentTxHash) {
-                // Stripe session ID
                 paymentLink.href = '#';
-                paymentLink.textContent = 'Card Payment';
-                paymentLink.parentElement.style.display = 'flex';
+                paymentLink.innerHTML = `Card Payment <span class="material-symbols-outlined text-sm">check_circle</span>`;
+                paymentRow.style.display = 'flex';
             } else {
-                paymentLink.parentElement.style.display = 'none';
+                paymentRow.style.display = 'none';
             }
             
             const mintLink = document.getElementById('resultMintTx');
+            const mintRow = document.getElementById('mintTxRow');
             if (data.mintTxHash) {
                 mintLink.href = `${CONFIG.explorerUrl}/tx/${data.mintTxHash}`;
-                mintLink.textContent = shortenAddress(data.mintTxHash);
-                mintLink.parentElement.style.display = 'flex';
+                mintLink.innerHTML = `${shortenAddress(data.mintTxHash)} <span class="material-symbols-outlined text-sm">open_in_new</span>`;
+                mintRow.style.display = 'flex';
             } else {
-                mintLink.parentElement.style.display = 'none';
+                mintRow.style.display = 'none';
             }
             
             document.getElementById('resultDetails').style.display = 'block';
@@ -1051,7 +1080,7 @@
             
             const resultOverlay = document.getElementById('resultOverlay');
             document.getElementById('resultIcon').textContent = 'error';
-            document.getElementById('resultIcon').className = 'material-symbols-outlined text-7xl mb-6 text-red-400';
+            document.getElementById('resultIcon').className = 'material-symbols-outlined text-6xl mb-4 text-red-400';
             document.getElementById('resultTitle').textContent = title;
             document.getElementById('resultMessage').textContent = message;
             document.getElementById('resultDetails').style.display = 'none';
