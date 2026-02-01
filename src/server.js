@@ -1544,6 +1544,59 @@ app.get('/api/presale/config', async (req, res) => {
     }
 });
 
+// Create Payment Intent for custom Stripe Elements
+app.post('/api/presale/create-payment-intent', async (req, res) => {
+    if (!stripe) {
+        return res.status(503).json({ error: 'Card payments not available' });
+    }
+    
+    try {
+        const { walletAddress, tokenAmount, email } = req.body;
+        
+        if (!walletAddress || !ethers.isAddress(walletAddress)) {
+            return res.status(400).json({ error: 'Invalid wallet address' });
+        }
+        
+        if (!tokenAmount || tokenAmount < PRESALE_CONFIG.minPurchase || tokenAmount > PRESALE_CONFIG.maxPurchase) {
+            return res.status(400).json({ 
+                error: `Token amount must be between ${PRESALE_CONFIG.minPurchase} and ${PRESALE_CONFIG.maxPurchase}` 
+            });
+        }
+        
+        const normalizedAddress = walletAddress.toLowerCase();
+        const totalEUR = tokenAmount * PRESALE_CONFIG.tokenPrice;
+        const amountCents = Math.round(totalEUR * 100);
+        
+        console.log('💳 Creating Payment Intent:', { wallet: normalizedAddress, tokens: tokenAmount, amount: totalEUR + ' EUR' });
+        
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: amountCents,
+            currency: 'eur',
+            metadata: {
+                walletAddress: normalizedAddress,
+                tokenAmount: tokenAmount.toString(),
+                source: 'presale'
+            },
+            receipt_email: email || undefined,
+            description: `${tokenAmount} VIP Tokens - Kea Valley Presale`
+        });
+        
+        console.log('✅ Payment Intent created:', paymentIntent.id);
+        
+        res.json({
+            success: true,
+            clientSecret: paymentIntent.client_secret,
+            paymentIntentId: paymentIntent.id,
+            amount: totalEUR,
+            currency: 'EUR'
+        });
+        
+    } catch (error) {
+        console.error('❌ Payment Intent error:', error);
+        res.status(500).json({ error: 'Failed to create payment' });
+    }
+});
+
 // ===========================================
 // Referral System API
 // ===========================================

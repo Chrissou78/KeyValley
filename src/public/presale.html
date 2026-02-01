@@ -91,6 +91,14 @@
         .animate-in {
             animation: animate-in 0.3s ease-out forwards;
         }
+        
+        /* Stripe Elements custom styling */
+        .StripeElement {
+            background: transparent;
+        }
+        .StripeElement--focus {
+            outline: none;
+        }
     </style>
 </head>
 <body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
@@ -367,6 +375,88 @@
         </div>
     </div>
 
+    <!-- Custom Stripe Payment Modal -->
+    <div id="stripeModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-surface border border-white/10 rounded-sm max-w-md w-full shadow-2xl overflow-hidden animate-in">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-primary/20 to-primary/5 p-6 border-b border-white/5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-primary/20 border border-primary/30 rounded-sm flex items-center justify-center">
+                            <span class="material-symbols-outlined text-primary">credit_card</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-serif text-white">Card Payment</h3>
+                            <p class="text-xs text-slate-500 uppercase tracking-widest">Secure Checkout</p>
+                        </div>
+                    </div>
+                    <button onclick="closeStripeModal()" class="text-slate-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-sm">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Order Summary -->
+            <div class="p-6 border-b border-white/5">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs text-slate-500 uppercase tracking-widest">VIP Tokens</span>
+                    <span id="stripeTokenAmount" class="text-white font-bold">0 VIP</span>
+                </div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs text-slate-500 uppercase tracking-widest">Price per token</span>
+                    <span class="text-white">€1.00</span>
+                </div>
+                <div class="h-px bg-white/5 my-3"></div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-500 uppercase tracking-widest">Total</span>
+                    <span id="stripeTotalAmount" class="text-2xl font-serif text-primary">€0.00</span>
+                </div>
+            </div>
+            
+            <!-- Payment Form -->
+            <div class="p-6">
+                <form id="payment-form">
+                    <!-- Email -->
+                    <div class="mb-4">
+                        <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Email (for receipt)</label>
+                        <input type="email" id="stripe-email" placeholder="your@email.com"
+                            class="w-full px-4 py-3 bg-background-dark border border-white/10 rounded-sm text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all">
+                    </div>
+                    
+                    <!-- Card Element -->
+                    <div class="mb-4">
+                        <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Card Details</label>
+                        <div id="card-element" class="w-full px-4 py-4 bg-background-dark border border-white/10 rounded-sm focus-within:border-primary/50 transition-all min-h-[50px]">
+                            <!-- Stripe Card Element mounts here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Card Errors -->
+                    <div id="card-errors" class="text-red-400 text-xs mb-4 hidden"></div>
+                    
+                    <!-- Submit Button -->
+                    <button type="submit" id="submit-payment" 
+                        class="w-full bg-primary text-background-dark py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-sm">lock</span>
+                        <span id="button-text">Pay Now</span>
+                    </button>
+                    
+                    <!-- Processing State -->
+                    <div id="payment-processing" class="hidden text-center py-4">
+                        <div class="spinner w-8 h-8 rounded-full animate-spin mx-auto mb-3"></div>
+                        <p class="text-slate-400 text-sm">Processing payment...</p>
+                    </div>
+                </form>
+                
+                <!-- Security Note -->
+                <div class="flex items-center justify-center gap-2 mt-4 text-xs text-slate-600">
+                    <span class="material-symbols-outlined text-sm">verified_user</span>
+                    <span>256-bit SSL encrypted • Powered by Stripe</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-background-dark py-8 border-t border-white/5">
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
@@ -405,6 +495,7 @@
             maxPurchase: 10000,
             presaleEnabled: true,
             presaleWallet: '',
+            stripePublicKey: null,
             
             chainId: 137,
             rpcUrl: 'https://polygon-rpc.com',
@@ -418,11 +509,13 @@
             storageKey: 'keavalley_profile'
         };
 
-        // Stripe variables
+        // ============================================
+        // STRIPE VARIABLES & FUNCTIONS
+        // ============================================
         let stripe = null;
-        let stripeCheckout = null;
+        let cardElement = null;
+        let stripePaymentData = null;
 
-        // Initialize Stripe
         async function initStripe() {
             try {
                 if (CONFIG.stripePublicKey) {
@@ -436,74 +529,190 @@
             }
         }
 
-        // Open Stripe embedded checkout modal
         async function openStripeCheckout(walletAddress, tokenAmount, email) {
-            const modal = document.getElementById('stripeModal');
-            const checkoutContainer = document.getElementById('checkout');
-            const loading = document.getElementById('stripeLoading');
+            if (!stripe) {
+                showError('Card Payment Unavailable', 'Please use POL or USDC.');
+                return;
+            }
             
+            const modal = document.getElementById('stripeModal');
+            const form = document.getElementById('payment-form');
+            const submitBtn = document.getElementById('submit-payment');
+            const processing = document.getElementById('payment-processing');
+            const errors = document.getElementById('card-errors');
+            
+            // Update order summary
+            const totalEUR = tokenAmount * CONFIG.tokenPriceEUR;
+            document.getElementById('stripeTokenAmount').textContent = `${tokenAmount.toLocaleString()} VIP`;
+            document.getElementById('stripeTotalAmount').textContent = `€${totalEUR.toFixed(2)}`;
+            document.getElementById('stripe-email').value = email || '';
+            
+            // Show modal
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            loading.style.display = 'flex';
-            checkoutContainer.innerHTML = '';
             
+            // Reset state
+            form.classList.remove('hidden');
+            submitBtn.classList.remove('hidden');
+            processing.classList.add('hidden');
+            errors.classList.add('hidden');
+            submitBtn.disabled = false;
+            document.getElementById('button-text').textContent = `Pay €${totalEUR.toFixed(2)}`;
+            
+            // Store payment data
+            stripePaymentData = { walletAddress, tokenAmount, email };
+            
+            // Create Payment Intent
             try {
-                const response = await fetch('/api/presale/create-checkout', {
+                const response = await fetch('/api/presale/create-payment-intent', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        walletAddress,
-                        tokenAmount,
-                        email,
-                        embedded: true
-                    })
+                    body: JSON.stringify({ walletAddress, tokenAmount, email })
                 });
                 
                 const data = await response.json();
                 
                 if (!response.ok || !data.clientSecret) {
-                    throw new Error(data.error || 'Failed to create checkout session');
+                    throw new Error(data.error || 'Failed to initialize payment');
                 }
                 
-                loading.style.display = 'none';
+                // Destroy existing card element if any
+                if (cardElement) {
+                    cardElement.destroy();
+                    cardElement = null;
+                }
                 
-                stripeCheckout = await stripe.initEmbeddedCheckout({
-                    clientSecret: data.clientSecret
+                // Create Stripe Elements with custom styling
+                const elements = stripe.elements();
+                
+                cardElement = elements.create('card', {
+                    style: {
+                        base: {
+                            color: '#ffffff',
+                            fontFamily: 'Manrope, sans-serif',
+                            fontSize: '16px',
+                            '::placeholder': {
+                                color: '#64748b'
+                            },
+                            iconColor: '#ee9d2b'
+                        },
+                        invalid: {
+                            color: '#f87171',
+                            iconColor: '#f87171'
+                        }
+                    },
+                    hidePostalCode: true
                 });
                 
-                stripeCheckout.mount('#checkout');
+                cardElement.mount('#card-element');
+                
+                // Store client secret for payment
+                stripePaymentData.clientSecret = data.clientSecret;
+                
+                // Handle card errors
+                cardElement.on('change', (event) => {
+                    if (event.error) {
+                        errors.textContent = event.error.message;
+                        errors.classList.remove('hidden');
+                    } else {
+                        errors.classList.add('hidden');
+                    }
+                });
                 
             } catch (error) {
-                console.error('Stripe checkout error:', error);
-                loading.innerHTML = `
-                    <div class="text-center">
-                        <span class="material-icons text-red-500 text-4xl mb-4">error</span>
-                        <p class="text-red-400 mb-4">${error.message || 'Failed to load payment form'}</p>
-                        <button onclick="closeStripeModal()" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white">
-                            Close
-                        </button>
-                    </div>
-                `;
+                console.error('Payment init error:', error);
+                errors.textContent = error.message || 'Failed to initialize payment';
+                errors.classList.remove('hidden');
             }
         }
 
-        // Close Stripe modal
         function closeStripeModal() {
             const modal = document.getElementById('stripeModal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
             
-            if (stripeCheckout) {
-                stripeCheckout.destroy();
-                stripeCheckout = null;
+            if (cardElement) {
+                cardElement.destroy();
+                cardElement = null;
             }
             
-            document.getElementById('checkout').innerHTML = '';
-            document.getElementById('stripeLoading').style.display = 'flex';
-            document.getElementById('stripeLoading').innerHTML = `
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mb-4"></div>
-                <p class="text-gray-400">Loading payment form...</p>
-            `;
+            stripePaymentData = null;
+        }
+
+        // Handle payment form submission
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('payment-form');
+            if (form) {
+                form.addEventListener('submit', handlePaymentSubmit);
+            }
+        });
+
+        async function handlePaymentSubmit(event) {
+            event.preventDefault();
+            
+            if (!stripe || !cardElement || !stripePaymentData?.clientSecret) {
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submit-payment');
+            const processing = document.getElementById('payment-processing');
+            const errors = document.getElementById('card-errors');
+            const email = document.getElementById('stripe-email').value;
+            
+            // Disable button and show processing
+            submitBtn.disabled = true;
+            submitBtn.classList.add('hidden');
+            processing.classList.remove('hidden');
+            errors.classList.add('hidden');
+            
+            try {
+                const { error, paymentIntent } = await stripe.confirmCardPayment(stripePaymentData.clientSecret, {
+                    payment_method: {
+                        card: cardElement,
+                        billing_details: {
+                            email: email || undefined
+                        }
+                    }
+                });
+                
+                if (error) {
+                    throw new Error(error.message);
+                }
+                
+                if (paymentIntent.status === 'succeeded') {
+                    console.log('✅ Payment successful:', paymentIntent.id);
+                    
+                    // Close modal and show success
+                    closeStripeModal();
+                    
+                    // Show success with pending minting status
+                    showSuccess({
+                        tokenAmount: stripePaymentData.tokenAmount,
+                        paymentTxHash: paymentIntent.id,
+                        mintTxHash: null,
+                        isCard: true
+                    });
+                    
+                    // Clear pending purchase
+                    localStorage.removeItem('pendingPurchase');
+                    
+                    // Reload data after a delay
+                    setTimeout(() => {
+                        loadPresaleConfig();
+                        if (currentWallet) {
+                            loadPurchaseHistory(currentWallet);
+                        }
+                    }, 5000);
+                }
+                
+            } catch (error) {
+                console.error('Payment error:', error);
+                errors.textContent = error.message || 'Payment failed. Please try again.';
+                errors.classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('hidden');
+                processing.classList.add('hidden');
+            }
         }
 
         // ============================================
@@ -587,6 +796,11 @@
             } catch (e) {
                 console.error('Failed to load presale config:', e);
             }
+        }
+
+        function updatePresaleUI() {
+            updatePresaleStatus(CONFIG.presaleEnabled);
+            updateUI();
         }
 
         function updatePresaleStatus(enabled) {
@@ -718,7 +932,7 @@
                 setWalletConnected(wallet);
             }
             
-            // Handle Stripe success callback
+            // Handle Stripe success callback (legacy redirect flow)
             const sessionId = params.get('session_id');
             if (sessionId) {
                 const stored = localStorage.getItem('pendingPurchase');
@@ -984,7 +1198,7 @@
             };
             localStorage.setItem('pendingPurchase', JSON.stringify(pendingPurchase));
             
-            // Handle Card payment via Stripe Embedded Checkout
+            // Handle Card payment via custom Stripe Elements
             if (selectedPayment === 'Card') {
                 if (!stripe) {
                     showError('Card Payment Unavailable', 'Card payments are not configured. Please use POL or USDC.');
@@ -1200,24 +1414,5 @@
             }
         }
     </script>
-    <!-- Stripe Embedded Checkout Modal -->
-    <div id="stripeModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden border border-gray-700 shadow-2xl">
-            <div class="flex items-center justify-between p-4 border-b border-gray-700">
-                <h3 class="text-lg font-semibold text-white">Complete Payment</h3>
-                <button onclick="closeStripeModal()" class="text-gray-400 hover:text-white transition-colors">
-                    <span class="material-icons">close</span>
-                </button>
-            </div>
-            <div id="stripeCheckoutContainer" class="p-4" style="min-height: 400px;">
-                <!-- Stripe Embedded Checkout will mount here -->
-                <div id="stripeLoading" class="flex flex-col items-center justify-center h-64">
-                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mb-4"></div>
-                    <p class="text-gray-400">Loading payment form...</p>
-                </div>
-                <div id="checkout"></div>
-            </div>
-        </div>
-    </div>
 </body>
 </html>
