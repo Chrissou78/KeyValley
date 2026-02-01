@@ -105,20 +105,33 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
     
     console.log('📨 Stripe webhook received:', event.type);
     
-    if (event.type === 'checkout.session.completed') {
-        const session = event.data.object;
-        const { walletAddress, tokenAmount } = session.metadata || {};
+    // Handle both checkout.session.completed and payment_intent.succeeded
+    if (event.type === 'checkout.session.completed' || event.type === 'payment_intent.succeeded') {
+        let walletAddress, tokenAmount, paymentId, eurAmount;
+        
+        if (event.type === 'checkout.session.completed') {
+            const session = event.data.object;
+            walletAddress = session.metadata?.walletAddress;
+            tokenAmount = session.metadata?.tokenAmount;
+            paymentId = session.id;
+            eurAmount = (session.amount_total || 0) / 100;
+        } else {
+            const paymentIntent = event.data.object;
+            walletAddress = paymentIntent.metadata?.walletAddress;
+            tokenAmount = paymentIntent.metadata?.tokenAmount;
+            paymentId = paymentIntent.id;
+            eurAmount = (paymentIntent.amount || 0) / 100;
+        }
         
         if (!walletAddress || !tokenAmount) {
-            console.error('❌ Missing metadata in Stripe session');
+            console.error('❌ Missing metadata in Stripe event');
             return res.json({ received: true, error: 'Missing metadata' });
         }
         
-        console.log('💳 Stripe payment completed:', { walletAddress, tokenAmount, sessionId: session.id });
+        console.log('💳 Stripe payment completed:', { walletAddress, tokenAmount, paymentId });
         
         try {
             const normalizedAddress = walletAddress.toLowerCase();
-            const eurAmount = (session.amount_total || 0) / 100;
             
             // Fetch live EUR/USD rate
             let eurUsdRate = 1.19;
@@ -138,11 +151,11 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
             // Check if already processed
             const existing = await db.pool.query(
                 'SELECT id FROM presale_purchases WHERE payment_tx_hash = $1',
-                [session.id]
+                [paymentId]
             );
             
             if (existing.rows.length > 0) {
-                console.log('⚠️ Payment already processed:', session.id);
+                console.log('⚠️ Payment already processed:', paymentId);
                 return res.json({ received: true, status: 'already_processed' });
             }
             
@@ -152,7 +165,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                 (wallet_address, token_amount, eur_amount, usd_amount, payment_method, payment_tx_hash, payment_amount, status, created_at)
                 VALUES ($1, $2, $3, $4, 'card', $5, $6, 'paid', NOW())
                 RETURNING id
-            `, [normalizedAddress, tokenAmount, eurAmount, usdAmount, session.id, eurAmount]);
+            `, [normalizedAddress, tokenAmount, eurAmount, usdAmount, paymentId, eurAmount]);
             
             const purchaseId = purchaseResult.rows[0].id;
             console.log('📝 Purchase recorded - ID:', purchaseId);
@@ -3266,6 +3279,58 @@ app.post('/api/presale/create-checkout', async (req, res) => {
             error: 'Failed to create checkout session',
             details: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
+    }
+});
+
+app.post('/api/presale/create-payment-intent', async (req, res) => {
+    if (!stripe) {
+        return res.status(503).json({ error: 'Card payments not available' });
+    }
+    
+    try {
+        const { walletAddress, tokenAmount, email } = req.body;
+        
+        if (!walletAddress || !ethers.isAddress(walletAddress)) {
+            return res.status(400).json({ error: 'Invalid wallet address' });
+        }
+        
+        if (!tokenAmount || tokenAmount < PRESALE_CONFIG.minPurchase || tokenAmount > PRESALE_CONFIG.maxPurchase) {
+            return res.status(400).json({ 
+                error: `Token amount must be between ${PRESALE_CONFIG.minPurchase} and ${PRESALE_CONFIG.maxPurchase}` 
+            });
+        }
+        
+        const normalizedAddress = walletAddress.toLowerCase();
+        const totalEUR = tokenAmount * PRESALE_CONFIG.tokenPrice;
+        const amountCents = Math.round(totalEUR * 100);
+        
+        console.log('💳 Creating Payment Intent:', { wallet: normalizedAddress, tokens: tokenAmount, amount: totalEUR + ' EUR' });
+        
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: amountCents,
+            currency: 'eur',
+            metadata: {
+                walletAddress: normalizedAddress,
+                tokenAmount: tokenAmount.toString(),
+                source: 'presale'
+            },
+            receipt_email: email || undefined,
+            description: `${tokenAmount} VIP Tokens - Kea Valley Presale`
+        });
+        
+        console.log('✅ Payment Intent created:', paymentIntent.id);
+        
+        res.json({
+            success: true,
+            clientSecret: paymentIntent.client_secret,
+            paymentIntentId: paymentIntent.id,
+            amount: totalEUR,
+            currency: 'EUR'
+        });
+        
+    } catch (error) {
+        console.error('❌ Payment Intent error:', error);
+        res.status(500).json({ error: 'Failed to create payment' });
     }
 });
 
