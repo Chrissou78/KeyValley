@@ -1535,7 +1535,8 @@ app.get('/api/presale/config', async (req, res) => {
             maxPurchase: PRESALE_CONFIG.maxPurchase,
             presaleWallet: PRESALE_CONFIG.presaleWallet || process.env.PRESALE_WALLET || '',
             eurUsdRate: eurUsdRate,
-            polPrice: polPrice
+            polPrice: polPrice,
+            stripePublicKey: process.env.STRIPE_PUBLIC_KEY || null  // Add this line
         });
     } catch (error) {
         console.error('Config error:', error);
@@ -3142,7 +3143,7 @@ app.post('/api/presale/create-checkout', async (req, res) => {
     }
     
     try {
-        const { walletAddress, tokenAmount, email } = req.body;
+        const { walletAddress, tokenAmount, email, embedded } = req.body;
         
         if (!walletAddress || !ethers.isAddress(walletAddress)) {
             return res.status(400).json({ error: 'Invalid wallet address' });
@@ -3155,16 +3156,15 @@ app.post('/api/presale/create-checkout', async (req, res) => {
         }
         
         const normalizedAddress = walletAddress.toLowerCase();
-        const unitPrice = Math.round(PRESALE_CONFIG.tokenPrice * 100); // EUR cents
-        const totalAmount = unitPrice * parseInt(tokenAmount);
+        const unitPrice = Math.round(PRESALE_CONFIG.tokenPrice * 100);
         
         console.log('💳 Creating Stripe checkout:', { 
             wallet: normalizedAddress, 
             tokens: tokenAmount, 
-            total: totalAmount / 100 + ' EUR' 
+            embedded: !!embedded
         });
         
-        const session = await stripe.checkout.sessions.create({
+        const sessionConfig = {
             payment_method_types: ['card'],
             customer_email: email || undefined,
             line_items: [{
@@ -3173,28 +3173,38 @@ app.post('/api/presale/create-checkout', async (req, res) => {
                     product_data: {
                         name: 'Kea Valley VIP Token',
                         description: `${tokenAmount} VIP Tokens at €${PRESALE_CONFIG.tokenPrice} each`,
-                        images: ['https://kea-valley.com/logo.png'] // Optional: add your logo
+                        images: ['https://kea-valley.com/logo.png']
                     },
                     unit_amount: unitPrice
                 },
                 quantity: parseInt(tokenAmount)
             }],
             mode: 'payment',
-            success_url: `${req.headers.origin || 'https://kea-valley.com'}/presale?purchase=complete&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${req.headers.origin || 'https://kea-valley.com'}/presale?purchase=cancelled`,
             metadata: {
                 walletAddress: normalizedAddress,
                 tokenAmount: tokenAmount.toString(),
                 source: 'presale'
             }
-        });
+        };
+        
+        // Embedded checkout uses ui_mode and return_url
+        if (embedded) {
+            sessionConfig.ui_mode = 'embedded';
+            sessionConfig.return_url = `${req.headers.origin || 'https://kea-valley.com'}/presale?purchase=complete&session_id={CHECKOUT_SESSION_ID}`;
+        } else {
+            sessionConfig.success_url = `${req.headers.origin || 'https://kea-valley.com'}/presale?purchase=complete&session_id={CHECKOUT_SESSION_ID}`;
+            sessionConfig.cancel_url = `${req.headers.origin || 'https://kea-valley.com'}/presale?purchase=cancelled`;
+        }
+        
+        const session = await stripe.checkout.sessions.create(sessionConfig);
         
         console.log('✅ Stripe session created:', session.id);
         
         res.json({ 
             success: true, 
             sessionId: session.id,
-            url: session.url 
+            clientSecret: session.client_secret, // For embedded checkout
+            url: session.url // For redirect checkout (fallback)
         });
         
     } catch (error) {

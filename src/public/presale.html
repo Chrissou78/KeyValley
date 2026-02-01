@@ -6,6 +6,7 @@
     <title>VIP Token Presale | Kea Valley</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <script>
@@ -417,6 +418,94 @@
             storageKey: 'keavalley_profile'
         };
 
+        // Stripe variables
+        let stripe = null;
+        let stripeCheckout = null;
+
+        // Initialize Stripe
+        async function initStripe() {
+            try {
+                if (CONFIG.stripePublicKey) {
+                    stripe = Stripe(CONFIG.stripePublicKey);
+                    console.log('✅ Stripe initialized');
+                } else {
+                    console.log('⚠️ Stripe public key not configured');
+                }
+            } catch (e) {
+                console.log('Stripe init error:', e);
+            }
+        }
+
+        // Open Stripe embedded checkout modal
+        async function openStripeCheckout(walletAddress, tokenAmount, email) {
+            const modal = document.getElementById('stripeModal');
+            const checkoutContainer = document.getElementById('checkout');
+            const loading = document.getElementById('stripeLoading');
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            loading.style.display = 'flex';
+            checkoutContainer.innerHTML = '';
+            
+            try {
+                const response = await fetch('/api/presale/create-checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        walletAddress,
+                        tokenAmount,
+                        email,
+                        embedded: true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok || !data.clientSecret) {
+                    throw new Error(data.error || 'Failed to create checkout session');
+                }
+                
+                loading.style.display = 'none';
+                
+                stripeCheckout = await stripe.initEmbeddedCheckout({
+                    clientSecret: data.clientSecret
+                });
+                
+                stripeCheckout.mount('#checkout');
+                
+            } catch (error) {
+                console.error('Stripe checkout error:', error);
+                loading.innerHTML = `
+                    <div class="text-center">
+                        <span class="material-icons text-red-500 text-4xl mb-4">error</span>
+                        <p class="text-red-400 mb-4">${error.message || 'Failed to load payment form'}</p>
+                        <button onclick="closeStripeModal()" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white">
+                            Close
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Close Stripe modal
+        function closeStripeModal() {
+            const modal = document.getElementById('stripeModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            
+            if (stripeCheckout) {
+                stripeCheckout.destroy();
+                stripeCheckout = null;
+            }
+            
+            document.getElementById('checkout').innerHTML = '';
+            document.getElementById('stripeLoading').style.display = 'flex';
+            document.getElementById('stripeLoading').innerHTML = `
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mb-4"></div>
+                <p class="text-gray-400">Loading payment form...</p>
+            `;
+        }
+
         // ============================================
         // Referral Handling
         // ============================================
@@ -475,28 +564,28 @@
 
         async function loadPresaleConfig() {
             try {
-                const response = await fetch('/api/presale/config');
-                const data = await response.json();
+                const res = await fetch('/api/presale/config');
+                const data = await res.json();
                 
-                console.log('Presale config:', data);
+                CONFIG.presaleEnabled = data.enabled;
+                CONFIG.tokenPriceEUR = data.tokenPrice || 1.00;
+                CONFIG.totalTokens = data.totalTokens || 1000000;
+                CONFIG.tokensSold = data.tokensSold || 0;
+                CONFIG.minPurchase = data.minPurchase || 10;
+                CONFIG.maxPurchase = data.maxPurchase || 10000;
+                CONFIG.presaleWallet = data.presaleWallet || '';
+                CONFIG.eurUsdRate = data.eurUsdRate || 1.19;
+                CONFIG.polPrice = data.polPrice || 0.12;
+                CONFIG.stripePublicKey = data.stripePublicKey || null;
                 
-                if (data.success !== false) {
-                    CONFIG.tokenPriceEUR = data.tokenPrice || CONFIG.tokenPriceEUR;
-                    CONFIG.eurUsdRate = data.eurUsdRate || CONFIG.eurUsdRate;
-                    CONFIG.polPrice = data.polPrice || CONFIG.polPrice;
-                    CONFIG.totalTokens = data.totalTokens || CONFIG.totalTokens;
-                    CONFIG.tokensSold = data.tokensSold || 0;
-                    CONFIG.minPurchase = data.minPurchase || CONFIG.minPurchase;
-                    CONFIG.maxPurchase = data.maxPurchase || CONFIG.maxPurchase;
-                    CONFIG.presaleEnabled = data.enabled === true;
-                    CONFIG.presaleWallet = data.presaleWallet || '';
+                // Initialize Stripe if key available
+                if (CONFIG.stripePublicKey) {
+                    await initStripe();
                 }
                 
-                updateUI();
-                updatePresaleStatus(CONFIG.presaleEnabled);
-            } catch (error) {
-                console.error('Failed to load presale config:', error);
-                updatePresaleStatus(false);
+                updatePresaleUI();
+            } catch (e) {
+                console.error('Failed to load presale config:', e);
             }
         }
 
@@ -895,37 +984,17 @@
             };
             localStorage.setItem('pendingPurchase', JSON.stringify(pendingPurchase));
             
-            // Handle Card payment via Stripe
+            // Handle Card payment via Stripe Embedded Checkout
             if (selectedPayment === 'Card') {
-                showProcessing('Initiating Payment', 'Redirecting to secure checkout...', 'Step 1: Card Payment');
-                
-                try {
-                    const session = localStorage.getItem(CONFIG.storageKey);
-                    const sessionData = session ? JSON.parse(session) : {};
-                    
-                    const response = await fetch('/api/presale/create-checkout', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            walletAddress: currentWallet,
-                            tokenAmount: tokenAmount,
-                            email: sessionData.email || null
-                        })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success && data.url) {
-                        window.location.href = data.url;
-                    } else {
-                        hideProcessing();
-                        showError('Checkout Failed', data.error || 'Failed to create checkout session. Please try crypto payment.');
-                    }
-                } catch (error) {
-                    console.error('Stripe checkout error:', error);
-                    hideProcessing();
-                    showError('Card Payment Unavailable', 'Card payment is currently unavailable. Please try POL or USDC.');
+                if (!stripe) {
+                    showError('Card Payment Unavailable', 'Card payments are not configured. Please use POL or USDC.');
+                    return;
                 }
+                
+                const session = localStorage.getItem(CONFIG.storageKey);
+                const sessionData = session ? JSON.parse(session) : {};
+                
+                openStripeCheckout(currentWallet, tokenAmount, sessionData.email || null);
                 return;
             }
             
@@ -1131,5 +1200,24 @@
             }
         }
     </script>
+    <!-- Stripe Embedded Checkout Modal -->
+    <div id="stripeModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden border border-gray-700 shadow-2xl">
+            <div class="flex items-center justify-between p-4 border-b border-gray-700">
+                <h3 class="text-lg font-semibold text-white">Complete Payment</h3>
+                <button onclick="closeStripeModal()" class="text-gray-400 hover:text-white transition-colors">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div id="stripeCheckoutContainer" class="p-4" style="min-height: 400px;">
+                <!-- Stripe Embedded Checkout will mount here -->
+                <div id="stripeLoading" class="flex flex-col items-center justify-center h-64">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mb-4"></div>
+                    <p class="text-gray-400">Loading payment form...</p>
+                </div>
+                <div id="checkout"></div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
