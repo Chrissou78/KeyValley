@@ -2950,7 +2950,103 @@ app.post('/api/presale/purchase', async (req, res) => {
 
 // Stripe checkout (disabled but kept for compatibility)
 app.post('/api/presale/create-checkout', async (req, res) => {
-    return res.status(503).json({ error: 'Card payments not available. Please use crypto (POL or USDC).' });
+    if (!stripe) {
+        return res.status(503).json({ error: 'Card payments not available. Please use crypto (POL or USDC).' });
+    }
+    
+    try {
+        const { walletAddress, tokenAmount, email } = req.body;
+        
+        if (!walletAddress || !tokenAmount) {
+            return res.status(400).json({ error: 'Missing wallet address or token amount' });
+        }
+        
+        const unitPrice = Math.round(PRESALE_CONFIG.tokenPrice * 100); // EUR cents
+        
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            customer_email: email || undefined,
+            line_items: [{
+                price_data: {
+                    currency: 'eur',
+                    product_data: {
+                        name: 'VIP Token Presale',
+                        description: `${tokenAmount} VIP Tokens`
+                    },
+                    unit_amount: unitPrice
+                },
+                quantity: parseInt(tokenAmount)
+            }],
+            mode: 'payment',
+            success_url: `${req.headers.origin || 'https://kea-valley.com'}/presale?purchase=complete&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${req.headers.origin || 'https://kea-valley.com'}/presale?purchase=cancelled`,
+            metadata: {
+                walletAddress: walletAddress.toLowerCase(),
+                tokenAmount: tokenAmount.toString()
+            }
+        });
+        
+        res.json({ 
+            success: true, 
+            sessionId: session.id,
+            url: session.url 
+        });
+        
+    } catch (error) {
+        console.error('Stripe checkout error:', error);
+        res.status(500).json({ error: 'Failed to create checkout session' });
+    }
+});
+
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    if (!stripe) {
+        return res.status(503).send('Stripe not configured');
+    }
+    
+    const sig = req.headers['stripe-signature'];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    let event;
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err) {
+        console.error('Webhook signature verification failed:', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+    
+    if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        const { walletAddress, tokenAmount } = session.metadata;
+        
+        console.log('💳 Stripe payment completed:', { walletAddress, tokenAmount });
+        
+        try {
+            // Record purchase
+            await db.pool.query(`
+                INSERT INTO presale_purchases 
+                (wallet_address, token_amount, eur_amount, payment_method, payment_tx_hash, status, created_at)
+                VALUES ($1, $2, $3, 'card', $4, 'paid', NOW())
+            `, [walletAddress, tokenAmount, session.amount_total / 100, session.id]);
+            
+            // Mint tokens
+            await minter.initialize();
+            const mintResult = await minter.mintToAddress(walletAddress, parseFloat(tokenAmount));
+            
+            if (mintResult.receipt || mintResult.hash) {
+                const txHash = mintResult.receipt?.hash || mintResult.hash;
+                await db.pool.query(`
+                    UPDATE presale_purchases 
+                    SET status = 'completed', mint_tx_hash = $1, minted_at = NOW()
+                    WHERE payment_tx_hash = $2
+                `, [txHash, session.id]);
+                console.log('✅ Tokens minted for Stripe payment:', txHash);
+            }
+        } catch (error) {
+            console.error('❌ Error processing Stripe payment:', error);
+        }
+    }
+    
+    res.json({ received: true });
 });
 
 // ===========================================
