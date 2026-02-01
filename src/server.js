@@ -120,6 +120,21 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
             const normalizedAddress = walletAddress.toLowerCase();
             const eurAmount = (session.amount_total || 0) / 100;
             
+            // Fetch live EUR/USD rate
+            let eurUsdRate = 1.19;
+            try {
+                const rateRes = await fetch('https://api.exchangerate-api.com/v4/latest/EUR');
+                if (rateRes.ok) {
+                    const rateData = await rateRes.json();
+                    eurUsdRate = rateData.rates?.USD || 1.19;
+                    console.log('💱 Live EUR/USD rate:', eurUsdRate);
+                }
+            } catch (e) {
+                console.log('⚠️ Using default EUR/USD rate:', eurUsdRate);
+            }
+            
+            const usdAmount = eurAmount * eurUsdRate;
+            
             // Check if already processed
             const existing = await db.pool.query(
                 'SELECT id FROM presale_purchases WHERE payment_tx_hash = $1',
@@ -134,10 +149,10 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
             // Record purchase
             const purchaseResult = await db.pool.query(`
                 INSERT INTO presale_purchases 
-                (wallet_address, token_amount, eur_amount, usd_amount, payment_method, payment_tx_hash, status, created_at)
-                VALUES ($1, $2, $3, $4, 'card', $5, 'paid', NOW())
+                (wallet_address, token_amount, eur_amount, usd_amount, payment_method, payment_tx_hash, payment_amount, status, created_at)
+                VALUES ($1, $2, $3, $4, 'card', $5, $6, 'paid', NOW())
                 RETURNING id
-            `, [normalizedAddress, tokenAmount, eurAmount, eurAmount * 1.19, session.id]);
+            `, [normalizedAddress, tokenAmount, eurAmount, usdAmount, session.id, eurAmount]);
             
             const purchaseId = purchaseResult.rows[0].id;
             console.log('📝 Purchase recorded - ID:', purchaseId);
@@ -166,6 +181,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                     
                     if (registrantResult.rows.length > 0 && registrantResult.rows[0].referrer_wallet) {
                         const referrerWallet = registrantResult.rows[0].referrer_wallet;
+                        const referrerCode = registrantResult.rows[0].referrer_code;
                         
                         const settingsResult = await db.pool.query(
                             'SELECT * FROM referral_settings WHERE id = 1'
@@ -173,32 +189,45 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                         
                         if (settingsResult.rows.length > 0 && settingsResult.rows[0].enabled) {
                             const settings = settingsResult.rows[0];
-                            let bonusAmount = 0;
+                            const minPurchase = parseFloat(settings.min_purchase_for_bonus) || 0;
                             
-                            if (settings.presale_bonus_type === 'fixed') {
-                                bonusAmount = parseFloat(settings.presale_bonus_amount) || 0;
-                            } else if (settings.presale_bonus_type === 'percentage') {
-                                bonusAmount = (parseFloat(tokenAmount) * parseFloat(settings.presale_bonus_amount)) / 100;
-                            }
-                            
-                            if (bonusAmount > 0) {
-                                console.log(`🎁 Minting ${bonusAmount} VIP presale bonus to referrer...`);
-                                const bonusMintResult = await minter.mintToAddress(referrerWallet, bonusAmount, true);
-                                const bonusTxHash = bonusMintResult.receipt?.hash || bonusMintResult.hash || 'bonus-minted';
+                            if (usdAmount >= minPurchase) {
+                                let bonusAmount = 0;
                                 
-                                await db.pool.query(`
-                                    UPDATE presale_purchases 
-                                    SET referral_bonus_amount = $1, referral_bonus_paid = true
-                                    WHERE id = $2
-                                `, [bonusAmount, purchaseId]);
+                                if (settings.presale_bonus_type === 'fixed') {
+                                    bonusAmount = parseFloat(settings.presale_bonus_amount) || 0;
+                                } else if (settings.presale_bonus_type === 'percentage') {
+                                    bonusAmount = (parseFloat(tokenAmount) * parseFloat(settings.presale_bonus_amount)) / 100;
+                                }
                                 
-                                await db.pool.query(`
-                                    UPDATE referrals 
-                                    SET presale_bonus_paid = presale_bonus_paid + $1
-                                    WHERE referee_wallet = $2
-                                `, [bonusAmount, normalizedAddress]);
-                                
-                                console.log('✅ Presale referral bonus minted! TX:', bonusTxHash);
+                                if (bonusAmount > 0) {
+                                    console.log(`🎁 Minting ${bonusAmount} VIP presale bonus to referrer...`);
+                                    const bonusMintResult = await minter.mintToAddress(referrerWallet, bonusAmount, true);
+                                    const bonusTxHash = bonusMintResult.receipt?.hash || bonusMintResult.hash || 'bonus-minted';
+                                    
+                                    await db.pool.query(`
+                                        UPDATE presale_purchases 
+                                        SET referral_bonus_amount = $1, referral_bonus_paid = true
+                                        WHERE id = $2
+                                    `, [bonusAmount, purchaseId]);
+                                    
+                                    await db.pool.query(`
+                                        UPDATE referrals 
+                                        SET presale_bonus_paid = presale_bonus_paid + $1,
+                                            presale_bonus_tx = $2
+                                        WHERE referee_wallet = $3
+                                    `, [bonusAmount, bonusTxHash, normalizedAddress]);
+                                    
+                                    await db.pool.query(`
+                                        UPDATE referral_codes 
+                                        SET total_presale_purchases = total_presale_purchases + 1,
+                                            total_bonus_earned = total_bonus_earned + $1,
+                                            updated_at = NOW()
+                                        WHERE code = $2
+                                    `, [bonusAmount, referrerCode]);
+                                    
+                                    console.log('✅ Presale referral bonus minted! TX:', bonusTxHash);
+                                }
                             }
                         }
                     }
