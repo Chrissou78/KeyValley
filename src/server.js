@@ -167,7 +167,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
 
             let mintResult;
             try {
-                mintResult = await minter.mintToAddress(normalizedAddress, parseFloat(tokenAmount));
+                mintResult = await minter.mintToAddress(normalizedAddress, parseFloat(tokenAmount), true); 
                 console.log('📋 Mint result:', JSON.stringify(mintResult, null, 2));
             } catch (mintError) {
                 console.error('❌ Mint error:', mintError.message);
@@ -2890,7 +2890,7 @@ app.post('/api/presale/verify-payment', async (req, res) => {
         
         let mintResult;
         try {
-            mintResult = await minter.mintToAddress(normalizedAddress, parseFloat(tokenAmount));
+            mintResult = await minter.mintToAddress(normalizedAddress, parseFloat(tokenAmount), true); 
         } catch (mintInitError) {
             console.error('❌ Minter error:', mintInitError.message);
             mintResult = { success: false, error: mintInitError.message };
