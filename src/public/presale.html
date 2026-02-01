@@ -43,7 +43,6 @@
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
         
-        /* Status pulse animation */
         @keyframes pulse-dot {
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.5; transform: scale(1.2); }
@@ -52,30 +51,25 @@
             animation: pulse-dot 2s infinite;
         }
         
-        /* Progress bar animation */
         .progress-bar-fill {
             background: linear-gradient(90deg, #ee9d2b, #fbdea6);
             transition: width 0.5s ease;
         }
         
-        /* Payment option selected state */
         .payment-option.selected {
             border-color: #ee9d2b;
             background: rgba(238, 157, 43, 0.1);
         }
         
-        /* Quick amount buttons */
         .quick-btn:hover {
             background: rgba(238, 157, 43, 0.2);
             border-color: #ee9d2b;
         }
         
-        /* Overlay styles */
         .overlay-backdrop {
             background: rgba(10, 10, 10, 0.95);
         }
         
-        /* Spinner */
         .spinner {
             border: 3px solid rgba(238, 157, 43, 0.2);
             border-top-color: #ee9d2b;
@@ -239,10 +233,9 @@
                                 <span class="text-2xl mb-1">💵</span>
                                 <span class="text-xs font-bold text-white">USDC</span>
                             </button>
-                            <button class="payment-option flex flex-col items-center py-4 border border-white/10 rounded-sm opacity-40 cursor-not-allowed" disabled>
+                            <button id="paymentCard" class="payment-option flex flex-col items-center py-4 border border-white/10 rounded-sm hover:border-primary/50 transition-all" onclick="selectPayment('Card')">
                                 <span class="text-2xl mb-1">💳</span>
                                 <span class="text-xs font-bold text-white">Card</span>
-                                <span class="text-[10px] text-slate-500">Soon</span>
                             </button>
                         </div>
                     </div>
@@ -446,6 +439,7 @@
             checkExistingSession();
             handleUrlParams();
             setupMessageListener();
+            checkReferralCode();
         });
 
         async function loadPresaleConfig() {
@@ -483,7 +477,6 @@
             const notConnectedOverlay = document.getElementById('notConnectedOverlay');
             
             if (enabled) {
-                // GREEN when active
                 statusBadge.className = 'inline-flex items-center gap-2 px-4 py-2 rounded-full border border-green-500/30 bg-green-500/10';
                 statusDot.className = 'w-2 h-2 rounded-full bg-green-500 pulse-dot';
                 statusText.className = 'text-xs font-bold uppercase tracking-widest text-green-400';
@@ -493,7 +486,6 @@
                     inactiveOverlay.classList.add('hidden');
                 }
             } else {
-                // RED when inactive
                 statusBadge.className = 'inline-flex items-center gap-2 px-4 py-2 rounded-full border border-red-500/30 bg-red-500/10';
                 statusDot.className = 'w-2 h-2 rounded-full bg-red-500';
                 statusText.className = 'text-xs font-bold uppercase tracking-widest text-red-400';
@@ -505,6 +497,7 @@
                 }
             }
         }
+
         function updateUI() {
             document.getElementById('tokenPriceDisplay').textContent = CONFIG.tokenPriceEUR.toFixed(2);
             document.getElementById('tokenPriceUSD').textContent = `≈ $${(CONFIG.tokenPriceEUR * CONFIG.eurUsdRate).toFixed(2)} USD`;
@@ -604,12 +597,31 @@
         function handleUrlParams() {
             const params = new URLSearchParams(window.location.search);
             
+            // Handle wallet from URL
             const wallet = params.get('wlt') || params.get('wallet') || params.get('address');
             if (wallet) {
                 saveSession({ wallet });
                 setWalletConnected(wallet);
             }
             
+            // Handle Stripe success callback
+            const sessionId = params.get('session_id');
+            if (sessionId) {
+                const stored = localStorage.getItem('pendingPurchase');
+                const purchase = stored ? JSON.parse(stored) : {};
+                
+                showSuccess({
+                    tokenAmount: purchase.tokenAmount || 'Your',
+                    paymentTxHash: sessionId,
+                    mintTxHash: null
+                });
+                document.getElementById('resultMessage').textContent = 'Payment received! Your VIP tokens will be sent to your wallet shortly.';
+                localStorage.removeItem('pendingPurchase');
+                window.history.replaceState({}, '', window.location.pathname);
+                return;
+            }
+            
+            // Handle crypto purchase callback
             const purchaseComplete = params.get('purchase');
             const txHash = params.get('txhash');
             const success = params.get('success');
@@ -618,7 +630,13 @@
                 handlePurchaseCallback(txHash, success === 'true');
             }
             
-            if (wallet || purchaseComplete) {
+            // Handle cancelled Stripe payment
+            if (purchaseComplete === 'cancelled') {
+                alert('Payment was cancelled. Please try again.');
+                localStorage.removeItem('pendingPurchase');
+            }
+            
+            if (wallet || purchaseComplete || sessionId) {
                 window.history.replaceState({}, '', window.location.pathname);
             }
         }
@@ -725,7 +743,15 @@
         }
 
         function updateBalanceDisplay() {
+            const balanceDisplay = document.getElementById('balanceDisplay');
             const balanceValue = document.getElementById('balanceValue');
+            
+            if (selectedPayment === 'Card') {
+                balanceDisplay.classList.add('hidden');
+                return;
+            }
+            
+            balanceDisplay.classList.remove('hidden');
             const balance = selectedPayment === 'POL' ? userBalances.POL : userBalances.USDC;
             const symbol = selectedPayment;
             
@@ -748,8 +774,6 @@
         // PAYMENT SELECTION & TOTALS
         // ============================================
         function selectPayment(method) {
-            if (method === 'Card') return;
-            
             selectedPayment = method;
             
             document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
@@ -777,18 +801,20 @@
             if (selectedPayment === 'POL') {
                 const polAmount = totalUSD / CONFIG.polPrice;
                 cryptoEquiv.textContent = `≈ ${polAmount.toFixed(2)} POL`;
-            } else {
+            } else if (selectedPayment === 'USDC') {
                 cryptoEquiv.textContent = `≈ ${totalUSD.toFixed(2)} USDC`;
+            } else if (selectedPayment === 'Card') {
+                cryptoEquiv.textContent = `€${totalEUR.toFixed(2)}`;
             }
             
             updateBuyButton(tokenAmount, totalUSD);
-            updateBalanceDisplay();
+            if (selectedPayment !== 'Card') {
+                updateBalanceDisplay();
+            }
         }
 
         function updateBuyButton(tokenAmount, totalUSD) {
             const buyButton = document.getElementById('buyButton');
-            const balance = selectedPayment === 'POL' ? userBalances.POL : userBalances.USDC;
-            const required = selectedPayment === 'POL' ? totalUSD / CONFIG.polPrice : totalUSD;
             
             if (!currentWallet) {
                 buyButton.textContent = 'Connect Wallet';
@@ -802,12 +828,22 @@
             } else if (tokenAmount > CONFIG.maxPurchase) {
                 buyButton.textContent = `Max ${CONFIG.maxPurchase} VIP`;
                 buyButton.disabled = true;
-            } else if (balance < required) {
-                buyButton.textContent = 'Insufficient Balance';
-                buyButton.disabled = true;
-            } else {
-                buyButton.textContent = `Buy ${tokenAmount.toLocaleString()} VIP`;
+            } else if (selectedPayment === 'Card') {
+                // Card payment - no balance check needed
+                buyButton.textContent = `Pay €${(tokenAmount * CONFIG.tokenPriceEUR).toFixed(2)}`;
                 buyButton.disabled = false;
+            } else {
+                // Crypto payment - check balance
+                const balance = selectedPayment === 'POL' ? userBalances.POL : userBalances.USDC;
+                const required = selectedPayment === 'POL' ? totalUSD / CONFIG.polPrice : totalUSD;
+                
+                if (balance < required) {
+                    buyButton.textContent = 'Insufficient Balance';
+                    buyButton.disabled = true;
+                } else {
+                    buyButton.textContent = `Buy ${tokenAmount.toLocaleString()} VIP`;
+                    buyButton.disabled = false;
+                }
             }
         }
 
@@ -836,6 +872,41 @@
             };
             localStorage.setItem('pendingPurchase', JSON.stringify(pendingPurchase));
             
+            // Handle Card payment via Stripe
+            if (selectedPayment === 'Card') {
+                showProcessing('Initiating Payment', 'Redirecting to secure checkout...', 'Step 1: Card Payment');
+                
+                try {
+                    const session = localStorage.getItem(CONFIG.storageKey);
+                    const sessionData = session ? JSON.parse(session) : {};
+                    
+                    const response = await fetch('/api/presale/create-checkout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            walletAddress: currentWallet,
+                            tokenAmount: tokenAmount,
+                            email: sessionData.email || null
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.url) {
+                        window.location.href = data.url;
+                    } else {
+                        hideProcessing();
+                        alert(data.error || 'Failed to create checkout session. Please try crypto payment.');
+                    }
+                } catch (error) {
+                    console.error('Stripe checkout error:', error);
+                    hideProcessing();
+                    alert('Card payment is currently unavailable. Please try POL or USDC.');
+                }
+                return;
+            }
+            
+            // Handle crypto payments (POL/USDC)
             showProcessing('Initiating Payment', 'Redirecting to WalletTwo...', 'Step 1: Confirm Payment');
             
             const redirectUri = `${window.location.origin}/presale?purchase=complete`;
@@ -949,8 +1020,18 @@
             document.getElementById('resultTokens').textContent = `${data.tokenAmount.toLocaleString()} VIP`;
             
             const paymentLink = document.getElementById('resultPaymentTx');
-            paymentLink.href = `${CONFIG.explorerUrl}/tx/${data.paymentTxHash}`;
-            paymentLink.textContent = shortenAddress(data.paymentTxHash);
+            if (data.paymentTxHash && data.paymentTxHash.startsWith('0x')) {
+                paymentLink.href = `${CONFIG.explorerUrl}/tx/${data.paymentTxHash}`;
+                paymentLink.textContent = shortenAddress(data.paymentTxHash);
+                paymentLink.parentElement.style.display = 'flex';
+            } else if (data.paymentTxHash) {
+                // Stripe session ID
+                paymentLink.href = '#';
+                paymentLink.textContent = 'Card Payment';
+                paymentLink.parentElement.style.display = 'flex';
+            } else {
+                paymentLink.parentElement.style.display = 'none';
+            }
             
             const mintLink = document.getElementById('resultMintTx');
             if (data.mintTxHash) {
