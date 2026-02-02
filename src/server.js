@@ -1577,22 +1577,52 @@ app.post('/api/presale/create-payment-intent', async (req, res) => {
         }
         
         const normalizedAddress = walletAddress.toLowerCase();
-        const totalEUR = tokenAmount * PRESALE_CONFIG.tokenPrice;
+        const baseEUR = tokenAmount * PRESALE_CONFIG.tokenPrice;
+        
+        // Add processing fee
+        const feePercent = parseFloat(process.env.CARD_FEE_PERCENT) || 3;
+        const feeAmount = baseEUR * (feePercent / 100);
+        const totalEUR = baseEUR + feeAmount;
         const amountCents = Math.round(totalEUR * 100);
+        const feeCents = Math.round(feeAmount * 100);
         
-        console.log('💳 Creating Payment Intent:', { wallet: normalizedAddress, tokens: tokenAmount, amount: totalEUR + ' EUR' });
+        console.log('💳 Creating Payment Intent:', { 
+            wallet: normalizedAddress, 
+            tokens: tokenAmount, 
+            base: baseEUR + ' EUR',
+            fee: feeAmount.toFixed(2) + ' EUR (' + feePercent + '%)',
+            total: totalEUR.toFixed(2) + ' EUR'
+        });
         
-        const paymentIntent = await stripe.paymentIntents.create({
+        // Payment Intent config
+        const paymentIntentConfig = {
             amount: amountCents,
             currency: 'eur',
             metadata: {
                 walletAddress: normalizedAddress,
                 tokenAmount: tokenAmount.toString(),
+                baseAmount: baseEUR.toFixed(2),
+                feeAmount: feeAmount.toFixed(2),
+                feePercent: feePercent.toString(),
                 source: 'presale'
             },
             receipt_email: email || undefined,
             description: `${tokenAmount} VIP Tokens - Kea Valley Presale`
-        });
+        };
+        
+        // If destination account configured, use destination charges
+        // Fee stays in your account, rest goes to destination
+        const destinationAccount = process.env.STRIPE_DESTINATION_ACCOUNT;
+        if (destinationAccount) {
+            paymentIntentConfig.transfer_data = {
+                destination: destinationAccount,
+                amount: amountCents - feeCents // Send total minus fee to destination
+            };
+            console.log('💸 Destination charge: €' + ((amountCents - feeCents)/100).toFixed(2) + ' to ' + destinationAccount);
+            console.log('💰 Platform fee: €' + (feeCents/100).toFixed(2) + ' stays in main account');
+        }
+        
+        const paymentIntent = await stripe.paymentIntents.create(paymentIntentConfig);
         
         console.log('✅ Payment Intent created:', paymentIntent.id);
         
@@ -1600,7 +1630,10 @@ app.post('/api/presale/create-payment-intent', async (req, res) => {
             success: true,
             clientSecret: paymentIntent.client_secret,
             paymentIntentId: paymentIntent.id,
-            amount: totalEUR,
+            baseAmount: baseEUR,
+            feeAmount: feeAmount,
+            feePercent: feePercent,
+            totalAmount: totalEUR,
             currency: 'EUR'
         });
         
