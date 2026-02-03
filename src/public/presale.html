@@ -542,7 +542,9 @@
         // WALLET CONNECTION
         // ============================================
         function checkWalletConnection() {
-            const profile = sessionStorage.getItem('keavalley_profile');
+            // Try both sessionStorage and localStorage
+            let profile = sessionStorage.getItem('keavalley_profile') || localStorage.getItem('keavalley_profile');
+            
             if (profile) {
                 try {
                     sessionData = JSON.parse(profile);
@@ -551,11 +553,15 @@
                         showWalletConnected();
                         loadBalances();
                         checkReferralCode();
+                        console.log('✅ Wallet connected from storage:', currentWallet);
+                        return;
                     }
                 } catch (e) {
                     console.error('Failed to parse session:', e);
                 }
             }
+            
+            console.log('ℹ️ No wallet connection found - user needs to connect via Profile page');
         }
 
         function connectWallet() {

@@ -40,6 +40,32 @@ function ProfileContent() {
   const [vipBalance, setVipBalance] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // ============================================
+  // SYNC USER TO STORAGE FOR OTHER PAGES
+  // ============================================
+  useEffect(() => {
+    if (user?.address) {
+      // Save to both sessionStorage and localStorage for persistence
+      const profileData = {
+        walletAddress: user.address,
+        email: user.email || null,
+        name: user.name || null,
+        connectedAt: Date.now()
+      };
+      
+      sessionStorage.setItem('keavalley_profile', JSON.stringify(profileData));
+      localStorage.setItem('keavalley_profile', JSON.stringify(profileData));
+      
+      console.log('✅ Profile synced to storage:', user.address);
+    } else {
+      // User logged out - clear storage
+      sessionStorage.removeItem('keavalley_profile');
+      localStorage.removeItem('keavalley_profile');
+      
+      console.log('🚪 Profile cleared from storage');
+    }
+  }, [user]);
+
   useEffect(() => {
     if (user?.address) {
       setLoading(true);
@@ -141,6 +167,9 @@ function ProfileContent() {
         <div className="action-buttons">
           <a href="/claim" className="action-button primary">
             🎁 Claim Free Tokens
+          </a>
+          <a href="/presale" className="action-button primary">
+            💰 Buy VIP Tokens
           </a>
           <a href="https://wallet.wallettwo.com/wallet/dashboard?tab=Tokens" target="_blank" rel="noopener noreferrer" className="action-button secondary">
             💼 Open WalletTwo
