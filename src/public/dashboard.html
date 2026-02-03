@@ -885,6 +885,7 @@
                 </div>
             </div>
         </div>
+        <!-- Manual Mint Tab Panel -->
         <div id="manual-mint-panel" class="tab-panel">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <!-- Mint Form -->
@@ -896,7 +897,7 @@
                         Manual Presale Mint (Cash/Bank Transfers)
                     </h3>
                     <p class="text-white/60 text-sm mb-6">
-                        Mint VIP tokens for payments received outside Stripe/crypto. A 1% platform fee applies.
+                        Mint VIP tokens for payments received outside Stripe/crypto. Tokens are calculated automatically based on presale price (€1.00 per VIP).
                     </p>
                     
                     <form id="manual-mint-form" onsubmit="submitManualMint(event)" class="space-y-4">
@@ -906,45 +907,24 @@
                         </div>
                         
                         <div>
-                            <label class="text-white/60 text-sm block mb-2">Token Amount (VIP) *</label>
-                            <input type="number" id="mint-amount" required min="1" step="0.01" placeholder="e.g., 1000"
-                                oninput="updateMintSummary()" class="input-field"/>
-                            <p class="text-white/40 text-xs mt-1">No maximum limit for manual mints</p>
-                        </div>
-                        
-                        <div>
                             <label class="text-white/60 text-sm block mb-2">EUR Amount Received *</label>
-                            <input type="number" id="mint-eur" required min="0" step="0.01" placeholder="e.g., 1000.00"
+                            <input type="number" id="mint-eur" required min="1" step="0.01" placeholder="e.g., 1000.00"
                                 oninput="updateMintSummary()" class="input-field"/>
-                        </div>
-                        
-                        <div>
-                            <label class="text-white/60 text-sm block mb-2">Payment Reference (optional)</label>
-                            <input type="text" id="mint-reference" placeholder="Bank transfer ref, invoice #, etc." class="input-field"/>
-                        </div>
-                        
-                        <div>
-                            <label class="text-white/60 text-sm block mb-2">Notes (optional)</label>
-                            <textarea id="mint-notes" rows="2" placeholder="Additional notes..." class="input-field resize-none"></textarea>
                         </div>
 
-                        <!-- Fee Summary -->
+                        <!-- Summary -->
                         <div class="p-4 bg-white/5 rounded-lg space-y-2">
-                            <h4 class="text-sm font-medium gold-text">Fee Summary</h4>
+                            <h4 class="text-sm font-medium gold-text">Summary</h4>
                             <div class="flex justify-between text-sm">
                                 <span class="text-white/60">EUR Received:</span>
                                 <span id="summary-eur">€0.00</span>
                             </div>
                             <div class="flex justify-between text-sm">
                                 <span class="text-white/60">Platform Fee (1%):</span>
-                                <span id="summary-fee" class="gold-text">€0.00</span>
+                                <span id="summary-fee" class="text-white/60">€0.00</span>
                             </div>
-                            <div class="flex justify-between text-sm border-t border-white/10 pt-2">
-                                <span class="text-white/60">Net to Connected Account:</span>
-                                <span id="summary-net">€0.00</span>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <span class="text-white/60">Tokens to Mint:</span>
+                            <div class="flex justify-between text-sm border-t border-white/10 pt-2 mt-2">
+                                <span class="text-white/80 font-medium">Tokens to Mint:</span>
                                 <span id="summary-tokens" class="gold-text font-bold">0 VIP</span>
                             </div>
                         </div>
@@ -975,6 +955,7 @@
                 </div>
             </div>
         </div>
+
     </main>
     
     <!-- Full Sync Modal -->
@@ -1061,6 +1042,7 @@
             } else if (tabName === 'admins') {
                 loadAdmins();
             } else if (tabName === 'manual-mint') {
+                loadManualMintConfig();
                 loadManualMints();
             } else if (tabName === 'settings') {
                 loadSettings();
@@ -2122,26 +2104,35 @@
         }
         
         // Manual Mint Functions
+        let manualMintTokenPrice = 1.00; // Will be loaded from config
+
+        async function loadManualMintConfig() {
+            try {
+                const response = await fetch('/api/presale/config');
+                const config = await response.json();
+                manualMintTokenPrice = config.tokenPrice || 1.00;
+                console.log('Manual mint token price loaded:', manualMintTokenPrice);
+            } catch (error) {
+                console.error('Error loading presale config for manual mint:', error);
+            }
+        }
+
         function updateMintSummary() {
-            const amount = parseFloat(document.getElementById('mint-amount').value) || 0;
             const eur = parseFloat(document.getElementById('mint-eur').value) || 0;
             const fee = eur * 0.01;
-            const net = eur - fee;
+            const tokensToMint = eur / manualMintTokenPrice;
             
             document.getElementById('summary-eur').textContent = `€${eur.toFixed(2)}`;
             document.getElementById('summary-fee').textContent = `€${fee.toFixed(2)}`;
-            document.getElementById('summary-net').textContent = `€${net.toFixed(2)}`;
-            document.getElementById('summary-tokens').textContent = `${amount} VIP`;
+            document.getElementById('summary-tokens').textContent = `${tokensToMint.toFixed(2)} VIP`;
         }
 
         async function submitManualMint(event) {
             event.preventDefault();
             
             const wallet = document.getElementById('mint-wallet').value.trim();
-            const amount = parseFloat(document.getElementById('mint-amount').value);
             const eurAmount = parseFloat(document.getElementById('mint-eur').value);
-            const reference = document.getElementById('mint-reference').value.trim();
-            const notes = document.getElementById('mint-notes').value.trim();
+            const tokenAmount = eurAmount / manualMintTokenPrice;
             
             const errorDiv = document.getElementById('mint-error');
             const successDiv = document.getElementById('mint-success');
@@ -2153,16 +2144,13 @@
             submitBtn.textContent = 'Minting...';
             
             try {
-                const response = await fetch('/api/admin/manual-mint', {
+                const response = await fetch('/api/presale/admin/manual-mint', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
                     body: JSON.stringify({
                         walletAddress: wallet,
-                        tokenAmount: amount,
-                        eurAmount: eurAmount,
-                        reference: reference,
-                        notes: notes
+                        eurAmount: eurAmount
                     })
                 });
                 
@@ -2173,14 +2161,13 @@
                 }
                 
                 successDiv.innerHTML = `
-                    ✅ Successfully minted ${amount} VIP to ${wallet.slice(0,6)}...${wallet.slice(-4)}<br>
-                    <a href="https://polygonscan.com/tx/${data.txHash}" target="_blank" class="text-primary hover:underline">
+                    ✅ Successfully minted ${data.tokenAmount.toFixed(2)} VIP to ${wallet.slice(0,6)}...${wallet.slice(-4)}<br>
+                    <a href="${EXPLORER_URL}/tx/${data.txHash}" target="_blank" class="gold-text hover:underline">
                         View TX: ${data.txHash.slice(0,10)}...
                     </a>
                 `;
                 successDiv.classList.remove('hidden');
                 
-                // Reset form
                 document.getElementById('manual-mint-form').reset();
                 updateMintSummary();
                 loadManualMints();
@@ -2198,7 +2185,7 @@
             const container = document.getElementById('manual-mints-list');
             
             try {
-                const response = await fetch('/api/admin/manual-mints', { credentials: 'include' });
+                const response = await fetch('/api/presale/admin/manual-mints', { credentials: 'include' });
                 const data = await response.json();
                 
                 if (!data.mints || data.mints.length === 0) {
@@ -2209,17 +2196,16 @@
                 container.innerHTML = data.mints.map(mint => `
                     <div class="p-4 bg-white/5 rounded-lg border border-white/10">
                         <div class="flex justify-between items-start mb-2">
-                            <span class="gold-text font-bold">${mint.token_amount} VIP</span>
+                            <span class="gold-text font-bold">${parseFloat(mint.token_amount).toFixed(2)} VIP</span>
                             <span class="text-xs text-white/40">${new Date(mint.created_at).toLocaleDateString()}</span>
                         </div>
                         <p class="text-sm text-white/80 font-mono truncate" title="${mint.wallet_address}">
                             To: ${mint.wallet_address.slice(0,8)}...${mint.wallet_address.slice(-6)}
                         </p>
                         <p class="text-sm text-white/60">€${parseFloat(mint.eur_amount).toFixed(2)} received</p>
-                        ${mint.reference ? `<p class="text-xs text-white/40 mt-1">Ref: ${mint.reference}</p>` : ''}
                         ${mint.mint_tx_hash ? `
                             <a href="${EXPLORER_URL}/tx/${mint.mint_tx_hash}" target="_blank" 
-                            class="text-xs gold-text hover:underline mt-1 block">
+                            class="text-xs gold-text hover:underline mt-2 block">
                                 TX: ${mint.mint_tx_hash.slice(0,10)}...
                             </a>
                         ` : ''}
@@ -2230,7 +2216,6 @@
                 container.innerHTML = `<p class="text-red-400 text-sm text-center py-4">Error: ${error.message}</p>`;
             }
         }
-        
         // ==========================================
         // INIT
         // ==========================================
