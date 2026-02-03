@@ -545,23 +545,28 @@
             // Try both sessionStorage and localStorage
             let profile = sessionStorage.getItem('keavalley_profile') || localStorage.getItem('keavalley_profile');
             
+            console.log('🔍 Checking wallet connection...');
+            
             if (profile) {
                 try {
                     sessionData = JSON.parse(profile);
-                    if (sessionData.walletAddress) {
-                        currentWallet = sessionData.walletAddress.toLowerCase();
+                    // Check ALL possible key names
+                    const wallet = sessionData.wallet || sessionData.walletAddress || sessionData.address || sessionData.wallet_address;
+                    
+                    if (wallet) {
+                        currentWallet = wallet.toLowerCase();
                         showWalletConnected();
                         loadBalances();
                         checkReferralCode();
-                        console.log('✅ Wallet connected from storage:', currentWallet);
+                        console.log('✅ Wallet connected:', currentWallet);
                         return;
                     }
                 } catch (e) {
-                    console.error('Failed to parse session:', e);
+                    console.error('❌ Failed to parse session:', e);
                 }
             }
             
-            console.log('ℹ️ No wallet connection found - user needs to connect via Profile page');
+            console.log('❌ No wallet found in storage');
         }
 
         function connectWallet() {
@@ -588,6 +593,7 @@
 
         function disconnectWallet() {
             sessionStorage.removeItem('keavalley_profile');
+            localStorage.removeItem('keavalley_profile');
             currentWallet = null;
             sessionData = null;
             document.getElementById('connect-wallet-btn').classList.remove('hidden');
