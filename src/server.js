@@ -3179,7 +3179,7 @@ app.post('/api/presale/verify-payment', async (req, res) => {
         totalEUR, 
         totalUSD, 
         paymentMethod,
-        referrerCode  // Optional: referrer code if provided at purchase
+        referrerCode
     } = req.body;
     
     console.log('\n💰 PRESALE PAYMENT VERIFICATION:', { 
@@ -3212,6 +3212,13 @@ app.post('/api/presale/verify-payment', async (req, res) => {
     
     const normalizedAddress = ethers.getAddress(walletAddress).toLowerCase();
     const networkConfig = getNetworkConfig();
+    
+    // Calculate 1% platform fee
+    const platformFeePercent = 0.01;
+    const platformFeeUSD = (parseFloat(totalUSD) || 0) * platformFeePercent;
+    const platformFeeEUR = (parseFloat(totalEUR) || 0) * platformFeePercent;
+    
+    console.log(`💰 Platform fee (1%): $${platformFeeUSD.toFixed(2)} / €${platformFeeEUR.toFixed(2)}`);
     
     try {
         // ==================== CHECK DUPLICATE TRANSACTION ====================
@@ -3263,12 +3270,65 @@ app.post('/api/presale/verify-payment', async (req, res) => {
         console.log('   Verified amount:', txVerified.amount);
         console.log('   Block:', txVerified.blockNumber);
         
+        // ==================== TRANSFER 1% FEE TO MINTER WALLET ====================
+        let feeTxHash = null;
+        const minterWallet = process.env.MINTER_ADDRESS || '0xdD4104A780142EfB9566659f26d3317714a81510';
+        const presaleWalletPrivateKey = process.env.PRESALE_WALLET_PRIVATE_KEY;
+        
+        if (presaleWalletPrivateKey && txVerified.amount > 0) {
+            try {
+                console.log(`💳 Transferring 1% fee to minter wallet ${minterWallet}...`);
+                
+                const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
+                const presaleWalletSigner = new ethers.Wallet(presaleWalletPrivateKey, provider);
+                
+                if (paymentMethod === 'USDC' || paymentMethod === 'usdc') {
+                    // Transfer USDC fee
+                    const usdcAddress = process.env.USDC_ADDRESS || '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
+                    const usdcAbi = ['function transfer(address to, uint256 amount) returns (bool)'];
+                    const usdcContract = new ethers.Contract(usdcAddress, usdcAbi, presaleWalletSigner);
+                    
+                    // USDC has 6 decimals
+                    const feeAmountUSDC = Math.floor(txVerified.amount * platformFeePercent * 1e6);
+                    console.log(`   USDC fee: ${feeAmountUSDC / 1e6} USDC`);
+                    
+                    if (feeAmountUSDC > 0) {
+                        const feeTx = await usdcContract.transfer(minterWallet, feeAmountUSDC);
+                        const feeReceipt = await feeTx.wait();
+                        feeTxHash = feeReceipt.hash;
+                        console.log(`✅ USDC fee transferred: ${feeTxHash}`);
+                    }
+                    
+                } else if (paymentMethod === 'POL' || paymentMethod === 'pol' || paymentMethod === 'matic') {
+                    // Transfer POL fee
+                    const feeAmountPOL = txVerified.amount * platformFeePercent;
+                    const feeAmountWei = ethers.parseEther(feeAmountPOL.toFixed(18));
+                    console.log(`   POL fee: ${feeAmountPOL} POL`);
+                    
+                    if (feeAmountWei > 0) {
+                        const feeTx = await presaleWalletSigner.sendTransaction({
+                            to: minterWallet,
+                            value: feeAmountWei
+                        });
+                        const feeReceipt = await feeTx.wait();
+                        feeTxHash = feeReceipt.hash;
+                        console.log(`✅ POL fee transferred: ${feeTxHash}`);
+                    }
+                }
+                
+            } catch (feeError) {
+                console.error('⚠️ Fee transfer failed (non-fatal):', feeError.message);
+                // Continue with minting - fee can be collected manually later
+            }
+        } else {
+            console.log('⚠️ Fee transfer skipped - PRESALE_WALLET_PRIVATE_KEY not configured');
+        }
+        
         // ==================== GET REFERRER INFO ====================
         let referrerWallet = null;
         let usedReferrerCode = null;
         
         try {
-            // First check if user already has a referrer set
             const registrantResult = await db.pool.query(
                 'SELECT referrer_wallet, referrer_code FROM registrants WHERE address = $1',
                 [normalizedAddress]
@@ -3289,8 +3349,8 @@ app.post('/api/presale/verify-payment', async (req, res) => {
         const purchaseResult = await db.pool.query(`
             INSERT INTO presale_purchases 
             (wallet_address, token_amount, eur_amount, usd_amount, payment_method, payment_tx_hash, 
-             referrer_wallet, referral_bonus_amount, referral_bonus_paid, status, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 0, false, 'paid', NOW())
+             referrer_wallet, referral_bonus_amount, referral_bonus_paid, platform_fee, fee_tx_hash, status, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 0, false, $8, $9, 'paid', NOW())
             RETURNING id
         `, [
             normalizedAddress, 
@@ -3299,7 +3359,9 @@ app.post('/api/presale/verify-payment', async (req, res) => {
             totalUSD || 0, 
             paymentMethod, 
             txHash,
-            referrerWallet
+            referrerWallet,
+            platformFeeUSD,
+            feeTxHash
         ]);
         
         const purchaseId = purchaseResult.rows[0].id;
@@ -3336,7 +3398,6 @@ app.post('/api/presale/verify-payment', async (req, res) => {
             
             if (referrerWallet) {
                 try {
-                    // Get referral settings
                     const settingsResult = await db.pool.query(
                         'SELECT * FROM referral_settings WHERE id = 1'
                     );
@@ -3353,7 +3414,6 @@ app.post('/api/presale/verify-payment', async (req, res) => {
                         if (purchaseUSD >= minPurchase) {
                             let bonusAmount = 0;
                             
-                            // Calculate bonus based on type
                             if (settings.presale_bonus_type === 'fixed') {
                                 bonusAmount = parseFloat(settings.presale_bonus_amount) || 0;
                             } else if (settings.presale_bonus_type === 'percentage') {
@@ -3364,21 +3424,18 @@ app.post('/api/presale/verify-payment', async (req, res) => {
                             console.log('   Bonus amount:', bonusAmount, 'VIP');
                             
                             if (bonusAmount > 0) {
-                                // Mint bonus tokens to referrer
                                 console.log(`🎁 Minting ${bonusAmount} VIP presale bonus to referrer...`);
                                 
                                 try {
                                     const bonusMintResult = await minter.mintToAddress(referrerWallet, bonusAmount, true);
                                     const bonusTxHash = bonusMintResult.receipt?.hash || bonusMintResult.hash || 'bonus-minted';
                                     
-                                    // Update purchase with referral bonus info
                                     await db.pool.query(`
                                         UPDATE presale_purchases 
                                         SET referral_bonus_amount = $1, referral_bonus_paid = true
                                         WHERE id = $2
                                     `, [bonusAmount, purchaseId]);
                                     
-                                    // Update referrals table
                                     await db.pool.query(`
                                         UPDATE referrals 
                                         SET presale_bonus_paid = presale_bonus_paid + $1
@@ -3396,7 +3453,6 @@ app.post('/api/presale/verify-payment', async (req, res) => {
                                     
                                 } catch (bonusMintError) {
                                     console.error('⚠️ Failed to mint presale referral bonus:', bonusMintError.message);
-                                    // Log for manual processing but don't fail the purchase
                                     await db.pool.query(`
                                         UPDATE presale_purchases 
                                         SET referral_bonus_amount = $1, referral_bonus_paid = false
@@ -3410,7 +3466,6 @@ app.post('/api/presale/verify-payment', async (req, res) => {
                     }
                 } catch (refError) {
                     console.error('⚠️ Referral bonus processing error:', refError.message);
-                    // Don't fail the purchase
                 }
             }
             
@@ -3437,6 +3492,8 @@ app.post('/api/presale/verify-payment', async (req, res) => {
                 tokenAmount: parseFloat(tokenAmount),
                 mintTxHash,
                 paymentTxHash: txHash,
+                platformFee: platformFeeUSD,
+                feeTxHash,
                 explorer_url: `${networkConfig.explorer}/tx/${mintTxHash}`,
                 payment_explorer_url: `${networkConfig.explorer}/tx/${txHash}`,
                 token_url: `${networkConfig.explorer}/token/${process.env.VIP_TOKEN_ADDRESS || '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F'}?a=${normalizedAddress}`
@@ -3449,7 +3506,6 @@ app.post('/api/presale/verify-payment', async (req, res) => {
             return res.json(response);
             
         } else {
-            // ==================== MINTING FAILED ====================
             console.log('⚠️ Minting failed - marking for manual retry');
             console.log('   Error:', mintResult?.error || 'Unknown minting error');
             
