@@ -74,9 +74,9 @@
             cursor: not-allowed;
         }
         .input-field {
-            background: rgba(26, 26, 26, 0.8);
+            background-color: #1a1a1a !important;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #ffffff;
+            color: #ffffff !important;
             transition: all 0.3s ease;
         }
         .input-field:focus {
@@ -84,13 +84,29 @@
             outline: none;
             box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
         }
+        /* Fix autofill background */
         .input-field:-webkit-autofill,
         .input-field:-webkit-autofill:hover,
         .input-field:-webkit-autofill:focus,
         .input-field:-webkit-autofill:active {
             -webkit-box-shadow: 0 0 0 30px #1a1a1a inset !important;
             -webkit-text-fill-color: #ffffff !important;
-            caret-color: #ffffff;
+            caret-color: #ffffff !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #1a1a1a inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+            caret-color: #ffffff !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+        /* Force input background */
+        input[type="number"] {
+            background-color: #1a1a1a !important;
+            color: #ffffff !important;
         }
         .payment-option {
             background: rgba(26, 26, 26, 0.6);
@@ -192,7 +208,8 @@
                     <div class="relative">
                         <input type="number" id="token-amount" min="10" max="10000" value="100" 
                             class="input-field w-full px-4 py-4 rounded-xl text-lg"
-                            oninput="updateTotals()">
+                            oninput="updateTotals()"
+                            style="background-color: #1a1a1a !important; color: #ffffff !important;">
                         <span class="absolute right-4 top-1/2 -translate-y-1/2 gold-text font-semibold">VIP</span>
                     </div>
                     <p class="text-gray-500 text-sm mt-2">Min: 10 VIP | Max: 10,000 VIP</p>
@@ -231,7 +248,7 @@
                     </div>
                 </div>
 
-                <!-- Total Section -->
+                <!-- Total Section - All in EUR with USD equivalent -->
                 <div class="border-t border-white/10 pt-6 mb-8">
                     <div class="space-y-3">
                         <div class="flex justify-between text-gray-400">
@@ -244,15 +261,18 @@
                         </div>
                         <div class="flex justify-between text-gray-400">
                             <span>Subtotal</span>
-                            <span id="subtotalUSD" class="text-white">$119.00</span>
+                            <span id="subtotalEUR" class="text-white">€100.00</span>
                         </div>
                         <div class="flex justify-between text-gray-400">
                             <span>Payment Fee (<span id="feePercent">1.5</span>%)</span>
-                            <span id="feeAmount" class="text-white">$1.79</span>
+                            <span id="feeAmountEUR" class="text-white">€1.50</span>
                         </div>
                         <div class="flex justify-between text-lg font-semibold border-t border-white/10 pt-3">
                             <span class="gold-text">Total</span>
-                            <span id="totalUSD" class="gold-text">$120.79</span>
+                            <span class="gold-text">
+                                <span id="totalEUR">€101.50</span>
+                                <span id="totalUSD" class="text-sm text-gray-400 ml-2">($120.79)</span>
+                            </span>
                         </div>
                         <div class="flex justify-between text-sm text-gray-500">
                             <span>You Pay (approx)</span>
@@ -398,8 +418,8 @@
                         <span id="stripe-tokens" class="text-white">100 VIP</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-gray-400">Token Price</span>
-                        <span class="text-white">€1.00 / VIP</span>
+                        <span class="text-gray-400">Subtotal</span>
+                        <span id="stripe-subtotal" class="text-white">€100.00</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-400">Payment Fee (4%)</span>
@@ -620,33 +640,33 @@
         }
 
         // ============================================
-        // CALCULATIONS
+        // CALCULATIONS - All in EUR with USD equivalent
         // ============================================
         function updateTotals() {
             const tokenAmount = parseInt(document.getElementById('token-amount').value) || 0;
             const baseEUR = tokenAmount * CONFIG.tokenPriceEUR;
-            const baseUSD = baseEUR * CONFIG.eurUsdRate;
             
             // Fee based on payment method
             const feePercent = selectedPayment === 'Card' ? CONFIG.cardFeePercent : CONFIG.cryptoFeePercent;
-            const feeUSD = baseUSD * (feePercent / 100);
-            const totalUSD = baseUSD + feeUSD;
+            const feeEUR = baseEUR * (feePercent / 100);
+            const totalEUR = baseEUR + feeEUR;
+            const totalUSD = totalEUR * CONFIG.eurUsdRate;
 
-            // Update display
+            // Update display - All in EUR
             document.getElementById('totalTokensDisplay').textContent = `${tokenAmount.toLocaleString()} VIP`;
-            document.getElementById('subtotalUSD').textContent = `$${baseUSD.toFixed(2)}`;
+            document.getElementById('subtotalEUR').textContent = `€${baseEUR.toFixed(2)}`;
             document.getElementById('feePercent').textContent = feePercent.toFixed(1);
-            document.getElementById('feeAmount').textContent = `$${feeUSD.toFixed(2)}`;
-            document.getElementById('totalUSD').textContent = `$${totalUSD.toFixed(2)}`;
+            document.getElementById('feeAmountEUR').textContent = `€${feeEUR.toFixed(2)}`;
+            document.getElementById('totalEUR').textContent = `€${totalEUR.toFixed(2)}`;
+            document.getElementById('totalUSD').textContent = `($${totalUSD.toFixed(2)})`;
 
-            // Crypto equivalent
+            // Crypto equivalent (what they actually pay)
             if (selectedPayment === 'POL') {
                 const polAmount = totalUSD / CONFIG.polPrice;
                 document.getElementById('cryptoEquivalent').textContent = `~${polAmount.toFixed(2)} POL`;
             } else if (selectedPayment === 'USDC') {
                 document.getElementById('cryptoEquivalent').textContent = `~${totalUSD.toFixed(2)} USDC`;
             } else {
-                const totalEUR = baseEUR * (1 + feePercent / 100);
                 document.getElementById('cryptoEquivalent').textContent = `€${totalEUR.toFixed(2)}`;
             }
 
@@ -682,18 +702,17 @@
             }
 
             const baseEUR = tokenAmount * CONFIG.tokenPriceEUR;
-            const baseUSD = baseEUR * CONFIG.eurUsdRate;
             const feePercent = selectedPayment === 'Card' ? CONFIG.cardFeePercent : CONFIG.cryptoFeePercent;
-            const totalUSD = baseUSD * (1 + feePercent / 100);
+            const totalEUR = baseEUR * (1 + feePercent / 100);
+            const totalUSD = totalEUR * CONFIG.eurUsdRate;
 
             if (selectedPayment === 'Card') {
-                const totalEUR = baseEUR * (1 + feePercent / 100);
                 btn.textContent = `Pay €${totalEUR.toFixed(2)}`;
                 btn.disabled = false;
             } else if (selectedPayment === 'POL') {
                 const requiredPOL = totalUSD / CONFIG.polPrice;
                 if (balances.POL >= requiredPOL) {
-                    btn.textContent = `Pay ${requiredPOL.toFixed(2)} POL`;
+                    btn.textContent = `Pay ~${requiredPOL.toFixed(2)} POL`;
                     btn.disabled = false;
                 } else {
                     btn.textContent = 'Insufficient POL Balance';
@@ -701,7 +720,7 @@
                 }
             } else if (selectedPayment === 'USDC') {
                 if (balances.USDC >= totalUSD) {
-                    btn.textContent = `Pay ${totalUSD.toFixed(2)} USDC`;
+                    btn.textContent = `Pay ~${totalUSD.toFixed(2)} USDC`;
                     btn.disabled = false;
                 } else {
                     btn.textContent = 'Insufficient USDC Balance';
@@ -761,22 +780,22 @@
 
             if (selectedPayment === 'Card') {
                 if (!stripe) {
-                    showResult('error', 'Payment Error', 'Card payments are not configured. Please try crypto payment.');
+                    showResult('error', 'Payment Error', 'Card payments are not configured. Please try crypto payment or contact us for SEPA transfer.');
                     return;
                 }
-                openStripeCheckout(tokenAmount, totalEUR);
+                openStripeCheckout(tokenAmount, baseEUR, feeEUR, totalEUR);
             } else {
                 // Crypto payment via WalletTwo multi-transaction
-                executeCryptoPurchase(tokenAmount, totalUSD);
+                executeCryptoPurchase(tokenAmount, totalUSD, baseEUR, feeEUR);
             }
         }
 
-        function executeCryptoPurchase(tokenAmount, totalUSD) {
-            const baseUSD = tokenAmount * CONFIG.tokenPriceEUR * CONFIG.eurUsdRate;
-            const feeUSD = totalUSD - baseUSD;
+        function executeCryptoPurchase(tokenAmount, totalUSD, baseEUR, feeEUR) {
+            const baseUSD = baseEUR * CONFIG.eurUsdRate;
+            const feeUSD = feeEUR * CONFIG.eurUsdRate;
 
             if (!CONFIG.presaleWallet) {
-                showResult('error', 'Configuration Error', 'Presale wallet not configured.');
+                showResult('error', 'Configuration Error', 'Presale wallet not configured. Please contact support.');
                 return;
             }
 
@@ -836,6 +855,8 @@
                     type: 'presale_purchase',
                     tokenAmount,
                     totalUSD,
+                    baseEUR,
+                    feeEUR,
                     paymentMethod: selectedPayment
                 }
             }));
@@ -846,12 +867,10 @@
         // ============================================
         // STRIPE CHECKOUT
         // ============================================
-        function openStripeCheckout(tokenAmount, totalEUR) {
-            const baseEUR = tokenAmount * CONFIG.tokenPriceEUR;
-            const feeEUR = totalEUR - baseEUR;
-
+        function openStripeCheckout(tokenAmount, baseEUR, feeEUR, totalEUR) {
             // Update Stripe modal
             document.getElementById('stripe-tokens').textContent = `${tokenAmount} VIP`;
+            document.getElementById('stripe-subtotal').textContent = `€${baseEUR.toFixed(2)}`;
             document.getElementById('stripe-fee').textContent = `€${feeEUR.toFixed(2)}`;
             document.getElementById('stripe-total').textContent = `€${totalEUR.toFixed(2)}`;
             document.getElementById('stripe-amount').textContent = totalEUR.toFixed(2);
