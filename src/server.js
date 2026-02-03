@@ -1690,6 +1690,9 @@ async function getReferralSettings() {
 
 // Admin manual mint for cash/direct transfers
 app.post('/api/presale/admin/manual-mint', async (req, res) => {
+    console.log('🚀 Manual mint endpoint hit');
+    console.log('📦 Stripe available:', !!stripe);
+    console.log('📦 STRIPE_DESTINATION_ACCOUNT:', process.env.STRIPE_DESTINATION_ACCOUNT ? 'set' : 'not set');
     try {
         const sessionId = req.cookies?.admin_session;
         if (!sessionId) {
@@ -1751,7 +1754,7 @@ app.post('/api/presale/admin/manual-mint', async (req, res) => {
         `, [mintResult.txHash, purchaseId]);
         
         console.log(`✅ Manual mint complete: ${mintResult.txHash}`);
-        
+        console.log('➡️ Starting Stripe fee transfer...');
         // ==================== STRIPE FEE TRANSFER ====================
         let stripeTransferId = null;
         
