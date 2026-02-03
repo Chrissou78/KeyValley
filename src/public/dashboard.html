@@ -73,6 +73,25 @@
         .badge-error { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
         .badge-purple { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
         .badge-pink { background: rgba(236, 72, 153, 0.2); color: #ec4899; }
+
+        /* Fix autofill/preset background */
+        .input-field:-webkit-autofill,
+        .input-field:-webkit-autofill:hover,
+        .input-field:-webkit-autofill:focus,
+        .input-field:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #1a1a1a inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+            caret-color: #ffffff;
+        }
+
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #1a1a1a inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+            caret-color: #ffffff;
+        }
         
         /* Input field fixes - ensure visibility on dark background */
         .input-field {
