@@ -1724,13 +1724,13 @@ app.post('/api/presale/admin/manual-mint', async (req, res) => {
         
         const usdAmount = eurAmount * eurUsdRate;
         
-        // Record purchase
+        // Record purchase - added payment_amount
         const purchaseResult = await db.pool.query(`
             INSERT INTO presale_purchases 
-            (wallet_address, token_amount, eur_amount, usd_amount, payment_method, platform_fee, status, created_at)
-            VALUES ($1, $2, $3, $4, 'manual', $5, 'pending', NOW())
+            (wallet_address, token_amount, payment_amount, eur_amount, usd_amount, payment_method, platform_fee, status, created_at)
+            VALUES ($1, $2, $3, $4, $5, 'manual', $6, 'pending', NOW())
             RETURNING id
-        `, [normalizedAddress, calculatedTokens, eurAmount, usdAmount, platformFee]);
+        `, [normalizedAddress, calculatedTokens, eurAmount, eurAmount, usdAmount, platformFee]);
         
         const purchaseId = purchaseResult.rows[0].id;
         
@@ -1834,6 +1834,30 @@ app.post('/api/presale/admin/manual-mint', async (req, res) => {
         
     } catch (error) {
         console.error('Manual mint error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/presale/admin/manual-mints', async (req, res) => {
+    try {
+        const sessionId = req.cookies?.admin_session;
+        if (!sessionId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        
+        const result = await db.pool.query(`
+            SELECT id, wallet_address, token_amount, eur_amount, usd_amount, 
+                   mint_tx_hash, status, created_at
+            FROM presale_purchases 
+            WHERE payment_method = 'manual'
+            ORDER BY created_at DESC
+            LIMIT 50
+        `);
+        
+        res.json({ mints: result.rows });
+        
+    } catch (error) {
+        console.error('Load manual mints error:', error);
         res.status(500).json({ error: error.message });
     }
 });
