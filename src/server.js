@@ -1724,7 +1724,8 @@ app.post('/api/presale/admin/manual-mint', async (req, res) => {
         
         const usdAmount = eurAmount * eurUsdRate;
         
-        const purchaseResult = await pool.query(`
+        // Record purchase
+        const purchaseResult = await db.pool.query(`
             INSERT INTO presale_purchases 
             (wallet_address, token_amount, eur_amount, usd_amount, payment_method, platform_fee, status, created_at)
             VALUES ($1, $2, $3, $4, 'manual', $5, 'pending', NOW())
@@ -1733,11 +1734,12 @@ app.post('/api/presale/admin/manual-mint', async (req, res) => {
         
         const purchaseId = purchaseResult.rows[0].id;
         
+        // Mint tokens to buyer
         await minter.initialize();
         const mintResult = await minter.mintToAddress(normalizedAddress, parseFloat(calculatedTokens), true);
         
         if (mintResult.success) {
-            await pool.query(`
+            await db.pool.query(`
                 UPDATE presale_purchases 
                 SET mint_tx_hash = $1, status = 'completed'
                 WHERE id = $2
@@ -1745,46 +1747,93 @@ app.post('/api/presale/admin/manual-mint', async (req, res) => {
             
             console.log(`✅ Manual mint complete: ${mintResult.txHash}`);
             
+            // ==================== REFERRAL BONUS ====================
+            let referralBonusTx = null;
+            let referralBonusAmount = 0;
+            
+            try {
+                // Check if buyer has a referrer
+                const referralResult = await db.pool.query(`
+                    SELECT r.referrer_wallet, r.referrer_code, rc.owner_wallet
+                    FROM referrals r
+                    LEFT JOIN referral_codes rc ON r.referrer_code = rc.code
+                    WHERE r.referee_wallet = $1
+                `, [normalizedAddress]);
+                
+                if (referralResult.rows.length > 0) {
+                    const referrerWallet = referralResult.rows[0].referrer_wallet || referralResult.rows[0].owner_wallet;
+                    
+                    if (referrerWallet) {
+                        // Get referral settings
+                        const settingsResult = await db.pool.query(`
+                            SELECT * FROM referral_settings WHERE id = 1
+                        `);
+                        
+                        const settings = settingsResult.rows[0] || {};
+                        const minPurchase = parseFloat(settings.min_purchase_for_bonus) || 0;
+                        
+                        if (settings.enabled && eurAmount >= minPurchase) {
+                            // Calculate bonus
+                            const bonusType = settings.presale_bonus_type || 'percentage';
+                            const bonusValue = parseFloat(settings.presale_bonus_amount) || 5;
+                            
+                            if (bonusType === 'percentage') {
+                                referralBonusAmount = (calculatedTokens * bonusValue) / 100;
+                            } else {
+                                referralBonusAmount = bonusValue;
+                            }
+                            
+                            if (referralBonusAmount > 0) {
+                                console.log(`🎁 Minting ${referralBonusAmount} VIP referral bonus to ${referrerWallet}`);
+                                
+                                const bonusMintResult = await minter.mintToAddress(referrerWallet.toLowerCase(), referralBonusAmount, true);
+                                
+                                if (bonusMintResult.success) {
+                                    referralBonusTx = bonusMintResult.txHash;
+                                    console.log(`✅ Referral bonus minted: ${referralBonusTx}`);
+                                    
+                                    // Update referral record
+                                    await db.pool.query(`
+                                        UPDATE referrals 
+                                        SET presale_bonus_paid = COALESCE(presale_bonus_paid, 0) + $1,
+                                            presale_bonus_tx = $2
+                                        WHERE referee_wallet = $3
+                                    `, [referralBonusAmount, referralBonusTx, normalizedAddress]);
+                                    
+                                    // Update referral code stats
+                                    await db.pool.query(`
+                                        UPDATE referral_codes 
+                                        SET total_bonus_earned = COALESCE(total_bonus_earned, 0) + $1
+                                        WHERE code = $2
+                                    `, [referralBonusAmount, referralResult.rows[0].referrer_code]);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (refError) {
+                console.error('⚠️ Referral bonus error (non-fatal):', refError.message);
+            }
+            
             res.json({
                 success: true,
                 purchaseId,
                 txHash: mintResult.txHash,
                 tokenAmount: calculatedTokens,
                 eurAmount,
-                platformFee
+                platformFee,
+                referralBonus: referralBonusAmount > 0 ? {
+                    amount: referralBonusAmount,
+                    txHash: referralBonusTx
+                } : null
             });
         } else {
-            await pool.query(`UPDATE presale_purchases SET status = 'failed' WHERE id = $1`, [purchaseId]);
+            await db.pool.query(`UPDATE presale_purchases SET status = 'failed' WHERE id = $1`, [purchaseId]);
             res.status(500).json({ error: 'Minting failed', details: mintResult.error });
         }
         
     } catch (error) {
         console.error('Manual mint error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// GET /api/presale/admin/manual-mints
-app.get('/api/presale/admin/manual-mints', async (req, res) => {
-    try {
-        const sessionId = req.cookies?.admin_session;
-        if (!sessionId) {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
-        
-        const result = await pool.query(`
-            SELECT id, wallet_address, token_amount, eur_amount, usd_amount, 
-                   mint_tx_hash, status, created_at
-            FROM presale_purchases 
-            WHERE payment_method = 'manual'
-            ORDER BY created_at DESC
-            LIMIT 50
-        `);
-        
-        res.json({ mints: result.rows });
-        
-    } catch (error) {
-        console.error('Load manual mints error:', error);
         res.status(500).json({ error: error.message });
     }
 });
