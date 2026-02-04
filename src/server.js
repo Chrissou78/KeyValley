@@ -1751,6 +1751,7 @@ app.post('/api/presale/create-payment-intent', async (req, res) => {
         const paymentIntentConfig = {
             amount: amountCents,
             currency: 'eur',
+            payment_method_types: ['card'],
             metadata: {
                 walletAddress: normalizedAddress,
                 tokenAmount: tokenAmount.toString(),
