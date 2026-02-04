@@ -609,26 +609,48 @@
         async function loadBalances() {
             if (!currentWallet) return;
 
-            try {
-                const provider = new ethers.JsonRpcProvider(CONFIG.rpcUrl);
-                
-                // POL Balance
-                const polBalance = await provider.getBalance(currentWallet);
-                balances.POL = parseFloat(ethers.formatEther(polBalance));
+            // List of fallback RPCs
+            const rpcUrls = [
+                'https://polygon-bor-rpc.publicnode.com',
+                'https://polygon.llamarpc.com',
+                'https://rpc.ankr.com/polygon',
+                'https://polygon-rpc.com',
+                'https://polygon-mainnet.g.alchemy.com/v2/IoufBRdGO6MKWC6pxqbZW'
+            ];
 
-                // USDC Balance
-                const usdcContract = new ethers.Contract(
-                    CONFIG.usdcAddress,
-                    ['function balanceOf(address) view returns (uint256)'],
-                    provider
-                );
-                const usdcBalance = await usdcContract.balanceOf(currentWallet);
-                balances.USDC = parseFloat(ethers.formatUnits(usdcBalance, CONFIG.usdcDecimals));
+            for (const rpcUrl of rpcUrls) {
+                try {
+                    console.log(`🔄 Trying RPC: ${rpcUrl}`);
+                    const provider = new ethers.JsonRpcProvider(rpcUrl);
+                    
+                    // POL Balance
+                    const polBalance = await provider.getBalance(currentWallet);
+                    balances.POL = parseFloat(ethers.formatEther(polBalance));
 
-                updateBalanceDisplay();
-            } catch (error) {
-                console.error('Failed to load balances:', error);
+                    // USDC Balance
+                    const usdcContract = new ethers.Contract(
+                        CONFIG.usdcAddress,
+                        ['function balanceOf(address) view returns (uint256)'],
+                        provider
+                    );
+                    const usdcBalance = await usdcContract.balanceOf(currentWallet);
+                    balances.USDC = parseFloat(ethers.formatUnits(usdcBalance, CONFIG.usdcDecimals));
+
+                    console.log(`✅ Balances loaded - POL: ${balances.POL}, USDC: ${balances.USDC}`);
+                    updateBalanceDisplay();
+                    return; // Success, exit loop
+                    
+                } catch (error) {
+                    console.warn(`⚠️ RPC ${rpcUrl} failed:`, error.message);
+                    continue; // Try next RPC
+                }
             }
+            
+            console.error('❌ All RPCs failed to load balances');
+            // Set default values so UI doesn't break
+            balances.POL = 0;
+            balances.USDC = 0;
+            updateBalanceDisplay();
         }
 
         function updateBalanceDisplay() {
