@@ -103,26 +103,28 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
     
-    console.log('📨 Stripe webhook received:', event.type);
+    console.log('\n' + '='.repeat(60));
+    console.log('📨 STRIPE WEBHOOK:', event.type);
+    console.log('='.repeat(60));
     
     if (event.type === 'checkout.session.completed' || event.type === 'payment_intent.succeeded') {
-        let walletAddress, tokenAmount, paymentId, eurAmount, baseAmount, feeAmount;
+        let walletAddress, tokenAmount, paymentId, totalAmount, baseAmount, feeAmount;
         
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object;
             walletAddress = session.metadata?.walletAddress;
             tokenAmount = session.metadata?.tokenAmount;
             paymentId = session.id;
-            eurAmount = (session.amount_total || 0) / 100;
-            baseAmount = parseFloat(session.metadata?.baseAmount) || eurAmount;
+            totalAmount = (session.amount_total || 0) / 100;
+            baseAmount = parseFloat(session.metadata?.baseAmount) || totalAmount;
             feeAmount = parseFloat(session.metadata?.feeAmount) || 0;
         } else {
             const paymentIntent = event.data.object;
             walletAddress = paymentIntent.metadata?.walletAddress;
             tokenAmount = paymentIntent.metadata?.tokenAmount;
             paymentId = paymentIntent.id;
-            eurAmount = (paymentIntent.amount || 0) / 100;
-            baseAmount = parseFloat(paymentIntent.metadata?.baseAmount) || eurAmount;
+            totalAmount = (paymentIntent.amount || 0) / 100;
+            baseAmount = parseFloat(paymentIntent.metadata?.baseAmount) || totalAmount;
             feeAmount = parseFloat(paymentIntent.metadata?.feeAmount) || 0;
         }
         
@@ -131,10 +133,61 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
             return res.json({ received: true, error: 'Missing metadata' });
         }
         
-        console.log('💳 Stripe payment completed:', { walletAddress, tokenAmount, paymentId, baseAmount, feeAmount });
+        console.log('\n💳 PAYMENT DETAILS:');
+        console.log('   Payment ID:', paymentId);
+        console.log('   Buyer Wallet:', walletAddress);
+        console.log('   Token Amount:', tokenAmount, 'VIP');
+        console.log('   Base Amount: €' + baseAmount.toFixed(2));
+        console.log('   Fee Amount: €' + feeAmount.toFixed(2), '(4%)');
+        console.log('   Total Charged: €' + totalAmount.toFixed(2));
         
         try {
             const normalizedAddress = walletAddress.toLowerCase();
+            
+            // Get actual Stripe fee from the charge
+            let actualStripeFee = 0;
+            let stripeFeePct = 0;
+            const paymentIntent = event.data.object;
+            
+            if (paymentIntent.latest_charge) {
+                try {
+                    const charge = await stripe.charges.retrieve(paymentIntent.latest_charge, {
+                        expand: ['balance_transaction']
+                    });
+                    if (charge.balance_transaction && typeof charge.balance_transaction === 'object') {
+                        actualStripeFee = charge.balance_transaction.fee / 100;
+                        stripeFeePct = (actualStripeFee / totalAmount) * 100;
+                    }
+                } catch (e) {
+                    console.log('   ⚠️ Could not fetch balance transaction');
+                }
+            }
+            
+            console.log('\n💰 FEE BREAKDOWN:');
+            console.log('   Actual Stripe Fee: €' + actualStripeFee.toFixed(2), `(${stripeFeePct.toFixed(2)}%)`);
+            console.log('   Estimated Stripe Fee (3%): €' + (totalAmount * 0.03).toFixed(2));
+            
+            if (stripeFeePct <= 3) {
+                console.log('   ✅ Stripe fee within 3% budget');
+            } else {
+                console.log('   ⚠️ Stripe fee exceeds 3% budget by €' + (actualStripeFee - totalAmount * 0.03).toFixed(2));
+            }
+            
+            console.log('   Platform Fee (1%): €' + (baseAmount * 0.01).toFixed(2));
+            
+            // Calculate connected account transfer
+            const platformKeeps = feeAmount; // 4% fee
+            const toConnectedAccount = baseAmount; // Base amount goes to connected account
+            
+            console.log('\n💸 FUND DISTRIBUTION:');
+            console.log('   Total Received: €' + totalAmount.toFixed(2));
+            console.log('   → Platform Keeps: €' + platformKeeps.toFixed(2), '(covers Stripe + platform fee)');
+            console.log('   → To Connected Account: €' + toConnectedAccount.toFixed(2));
+            if (process.env.STRIPE_CONNECTED_ACCOUNT_ID) {
+                console.log('   Connected Account ID:', process.env.STRIPE_CONNECTED_ACCOUNT_ID);
+            } else {
+                console.log('   ⚠️ No connected account configured');
+            }
             
             // Fetch live EUR/USD rate
             let eurUsdRate = 1.19;
@@ -143,15 +196,17 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                 if (rateRes.ok) {
                     const rateData = await rateRes.json();
                     eurUsdRate = rateData.rates?.USD || 1.19;
-                    console.log('💱 Live EUR/USD rate:', eurUsdRate);
                 }
             } catch (e) {
-                console.log('⚠️ Using default EUR/USD rate:', eurUsdRate);
+                // Use default
             }
             
             const usdAmount = baseAmount * eurUsdRate;
+            console.log('\n💱 CONVERSION:');
+            console.log('   EUR/USD Rate:', eurUsdRate.toFixed(4));
+            console.log('   USD Equivalent: $' + usdAmount.toFixed(2));
             
-            // Check if already processed - check BOTH columns
+            // Check if already processed
             const existing = await db.pool.query(
                 'SELECT id, status, mint_tx_hash FROM presale_purchases WHERE stripe_payment_intent = $1 OR payment_tx_hash = $1',
                 [paymentId]
@@ -160,48 +215,49 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
             if (existing.rows.length > 0) {
                 const purchase = existing.rows[0];
                 if (purchase.status === 'completed' && purchase.mint_tx_hash) {
-                    console.log('⚠️ Payment already processed:', paymentId);
+                    console.log('\n⚠️ ALREADY PROCESSED');
+                    console.log('   Purchase ID:', purchase.id);
+                    console.log('   Mint TX:', purchase.mint_tx_hash);
                     return res.json({ received: true, status: 'already_processed' });
                 }
-                // Continue processing if not completed
             }
             
-            // Record purchase (use stripe_payment_intent for Stripe payments)
+            // Record purchase
             let purchaseId;
             if (existing.rows.length > 0) {
                 purchaseId = existing.rows[0].id;
                 await db.pool.query(`
                     UPDATE presale_purchases 
-                    SET status = 'paid', updated_at = NOW()
-                    WHERE id = $1
-                `, [purchaseId]);
+                    SET status = 'paid', actual_stripe_fee = $1, updated_at = NOW()
+                    WHERE id = $2
+                `, [actualStripeFee, purchaseId]);
             } else {
                 const purchaseResult = await db.pool.query(`
                     INSERT INTO presale_purchases 
                     (wallet_address, token_amount, eur_amount, usd_amount, payment_method, 
-                     stripe_payment_intent, payment_amount, platform_fee, status, created_at)
-                    VALUES ($1, $2, $3, $4, 'stripe', $5, $6, $7, 'paid', NOW())
+                     stripe_payment_intent, payment_amount, platform_fee, actual_stripe_fee, status, created_at)
+                    VALUES ($1, $2, $3, $4, 'stripe', $5, $6, $7, $8, 'paid', NOW())
                     RETURNING id
-                `, [normalizedAddress, tokenAmount, baseAmount, usdAmount, paymentId, eurAmount, feeAmount]);
+                `, [normalizedAddress, tokenAmount, baseAmount, usdAmount, paymentId, totalAmount, feeAmount, actualStripeFee]);
                 purchaseId = purchaseResult.rows[0].id;
             }
             
-            console.log('📝 Purchase recorded - ID:', purchaseId);
+            console.log('\n📝 PURCHASE RECORDED:');
+            console.log('   Purchase ID:', purchaseId);
             
             // Mint tokens
-            console.log('🎯 Starting mint for Stripe payment...');
-            console.log('   Address:', normalizedAddress);
-            console.log('   Amount:', tokenAmount);
+            console.log('\n🎯 MINTING TOKENS:');
+            console.log('   Recipient:', normalizedAddress);
+            console.log('   Amount:', tokenAmount, 'VIP');
 
             await minter.initialize();
-            console.log('✅ Minter initialized');
+            console.log('   ✅ Minter initialized');
 
             let mintResult;
             try {
                 mintResult = await minter.mintToAddress(normalizedAddress, parseFloat(tokenAmount), true); 
-                console.log('📋 Mint result:', JSON.stringify(mintResult, null, 2));
             } catch (mintError) {
-                console.error('❌ Mint error:', mintError.message);
+                console.error('   ❌ Mint error:', mintError.message);
                 mintResult = { error: mintError.message };
             }
 
@@ -214,7 +270,9 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                     WHERE id = $2
                 `, [txHash, purchaseId]);
                 
-                console.log('✅ Tokens minted for Stripe payment:', txHash);
+                console.log('   ✅ MINTED SUCCESSFULLY!');
+                console.log('   TX Hash:', txHash);
+                console.log('   Explorer: https://polygonscan.com/tx/' + txHash);
                 
                 // Update presale stats
                 await db.pool.query(`
@@ -224,6 +282,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                 `, [parseFloat(tokenAmount)]);
                 
                 // Process referral bonus
+                console.log('\n🎁 REFERRAL CHECK:');
                 try {
                     const registrantResult = await db.pool.query(
                         'SELECT referrer_wallet, referrer_code FROM registrants WHERE address = $1',
@@ -234,6 +293,9 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                         const referrerWallet = registrantResult.rows[0].referrer_wallet;
                         const referrerCode = registrantResult.rows[0].referrer_code;
                         
+                        console.log('   Referrer Found:', referrerWallet);
+                        console.log('   Referral Code:', referrerCode);
+                        
                         const settingsResult = await db.pool.query(
                             'SELECT * FROM referral_settings WHERE id = 1'
                         );
@@ -242,17 +304,28 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                             const settings = settingsResult.rows[0];
                             const minPurchase = parseFloat(settings.min_purchase_for_bonus) || 0;
                             
+                            console.log('   Referral Enabled:', settings.enabled);
+                            console.log('   Min Purchase: $' + minPurchase);
+                            console.log('   Purchase Amount: $' + usdAmount.toFixed(2));
+                            
                             if (usdAmount >= minPurchase) {
                                 let bonusAmount = 0;
                                 
                                 if (settings.presale_bonus_type === 'fixed') {
                                     bonusAmount = parseFloat(settings.presale_bonus_amount) || 0;
+                                    console.log('   Bonus Type: Fixed');
                                 } else if (settings.presale_bonus_type === 'percentage') {
                                     bonusAmount = (parseFloat(tokenAmount) * parseFloat(settings.presale_bonus_amount)) / 100;
+                                    console.log('   Bonus Type: Percentage (' + settings.presale_bonus_amount + '%)');
                                 }
                                 
+                                console.log('   Bonus Amount:', bonusAmount, 'VIP');
+                                
                                 if (bonusAmount > 0) {
-                                    console.log(`🎁 Minting ${bonusAmount} VIP presale bonus to referrer ${referrerWallet}...`);
+                                    console.log('\n   🎁 MINTING REFERRAL BONUS:');
+                                    console.log('   Recipient:', referrerWallet);
+                                    console.log('   Amount:', bonusAmount, 'VIP');
+                                    
                                     const bonusMintResult = await minter.mintToAddress(referrerWallet, bonusAmount, true);
                                     const bonusTxHash = bonusMintResult.txHash || bonusMintResult.receipt?.hash || bonusMintResult.hash;
                                     
@@ -278,18 +351,28 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                                             WHERE code = $2
                                         `, [bonusAmount, referrerCode]);
                                         
-                                        console.log('✅ Presale referral bonus minted! TX:', bonusTxHash);
+                                        console.log('   ✅ REFERRAL BONUS MINTED!');
+                                        console.log('   TX Hash:', bonusTxHash);
+                                        console.log('   Explorer: https://polygonscan.com/tx/' + bonusTxHash);
+                                    } else {
+                                        console.log('   ❌ Referral bonus mint failed');
                                     }
                                 }
+                            } else {
+                                console.log('   ⏭️ Purchase below minimum for referral bonus');
                             }
+                        } else {
+                            console.log('   ⏭️ Referral bonuses disabled');
                         }
+                    } else {
+                        console.log('   ℹ️ No referrer for this wallet');
                     }
                 } catch (refError) {
-                    console.error('⚠️ Referral bonus error:', refError.message);
+                    console.error('   ⚠️ Referral bonus error:', refError.message);
                 }
                 
             } else {
-                console.error('⚠️ Minting failed:', mintResult?.error);
+                console.log('   ❌ MINTING FAILED:', mintResult?.error);
                 await db.pool.query(`
                     UPDATE presale_purchases 
                     SET status = 'pending_mint', error_message = $1
@@ -297,8 +380,13 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                 `, [mintResult?.error || 'Unknown error', purchaseId]);
             }
             
+            console.log('\n' + '='.repeat(60));
+            console.log('✅ WEBHOOK PROCESSING COMPLETE');
+            console.log('='.repeat(60) + '\n');
+            
         } catch (error) {
-            console.error('❌ Error processing Stripe payment:', error);
+            console.error('\n❌ ERROR PROCESSING WEBHOOK:', error);
+            console.log('='.repeat(60) + '\n');
         }
     }
     
