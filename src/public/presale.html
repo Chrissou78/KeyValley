@@ -143,6 +143,24 @@
             background: rgba(212, 175, 55, 0.2);
             color: #D4AF37;
         }
+        
+        /* Stripe card element dark theme */
+        #card-element {
+            background-color: #1a1a1a !important;
+        }
+        .StripeElement {
+            background-color: #1a1a1a !important;
+        }
+        .StripeElement--focus {
+            border-color: #D4AF37;
+            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+        }
+        .StripeElement--invalid {
+            border-color: #ef4444;
+        }
+        .StripeElement--complete {
+            border-color: #D4AF37;
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -433,7 +451,7 @@
             </div>
 
             <form id="stripe-form">
-                <div id="card-element" class="input-field p-4 rounded-xl mb-4"></div>
+                <div id="card-element" class="input-field p-4 rounded-xl mb-4" style="background-color: #1a1a1a;"></div>
                 <div id="card-errors" class="text-red-500 text-sm mb-4 hidden"></div>
                 <button type="submit" id="stripe-submit" class="btn-primary w-full py-3 rounded-xl font-semibold">
                     Pay €<span id="stripe-amount">104.00</span>
@@ -541,9 +559,18 @@
                             color: '#ffffff',
                             fontFamily: 'Montserrat, sans-serif',
                             fontSize: '16px',
-                            '::placeholder': { color: '#6b7280' }
+                            backgroundColor: '#1a1a1a',
+                            '::placeholder': { color: '#6b7280' },
+                            iconColor: '#D4AF37'
                         },
-                        invalid: { color: '#ef4444' }
+                        invalid: { 
+                            color: '#ef4444',
+                            iconColor: '#ef4444'
+                        },
+                        complete: {
+                            color: '#D4AF37',
+                            iconColor: '#D4AF37'
+                        }
                     }
                 });
                 cardElement.mount('#card-element');
