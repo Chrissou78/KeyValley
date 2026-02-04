@@ -560,7 +560,6 @@
                     const errorDisplay = document.getElementById('card-errors');
                     
                     if (event.error) {
-                        // Show error
                         if (errorDisplay) {
                             errorDisplay.textContent = event.error.message;
                             errorDisplay.classList.remove('hidden');
@@ -570,25 +569,24 @@
                             submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
                         }
                     } else {
-                        // Clear error
                         if (errorDisplay) {
                             errorDisplay.textContent = '';
                             errorDisplay.classList.add('hidden');
                         }
                         
-                        // Enable button only if card is complete
                         if (submitBtn) {
                             if (event.complete) {
+                                // Card is complete and valid - enable button
                                 submitBtn.disabled = false;
                                 submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                             } else {
+                                // Card is incomplete - keep disabled
                                 submitBtn.disabled = true;
                                 submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
                             }
                         }
                     }
-                });
-                
+                });                
                 console.log('✅ Stripe initialized with key:', CONFIG.stripePublicKey.slice(0, 12) + '...');
             }
         }
@@ -968,7 +966,7 @@
             setTextContent('stripe-total', `€${totalEUR.toFixed(2)}`);
             setTextContent('stripe-amount', totalEUR.toFixed(2));
 
-            // Reset submit button to disabled
+            // ALWAYS disable submit button when opening modal
             const submitBtn = document.getElementById('stripe-submit');
             if (submitBtn) {
                 submitBtn.disabled = true;
@@ -987,9 +985,10 @@
                 cardElement.clear();
             }
 
+            // Show modal
             document.getElementById('stripe-modal').classList.remove('hidden');
 
-            // Create payment intent
+            // Create payment intent (but don't enable button - card change event will do that)
             createPaymentIntent(tokenAmount, totalEUR);
         }
 
@@ -1032,10 +1031,24 @@
             e.preventDefault();
 
             const submitBtn = document.getElementById('stripe-submit');
+            
+            // Don't proceed if button is disabled
+            if (submitBtn.disabled) {
+                return;
+            }
+
             submitBtn.disabled = true;
             submitBtn.textContent = 'Processing...';
 
             const paymentData = JSON.parse(localStorage.getItem('stripePaymentData') || '{}');
+
+            if (!paymentData.clientSecret) {
+                document.getElementById('card-errors').textContent = 'Payment not initialized. Please try again.';
+                document.getElementById('card-errors').classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.textContent = `Pay €${paymentData.totalEUR?.toFixed(2) || '0.00'}`;
+                return;
+            }
 
             try {
                 const { error, paymentIntent } = await stripe.confirmCardPayment(
@@ -1047,6 +1060,7 @@
                     document.getElementById('card-errors').textContent = error.message;
                     document.getElementById('card-errors').classList.remove('hidden');
                     submitBtn.disabled = false;
+                    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                     submitBtn.textContent = `Pay €${paymentData.totalEUR?.toFixed(2) || '0.00'}`;
                 } else if (paymentIntent.status === 'succeeded') {
                     closeStripeModal();
@@ -1055,7 +1069,11 @@
                 }
             } catch (error) {
                 console.error('Stripe error:', error);
-                showResult('error', 'Payment Failed', error.message);
+                document.getElementById('card-errors').textContent = error.message;
+                document.getElementById('card-errors').classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitBtn.textContent = `Pay €${paymentData.totalEUR?.toFixed(2) || '0.00'}`;
             }
         });
 
