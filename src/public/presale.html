@@ -528,7 +528,7 @@
                 stripe = Stripe(CONFIG.stripePublicKey);
                 const elements = stripe.elements();
                 
-                // Clear any existing content in the card element container
+                // Clear any existing content
                 const cardContainer = document.getElementById('card-element');
                 if (cardContainer) {
                     cardContainer.innerHTML = '';
@@ -546,6 +546,49 @@
                     }
                 });
                 cardElement.mount('#card-element');
+                
+                // Disable submit button initially
+                const submitBtn = document.getElementById('stripe-submit');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                
+                // Listen for card changes
+                cardElement.on('change', (event) => {
+                    const submitBtn = document.getElementById('stripe-submit');
+                    const errorDisplay = document.getElementById('card-errors');
+                    
+                    if (event.error) {
+                        // Show error
+                        if (errorDisplay) {
+                            errorDisplay.textContent = event.error.message;
+                            errorDisplay.classList.remove('hidden');
+                        }
+                        if (submitBtn) {
+                            submitBtn.disabled = true;
+                            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                        }
+                    } else {
+                        // Clear error
+                        if (errorDisplay) {
+                            errorDisplay.textContent = '';
+                            errorDisplay.classList.add('hidden');
+                        }
+                        
+                        // Enable button only if card is complete
+                        if (submitBtn) {
+                            if (event.complete) {
+                                submitBtn.disabled = false;
+                                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                            } else {
+                                submitBtn.disabled = true;
+                                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                            }
+                        }
+                    }
+                });
+                
                 console.log('✅ Stripe initialized with key:', CONFIG.stripePublicKey.slice(0, 12) + '...');
             }
         }
@@ -913,11 +956,10 @@
         // STRIPE CHECKOUT
         // ============================================
         function openStripeCheckout(tokenAmount, baseEUR, feeEUR, totalEUR) {
-            // Safely update elements (check if they exist first)
+            // Update modal content
             const setTextContent = (id, value) => {
                 const el = document.getElementById(id);
                 if (el) el.textContent = value;
-                else console.warn(`Element #${id} not found`);
             };
 
             setTextContent('stripe-tokens', `${tokenAmount} VIP`);
@@ -925,6 +967,25 @@
             setTextContent('stripe-fee', `€${feeEUR.toFixed(2)}`);
             setTextContent('stripe-total', `€${totalEUR.toFixed(2)}`);
             setTextContent('stripe-amount', totalEUR.toFixed(2));
+
+            // Reset submit button to disabled
+            const submitBtn = document.getElementById('stripe-submit');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            
+            // Clear any previous errors
+            const errorDisplay = document.getElementById('card-errors');
+            if (errorDisplay) {
+                errorDisplay.textContent = '';
+                errorDisplay.classList.add('hidden');
+            }
+            
+            // Clear the card element
+            if (cardElement) {
+                cardElement.clear();
+            }
 
             document.getElementById('stripe-modal').classList.remove('hidden');
 
