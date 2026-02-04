@@ -884,12 +884,18 @@
         // STRIPE CHECKOUT
         // ============================================
         function openStripeCheckout(tokenAmount, baseEUR, feeEUR, totalEUR) {
-            // Update Stripe modal
-            document.getElementById('stripe-tokens').textContent = `${tokenAmount} VIP`;
-            document.getElementById('stripe-subtotal').textContent = `€${baseEUR.toFixed(2)}`;
-            document.getElementById('stripe-fee').textContent = `€${feeEUR.toFixed(2)}`;
-            document.getElementById('stripe-total').textContent = `€${totalEUR.toFixed(2)}`;
-            document.getElementById('stripe-amount').textContent = totalEUR.toFixed(2);
+            // Safely update elements (check if they exist first)
+            const setTextContent = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+                else console.warn(`Element #${id} not found`);
+            };
+
+            setTextContent('stripe-tokens', `${tokenAmount} VIP`);
+            setTextContent('stripe-subtotal', `€${baseEUR.toFixed(2)}`);
+            setTextContent('stripe-fee', `€${feeEUR.toFixed(2)}`);
+            setTextContent('stripe-total', `€${totalEUR.toFixed(2)}`);
+            setTextContent('stripe-amount', totalEUR.toFixed(2));
 
             document.getElementById('stripe-modal').classList.remove('hidden');
 
