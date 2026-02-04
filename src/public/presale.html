@@ -993,42 +993,54 @@
 
         async function verifyStripePayment(paymentIntentId, tokenAmount) {
             try {
-                const pendingPurchase = JSON.parse(localStorage.getItem('pendingPurchase') || '{}');
+                showProcessing('Payment received! Minting your tokens...');
                 
-                const response = await fetch('/api/presale/verify-payment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        paymentIntentId,
-                        walletAddress: currentWallet,
-                        tokenAmount,
-                        totalEUR: pendingPurchase.totalEUR,
-                        totalUSD: pendingPurchase.totalUSD,
-                        paymentMethod: 'stripe'
-                    })
-                });
-
-                const data = await response.json();
-
-                hideProcessing();
-
-                if (data.success) {
-                    showResult('success', 'Purchase Complete!', 
-                        `Successfully purchased ${tokenAmount} VIP tokens!`,
-                        { tokens: tokenAmount, mintTx: data.mintTxHash }
-                    );
-                    localStorage.removeItem('pendingPurchase');
-                    localStorage.removeItem('stripePaymentData');
-                    loadPresaleConfig();
-                } else {
-                    showResult('error', 'Verification Failed', data.error || 'Please contact support.');
+                let attempts = 0;
+                const maxAttempts = 60;
+                
+                while (attempts < maxAttempts) {
+                    try {
+                        const response = await fetch(`/api/presale/purchase-status/${paymentIntentId}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            console.log(`🔄 Poll ${attempts + 1}: ${data.status}`);
+                            
+                            if (data.status === 'completed' && data.mintTxHash) {
+                                hideProcessing();
+                                showResult('success', 'Purchase Complete!', 
+                                    `Successfully purchased ${tokenAmount} VIP tokens!`,
+                                    { tokens: tokenAmount, mintTx: data.mintTxHash }
+                                );
+                                localStorage.removeItem('pendingPurchase');
+                                localStorage.removeItem('stripePaymentData');
+                                loadPresaleConfig();
+                                return;
+                            }
+                            
+                            if (data.status === 'mint_failed' || data.status === 'failed') {
+                                hideProcessing();
+                                showResult('error', 'Minting Failed', data.error || 'Please contact presale@kea-valley.com');
+                                return;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Poll error:', e);
+                    }
+                    
+                    attempts++;
+                    await new Promise(r => setTimeout(r, 1000));
                 }
+                
+                hideProcessing();
+                showResult('info', 'Processing', 'Payment received. Tokens will arrive shortly. Check your profile in a few minutes.');
+                localStorage.removeItem('pendingPurchase');
+                localStorage.removeItem('stripePaymentData');
+                
             } catch (error) {
                 hideProcessing();
-                showResult('error', 'Verification Error', error.message);
+                showResult('error', 'Error', error.message);
             }
         }
-
         // ============================================
         // URL PARAMS & CRYPTO VERIFICATION
         // ============================================

@@ -105,9 +105,8 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
     
     console.log('📨 Stripe webhook received:', event.type);
     
-    // Handle both checkout.session.completed and payment_intent.succeeded
     if (event.type === 'checkout.session.completed' || event.type === 'payment_intent.succeeded') {
-        let walletAddress, tokenAmount, paymentId, eurAmount;
+        let walletAddress, tokenAmount, paymentId, eurAmount, baseAmount, feeAmount;
         
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object;
@@ -115,12 +114,16 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
             tokenAmount = session.metadata?.tokenAmount;
             paymentId = session.id;
             eurAmount = (session.amount_total || 0) / 100;
+            baseAmount = parseFloat(session.metadata?.baseAmount) || eurAmount;
+            feeAmount = parseFloat(session.metadata?.feeAmount) || 0;
         } else {
             const paymentIntent = event.data.object;
             walletAddress = paymentIntent.metadata?.walletAddress;
             tokenAmount = paymentIntent.metadata?.tokenAmount;
             paymentId = paymentIntent.id;
             eurAmount = (paymentIntent.amount || 0) / 100;
+            baseAmount = parseFloat(paymentIntent.metadata?.baseAmount) || eurAmount;
+            feeAmount = parseFloat(paymentIntent.metadata?.feeAmount) || 0;
         }
         
         if (!walletAddress || !tokenAmount) {
@@ -128,7 +131,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
             return res.json({ received: true, error: 'Missing metadata' });
         }
         
-        console.log('💳 Stripe payment completed:', { walletAddress, tokenAmount, paymentId });
+        console.log('💳 Stripe payment completed:', { walletAddress, tokenAmount, paymentId, baseAmount, feeAmount });
         
         try {
             const normalizedAddress = walletAddress.toLowerCase();
@@ -146,28 +149,43 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                 console.log('⚠️ Using default EUR/USD rate:', eurUsdRate);
             }
             
-            const usdAmount = eurAmount * eurUsdRate;
+            const usdAmount = baseAmount * eurUsdRate;
             
-            // Check if already processed
+            // Check if already processed - check BOTH columns
             const existing = await db.pool.query(
-                'SELECT id FROM presale_purchases WHERE payment_tx_hash = $1',
+                'SELECT id, status, mint_tx_hash FROM presale_purchases WHERE stripe_payment_intent = $1 OR payment_tx_hash = $1',
                 [paymentId]
             );
             
             if (existing.rows.length > 0) {
-                console.log('⚠️ Payment already processed:', paymentId);
-                return res.json({ received: true, status: 'already_processed' });
+                const purchase = existing.rows[0];
+                if (purchase.status === 'completed' && purchase.mint_tx_hash) {
+                    console.log('⚠️ Payment already processed:', paymentId);
+                    return res.json({ received: true, status: 'already_processed' });
+                }
+                // Continue processing if not completed
             }
             
-            // Record purchase
-            const purchaseResult = await db.pool.query(`
-                INSERT INTO presale_purchases 
-                (wallet_address, token_amount, eur_amount, usd_amount, payment_method, payment_tx_hash, payment_amount, status, created_at)
-                VALUES ($1, $2, $3, $4, 'card', $5, $6, 'paid', NOW())
-                RETURNING id
-            `, [normalizedAddress, tokenAmount, eurAmount, usdAmount, paymentId, eurAmount]);
+            // Record purchase (use stripe_payment_intent for Stripe payments)
+            let purchaseId;
+            if (existing.rows.length > 0) {
+                purchaseId = existing.rows[0].id;
+                await db.pool.query(`
+                    UPDATE presale_purchases 
+                    SET status = 'paid', updated_at = NOW()
+                    WHERE id = $1
+                `, [purchaseId]);
+            } else {
+                const purchaseResult = await db.pool.query(`
+                    INSERT INTO presale_purchases 
+                    (wallet_address, token_amount, eur_amount, usd_amount, payment_method, 
+                     stripe_payment_intent, payment_amount, platform_fee, status, created_at)
+                    VALUES ($1, $2, $3, $4, 'stripe', $5, $6, $7, 'paid', NOW())
+                    RETURNING id
+                `, [normalizedAddress, tokenAmount, baseAmount, usdAmount, paymentId, eurAmount, feeAmount]);
+                purchaseId = purchaseResult.rows[0].id;
+            }
             
-            const purchaseId = purchaseResult.rows[0].id;
             console.log('📝 Purchase recorded - ID:', purchaseId);
             
             // Mint tokens
@@ -184,12 +202,11 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                 console.log('📋 Mint result:', JSON.stringify(mintResult, null, 2));
             } catch (mintError) {
                 console.error('❌ Mint error:', mintError.message);
-                console.error('   Stack:', mintError.stack);
                 mintResult = { error: mintError.message };
             }
 
-            if (mintResult && !mintResult.error && (mintResult.receipt || mintResult.hash)) {
-                const txHash = mintResult.receipt?.hash || mintResult.hash;
+            if (mintResult && !mintResult.error && (mintResult.receipt || mintResult.hash || mintResult.txHash)) {
+                const txHash = mintResult.txHash || mintResult.receipt?.hash || mintResult.hash;
                 
                 await db.pool.query(`
                     UPDATE presale_purchases 
@@ -199,7 +216,14 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                 
                 console.log('✅ Tokens minted for Stripe payment:', txHash);
                 
-                // Process referral bonus if applicable
+                // Update presale stats
+                await db.pool.query(`
+                    UPDATE presale_config 
+                    SET tokens_sold = COALESCE(tokens_sold, 0) + $1, updated_at = NOW() 
+                    WHERE id = 1
+                `, [parseFloat(tokenAmount)]);
+                
+                // Process referral bonus
                 try {
                     const registrantResult = await db.pool.query(
                         'SELECT referrer_wallet, referrer_code FROM registrants WHERE address = $1',
@@ -228,32 +252,34 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                                 }
                                 
                                 if (bonusAmount > 0) {
-                                    console.log(`🎁 Minting ${bonusAmount} VIP presale bonus to referrer...`);
+                                    console.log(`🎁 Minting ${bonusAmount} VIP presale bonus to referrer ${referrerWallet}...`);
                                     const bonusMintResult = await minter.mintToAddress(referrerWallet, bonusAmount, true);
-                                    const bonusTxHash = bonusMintResult.receipt?.hash || bonusMintResult.hash || 'bonus-minted';
+                                    const bonusTxHash = bonusMintResult.txHash || bonusMintResult.receipt?.hash || bonusMintResult.hash;
                                     
-                                    await db.pool.query(`
-                                        UPDATE presale_purchases 
-                                        SET referral_bonus_amount = $1, referral_bonus_paid = true
-                                        WHERE id = $2
-                                    `, [bonusAmount, purchaseId]);
-                                    
-                                    await db.pool.query(`
-                                        UPDATE referrals 
-                                        SET presale_bonus_paid = presale_bonus_paid + $1,
-                                            presale_bonus_tx = $2
-                                        WHERE referee_wallet = $3
-                                    `, [bonusAmount, bonusTxHash, normalizedAddress]);
-                                    
-                                    await db.pool.query(`
-                                        UPDATE referral_codes 
-                                        SET total_presale_purchases = total_presale_purchases + 1,
-                                            total_bonus_earned = total_bonus_earned + $1,
-                                            updated_at = NOW()
-                                        WHERE code = $2
-                                    `, [bonusAmount, referrerCode]);
-                                    
-                                    console.log('✅ Presale referral bonus minted! TX:', bonusTxHash);
+                                    if (bonusTxHash) {
+                                        await db.pool.query(`
+                                            UPDATE presale_purchases 
+                                            SET referral_bonus_amount = $1, referral_bonus_paid = true
+                                            WHERE id = $2
+                                        `, [bonusAmount, purchaseId]);
+                                        
+                                        await db.pool.query(`
+                                            UPDATE referrals 
+                                            SET presale_bonus_paid = COALESCE(presale_bonus_paid, 0) + $1,
+                                                presale_bonus_tx = $2
+                                            WHERE referee_wallet = $3
+                                        `, [bonusAmount, bonusTxHash, normalizedAddress]);
+                                        
+                                        await db.pool.query(`
+                                            UPDATE referral_codes 
+                                            SET total_presale_purchases = COALESCE(total_presale_purchases, 0) + 1,
+                                                total_bonus_earned = COALESCE(total_bonus_earned, 0) + $1,
+                                                updated_at = NOW()
+                                            WHERE code = $2
+                                        `, [bonusAmount, referrerCode]);
+                                        
+                                        console.log('✅ Presale referral bonus minted! TX:', bonusTxHash);
+                                    }
                                 }
                             }
                         }
@@ -263,12 +289,12 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                 }
                 
             } else {
-                console.log('⚠️ Minting failed, marked as pending_mint');
+                console.error('⚠️ Minting failed:', mintResult?.error);
                 await db.pool.query(`
                     UPDATE presale_purchases 
-                    SET status = 'pending_mint'
-                    WHERE id = $1
-                `, [purchaseId]);
+                    SET status = 'pending_mint', error_message = $1
+                    WHERE id = $2
+                `, [mintResult?.error || 'Unknown error', purchaseId]);
             }
             
         } catch (error) {
@@ -277,6 +303,34 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
     }
     
     res.json({ received: true });
+});
+
+app.get('/api/presale/purchase-status/:paymentIntentId', async (req, res) => {
+    try {
+        const { paymentIntentId } = req.params;
+        
+        const result = await db.pool.query(
+            `SELECT status, mint_tx_hash, token_amount, error_message 
+             FROM presale_purchases 
+             WHERE stripe_payment_intent = $1 OR payment_tx_hash = $1`,
+            [paymentIntentId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.json({ status: 'pending', message: 'Waiting for payment confirmation...' });
+        }
+        
+        const purchase = result.rows[0];
+        res.json({
+            status: purchase.status,
+            mintTxHash: purchase.mint_tx_hash,
+            tokenAmount: purchase.token_amount,
+            error: purchase.error_message
+        });
+    } catch (error) {
+        console.error('❌ Purchase status error:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // Middleware
@@ -1579,18 +1633,31 @@ app.post('/api/presale/create-payment-intent', async (req, res) => {
         const normalizedAddress = walletAddress.toLowerCase();
         const baseEUR = tokenAmount * PRESALE_CONFIG.tokenPrice;
         
-        // 4% card fee (3% Stripe + 1% platform)
-        const feePercent = 4;
-        const feeEUR = baseEUR * (feePercent / 100);
+        // Fee structure
+        const stripeFeePercent = 3;    // Estimated Stripe fee (covers most cards)
+        const platformFeePercent = 1;  // Platform fee
+        const totalFeePercent = stripeFeePercent + platformFeePercent; // 4%
+        
+        const feeEUR = baseEUR * (totalFeePercent / 100);
         const totalEUR = baseEUR + feeEUR;
         const amountCents = Math.round(totalEUR * 100);
+        
+        // Platform keeps the 4% fee, connected account gets baseEUR
+        // But we need to account for actual Stripe fees which come out of the total
+        // Stripe fee is typically: 1.5% + €0.25 (EU cards) or 3.25% + €0.25 (non-EU)
+        // We estimate 3% to be safe, actual fee is deducted by Stripe
+        
+        const platformFeeCents = Math.round(feeEUR * 100); // 4% in cents
+        const connectedAccountCents = amountCents - platformFeeCents; // Base amount to connected account
         
         console.log('💳 Creating Payment Intent:', { 
             wallet: normalizedAddress, 
             tokens: tokenAmount, 
             base: `€${baseEUR.toFixed(2)}`,
-            fee: `€${feeEUR.toFixed(2)} (${feePercent}%)`,
-            total: `€${totalEUR.toFixed(2)}`
+            fee: `€${feeEUR.toFixed(2)} (${totalFeePercent}%)`,
+            total: `€${totalEUR.toFixed(2)}`,
+            toConnectedAccount: `€${(connectedAccountCents / 100).toFixed(2)}`,
+            platformKeeps: `€${(platformFeeCents / 100).toFixed(2)}`
         });
         
         const paymentIntentConfig = {
@@ -1601,12 +1668,26 @@ app.post('/api/presale/create-payment-intent', async (req, res) => {
                 tokenAmount: tokenAmount.toString(),
                 baseAmount: baseEUR.toFixed(2),
                 feeAmount: feeEUR.toFixed(2),
-                feePercent: feePercent.toString(),
+                stripeFeeEstimate: (baseEUR * stripeFeePercent / 100).toFixed(2),
+                platformFee: (baseEUR * platformFeePercent / 100).toFixed(2),
+                feePercent: totalFeePercent.toString(),
                 source: 'presale'
             },
             receipt_email: email || undefined,
             description: `${tokenAmount} VIP Tokens - Kea Valley Presale`
         };
+        
+        // Add destination charge if connected account is configured
+        if (process.env.STRIPE_CONNECTED_ACCOUNT_ID) {
+            // Platform receives payment, then transfers to connected account
+            // application_fee_amount is what platform KEEPS
+            paymentIntentConfig.transfer_data = {
+                destination: process.env.STRIPE_CONNECTED_ACCOUNT_ID,
+                amount: connectedAccountCents  // Amount to transfer to connected account
+            };
+            
+            console.log(`💸 Destination charge: €${(connectedAccountCents / 100).toFixed(2)} to ${process.env.STRIPE_CONNECTED_ACCOUNT_ID}`);
+        }
         
         const paymentIntent = await stripe.paymentIntents.create(paymentIntentConfig);
         
@@ -1618,7 +1699,7 @@ app.post('/api/presale/create-payment-intent', async (req, res) => {
             paymentIntentId: paymentIntent.id,
             baseAmount: baseEUR,
             feeAmount: feeEUR,
-            feePercent: feePercent,
+            feePercent: totalFeePercent,
             totalAmount: totalEUR,
             currency: 'EUR'
         });
