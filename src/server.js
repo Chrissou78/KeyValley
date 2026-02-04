@@ -183,8 +183,8 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
             console.log('   Total Received: €' + totalAmount.toFixed(2));
             console.log('   → Platform Keeps: €' + platformKeeps.toFixed(2), '(covers Stripe + platform fee)');
             console.log('   → To Connected Account: €' + toConnectedAccount.toFixed(2));
-            if (process.env.STRIPE_CONNECTED_ACCOUNT_ID) {
-                console.log('   Connected Account ID:', process.env.STRIPE_CONNECTED_ACCOUNT_ID);
+            if (process.env.STRIPE_DESTINATION_ACCOUNT) {
+                console.log('   Connected Account ID:', process.env.STRIPE_DESTINATION_ACCOUNT);
             } else {
                 console.log('   ⚠️ No connected account configured');
             }
@@ -1766,15 +1766,15 @@ app.post('/api/presale/create-payment-intent', async (req, res) => {
         };
         
         // Add destination charge if connected account is configured
-        if (process.env.STRIPE_CONNECTED_ACCOUNT_ID) {
+        if (process.env.STRIPE_DESTINATION_ACCOUNT) {
             // Platform receives payment, then transfers to connected account
             // application_fee_amount is what platform KEEPS
             paymentIntentConfig.transfer_data = {
-                destination: process.env.STRIPE_CONNECTED_ACCOUNT_ID,
+                destination: process.env.STRIPE_DESTINATION_ACCOUNT,
                 amount: connectedAccountCents  // Amount to transfer to connected account
             };
             
-            console.log(`💸 Destination charge: €${(connectedAccountCents / 100).toFixed(2)} to ${process.env.STRIPE_CONNECTED_ACCOUNT_ID}`);
+            console.log(`💸 Destination charge: €${(connectedAccountCents / 100).toFixed(2)} to ${process.env.STRIPE_DESTINATION_ACCOUNT}`);
         }
         
         const paymentIntent = await stripe.paymentIntents.create(paymentIntentConfig);
