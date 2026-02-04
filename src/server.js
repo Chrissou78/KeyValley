@@ -1539,17 +1539,17 @@ app.get('/api/presale/config', async (req, res) => {
             console.log('Using default POL price:', polPrice);
         }
 
-        res.json({
-            enabled: PRESALE_CONFIG.enabled,
-            tokenPrice: PRESALE_CONFIG.tokenPrice,
-            totalTokens: PRESALE_CONFIG.totalTokens,
-            tokensSold: tokensSold,
-            minPurchase: PRESALE_CONFIG.minPurchase,
-            maxPurchase: PRESALE_CONFIG.maxPurchase,
-            presaleWallet: PRESALE_CONFIG.presaleWallet || process.env.PRESALE_WALLET || '',
-            eurUsdRate: eurUsdRate,
-            polPrice: polPrice,
-            stripePublicKey: process.env.STRIPE_PUBLIC_KEY || null  // Add this line
+         res.json({
+            totalTokens: PRESALE_CONFIG.totalTokens || 1000000,
+            tokensSold: PRESALE_CONFIG.tokensSold || 0,
+            tokenPrice: PRESALE_CONFIG.tokenPrice || 1.00,
+            eurUsdRate: PRESALE_CONFIG.eurUsdRate || 1.19,
+            polPrice: PRESALE_CONFIG.polPrice || 0.12,
+            presaleEnabled: PRESALE_CONFIG.presaleEnabled !== false,
+            presaleWallet: PRESALE_CONFIG.presaleWallet,
+            minPurchase: PRESALE_CONFIG.minPurchase || 10,
+            maxPurchase: PRESALE_CONFIG.maxPurchase || 10000,
+            stripePublicKey: process.env.STRIPE_PUBLIC_KEY  // ADD THIS LINE
         });
     } catch (error) {
         console.error('Config error:', error);

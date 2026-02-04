@@ -487,7 +487,6 @@
             await loadPresaleConfig();
             checkWalletConnection();
             checkUrlParams();
-            initStripe();
             updateTotals();
         });
 
@@ -505,7 +504,10 @@
                     CONFIG.presaleWallet = data.presaleWallet || CONFIG.presaleWallet;
                     CONFIG.minPurchase = data.minPurchase || CONFIG.minPurchase;
                     CONFIG.maxPurchase = data.maxPurchase || CONFIG.maxPurchase;
+                    CONFIG.stripePublicKey = data.stripePublicKey;  // ADD THIS
+                    
                     updateProgress();
+                    initStripe();  // INIT STRIPE AFTER CONFIG LOADS
                 }
             } catch (error) {
                 console.error('Failed to load presale config:', error);
@@ -517,27 +519,29 @@
         }
 
         function initStripe() {
+            if (!CONFIG.stripePublicKey) {
+                console.log('⚠️ Stripe key not loaded yet');
+                return;
+            }
+            
             if (typeof Stripe !== 'undefined') {
-                const stripeKey = document.querySelector('meta[name="stripe-key"]')?.content;
-                if (stripeKey) {
-                    stripe = Stripe(stripeKey);
-                    const elements = stripe.elements();
-                    cardElement = elements.create('card', {
-                        style: {
-                            base: {
-                                color: '#ffffff',
-                                fontFamily: 'Montserrat, sans-serif',
-                                fontSize: '16px',
-                                '::placeholder': { color: '#6b7280' }
-                            },
-                            invalid: { color: '#ef4444' }
-                        }
-                    });
-                    cardElement.mount('#card-element');
-                }
+                stripe = Stripe(CONFIG.stripePublicKey);
+                const elements = stripe.elements();
+                cardElement = elements.create('card', {
+                    style: {
+                        base: {
+                            color: '#ffffff',
+                            fontFamily: 'Montserrat, sans-serif',
+                            fontSize: '16px',
+                            '::placeholder': { color: '#6b7280' }
+                        },
+                        invalid: { color: '#ef4444' }
+                    }
+                });
+                cardElement.mount('#card-element');
+                console.log('✅ Stripe initialized with key:', CONFIG.stripePublicKey.slice(0, 12) + '...');
             }
         }
-
         // ============================================
         // WALLET CONNECTION
         // ============================================
