@@ -207,14 +207,17 @@
             <div class="glass-card rounded-2xl p-6 mb-8">
                 <div class="flex justify-between items-center mb-4">
                     <span class="text-gray-400">Presale Progress</span>
-                    <span id="progress-text" class="gold-text font-semibold">0 / 1,000,000 VIP</span>
+                    <span id="progress-pct" class="gold-text font-semibold">0%</span>
                 </div>
                 <div class="w-full bg-surface-light rounded-full h-3 overflow-hidden">
                     <div id="progress-bar" class="progress-bar h-full rounded-full" style="width: 0%"></div>
                 </div>
                 <div class="flex justify-between mt-4 text-sm">
-                    <span class="text-gray-500">Token Price: <span class="gold-text">€1.00</span></span>
-                    <span id="remaining-text" class="text-gray-500">Remaining: <span class="text-white">1,000,000 VIP</span></span>
+                    <span id="progress-raised" class="text-white font-semibold">€0.00</span>
+                    <span id="progress-target" class="text-gray-500">€500,000</span>
+                </div>
+                <div class="text-center mt-3 text-xs text-gray-500">
+                    <span id="tokens-info"><span id="tokens-sold">0</span> / <span id="tokens-total">1,000,000</span> VIP tokens sold • Token Price: <span class="gold-text">€1.00</span></span>
                 </div>
             </div>
 
@@ -522,10 +525,15 @@
                     CONFIG.presaleWallet = data.presaleWallet || CONFIG.presaleWallet;
                     CONFIG.minPurchase = data.minPurchase || CONFIG.minPurchase;
                     CONFIG.maxPurchase = data.maxPurchase || CONFIG.maxPurchase;
-                    CONFIG.stripePublicKey = data.stripePublicKey;  // ADD THIS
+                    CONFIG.stripePublicKey = data.stripePublicKey;
+                    
+                    // EUR-based progress data
+                    CONFIG.eurRaised = data.eurRaised || 0;
+                    CONFIG.saleTargetEUR = data.saleTargetEUR || 500000;
+                    CONFIG.progressPct = data.progressPct || 0;
                     
                     updateProgress();
-                    initStripe();  // INIT STRIPE AFTER CONFIG LOADS
+                    initStripe();
                 }
             } catch (error) {
                 console.error('Failed to load presale config:', error);
@@ -535,7 +543,6 @@
                 document.getElementById('presale-inactive-overlay').classList.remove('hidden');
             }
         }
-
         function initStripe() {
             if (!CONFIG.stripePublicKey) {
                 console.log('⚠️ Stripe key not loaded yet');
@@ -845,12 +852,26 @@
         }
 
         function updateProgress() {
-            const percent = (CONFIG.tokensSold / CONFIG.totalTokens) * 100;
-            document.getElementById('progress-bar').style.width = `${percent}%`;
-            document.getElementById('progress-text').textContent = 
-                `${CONFIG.tokensSold.toLocaleString()} / ${CONFIG.totalTokens.toLocaleString()} VIP`;
-            document.getElementById('remaining-text').innerHTML = 
-                `Remaining: <span class="text-white">${(CONFIG.totalTokens - CONFIG.tokensSold).toLocaleString()} VIP</span>`;
+            // EUR-based progress
+            const eurRaised = CONFIG.eurRaised || 0;
+            const targetEUR = CONFIG.saleTargetEUR || 500000;
+            const progressPct = CONFIG.progressPct || ((eurRaised / targetEUR) * 100);
+            
+            // Progress bar width
+            document.getElementById('progress-bar').style.width = `${Math.min(progressPct, 100)}%`;
+            
+            // Top right: percentage
+            document.getElementById('progress-pct').textContent = progressPct.toFixed(2) + '%';
+            
+            // Bottom left: EUR raised
+            document.getElementById('progress-raised').textContent = '€' + eurRaised.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            
+            // Bottom right: target
+            document.getElementById('progress-target').textContent = '€' + targetEUR.toLocaleString();
+            
+            // Token info (small text)
+            document.getElementById('tokens-sold').textContent = CONFIG.tokensSold.toLocaleString();
+            document.getElementById('tokens-total').textContent = CONFIG.totalTokens.toLocaleString();
         }
 
         // ============================================
