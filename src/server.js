@@ -2487,6 +2487,43 @@ app.post('/api/admin/referrals/toggle/:code', requireAdminAuth, async (req, res)
     }
 });
 
+// POST /api/admin/presale/settings - Save presale settings
+app.post('/api/admin/presale/settings', async (req, res) => {
+    try {
+        const { saleTargetEUR, tokenPrice, minPurchase, presaleWallet, presaleEnabled } = req.body;
+        
+        console.log('📝 Saving presale settings:', { saleTargetEUR, tokenPrice, minPurchase, presaleWallet, presaleEnabled });
+        
+        // Update in-memory config
+        PRESALE_CONFIG.saleTargetEUR = saleTargetEUR || 500000;
+        PRESALE_CONFIG.tokenPrice = tokenPrice || 1.00;
+        PRESALE_CONFIG.minPurchase = minPurchase || 10;
+        PRESALE_CONFIG.presaleWallet = presaleWallet || PRESALE_CONFIG.presaleWallet;
+        PRESALE_CONFIG.presaleEnabled = presaleEnabled !== false;
+        
+        // Save to database
+        await db.pool.query(`
+            INSERT INTO presale_config (id, sale_target_eur, token_price, min_purchase, presale_wallet, presale_enabled, updated_at)
+            VALUES (1, $1, $2, $3, $4, $5, NOW())
+            ON CONFLICT (id) DO UPDATE SET
+                sale_target_eur = $1,
+                token_price = $2,
+                min_purchase = $3,
+                presale_wallet = $4,
+                presale_enabled = $5,
+                updated_at = NOW()
+        `, [saleTargetEUR, tokenPrice, minPurchase, presaleWallet, presaleEnabled]);
+        
+        console.log('✅ Presale settings saved');
+        
+        res.json({ success: true });
+        
+    } catch (error) {
+        console.error('❌ Failed to save presale settings:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.get('/api/admin/presale/stats', async (req, res) => {
     try {
         const stats = await db.pool.query(`

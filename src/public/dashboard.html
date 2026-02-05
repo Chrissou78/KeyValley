@@ -1984,28 +1984,35 @@
                 if (dbStatusEl) dbStatusEl.innerHTML = '<span class="badge badge-error">Error</span>';
             }
         }
-        
+
         async function savePresaleSettings() {
-            const statusEl = document.getElementById('presale-settings-status');
-            if (statusEl) statusEl.innerHTML = '<span class="text-white/60">Saving...</span>';
-            
-            const toggle = document.getElementById('presale-enabled-toggle');
-            
-            // Handle both old and new field names
-            const saleTargetEl = document.getElementById('setting-sale-target') || document.getElementById('setting-total-tokens');
-            const tokenPriceEl = document.getElementById('setting-token-price');
-            const minPurchaseEl = document.getElementById('setting-min-purchase');
-            const presaleWalletEl = document.getElementById('setting-presale-wallet');
-            
-            const settings = {
-                saleTargetEUR: parseFloat(saleTargetEl?.value) || 500000,
-                tokenPrice: parseFloat(tokenPriceEl?.value) || 1.00,
-                minPurchase: parseFloat(minPurchaseEl?.value) || 10,
-                presaleWallet: presaleWalletEl?.value || '',
-                presaleEnabled: toggle?.classList.contains('active') ?? true
+            // Get all possible element variations
+            const elements = {
+                saleTarget: document.getElementById('setting-sale-target') 
+                    || document.getElementById('setting-total-tokens')
+                    || document.querySelector('input[id*="sale-target"]')
+                    || document.querySelector('input[id*="total-tokens"]'),
+                tokenPrice: document.getElementById('setting-token-price')
+                    || document.querySelector('input[id*="token-price"]'),
+                minPurchase: document.getElementById('setting-min-purchase')
+                    || document.querySelector('input[id*="min-purchase"]'),
+                presaleWallet: document.getElementById('setting-presale-wallet')
+                    || document.querySelector('input[id*="presale-wallet"]'),
+                toggle: document.getElementById('presale-enabled-toggle')
             };
             
-            console.log('Saving presale settings:', settings);
+            console.log('Found elements:', elements);
+            
+            // Build settings with fallbacks
+            const settings = {
+                saleTargetEUR: elements.saleTarget ? parseFloat(elements.saleTarget.value) || 500000 : 500000,
+                tokenPrice: elements.tokenPrice ? parseFloat(elements.tokenPrice.value) || 1.00 : 1.00,
+                minPurchase: elements.minPurchase ? parseFloat(elements.minPurchase.value) || 10 : 10,
+                presaleWallet: elements.presaleWallet ? elements.presaleWallet.value : '',
+                presaleEnabled: elements.toggle ? elements.toggle.classList.contains('active') : true
+            };
+            
+            console.log('Saving settings:', settings);
             
             try {
                 const response = await fetch('/api/admin/presale/settings', {
@@ -2016,53 +2023,22 @@
                 });
                 
                 const data = await response.json();
+                console.log('Save response:', data);
                 
                 if (response.ok && data.success) {
-                    if (statusEl) statusEl.innerHTML = '<span class="text-green-400">✓ Saved!</span>';
-                    alert('Settings saved successfully!');
-                    setTimeout(() => { if (statusEl) statusEl.innerHTML = ''; }, 3000);
+                    alert('✅ Settings saved successfully!');
                 } else {
-                    if (statusEl) statusEl.innerHTML = `<span class="text-red-400">${data.error || 'Failed to save'}</span>`;
-                    alert('Error: ' + (data.error || 'Failed to save'));
+                    alert('❌ Error: ' + (data.error || 'Failed to save'));
                 }
             } catch (error) {
                 console.error('Error saving settings:', error);
-                if (statusEl) statusEl.innerHTML = '<span class="text-red-400">Network error</span>';
-                alert('Network error saving settings');
+                alert('❌ Network error: ' + error.message);
             }
         }
 
         function togglePresaleEnabled() {
             const toggle = document.getElementById('presale-enabled-toggle');
             toggle.classList.toggle('active');
-        }
-        
-        async function savePresaleSettings() {
-            const settings = {
-                enabled: document.getElementById('presale-enabled-toggle').classList.contains('active'),
-                tokenPrice: parseFloat(document.getElementById('setting-token-price').value),
-                totalTokens: parseInt(document.getElementById('setting-total-tokens').value),
-                minPurchase: parseInt(document.getElementById('setting-min-purchase').value),
-                maxPurchase: parseInt(document.getElementById('setting-max-purchase').value),
-                presaleWallet: document.getElementById('setting-presale-wallet').value
-            };
-            
-            try {
-                const response = await fetch('/api/presale/admin/settings', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(settings)
-                });
-                
-                if (response.ok) {
-                    alert('Settings saved successfully');
-                } else {
-                    throw new Error('Failed to save');
-                }
-            } catch (error) {
-                console.error('Error saving settings:', error);
-                alert('Error saving settings');
-            }
         }
         
         // ==========================================
