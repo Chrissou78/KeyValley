@@ -3151,104 +3151,106 @@ app.get('/api/members/sync', requireAdminAuth, async (req, res) => {
         const companyId = process.env.WALLETTWO_COMPANY_ID;
         
         if (!apiKey || !companyId) {
-            return res.status(500).json({ error: 'WalletTwo API not configured' });
+            return res.status(500).json({ 
+                error: 'WalletTwo API not configured',
+                missing: { apiKey: !apiKey, companyId: !companyId }
+            });
         }
         
         console.log('🔄 Syncing members from WalletTwo...');
         
-        const response = await fetch(`https://api.wallettwo.com/company/api/company/${companyId}/members`, {
-            method: 'GET',
-            headers: {
-                'x-api-key': apiKey,
-                'Content-Type': 'application/json'
+        const response = await fetch(
+            `https://api.wallettwo.com/company/api/company/${companyId}/members`,
+            {
+                headers: {
+                    'x-api-key': apiKey,
+                    'Content-Type': 'application/json'
+                }
             }
-        });
-        
-        const data = await response.json();
-        
-        // Debug: log the actual response structure
-        console.log('📋 WalletTwo API response:', JSON.stringify(data, null, 2));
-        console.log('📋 Response type:', typeof data);
-        console.log('📋 Is array:', Array.isArray(data));
+        );
         
         if (!response.ok) {
-            console.error('❌ WalletTwo API error:', response.status, data);
-            return res.status(response.status).json({ error: 'Failed to fetch members', details: data });
+            const error = await response.text();
+            console.error('❌ WalletTwo API error:', response.status, error);
+            return res.status(response.status).json({ error: 'Failed to fetch members' });
         }
         
-        // Handle different response formats
-        let members = [];
-        if (Array.isArray(data)) {
-            members = data;
-        } else if (data && Array.isArray(data.members)) {
-            members = data.members;
-        } else if (data && Array.isArray(data.data)) {
-            members = data.data;
-        } else if (data && Array.isArray(data.users)) {
-            members = data.users;
-        } else if (data && Array.isArray(data.results)) {
-            members = data.results;
-        } else {
-            console.log('⚠️ Unknown response format, returning raw data');
-            return res.json({ 
-                success: false, 
-                error: 'Unknown response format',
-                rawResponse: data 
-            });
-        }
+        const data = await response.json();
+        const members = data.members || [];
         
-        console.log(`📋 Found ${members.length} members`);
+        console.log(`📋 Found ${members.length} members from WalletTwo`);
         
         let synced = 0;
         let updated = 0;
+        let skipped = 0;
         
         for (const member of members) {
-            const wallet = (member.wallet || member.walletAddress || member.address || '').toLowerCase();
-            const email = member.email || '';
-            const name = member.name || member.displayName || member.username || '';
+            // Get wallet - WalletTwo uses 'wallet' field
+            let wallet = member.wallet || '';
             
-            if (!wallet) {
-                console.log('⚠️ Skipping member without wallet:', member);
+            // Validate wallet address
+            if (!wallet || typeof wallet !== 'string') {
+                console.log(`⚠️ Skipping ${member.email || 'unknown'}: no wallet`);
+                skipped++;
                 continue;
             }
             
-            // Check if exists
-            const existing = await db.pool.query(
-                'SELECT id FROM registrants WHERE address = $1',
-                [wallet]
-            );
+            // Normalize: trim whitespace and lowercase
+            wallet = wallet.trim().toLowerCase();
             
-            if (existing.rows.length > 0) {
-                // Update existing
-                await db.pool.query(`
-                    UPDATE registrants 
-                    SET email = COALESCE(NULLIF($1, ''), email),
-                        updated_at = NOW()
-                    WHERE address = $2
-                `, [email, wallet]);
-                updated++;
-            } else {
-                // Insert new
-                await db.pool.query(`
-                    INSERT INTO registrants (address, email, source, registered_at)
-                    VALUES ($1, $2, 'wallettwo_sync', NOW())
-                `, [wallet, email]);
-                synced++;
+            // Validate format (0x + 40 hex chars)
+            if (!wallet.match(/^0x[a-f0-9]{40}$/)) {
+                console.log(`⚠️ Skipping ${member.email || 'unknown'}: invalid wallet format "${wallet}"`);
+                skipped++;
+                continue;
+            }
+            
+            const email = member.email || '';
+            const displayName = member.displayName || `${member.givenName || ''} ${member.familyName || ''}`.trim();
+            
+            try {
+                // Check if exists
+                const existing = await db.pool.query(
+                    'SELECT id FROM registrants WHERE address = $1',
+                    [wallet]
+                );
+                
+                if (existing.rows.length > 0) {
+                    await db.pool.query(`
+                        UPDATE registrants 
+                        SET email = COALESCE(NULLIF($1, ''), email),
+                            updated_at = NOW()
+                        WHERE address = $2
+                    `, [email, wallet]);
+                    updated++;
+                    console.log(`✏️ Updated: ${wallet.substring(0, 10)}... (${email})`);
+                } else {
+                    await db.pool.query(`
+                        INSERT INTO registrants (address, email, source, registered_at)
+                        VALUES ($1, $2, 'wallettwo_sync', NOW())
+                    `, [wallet, email]);
+                    synced++;
+                    console.log(`➕ Added: ${wallet.substring(0, 10)}... (${email})`);
+                }
+            } catch (dbError) {
+                console.error(`❌ DB error for ${wallet}:`, dbError.message);
+                skipped++;
             }
         }
         
-        console.log(`✅ Sync complete: ${synced} new, ${updated} updated`);
+        console.log(`✅ Sync complete: ${synced} new, ${updated} updated, ${skipped} skipped`);
         
         res.json({
             success: true,
             total: members.length,
             synced,
-            updated
+            updated,
+            skipped
         });
         
     } catch (error) {
         console.error('❌ Sync error:', error.message);
-        res.status(500).json({ error: 'Sync failed', details: error.message });
+        res.status(500).json({ error: 'Sync failed', message: error.message });
     }
 });
 
