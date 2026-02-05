@@ -217,7 +217,7 @@
                     <span id="progress-target" class="text-gray-500">€500,000</span>
                 </div>
                 <div class="text-center mt-3 text-xs text-gray-500">
-                    <span id="tokens-info"><span id="tokens-sold">0</span> / <span id="tokens-total">1,000,000</span> VIP tokens sold • Token Price: <span class="gold-text">€1.00</span></span>
+                    <span id="tokens-info"><span id="tokens-sold">0</span> VIP tokens sold • Token Price: <span class="gold-text">€1.00</span></span>
                 </div>
             </div>
 
@@ -866,7 +866,7 @@
             // Bottom left: EUR raised
             document.getElementById('progress-raised').textContent = '€' + eurRaised.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
             
-            // Bottom right: target
+            // Bottom right: target (from config, not hardcoded)
             document.getElementById('progress-target').textContent = '€' + targetEUR.toLocaleString();
             
             // Token info (small text)
