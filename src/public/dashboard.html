@@ -780,37 +780,35 @@
                         </div>
                         
                         <div>
-                            <label class="text-white/60 text-sm block mb-2">Token Price (EUR)</label>
-                            <input type="number" id="setting-token-price" class="input-field" value="1.00" step="0.01" min="0.01">
-                            <p class="text-white/40 text-xs mt-1">Base price in EUR</p>
+                            <label class="text-white/60 text-sm block mb-2">Sale Target (EUR)</label>
+                            <input type="number" id="setting-sale-target" class="input-field" value="500000" min="1000">
+                            <p class="text-white/40 text-xs mt-1">Total EUR to raise in this presale</p>
                         </div>
                         
                         <div>
-                            <label class="text-white/60 text-sm block mb-2">Total Tokens</label>
-                            <input type="number" id="setting-total-tokens" class="input-field" value="1000000" min="1">
+                            <label class="text-white/60 text-sm block mb-2">Token Price (EUR)</label>
+                            <input type="number" id="setting-token-price" class="input-field" value="1.00" step="0.01" min="0.01">
+                            <p class="text-white/40 text-xs mt-1">Price per VIP token</p>
                         </div>
                         
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-white/60 text-sm block mb-2">Min Purchase</label>
-                                <input type="number" id="setting-min-purchase" class="input-field" value="10" min="1">
-                            </div>
-                            <div>
-                                <label class="text-white/60 text-sm block mb-2">Max Purchase</label>
-                                <input type="number" id="setting-max-purchase" class="input-field" value="10000" min="1">
-                            </div>
+                        <div>
+                            <label class="text-white/60 text-sm block mb-2">Minimum Purchase (EUR)</label>
+                            <input type="number" id="setting-min-purchase" class="input-field" value="10" min="1">
+                            <p class="text-white/40 text-xs mt-1">Minimum amount per transaction</p>
                         </div>
                         
                         <div>
                             <label class="text-white/60 text-sm block mb-2">Presale Wallet</label>
                             <input type="text" id="setting-presale-wallet" class="input-field font-mono text-sm" placeholder="0x...">
+                            <p class="text-white/40 text-xs mt-1">Wallet to receive crypto payments</p>
                         </div>
                         
                         <div class="pt-4">
                             <button onclick="savePresaleSettings()" class="btn-gold w-full">Save Settings</button>
+                            <span id="presale-settings-status" class="ml-4 text-sm"></span>
                         </div>
                         
-                        <p class="text-white/40 text-xs mt-2">Note: Some settings require Vercel env var changes for persistence.</p>
+                        <p class="text-white/40 text-xs mt-2">Settings are saved to database and persist across deployments.</p>
                     </div>
                 </div>
                 
@@ -1925,14 +1923,13 @@
                 const configRes = await fetch('/api/presale/config');
                 const config = await configRes.json();
                 
+                document.getElementById('setting-sale-target').value = config.saleTargetEUR || 500000;
                 document.getElementById('setting-token-price').value = config.tokenPrice || 1.00;
-                document.getElementById('setting-total-tokens').value = config.totalTokens || 1000000;
                 document.getElementById('setting-min-purchase').value = config.minPurchase || 10;
-                document.getElementById('setting-max-purchase').value = config.maxPurchase || 10000;
                 document.getElementById('setting-presale-wallet').value = config.presaleWallet || '';
                 
                 const toggle = document.getElementById('presale-enabled-toggle');
-                if (config.enabled) {
+                if (config.presaleEnabled) {
                     toggle.classList.add('active');
                 } else {
                     toggle.classList.remove('active');
@@ -1960,7 +1957,7 @@
                 document.getElementById('db-status').innerHTML = '<span class="badge badge-success">Connected</span>';
                 
                 // Load presale purchase count
-                const presaleStats = await fetch('/api/presale/admin/stats').then(r => r.json()).catch(() => ({}));
+                const presaleStats = await fetch('/api/admin/presale/stats', { credentials: 'include' }).then(r => r.json()).catch(() => ({}));
                 document.getElementById('db-purchases').textContent = (presaleStats.totalPurchases || 0).toLocaleString();
                 
             } catch (error) {
@@ -1968,7 +1965,43 @@
                 document.getElementById('db-status').innerHTML = '<span class="badge badge-error">Error</span>';
             }
         }
-        
+
+        async function savePresaleSettings() {
+            const statusEl = document.getElementById('presale-settings-status');
+            statusEl.innerHTML = '<span class="text-white/60">Saving...</span>';
+            
+            const toggle = document.getElementById('presale-enabled-toggle');
+            
+            const settings = {
+                saleTargetEUR: parseFloat(document.getElementById('setting-sale-target').value) || 500000,
+                tokenPrice: parseFloat(document.getElementById('setting-token-price').value) || 1.00,
+                minPurchase: parseFloat(document.getElementById('setting-min-purchase').value) || 10,
+                presaleWallet: document.getElementById('setting-presale-wallet').value,
+                presaleEnabled: toggle.classList.contains('active')
+            };
+            
+            try {
+                const response = await fetch('/api/admin/presale/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(settings)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    statusEl.innerHTML = '<span class="text-green-400">✓ Saved!</span>';
+                    setTimeout(() => { statusEl.innerHTML = ''; }, 3000);
+                } else {
+                    statusEl.innerHTML = `<span class="text-red-400">${data.error || 'Failed to save'}</span>`;
+                }
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                statusEl.innerHTML = '<span class="text-red-400">Network error</span>';
+            }
+        }
+
         function togglePresaleEnabled() {
             const toggle = document.getElementById('presale-enabled-toggle');
             toggle.classList.toggle('active');
