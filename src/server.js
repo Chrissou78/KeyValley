@@ -2534,82 +2534,41 @@ app.get('/api/admin/presale/stats', async (req, res) => {
     }
 });
 
-async function loadPresalePurchases() {
+app.get('/api/admin/presale/purchases', async (req, res) => {
     try {
-        const response = await fetch('/api/admin/presale/purchases', { credentials: 'include' });
-        const data = await response.json();
-        console.log('📋 Presale purchases received:', data);
+        const result = await db.pool.query(`
+            SELECT 
+                id,
+                wallet_address,
+                token_amount,
+                eur_amount,
+                usd_amount,
+                platform_fee,
+                net_amount,
+                payment_method,
+                stripe_payment_intent,
+                status,
+                mint_tx_hash,
+                referrer_wallet,
+                referral_bonus_amount,
+                referral_bonus_paid,
+                error_message,
+                created_at,
+                minted_at
+            FROM presale_purchases
+            ORDER BY created_at DESC
+            LIMIT 100
+        `);
         
-        const tbody = document.getElementById('presale-table');
-        if (!tbody) return;
+        console.log(`📋 Returning ${result.rows.length} presale purchases`);
         
-        tbody.innerHTML = '';
-        
-        // Handle error response
-        if (data.error) {
-            console.error('❌ API Error:', data.error);
-            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-red-400 py-8">Error: ${data.error}</td></tr>`;
-            return;
-        }
-        
-        // Handle different response formats
-        let purchases = [];
-        if (Array.isArray(data)) {
-            purchases = data;
-        } else if (Array.isArray(data.purchases)) {
-            purchases = data.purchases;
-        } else if (data.rows && Array.isArray(data.rows)) {
-            purchases = data.rows;
-        }
-        
-        if (purchases.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-white/40 py-8">No purchases yet</td></tr>';
-            return;
-        }
-        
-        purchases.forEach(p => {
-            const walletAddress = p.wallet_address ?? '';
-            const tokenAmount = p.token_amount ?? 0;
-            const eurAmount = p.eur_amount ?? 0;
-            const netAmount = p.net_amount ?? 0;
-            const platformFee = p.platform_fee ?? 0;
-            const usdAmount = p.usd_amount ?? 0;
-            const paymentMethod = p.payment_method ?? 'card';
-            const status = p.status ?? 'unknown';
-            const referrerWallet = p.referrer_wallet ?? '';
-            const createdAt = p.created_at;
-            const mintTxHash = p.mint_tx_hash;
-            const purchaseId = p.id ?? '';
-            
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td title="${walletAddress}">${walletAddress ? walletAddress.slice(0,6) + '...' + walletAddress.slice(-4) : '-'}</td>
-                <td><strong>${parseFloat(tokenAmount).toLocaleString()} VIP</strong></td>
-                <td>€${parseFloat(netAmount).toFixed(2)}</td>
-                <td>€${parseFloat(platformFee).toFixed(2)}</td>
-                <td>€${parseFloat(eurAmount).toFixed(2)}</td>
-                <td>${paymentMethod}</td>
-                <td><span class="badge ${getStatusBadge(status)}">${status}</span></td>
-                <td>${new Date(createdAt).toLocaleDateString()}</td>
-                <td>
-                    ${mintTxHash 
-                        ? `<a href="https://polygonscan.com/tx/${mintTxHash}" target="_blank" class="text-emerald-400 hover:text-emerald-300">View TX</a>` 
-                        : status === 'paid' || status === 'pending_mint'
-                            ? `<button onclick="manualMint('${purchaseId}')" class="text-yellow-400 hover:text-yellow-300">Mint</button>`
-                            : '-'}
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
+        res.json({ purchases: result.rows });
         
     } catch (error) {
-        console.error('❌ Error loading presale purchases:', error);
-        const tbody = document.getElementById('presale-table');
-        if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-red-400 py-8">Failed to load: ${error.message}</td></tr>`;
-        }
+        console.error('❌ Presale purchases fetch error:', error);
+        res.status(500).json({ error: error.message });
     }
-}
+});
 
 // Get referral details for a specific code (admin)
 app.get('/api/admin/referrals/:code', requireAdminAuth, async (req, res) => {
