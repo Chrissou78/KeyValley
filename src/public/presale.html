@@ -217,23 +217,27 @@
                     <span id="progress-target" class="text-gray-500">€500,000</span>
                 </div>
                 <div class="text-center mt-3 text-xs text-gray-500">
-                    <span id="tokens-info"><span id="tokens-sold">0</span> VIP tokens sold • Token Price: <span class="gold-text">€1.00</span></span>
+                    <span id="tokens-info"><span id="tokens-sold">0</span> VIP tokens minted • Token Price: <span class="gold-text">€1.00</span></span>
                 </div>
             </div>
 
             <!-- Purchase Card -->
             <div class="glass-card rounded-2xl p-8">
-                <!-- Token Amount Input -->
+                <!-- EUR Amount Input -->
                 <div class="mb-8">
-                    <label class="block text-gray-300 text-sm font-medium mb-3">Token Amount</label>
+                    <label class="block text-gray-300 text-sm font-medium mb-3">Investment Amount</label>
                     <div class="relative">
-                        <input type="number" id="token-amount" min="10" max="10000" value="100" 
-                            class="input-field w-full pl-4 pr-20 py-4 rounded-xl text-lg"
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 font-semibold pointer-events-none">€</span>
+                        <input type="number" id="eur-amount" min="10" step="1" value="100" 
+                            class="input-field w-full pl-10 pr-20 py-4 rounded-xl text-lg"
                             oninput="updateTotals()"
                             style="background-color: #1a1a1a !important; color: #ffffff !important;">
-                        <span class="absolute right-12 top-1/2 -translate-y-1/2 gold-text font-semibold pointer-events-none">VIP</span>
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-semibold pointer-events-none">EUR</span>
                     </div>
-                    <p class="text-gray-500 text-sm mt-2">Min: 10 VIP | Max: 10,000 VIP</p>
+                    <div class="flex justify-between mt-2">
+                        <p class="text-gray-500 text-sm">Min: €<span id="min-purchase-display">-</span></p>
+                        <p class="gold-text text-sm font-medium">= <span id="token-amount-display">-</span> VIP tokens</p>
+                    </div>
                 </div>
 
                 <!-- Payment Method Selection -->
@@ -514,35 +518,40 @@
         async function loadPresaleConfig() {
             try {
                 const response = await fetch('/api/presale/config');
-                if (response.ok) {
-                    const data = await response.json();
-                    CONFIG.totalTokens = data.totalTokens || CONFIG.totalTokens;
-                    CONFIG.tokensSold = data.tokensSold || 0;
-                    CONFIG.tokenPriceEUR = data.tokenPrice || CONFIG.tokenPriceEUR;
-                    CONFIG.eurUsdRate = data.eurUsdRate || CONFIG.eurUsdRate;
-                    CONFIG.polPrice = data.polPrice || CONFIG.polPrice;
-                    CONFIG.presaleEnabled = data.presaleEnabled !== false;
-                    CONFIG.presaleWallet = data.presaleWallet || CONFIG.presaleWallet;
-                    CONFIG.minPurchase = data.minPurchase || CONFIG.minPurchase;
-                    CONFIG.maxPurchase = data.maxPurchase || CONFIG.maxPurchase;
-                    CONFIG.stripePublicKey = data.stripePublicKey;
-                    
-                    // EUR-based progress data
-                    CONFIG.eurRaised = data.eurRaised || 0;
-                    CONFIG.saleTargetEUR = data.saleTargetEUR || 500000;
-                    CONFIG.progressPct = data.progressPct || 0;
-                    
-                    updateProgress();
-                    initStripe();
+                const config = await response.json();
+                
+                // Update CONFIG with DB values
+                CONFIG.totalTokens = config.totalTokens || 1000000;
+                CONFIG.tokensSold = config.tokensSold || 0;
+                CONFIG.tokenPriceEUR = config.tokenPrice || 1.00;
+                CONFIG.eurUsdRate = config.eurUsdRate || 1.19;
+                CONFIG.polPrice = config.polPrice || 0.12;
+                CONFIG.presaleEnabled = config.presaleEnabled !== false;
+                CONFIG.presaleWallet = config.presaleWallet || '';
+                CONFIG.minPurchase = config.minPurchase || 10;
+                CONFIG.stripePublicKey = config.stripePublicKey || '';
+                CONFIG.eurRaised = config.eurRaised || 0;
+                CONFIG.saleTargetEUR = config.saleTargetEUR || 500000;
+                
+                // Update progress display
+                updateProgress();
+                
+                // Update totals with DB values (min purchase, rates, etc.)
+                updateTotals();
+                
+                // Initialize Stripe
+                initStripe();
+                
+                // Handle presale disabled
+                if (!CONFIG.presaleEnabled) {
+                    document.getElementById('presale-inactive-overlay')?.classList.remove('hidden');
                 }
+                
             } catch (error) {
-                console.error('Failed to load presale config:', error);
-            }
-
-            if (!CONFIG.presaleEnabled) {
-                document.getElementById('presale-inactive-overlay').classList.remove('hidden');
+                console.error('❌ Failed to load presale config:', error);
             }
         }
+
         function initStripe() {
             if (!CONFIG.stripePublicKey) {
                 console.log('⚠️ Stripe key not loaded yet');
@@ -765,34 +774,82 @@
         // CALCULATIONS - All in EUR with USD equivalent
         // ============================================
         function updateTotals() {
-            const tokenAmount = parseInt(document.getElementById('token-amount').value) || 0;
-            const baseEUR = tokenAmount * CONFIG.tokenPriceEUR;
+            const eurInput = document.getElementById('eur-amount');
+            const eurAmount = parseFloat(eurInput?.value) || 0;
             
-            // Fee based on payment method
-            const feePercent = selectedPayment === 'Card' ? CONFIG.cardFeePercent : CONFIG.cryptoFeePercent;
-            const feeEUR = baseEUR * (feePercent / 100);
-            const totalEUR = baseEUR + feeEUR;
-            const totalUSD = totalEUR * CONFIG.eurUsdRate;
-
-            // Update display - All in EUR
-            document.getElementById('totalTokensDisplay').textContent = `${tokenAmount.toLocaleString()} VIP`;
-            document.getElementById('subtotalEUR').textContent = `€${baseEUR.toFixed(2)}`;
-            document.getElementById('feePercent').textContent = feePercent.toFixed(1);
-            document.getElementById('feeAmountEUR').textContent = `€${feeEUR.toFixed(2)}`;
-            document.getElementById('totalEUR').textContent = `€${totalEUR.toFixed(2)}`;
-            document.getElementById('totalUSD').textContent = `($${totalUSD.toFixed(2)})`;
-
-            // Crypto equivalent (what they actually pay)
-            if (selectedPayment === 'POL') {
-                const polAmount = totalUSD / CONFIG.polPrice;
-                document.getElementById('cryptoEquivalent').textContent = `~${polAmount.toFixed(2)} POL`;
-            } else if (selectedPayment === 'USDC') {
-                document.getElementById('cryptoEquivalent').textContent = `~${totalUSD.toFixed(2)} USDC`;
-            } else {
-                document.getElementById('cryptoEquivalent').textContent = `€${totalEUR.toFixed(2)}`;
+            // Get config values (loaded from DB)
+            const tokenPrice = CONFIG.tokenPriceEUR || 1.00;
+            const minPurchase = CONFIG.minPurchase || 10;
+            const cardFeePercent = CONFIG.cardFeePercent || 4;
+            const cryptoFeePercent = CONFIG.cryptoFeePercent || 1.5;
+            
+            // Calculate token amount from EUR
+            const tokenAmount = Math.floor(eurAmount / tokenPrice);
+            
+            // Update token display
+            const tokenDisplay = document.getElementById('token-amount-display');
+            if (tokenDisplay) {
+                tokenDisplay.textContent = tokenAmount.toLocaleString();
             }
-
-            updateBuyButton();
+            
+            // Update min purchase display
+            const minDisplay = document.getElementById('min-purchase-display');
+            if (minDisplay) {
+                minDisplay.textContent = minPurchase.toLocaleString();
+            }
+            
+            // Validate minimum
+            if (eurAmount < minPurchase && eurAmount > 0) {
+                eurInput.classList.add('border-red-500');
+            } else {
+                eurInput.classList.remove('border-red-500');
+            }
+            
+            // Calculate fees and totals for each payment method
+            const cardFee = eurAmount * (cardFeePercent / 100);
+            const cardTotal = eurAmount + cardFee;
+            
+            const cryptoFee = eurAmount * (cryptoFeePercent / 100);
+            const cryptoTotal = eurAmount + cryptoFee;
+            
+            // EUR to USD conversion
+            const eurUsdRate = CONFIG.eurUsdRate || 1.19;
+            const usdAmount = eurAmount * eurUsdRate;
+            const cardTotalUSD = cardTotal * eurUsdRate;
+            const cryptoTotalUSD = cryptoTotal * eurUsdRate;
+            
+            // POL conversion
+            const polPrice = CONFIG.polPrice || 0.12;
+            const polAmount = cryptoTotalUSD / polPrice;
+            
+            // Update payment method displays
+            // Card
+            const cardTotalEl = document.getElementById('card-total');
+            const cardTotalUsdEl = document.getElementById('card-total-usd');
+            if (cardTotalEl) cardTotalEl.textContent = `€${cardTotal.toFixed(2)}`;
+            if (cardTotalUsdEl) cardTotalUsdEl.textContent = `≈ $${cardTotalUSD.toFixed(2)}`;
+            
+            // POL
+            const polTotalEl = document.getElementById('pol-total');
+            const polAmountEl = document.getElementById('pol-amount');
+            if (polTotalEl) polTotalEl.textContent = `€${cryptoTotal.toFixed(2)}`;
+            if (polAmountEl) polAmountEl.textContent = `≈ ${polAmount.toFixed(2)} POL`;
+            
+            // USDC
+            const usdcTotalEl = document.getElementById('usdc-total');
+            const usdcAmountEl = document.getElementById('usdc-amount');
+            if (usdcTotalEl) usdcTotalEl.textContent = `€${cryptoTotal.toFixed(2)}`;
+            if (usdcAmountEl) usdcAmountEl.textContent = `≈ ${cryptoTotalUSD.toFixed(2)} USDC`;
+            
+            // Store for purchase flow
+            window.currentPurchase = {
+                eurAmount: eurAmount,
+                tokenAmount: tokenAmount,
+                cardTotal: cardTotal,
+                cryptoTotal: cryptoTotal,
+                usdAmount: usdAmount,
+                polAmount: polAmount
+            };
         }
 
         function updateBuyButton() {
