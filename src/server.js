@@ -1663,7 +1663,26 @@ app.post('/api/mint-manual', requireAdminAuth, async (req, res) => {
 // Get presale config (public)
 app.get('/api/presale/config', async (req, res) => {
     try {
-        // Get EUR raised from completed purchases
+        // Load settings from database
+        let dbConfig = {};
+        try {
+            const configResult = await db.pool.query('SELECT * FROM presale_config WHERE id = 1');
+            if (configResult.rows.length > 0) {
+                dbConfig = configResult.rows[0];
+            }
+        } catch (dbErr) {
+            console.log('⚠️ Could not load presale_config from DB:', dbErr.message);
+        }
+        
+        // Update in-memory config from DB
+        PRESALE_CONFIG.saleTargetEUR = parseFloat(dbConfig.sale_target_eur) || PRESALE_CONFIG.saleTargetEUR || 500000;
+        PRESALE_CONFIG.tokenPrice = parseFloat(dbConfig.token_price) || PRESALE_CONFIG.tokenPrice || 1.00;
+        PRESALE_CONFIG.minPurchase = parseFloat(dbConfig.min_purchase) || PRESALE_CONFIG.minPurchase || 10;
+        PRESALE_CONFIG.presaleWallet = dbConfig.presale_wallet || PRESALE_CONFIG.presaleWallet;
+        PRESALE_CONFIG.presaleEnabled = dbConfig.presale_enabled !== false;
+        PRESALE_CONFIG.totalTokens = parseFloat(dbConfig.total_tokens) || PRESALE_CONFIG.totalTokens || 1000000;
+        
+        // Get EUR raised and tokens sold from completed purchases
         let eurRaised = 0;
         let tokensSold = 0;
         try {
@@ -1703,17 +1722,17 @@ app.get('/api/presale/config', async (req, res) => {
         }
 
         const saleTargetEUR = PRESALE_CONFIG.saleTargetEUR || 500000;
-        const progressPct = ((eurRaised / saleTargetEUR) * 100).toFixed(2);
+        const progressPct = ((eurRaised / saleTargetEUR) * 100);
 
-        console.log(`📊 Config: €${eurRaised} / €${saleTargetEUR} (${progressPct}%)`);
+        console.log(`📊 Config: €${eurRaised} / €${saleTargetEUR} (${progressPct.toFixed(2)}%)`);
 
         res.json({
-            // Main progress (EUR-based)
+            // EUR-based progress
             eurRaised: eurRaised,
             saleTargetEUR: saleTargetEUR,
-            progressPct: parseFloat(progressPct),
+            progressPct: parseFloat(progressPct.toFixed(2)),
             
-            // Token info (secondary)
+            // Token info
             tokensSold: tokensSold,
             totalTokens: PRESALE_CONFIG.totalTokens || 1000000,
             tokenPrice: PRESALE_CONFIG.tokenPrice || 1.00,
@@ -1726,7 +1745,6 @@ app.get('/api/presale/config', async (req, res) => {
             presaleEnabled: PRESALE_CONFIG.presaleEnabled !== false,
             presaleWallet: PRESALE_CONFIG.presaleWallet,
             minPurchase: PRESALE_CONFIG.minPurchase || 10,
-            maxPurchase: PRESALE_CONFIG.maxPurchase || 10000,
             stripePublicKey: process.env.STRIPE_PUBLIC_KEY
         });
     } catch (error) {
