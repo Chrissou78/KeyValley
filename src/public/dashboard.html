@@ -1722,24 +1722,31 @@
         // ==========================================
         async function loadPresaleStats() {
             try {
-                const response = await fetch('/api/admin/presale/stats', {
-                    credentials: 'include'
-                });
+                const response = await fetch('/api/admin/presale/stats', { credentials: 'include' });
                 const data = await response.json();
+                console.log('📊 Presale stats received:', data);
                 
-                console.log('📊 Presale stats received:', data); // Debug log
-                
+                // Main stats
                 document.getElementById('presale-total').textContent = (data.totalPurchases || 0).toLocaleString();
-                document.getElementById('presale-tokens').textContent = (data.tokensSold || 0).toLocaleString();
-                document.getElementById('presale-usd').textContent = '€' + (data.totalEUR || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('presale-tokens').textContent = (data.tokensSold || 0).toLocaleString() + ' VIP';
                 document.getElementById('presale-buyers').textContent = (data.uniqueBuyers || 0).toLocaleString();
                 document.getElementById('presale-pending').textContent = (data.pendingMint || 0).toLocaleString();
                 
-                const totalTokens = data.totalTokens || 1000000;
-                const soldPct = ((data.tokensSold || 0) / totalTokens * 100).toFixed(2);
-                document.getElementById('presale-progress-pct').textContent = soldPct + '%';
-                document.getElementById('presale-progress-bar').style.width = soldPct + '%';
-                document.getElementById('presale-progress-total').textContent = totalTokens.toLocaleString() + ' VIP';
+                // EUR Raised (net amount - what was actually invested)
+                const eurRaised = data.eurRaised || 0;
+                const eurGross = data.eurGross || 0;
+                const totalFees = data.totalFees || 0;
+                const targetEUR = data.saleTargetEUR || 500000;
+                const progressPct = data.progressPct || 0;
+                
+                // Display net EUR raised
+                document.getElementById('presale-usd').textContent = '€' + eurRaised.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                
+                // Progress bar (EUR-based)
+                document.getElementById('presale-progress-pct').textContent = '€' + eurRaised.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('presale-progress-bar').style.width = Math.min(progressPct, 100) + '%';
+                document.getElementById('presale-progress-total').textContent = '€' + targetEUR.toLocaleString() + ' target';
+                
             } catch (error) {
                 console.error('Error loading presale stats:', error);
             }
@@ -1747,15 +1754,73 @@
         
         async function loadPresalePurchases() {
             try {
-                const response = await fetch('/api/presale/admin/purchases');
+                const response = await fetch('/api/admin/presale/purchases', { credentials: 'include' });
                 const data = await response.json();
-                presaleData = data.purchases || data || [];
-                renderPresalePurchases(presaleData);
+                console.log('📋 Presale purchases received:', data);
+                
+                const tbody = document.getElementById('presale-table');
+                if (!tbody) return;
+                
+                tbody.innerHTML = '';
+                
+                const purchases = data.purchases || data;
+                
+                if (!purchases || purchases.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-white/40 py-8">No purchases yet</td></tr>';
+                    return;
+                }
+                
+                purchases.forEach(p => {
+                    // Handle both camelCase and snake_case field names
+                    const email = p.email ?? p.user_email ?? '-';
+                    const walletAddress = p.walletAddress ?? p.wallet_address ?? '';
+                    const tokenAmount = p.tokenAmount ?? p.token_amount ?? 0;
+                    const eurAmount = p.eurAmount ?? p.eur_amount ?? 0;
+                    const usdAmount = p.usdAmount ?? p.usd_amount ?? 0;
+                    const paymentMethod = p.paymentMethod ?? p.payment_method ?? 'card';
+                    const status = p.status ?? 'unknown';
+                    const referrerWallet = p.referrerWallet ?? p.referrer_wallet ?? '';
+                    const createdAt = p.createdAt ?? p.created_at;
+                    const mintTxHash = p.mintTxHash ?? p.mint_tx_hash;
+                    const purchaseId = p.id ?? p.purchaseId ?? '';
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${email}</td>
+                        <td title="${walletAddress}">${walletAddress ? walletAddress.slice(0,6) + '...' + walletAddress.slice(-4) : '-'}</td>
+                        <td><strong>${parseFloat(tokenAmount).toLocaleString()} VIP</strong></td>
+                        <td>€${parseFloat(eurAmount).toFixed(2)} <span class="text-white/40">($${parseFloat(usdAmount).toFixed(2)})</span></td>
+                        <td>${paymentMethod}</td>
+                        <td><span class="badge ${getStatusBadge(status)}">${status}</span></td>
+                        <td title="${referrerWallet}">${referrerWallet ? referrerWallet.slice(0,6) + '...' + referrerWallet.slice(-4) : '-'}</td>
+                        <td>${new Date(createdAt).toLocaleDateString()}</td>
+                        <td>
+                            ${mintTxHash 
+                                ? `<a href="https://polygonscan.com/tx/${mintTxHash}" target="_blank" class="text-emerald-400 hover:text-emerald-300">View TX</a>` 
+                                : status === 'paid' || status === 'pending_mint'
+                                    ? `<button onclick="manualMint('${purchaseId}')" class="text-yellow-400 hover:text-yellow-300">Mint</button>`
+                                    : '-'}
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
             } catch (error) {
-                console.error('Error loading presale purchases:', error);
+                console.error('❌ Error loading presale purchases:', error);
             }
         }
-        
+
+        function getStatusBadge(status) {
+            switch(status) {
+                case 'completed': return 'bg-emerald-500/20 text-emerald-400';
+                case 'minted': return 'bg-emerald-500/20 text-emerald-400';
+                case 'paid': return 'bg-blue-500/20 text-blue-400';
+                case 'pending_mint': return 'bg-yellow-500/20 text-yellow-400';
+                case 'pending': return 'bg-gray-500/20 text-gray-400';
+                case 'failed': return 'bg-red-500/20 text-red-400';
+                default: return 'bg-gray-500/20 text-gray-400';
+            }
+        }       
         function renderPresalePurchases(purchases) {
             const tbody = document.getElementById('presale-table');
             

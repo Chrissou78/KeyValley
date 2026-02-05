@@ -29,12 +29,13 @@ try {
 // Presale Configuration
 // ===========================================
 const PRESALE_CONFIG = {
-    enabled: process.env.PRESALE_ENABLED !== 'false',
-    tokenPrice: parseFloat(process.env.PRESALE_TOKEN_PRICE) || 1.00, // EUR
-    totalTokens: parseInt(process.env.PRESALE_TOTAL_TOKENS) || 1000000,
-    minPurchase: parseInt(process.env.PRESALE_MIN_PURCHASE) || 10,
-    maxPurchase: parseInt(process.env.PRESALE_MAX_PURCHASE) || 10000,
-    presaleWallet: process.env.PRESALE_WALLET || '',
+    presaleEnabled: true,
+    saleTargetEUR: 500000,        // Target: €500,000 to raise
+    totalTokens: 1000000,          // 1M VIP tokens available
+    tokenPrice: 1.00,              // €1 per VIP token
+    minPurchase: 10,               // Min €10
+    maxPurchase: 10000,            // Max €10,000
+    presaleWallet: process.env.PRESALE_WALLET || '0x...',
     tokenAddress: '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F',
     tokenDecimals: 18
 };
@@ -201,7 +202,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                 // Use default
             }
             
-            const usdAmount = baseAmount * eurUsdRate;
+            const usdAmount = totalAmount * eurUsdRate;
             console.log('\n💱 CONVERSION:');
             console.log('   EUR/USD Rate:', eurUsdRate.toFixed(4));
             console.log('   USD Equivalent: $' + usdAmount.toFixed(2));
@@ -228,22 +229,31 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                 purchaseId = existing.rows[0].id;
                 await db.pool.query(`
                     UPDATE presale_purchases 
-                    SET status = 'paid', actual_stripe_fee = $1, updated_at = NOW()
-                    WHERE id = $2
-                `, [actualStripeFee, purchaseId]);
+                    SET status = 'paid', 
+                        eur_amount = $2,
+                        usd_amount = $3,
+                        platform_fee = $4,
+                        net_amount = $5,
+                        actual_stripe_fee = $6, 
+                        updated_at = NOW()
+                    WHERE id = $1
+                `, [purchaseId, totalAmount, usdAmount, feeAmount, baseAmount, actualStripeFee]);
             } else {
                 const purchaseResult = await db.pool.query(`
                     INSERT INTO presale_purchases 
                     (wallet_address, token_amount, eur_amount, usd_amount, payment_method, 
-                     stripe_payment_intent, payment_amount, platform_fee, actual_stripe_fee, status, created_at)
-                    VALUES ($1, $2, $3, $4, 'stripe', $5, $6, $7, $8, 'paid', NOW())
+                    stripe_payment_intent, payment_amount, platform_fee, net_amount, actual_stripe_fee, status, created_at)
+                    VALUES ($1, $2, $3, $4, 'stripe', $5, $6, $7, $8, $9, 'paid', NOW())
                     RETURNING id
-                `, [normalizedAddress, tokenAmount, baseAmount, usdAmount, paymentId, totalAmount, feeAmount, actualStripeFee]);
+                `, [normalizedAddress, tokenAmount, totalAmount, usdAmount, paymentId, totalAmount, feeAmount, baseAmount, actualStripeFee]);
                 purchaseId = purchaseResult.rows[0].id;
             }
             
             console.log('\n📝 PURCHASE RECORDED:');
             console.log('   Purchase ID:', purchaseId);
+            console.log('   EUR Amount: €' + totalAmount.toFixed(2));
+            console.log('   Platform Fee: €' + feeAmount.toFixed(2));
+            console.log('   Net Amount: €' + baseAmount.toFixed(2));
             
             // Mint tokens
             console.log('\n🎯 MINTING TOKENS:');
@@ -380,7 +390,10 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                 console.log('   ❌ MINTING FAILED:', mintResult?.error);
                 await db.pool.query(`
                     UPDATE presale_purchases 
-                    SET status = 'pending_mint', error_message = $1
+                    SET status = 'pending_mint', 
+                        error_message = $1,
+                        platform_fee = 0,
+                        net_amount = 0
                     WHERE id = $2
                 `, [mintResult?.error || 'Unknown error', purchaseId]);
             }
@@ -1650,60 +1663,66 @@ app.post('/api/mint-manual', requireAdminAuth, async (req, res) => {
 // Get presale config (public)
 app.get('/api/presale/config', async (req, res) => {
     try {
-        // Get tokens sold from presale_config table (updated by webhook)
+        // Get EUR raised from completed purchases
+        let eurRaised = 0;
         let tokensSold = 0;
         try {
-            const configResult = await db.pool.query(
-                'SELECT tokens_sold FROM presale_config WHERE id = 1'
-            );
-            if (configResult.rows.length > 0) {
-                tokensSold = parseFloat(configResult.rows[0].tokens_sold) || 0;
+            const result = await db.pool.query(`
+                SELECT 
+                    COALESCE(SUM(net_amount), 0) as eur_raised,
+                    COALESCE(SUM(token_amount), 0) as tokens_sold
+                FROM presale_purchases 
+                WHERE status IN ('completed', 'minted')
+            `);
+            if (result.rows.length > 0) {
+                eurRaised = parseFloat(result.rows[0].eur_raised) || 0;
+                tokensSold = parseFloat(result.rows[0].tokens_sold) || 0;
             }
-        } catch (e) {
-            // Fallback: calculate from purchases
-            console.log('⚠️ presale_config not found, calculating from purchases...');
-            try {
-                const soldResult = await db.pool.query(
-                    "SELECT COALESCE(SUM(token_amount), 0) as sold FROM presale_purchases WHERE status IN ('paid', 'minted', 'completed')"
-                );
-                tokensSold = parseFloat(soldResult.rows[0].sold) || 0;
-            } catch (e2) {
-                console.log('Could not fetch tokens sold:', e2.message);
-            }
+        } catch (dbErr) {
+            console.error('❌ Failed to get sales from DB:', dbErr.message);
         }
-
+        
         // Fetch live EUR/USD rate
         let eurUsdRate = 1.19;
         try {
             const rateRes = await fetch('https://api.exchangerate-api.com/v4/latest/EUR');
-            if (rateRes.ok) {
-                const rateData = await rateRes.json();
-                eurUsdRate = rateData.rates?.USD || 1.19;
-            }
+            const rateData = await rateRes.json();
+            eurUsdRate = rateData.rates?.USD || 1.19;
         } catch (e) {
             console.log('⚠️ Using fallback EUR/USD rate:', eurUsdRate);
         }
-
-        // Fetch POL price in USD
+        
+        // Fetch POL price
         let polPrice = 0.12;
         try {
             const polRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=polygon-ecosystem-token&vs_currencies=usd');
-            if (polRes.ok) {
-                const polData = await polRes.json();
-                polPrice = polData['polygon-ecosystem-token']?.usd || 0.12;
-            }
+            const polData = await polRes.json();
+            polPrice = polData['polygon-ecosystem-token']?.usd || 0.12;
         } catch (e) {
             console.log('⚠️ Using fallback POL price:', polPrice);
         }
 
-        console.log(`📊 Config: tokensSold=${tokensSold}, EUR/USD=${eurUsdRate}, POL=$${polPrice}`);
+        const saleTargetEUR = PRESALE_CONFIG.saleTargetEUR || 500000;
+        const progressPct = ((eurRaised / saleTargetEUR) * 100).toFixed(2);
+
+        console.log(`📊 Config: €${eurRaised} / €${saleTargetEUR} (${progressPct}%)`);
 
         res.json({
-            totalTokens: PRESALE_CONFIG.totalTokens || 1000000,
+            // Main progress (EUR-based)
+            eurRaised: eurRaised,
+            saleTargetEUR: saleTargetEUR,
+            progressPct: parseFloat(progressPct),
+            
+            // Token info (secondary)
             tokensSold: tokensSold,
+            totalTokens: PRESALE_CONFIG.totalTokens || 1000000,
             tokenPrice: PRESALE_CONFIG.tokenPrice || 1.00,
+            
+            // Rates
             eurUsdRate: eurUsdRate,
             polPrice: polPrice,
+            
+            // Config
             presaleEnabled: PRESALE_CONFIG.presaleEnabled !== false,
             presaleWallet: PRESALE_CONFIG.presaleWallet,
             minPurchase: PRESALE_CONFIG.minPurchase || 10,
@@ -1712,7 +1731,7 @@ app.get('/api/presale/config', async (req, res) => {
         });
     } catch (error) {
         console.error('❌ Config error:', error);
-        res.status(500).json({ error: 'Failed to load config' });
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -2472,33 +2491,125 @@ app.get('/api/admin/presale/stats', async (req, res) => {
     try {
         const stats = await db.pool.query(`
             SELECT 
-                COUNT(*) as total_purchases,
-                COALESCE(SUM(token_amount), 0) as tokens_sold,
-                COALESCE(SUM(eur_amount), 0) as total_eur,
-                COUNT(DISTINCT wallet_address) as unique_buyers,
+                COUNT(*) FILTER (WHERE status IN ('completed', 'minted', 'paid', 'pending_mint')) as total_purchases,
+                COALESCE(SUM(token_amount) FILTER (WHERE status IN ('completed', 'minted')), 0) as tokens_sold,
+                COALESCE(SUM(net_amount) FILTER (WHERE status IN ('completed', 'minted')), 0) as eur_raised,
+                COALESCE(SUM(eur_amount) FILTER (WHERE status IN ('completed', 'minted')), 0) as eur_gross,
+                COALESCE(SUM(platform_fee) FILTER (WHERE status IN ('completed', 'minted')), 0) as total_fees,
+                COUNT(DISTINCT wallet_address) FILTER (WHERE status IN ('completed', 'minted', 'paid', 'pending_mint')) as unique_buyers,
                 COUNT(*) FILTER (WHERE status = 'pending_mint') as pending_mint,
                 COUNT(*) FILTER (WHERE status = 'paid') as paid,
-                COUNT(*) FILTER (WHERE status = 'completed') as minted
+                COUNT(*) FILTER (WHERE status IN ('completed', 'minted')) as minted
             FROM presale_purchases
         `);
         
         const row = stats.rows[0];
         
+        const eurRaised = parseFloat(row.eur_raised) || 0;
+        const eurGross = parseFloat(row.eur_gross) || 0;
+        const totalFees = parseFloat(row.total_fees) || 0;
+        const saleTargetEUR = PRESALE_CONFIG.saleTargetEUR || 500000;
+        const progressPct = ((eurRaised / saleTargetEUR) * 100).toFixed(2);
+        
+        console.log(`📊 Presale: €${eurRaised} net / €${eurGross} gross (fees: €${totalFees}) - ${progressPct}%`);
+        
         res.json({
-            totalPurchases: parseInt(row.total_purchases) || 0,
+            eurRaised: eurRaised,
+            eurGross: eurGross,
+            totalFees: totalFees,
+            saleTargetEUR: saleTargetEUR,
+            progressPct: parseFloat(progressPct),
             tokensSold: parseFloat(row.tokens_sold) || 0,
-            totalEUR: parseFloat(row.total_eur) || 0,
+            totalTokens: PRESALE_CONFIG.totalTokens || 1000000,
+            tokenPriceEUR: PRESALE_CONFIG.tokenPrice || 1.00,
+            totalPurchases: parseInt(row.total_purchases) || 0,
             uniqueBuyers: parseInt(row.unique_buyers) || 0,
             pendingMint: parseInt(row.pending_mint) || 0,
             paid: parseInt(row.paid) || 0,
-            minted: parseInt(row.minted) || 0,
-            totalTokens: PRESALE_CONFIG.totalTokens || 1000000
+            minted: parseInt(row.minted) || 0
         });
     } catch (error) {
         console.error('❌ Stats error:', error);
         res.status(500).json({ error: error.message });
     }
 });
+
+async function loadPresalePurchases() {
+    try {
+        const response = await fetch('/api/admin/presale/purchases', { credentials: 'include' });
+        const data = await response.json();
+        console.log('📋 Presale purchases received:', data);
+        
+        const tbody = document.getElementById('presale-table');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+        
+        // Handle error response
+        if (data.error) {
+            console.error('❌ API Error:', data.error);
+            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-red-400 py-8">Error: ${data.error}</td></tr>`;
+            return;
+        }
+        
+        // Handle different response formats
+        let purchases = [];
+        if (Array.isArray(data)) {
+            purchases = data;
+        } else if (Array.isArray(data.purchases)) {
+            purchases = data.purchases;
+        } else if (data.rows && Array.isArray(data.rows)) {
+            purchases = data.rows;
+        }
+        
+        if (purchases.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-white/40 py-8">No purchases yet</td></tr>';
+            return;
+        }
+        
+        purchases.forEach(p => {
+            const walletAddress = p.wallet_address ?? '';
+            const tokenAmount = p.token_amount ?? 0;
+            const eurAmount = p.eur_amount ?? 0;
+            const netAmount = p.net_amount ?? 0;
+            const platformFee = p.platform_fee ?? 0;
+            const usdAmount = p.usd_amount ?? 0;
+            const paymentMethod = p.payment_method ?? 'card';
+            const status = p.status ?? 'unknown';
+            const referrerWallet = p.referrer_wallet ?? '';
+            const createdAt = p.created_at;
+            const mintTxHash = p.mint_tx_hash;
+            const purchaseId = p.id ?? '';
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td title="${walletAddress}">${walletAddress ? walletAddress.slice(0,6) + '...' + walletAddress.slice(-4) : '-'}</td>
+                <td><strong>${parseFloat(tokenAmount).toLocaleString()} VIP</strong></td>
+                <td>€${parseFloat(netAmount).toFixed(2)}</td>
+                <td>€${parseFloat(platformFee).toFixed(2)}</td>
+                <td>€${parseFloat(eurAmount).toFixed(2)}</td>
+                <td>${paymentMethod}</td>
+                <td><span class="badge ${getStatusBadge(status)}">${status}</span></td>
+                <td>${new Date(createdAt).toLocaleDateString()}</td>
+                <td>
+                    ${mintTxHash 
+                        ? `<a href="https://polygonscan.com/tx/${mintTxHash}" target="_blank" class="text-emerald-400 hover:text-emerald-300">View TX</a>` 
+                        : status === 'paid' || status === 'pending_mint'
+                            ? `<button onclick="manualMint('${purchaseId}')" class="text-yellow-400 hover:text-yellow-300">Mint</button>`
+                            : '-'}
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+    } catch (error) {
+        console.error('❌ Error loading presale purchases:', error);
+        const tbody = document.getElementById('presale-table');
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-red-400 py-8">Failed to load: ${error.message}</td></tr>`;
+        }
+    }
+}
 
 // Get referral details for a specific code (admin)
 app.get('/api/admin/referrals/:code', requireAdminAuth, async (req, res) => {
@@ -3426,12 +3537,19 @@ app.post('/api/presale/verify-payment', async (req, res) => {
     const normalizedAddress = ethers.getAddress(walletAddress).toLowerCase();
     const networkConfig = getNetworkConfig();
     
-    // Calculate 1% platform fee
-    const platformFeePercent = 0.01;
-    const platformFeeUSD = (parseFloat(totalUSD) || 0) * platformFeePercent;
-    const platformFeeEUR = (parseFloat(totalEUR) || 0) * platformFeePercent;
+    // ==================== CALCULATE AMOUNTS ====================
+    // totalEUR from frontend is already base + fee (e.g., €10.15)
+    // We need to reverse-calculate to get base and fee
+    const cryptoFeePercent = 0.015; // 1.5%
+    const eurAmountTotal = parseFloat(totalEUR) || 0;     // €10.15 (total charged)
+    const netAmountEUR = eurAmountTotal / (1 + cryptoFeePercent); // €10.00 (base)
+    const platformFeeEUR = eurAmountTotal - netAmountEUR; // €0.15 (fee)
+    const usdAmountTotal = parseFloat(totalUSD) || 0;
     
-    console.log(`💰 Platform fee (1%): $${platformFeeUSD.toFixed(2)} / €${platformFeeEUR.toFixed(2)}`);
+    console.log(`💰 Crypto payment breakdown:`);
+    console.log(`   Total charged: €${eurAmountTotal.toFixed(2)}`);
+    console.log(`   Platform fee (1.5%): €${platformFeeEUR.toFixed(2)}`);
+    console.log(`   Net invested: €${netAmountEUR.toFixed(2)}`);
     
     try {
         // ==================== CHECK DUPLICATE TRANSACTION ====================
@@ -3483,14 +3601,14 @@ app.post('/api/presale/verify-payment', async (req, res) => {
         console.log('   Verified amount:', txVerified.amount);
         console.log('   Block:', txVerified.blockNumber);
         
-        // ==================== TRANSFER 1% FEE TO MINTER WALLET ====================
+        // ==================== TRANSFER 1.5% FEE TO MINTER WALLET ====================
         let feeTxHash = null;
         const minterWallet = process.env.MINTER_ADDRESS || '0xdD4104A780142EfB9566659f26d3317714a81510';
         const presaleWalletPrivateKey = process.env.PRESALE_WALLET_PRIVATE_KEY;
         
         if (presaleWalletPrivateKey && txVerified.amount > 0) {
             try {
-                console.log(`💳 Transferring 1% fee to minter wallet ${minterWallet}...`);
+                console.log(`💳 Transferring 1.5% fee to minter wallet ${minterWallet}...`);
                 
                 const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
                 const presaleWalletSigner = new ethers.Wallet(presaleWalletPrivateKey, provider);
@@ -3501,8 +3619,9 @@ app.post('/api/presale/verify-payment', async (req, res) => {
                     const usdcAbi = ['function transfer(address to, uint256 amount) returns (bool)'];
                     const usdcContract = new ethers.Contract(usdcAddress, usdcAbi, presaleWalletSigner);
                     
-                    // USDC has 6 decimals
-                    const feeAmountUSDC = Math.floor(txVerified.amount * platformFeePercent * 1e6);
+                    // Calculate fee in USDC (1.5% of total USD)
+                    const feeAmountUSD = usdAmountTotal * cryptoFeePercent;
+                    const feeAmountUSDC = Math.floor(feeAmountUSD * 1e6); // USDC has 6 decimals
                     console.log(`   USDC fee: ${feeAmountUSDC / 1e6} USDC`);
                     
                     if (feeAmountUSDC > 0) {
@@ -3514,7 +3633,7 @@ app.post('/api/presale/verify-payment', async (req, res) => {
                     
                 } else if (paymentMethod === 'POL' || paymentMethod === 'pol' || paymentMethod === 'matic') {
                     // Transfer POL fee
-                    const feeAmountPOL = txVerified.amount * platformFeePercent;
+                    const feeAmountPOL = txVerified.amount * cryptoFeePercent;
                     const feeAmountWei = ethers.parseEther(feeAmountPOL.toFixed(18));
                     console.log(`   POL fee: ${feeAmountPOL} POL`);
                     
@@ -3562,23 +3681,27 @@ app.post('/api/presale/verify-payment', async (req, res) => {
         const purchaseResult = await db.pool.query(`
             INSERT INTO presale_purchases 
             (wallet_address, token_amount, eur_amount, usd_amount, payment_method, payment_tx_hash, 
-             referrer_wallet, referral_bonus_amount, referral_bonus_paid, platform_fee, fee_tx_hash, status, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 0, false, $8, $9, 'paid', NOW())
+             referrer_wallet, referral_bonus_amount, referral_bonus_paid, platform_fee, net_amount, fee_tx_hash, status, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 0, false, $8, $9, $10, 'paid', NOW())
             RETURNING id
         `, [
             normalizedAddress, 
             tokenAmount, 
-            totalEUR || 0, 
-            totalUSD || 0, 
+            eurAmountTotal,    // Total charged (€10.15)
+            usdAmountTotal,    // Total in USD
             paymentMethod, 
             txHash,
             referrerWallet,
-            platformFeeUSD,
+            platformFeeEUR,    // Fee (€0.15)
+            netAmountEUR,      // Net invested (€10.00)
             feeTxHash
         ]);
         
         const purchaseId = purchaseResult.rows[0].id;
         console.log('✅ Purchase recorded - ID:', purchaseId);
+        console.log('   EUR Amount (total): €' + eurAmountTotal.toFixed(2));
+        console.log('   Platform Fee: €' + platformFeeEUR.toFixed(2));
+        console.log('   Net Amount: €' + netAmountEUR.toFixed(2));
         
         // ==================== MINT TOKENS TO BUYER ====================
         console.log(`🎯 Minting ${tokenAmount} VIP tokens to ${normalizedAddress}...`);
@@ -3629,7 +3752,7 @@ app.post('/api/presale/verify-payment', async (req, res) => {
                     
                     if (settingsResult.rows.length > 0 && settingsResult.rows[0].enabled) {
                         const settings = settingsResult.rows[0];
-                        const purchaseUSD = parseFloat(totalUSD) || 0;
+                        const purchaseUSD = usdAmountTotal;
                         const minPurchase = parseFloat(settings.min_purchase_for_bonus) || 0;
                         
                         console.log('🎁 Processing presale referral bonus...');
@@ -3704,7 +3827,9 @@ app.post('/api/presale/verify-payment', async (req, res) => {
                 tokenAmount: parseFloat(tokenAmount),
                 mintTxHash,
                 paymentTxHash: txHash,
-                platformFee: platformFeeUSD,
+                eurAmount: eurAmountTotal,
+                platformFee: platformFeeEUR,
+                netAmount: netAmountEUR,
                 feeTxHash,
                 explorer_url: `${networkConfig.explorer}/tx/${mintTxHash}`,
                 payment_explorer_url: `${networkConfig.explorer}/tx/${txHash}`,
@@ -3721,12 +3846,15 @@ app.post('/api/presale/verify-payment', async (req, res) => {
             console.log('⚠️ Minting failed - marking for manual retry');
             console.log('   Error:', mintResult?.error || 'Unknown minting error');
             
+            // Set platform_fee and net_amount to 0 for failed mints
             await db.pool.query(`
                 UPDATE presale_purchases 
                 SET status = 'pending_mint', 
-                    metadata = jsonb_set(COALESCE(metadata, '{}'), '{mint_error}', $1)
+                    platform_fee = 0,
+                    net_amount = 0,
+                    error_message = $1
                 WHERE id = $2
-            `, [JSON.stringify(mintResult?.error || 'Minting failed'), purchaseId]);
+            `, [mintResult?.error || 'Minting failed', purchaseId]);
             
             return res.status(500).json({
                 success: false,
