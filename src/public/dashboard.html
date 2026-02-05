@@ -1722,12 +1722,16 @@
         // ==========================================
         async function loadPresaleStats() {
             try {
-                const response = await fetch('/api/presale/admin/stats');
+                const response = await fetch('/api/admin/presale/stats', {
+                    credentials: 'include'
+                });
                 const data = await response.json();
+                
+                console.log('📊 Presale stats received:', data); // Debug log
                 
                 document.getElementById('presale-total').textContent = (data.totalPurchases || 0).toLocaleString();
                 document.getElementById('presale-tokens').textContent = (data.tokensSold || 0).toLocaleString();
-                document.getElementById('presale-usd').textContent = '€' + (data.totalUsd || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('presale-usd').textContent = '€' + (data.totalEUR || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 document.getElementById('presale-buyers').textContent = (data.uniqueBuyers || 0).toLocaleString();
                 document.getElementById('presale-pending').textContent = (data.pendingMint || 0).toLocaleString();
                 
