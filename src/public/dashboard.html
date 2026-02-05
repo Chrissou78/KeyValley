@@ -462,17 +462,17 @@
             </div>
             
             <!-- Presale Progress -->
-            <div class="glass-card rounded-xl p-6 mb-8">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-white/60">Sale Progress</span>
-                    <span class="gold-text font-semibold" id="presale-progress-pct">0%</span>
+            <div class="glass-card rounded-xl p-6">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-semibold">Sale Progress</h3>
+                    <span id="presale-progress-pct" class="text-emerald-400 font-bold">0%</span>
                 </div>
-                <div class="w-full h-3 bg-white/10 rounded-full overflow-hidden">
-                    <div id="presale-progress-bar" class="h-full gold-gradient transition-all duration-500" style="width: 0%"></div>
+                <div class="w-full bg-white/10 rounded-full h-3 mb-3">
+                    <div id="presale-progress-bar" class="bg-emerald-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
                 </div>
-                <div class="flex justify-between mt-2 text-sm text-white/40">
-                    <span>0</span>
-                    <span id="presale-progress-total">1,000,000 VIP</span>
+                <div class="flex justify-between text-sm">
+                    <span id="presale-progress-raised" class="text-white font-semibold">€0.00</span>
+                    <span id="presale-progress-total" class="text-white/60">€500,000</span>
                 </div>
             </div>
             
@@ -1732,20 +1732,26 @@
                 document.getElementById('presale-buyers').textContent = (data.uniqueBuyers || 0).toLocaleString();
                 document.getElementById('presale-pending').textContent = (data.pendingMint || 0).toLocaleString();
                 
-                // EUR Raised (net amount - what was actually invested)
+                // EUR Raised (net amount)
                 const eurRaised = data.eurRaised || 0;
-                const eurGross = data.eurGross || 0;
-                const totalFees = data.totalFees || 0;
                 const targetEUR = data.saleTargetEUR || 500000;
                 const progressPct = data.progressPct || 0;
                 
-                // Display net EUR raised
+                // Display EUR raised in the main stat card
                 document.getElementById('presale-usd').textContent = '€' + eurRaised.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 
-                // Progress bar (EUR-based)
-                document.getElementById('presale-progress-pct').textContent = '€' + eurRaised.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                // Progress bar section:
+                // Top right: percentage
+                document.getElementById('presale-progress-pct').textContent = progressPct + '%';
+                
+                // Bar width
                 document.getElementById('presale-progress-bar').style.width = Math.min(progressPct, 100) + '%';
-                document.getElementById('presale-progress-total').textContent = '€' + targetEUR.toLocaleString() + ' target';
+                
+                // Bottom left: amount raised
+                document.getElementById('presale-progress-raised').textContent = '€' + eurRaised.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                
+                // Bottom right: target
+                document.getElementById('presale-progress-total').textContent = '€' + targetEUR.toLocaleString();
                 
             } catch (error) {
                 console.error('Error loading presale stats:', error);
