@@ -274,12 +274,17 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                 console.log('   TX Hash:', txHash);
                 console.log('   Explorer: https://polygonscan.com/tx/' + txHash);
                 
-                // Update presale stats
-                await db.pool.query(`
-                    UPDATE presale_config 
-                    SET tokens_sold = COALESCE(tokens_sold, 0) + $1, updated_at = NOW() 
-                    WHERE id = 1
-                `, [parseFloat(tokenAmount)]);
+                // ==================== UPDATE PRESALE CONFIG TOKENS SOLD ====================
+                try {
+                    await db.pool.query(`
+                        UPDATE presale_config 
+                        SET tokens_sold = COALESCE(tokens_sold, 0) + $1, updated_at = NOW() 
+                        WHERE id = 1
+                    `, [parseFloat(tokenAmount)]);
+                    console.log(`\n📊 PRESALE CONFIG UPDATED: +${tokenAmount} tokens sold`);
+                } catch (configError) {
+                    console.error('   ⚠️ Failed to update presale_config:', configError.message);
+                }
                 
                 // Process referral bonus
                 console.log('\n🎁 REFERRAL CHECK:');
@@ -1645,15 +1650,26 @@ app.post('/api/mint-manual', requireAdminAuth, async (req, res) => {
 // Get presale config (public)
 app.get('/api/presale/config', async (req, res) => {
     try {
-        // Get tokens sold from DB
+        // Get tokens sold from presale_config table (updated by webhook)
         let tokensSold = 0;
         try {
-            const soldResult = await db.pool.query(
-                "SELECT COALESCE(SUM(token_amount), 0) as sold FROM presale_purchases WHERE status IN ('paid', 'minted', 'completed')"
+            const configResult = await db.pool.query(
+                'SELECT tokens_sold FROM presale_config WHERE id = 1'
             );
-            tokensSold = parseInt(soldResult.rows[0].sold) || 0;
+            if (configResult.rows.length > 0) {
+                tokensSold = parseFloat(configResult.rows[0].tokens_sold) || 0;
+            }
         } catch (e) {
-            console.log('Could not fetch tokens sold:', e.message);
+            // Fallback: calculate from purchases
+            console.log('⚠️ presale_config not found, calculating from purchases...');
+            try {
+                const soldResult = await db.pool.query(
+                    "SELECT COALESCE(SUM(token_amount), 0) as sold FROM presale_purchases WHERE status IN ('paid', 'minted', 'completed')"
+                );
+                tokensSold = parseFloat(soldResult.rows[0].sold) || 0;
+            } catch (e2) {
+                console.log('Could not fetch tokens sold:', e2.message);
+            }
         }
 
         // Fetch live EUR/USD rate
@@ -1665,36 +1681,37 @@ app.get('/api/presale/config', async (req, res) => {
                 eurUsdRate = rateData.rates?.USD || 1.19;
             }
         } catch (e) {
-            console.log('Using default EUR/USD rate');
+            console.log('⚠️ Using fallback EUR/USD rate:', eurUsdRate);
         }
 
-        // Fetch POL price in USD (correct CoinGecko endpoint)
-        let polPrice = 0.12; // Default to current ~$0.12
+        // Fetch POL price in USD
+        let polPrice = 0.12;
         try {
             const polRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=polygon-ecosystem-token&vs_currencies=usd');
             if (polRes.ok) {
                 const polData = await polRes.json();
                 polPrice = polData['polygon-ecosystem-token']?.usd || 0.12;
-                console.log('POL price fetched:', polPrice);
             }
         } catch (e) {
-            console.log('Using default POL price:', polPrice);
+            console.log('⚠️ Using fallback POL price:', polPrice);
         }
 
-         res.json({
+        console.log(`📊 Config: tokensSold=${tokensSold}, EUR/USD=${eurUsdRate}, POL=$${polPrice}`);
+
+        res.json({
             totalTokens: PRESALE_CONFIG.totalTokens || 1000000,
-            tokensSold: PRESALE_CONFIG.tokensSold || 0,
+            tokensSold: tokensSold,
             tokenPrice: PRESALE_CONFIG.tokenPrice || 1.00,
-            eurUsdRate: PRESALE_CONFIG.eurUsdRate || 1.19,
-            polPrice: PRESALE_CONFIG.polPrice || 0.12,
+            eurUsdRate: eurUsdRate,
+            polPrice: polPrice,
             presaleEnabled: PRESALE_CONFIG.presaleEnabled !== false,
             presaleWallet: PRESALE_CONFIG.presaleWallet,
             minPurchase: PRESALE_CONFIG.minPurchase || 10,
             maxPurchase: PRESALE_CONFIG.maxPurchase || 10000,
-            stripePublicKey: process.env.STRIPE_PUBLIC_KEY  // ADD THIS LINE
+            stripePublicKey: process.env.STRIPE_PUBLIC_KEY
         });
     } catch (error) {
-        console.error('Config error:', error);
+        console.error('❌ Config error:', error);
         res.status(500).json({ error: 'Failed to load config' });
     }
 });
@@ -2002,6 +2019,18 @@ app.post('/api/presale/admin/manual-mint', async (req, res) => {
             WHERE id = $2
         `, [mintResult.txHash, purchaseId]);
         console.log(`✅ Purchase updated`);
+        
+        // ==================== UPDATE PRESALE CONFIG TOKENS SOLD ====================
+        try {
+            await db.pool.query(`
+                UPDATE presale_config 
+                SET tokens_sold = COALESCE(tokens_sold, 0) + $1, updated_at = NOW() 
+                WHERE id = 1
+            `, [parseFloat(calculatedTokens)]);
+            console.log(`📊 PRESALE CONFIG UPDATED: +${calculatedTokens} tokens sold`);
+        } catch (configError) {
+            console.error('⚠️ Failed to update presale_config:', configError.message);
+        }
         
         // ==================== REFERRAL BONUS ====================
         let referralBonusTx = null;
@@ -2436,6 +2465,38 @@ app.post('/api/admin/referrals/toggle/:code', requireAdminAuth, async (req, res)
     } catch (error) {
         console.error('[Admin Referral] Toggle error:', error);
         res.status(500).json({ success: false, error: 'Failed to toggle code' });
+    }
+});
+
+app.get('/api/admin/presale/stats', async (req, res) => {
+    try {
+        const stats = await db.pool.query(`
+            SELECT 
+                COUNT(*) as total_purchases,
+                COALESCE(SUM(token_amount), 0) as tokens_sold,
+                COALESCE(SUM(eur_amount), 0) as total_eur,
+                COUNT(DISTINCT wallet_address) as unique_buyers,
+                COUNT(*) FILTER (WHERE status = 'pending_mint') as pending_mint,
+                COUNT(*) FILTER (WHERE status = 'paid') as paid,
+                COUNT(*) FILTER (WHERE status = 'completed') as minted
+            FROM presale_purchases
+        `);
+        
+        const row = stats.rows[0];
+        
+        res.json({
+            totalPurchases: parseInt(row.total_purchases) || 0,
+            tokensSold: parseFloat(row.tokens_sold) || 0,
+            totalEUR: parseFloat(row.total_eur) || 0,
+            uniqueBuyers: parseInt(row.unique_buyers) || 0,
+            pendingMint: parseInt(row.pending_mint) || 0,
+            paid: parseInt(row.paid) || 0,
+            minted: parseInt(row.minted) || 0,
+            totalTokens: PRESALE_CONFIG.totalTokens || 1000000
+        });
+    } catch (error) {
+        console.error('❌ Stats error:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -2920,10 +2981,6 @@ app.post('/api/referral/generate', async (req, res) => {
     }
 });
 
-// ============================================================
-// WALLETTWO MEMBERS API PROXY
-// ============================================================
-
 // GET /api/members - Proxy to WalletTwo members API
 app.get('/api/members', async (req, res) => {
     try {
@@ -3081,7 +3138,7 @@ app.get('/api/admin/claim/settings', requireAdminAuth, async (req, res) => {
         );
         
         const mintAmount = result.rows.length > 0 
-            ? parseInt(result.rows[0].value)  // <-- Change from setting_value to value
+            ? parseInt(result.rows[0].value)
             : parseInt(process.env.MINT_AMOUNT) || 2;
         
         res.json({ mintAmount });
@@ -3549,6 +3606,18 @@ app.post('/api/presale/verify-payment', async (req, res) => {
                 WHERE id = $2
             `, [mintTxHash, purchaseId]);
             
+            // ==================== UPDATE PRESALE CONFIG TOKENS SOLD ====================
+            try {
+                await db.pool.query(`
+                    UPDATE presale_config 
+                    SET tokens_sold = COALESCE(tokens_sold, 0) + $1, updated_at = NOW() 
+                    WHERE id = 1
+                `, [parseFloat(tokenAmount)]);
+                console.log(`📊 PRESALE CONFIG UPDATED: +${tokenAmount} tokens sold`);
+            } catch (configError) {
+                console.error('⚠️ Failed to update presale_config:', configError.message);
+            }
+            
             // ==================== PROCESS REFERRAL BONUS ====================
             let referralBonus = null;
             
@@ -3623,19 +3692,6 @@ app.post('/api/presale/verify-payment', async (req, res) => {
                 } catch (refError) {
                     console.error('⚠️ Referral bonus processing error:', refError.message);
                 }
-            }
-            
-            // ==================== UPDATE PRESALE STATS ====================
-            try {
-                await db.pool.query(`
-                    UPDATE presale_config 
-                    SET tokens_sold = tokens_sold + $1, 
-                        updated_at = NOW()
-                    WHERE id = 1
-                `, [parseFloat(tokenAmount)]);
-                console.log('📊 Presale stats updated');
-            } catch (statsError) {
-                console.error('⚠️ Failed to update presale stats:', statsError.message);
             }
             
             // ==================== SUCCESS RESPONSE ====================
@@ -3985,6 +4041,18 @@ app.post('/api/presale/admin/fulfill', requireAdminAuth, async (req, res) => {
                 SET status = 'completed', mint_tx_hash = $1, minted_at = NOW()
                 WHERE id = $2
             `, [mintResult.txHash, purchase_id]);
+            
+            // Update presale config tokens sold
+            try {
+                await db.pool.query(`
+                    UPDATE presale_config 
+                    SET tokens_sold = COALESCE(tokens_sold, 0) + $1, updated_at = NOW() 
+                    WHERE id = 1
+                `, [parseFloat(purchase.token_amount)]);
+                console.log(`📊 PRESALE CONFIG UPDATED: +${purchase.token_amount} tokens sold`);
+            } catch (configError) {
+                console.error('⚠️ Failed to update presale_config:', configError.message);
+            }
             
             res.json({
                 success: true,
