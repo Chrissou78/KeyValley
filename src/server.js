@@ -3179,133 +3179,75 @@ app.post('/api/admin/referral/create-code', requireAdminAuth, async (req, res) =
 // ===========================================
 // Members API (WalletTwo Proxy)
 // ===========================================
-app.get('/api/members', async (req, res) => {
-    try {
-        const apiKey = process.env.WALLETTWO_API_KEY;
-        const companyId = process.env.WALLETTWO_COMPANY_ID;
-        
-        if (!apiKey || !companyId) {
-            return res.status(500).json({ error: 'WalletTwo API not configured' });
-        }
-        
-        const response = await fetch(`https://api.wallettwo.com/company/api/company/${companyId}/members`, {
-            method: 'GET',
-            headers: {
-                'x-api-key': apiKey,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            return res.status(response.status).json({ error: 'Failed to fetch members' });
-        }
-        
-        const members = await response.json();
-        res.json(members);
-        
-    } catch (error) {
-        console.error('❌ Members API error:', error.message);
-        res.status(500).json({ error: 'Failed to fetch members' });
-    }
-});
-
-app.post('/api/members/sync', requireAdminAuth, async (req, res) => {
-    try {
-        const apiKey = process.env.WALLETTWO_API_KEY;
-        const companyId = process.env.WALLETTWO_COMPANY_ID;
-        
-        if (!apiKey || !companyId) {
-            return res.status(500).json({ error: 'WalletTwo API not configured' });
-        }
-        
-        const response = await fetch(
-            `https://api.wallettwo.com/company/api/company/${companyId}/members`,
-            { headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' } }
-        );
-        
-        if (!response.ok) {
-            return res.status(response.status).json({ error: 'Failed to fetch members' });
-        }
-        
-        const data = await response.json();
-        const members = data.members || [];
-        
-        let synced = 0, updated = 0, skipped = 0;
-        
-        for (const member of members) {
-            let wallet = member.wallet || '';
-            if (!wallet || typeof wallet !== 'string') { skipped++; continue; }
-            
-            wallet = wallet.trim().toLowerCase();
-            if (!wallet.match(/^0x[a-f0-9]{40}$/)) { skipped++; continue; }
-            
-            const email = member.email || '';
-            
-            try {
-                const existing = await db.pool.query(
-                    'SELECT id FROM registrants WHERE address = $1',
-                    [wallet]
-                );
-                
-                if (existing.rows.length > 0) {
-                    await db.pool.query(`
-                        UPDATE registrants 
-                        SET email = COALESCE(NULLIF($1, ''), email), updated_at = NOW()
-                        WHERE address = $2
-                    `, [email, wallet]);
-                    updated++;
-                } else {
-                    await db.pool.query(`
-                        INSERT INTO registrants (address, email, source, registered_at)
-                        VALUES ($1, $2, 'wallettwo_sync', NOW())
-                    `, [wallet, email]);
-                    synced++;
-                }
-            } catch (dbError) {
-                skipped++;
-            }
-        }
-        
-        res.json({ success: true, total: members.length, synced, updated, skipped });
-        
-    } catch (error) {
-        console.error('❌ Sync error:', error.message);
-        res.status(500).json({ error: 'Sync failed' });
-    }
-});
-
 app.get('/api/members/sync', requireAdminAuth, async (req, res) => {
   try {
     if (!process.env.WALLETTWO_API_KEY || !process.env.WALLETTWO_COMPANY_ID) {
       return res.status(503).json({ error: 'WalletTwo not configured' });
     }
 
-    const response = await fetch(
-      `https://api.wallettwo.com/company/${process.env.WALLETTWO_COMPANY_ID}/members`,
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.WALLETTWO_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+    const baseUrl = `https://api.wallettwo.com/company/admin/company/${process.env.WALLETTWO_COMPANY_ID}/members`;
+    const headers = {
+      'Authorization': `Bearer ${process.env.WALLETTWO_API_KEY}`,
+      'Content-Type': 'application/json'
+    };
 
-    if (!response.ok) {
-      throw new Error(`WalletTwo API error: ${response.status}`);
+    let allMembers = [];
+    let currentPage = 1;
+    let totalPages = 1;
+
+    // Fetch first page to get totalPages
+    console.log(`Fetching WalletTwo members page ${currentPage}...`);
+    const firstResponse = await fetch(`${baseUrl}?page=${currentPage}`, { headers });
+    
+    if (!firstResponse.ok) {
+      throw new Error(`WalletTwo API error: ${firstResponse.status}`);
     }
 
-    const members = await response.json();
+    const firstData = await firstResponse.json();
+    totalPages = firstData.totalPages || firstData.total_pages || 1;
+    const firstPageMembers = firstData.members || firstData.data || firstData.users || [];
+    allMembers = allMembers.concat(firstPageMembers);
+    
+    console.log(`Total pages: ${totalPages}, First page members: ${firstPageMembers.length}`);
+
+    // Fetch remaining pages
+    for (currentPage = 2; currentPage <= totalPages; currentPage++) {
+      console.log(`Fetching WalletTwo members page ${currentPage}/${totalPages}...`);
+      
+      const response = await fetch(`${baseUrl}?page=${currentPage}`, { headers });
+      
+      if (!response.ok) {
+        console.error(`Failed to fetch page ${currentPage}: ${response.status}`);
+        continue;
+      }
+
+      const data = await response.json();
+      const pageMembers = data.members || data.data || data.users || [];
+      allMembers = allMembers.concat(pageMembers);
+      
+      console.log(`Page ${currentPage}: ${pageMembers.length} members`);
+      
+      // Small delay to avoid rate limiting
+      await new Promise(r => setTimeout(r, 100));
+    }
+
+    console.log(`Total members fetched: ${allMembers.length}`);
+
     let synced = 0, updated = 0, errors = 0;
 
-    for (const member of members) {
-      if (!member.wallet_address) continue;
+    for (const member of allMembers) {
+      const walletAddress = member.wallet_address || member.walletAddress || member.wallet;
+      if (!walletAddress) continue;
 
       try {
-        const normalizedWallet = member.wallet_address.toLowerCase();
+        const normalizedWallet = walletAddress.toLowerCase();
         const existing = await db.pool.query(
           'SELECT id FROM registrants WHERE wallet_address = $1',
           [normalizedWallet]
         );
+
+        const email = member.email || null;
+        const name = member.name || member.fullName || member.full_name || null;
 
         if (existing.rows.length > 0) {
           await db.pool.query(
@@ -3315,26 +3257,27 @@ app.get('/api/members/sync', requireAdminAuth, async (req, res) => {
                  source = $3, 
                  updated_at = NOW() 
              WHERE wallet_address = $4`,
-            [member.email, member.name, 'wallettwo_sync', normalizedWallet]
+            [email, name, 'wallettwo_sync', normalizedWallet]
           );
           updated++;
         } else {
           await db.pool.query(
             `INSERT INTO registrants (wallet_address, email, name, source, created_at) 
              VALUES ($1, $2, $3, $4, NOW())`,
-            [normalizedWallet, member.email, member.name, 'wallettwo_sync']
+            [normalizedWallet, email, name, 'wallettwo_sync']
           );
           synced++;
         }
       } catch (e) {
-        console.error('Sync error for member:', member.wallet_address, e.message);
+        console.error('Sync error for member:', walletAddress, e.message);
         errors++;
       }
     }
 
     res.json({
       success: true,
-      total: members.length,
+      totalPages,
+      totalFetched: allMembers.length,
       synced,
       updated,
       errors
@@ -3342,7 +3285,7 @@ app.get('/api/members/sync', requireAdminAuth, async (req, res) => {
 
   } catch (error) {
     console.error('Members sync error:', error);
-    res.status(500).json({ error: 'Failed to sync members' });
+    res.status(500).json({ error: 'Failed to sync members: ' + error.message });
   }
 });
 
