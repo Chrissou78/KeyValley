@@ -35,6 +35,7 @@ Copy<!DOCTYPE html>
         .glass-card { background: rgba(18, 18, 18, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(212, 175, 55, 0.1); }
         .glass-nav { background-color: rgba(18, 18, 18, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(212, 175, 55, 0.1); }
         .gold-text { color: #D4AF37; }
+        .progress-bar { background: linear-gradient(90deg, #D4AF37 0%, #E5C76B 100%); transition: width 0.5s ease; }
         .gold-gradient { background: linear-gradient(135deg, #D4AF37 0%, #F4E5B0 50%, #D4AF37 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .btn-primary { background: linear-gradient(135deg, #D4AF37 0%, #B8960C 100%); color: #0a0a0a; font-weight: 600; transition: all 0.3s ease; }
         .btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #E5C76B 0%, #D4AF37 100%); transform: translateY(-2px); box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3); }
@@ -95,7 +96,23 @@ Copy<!DOCTYPE html>
                 <h1 class="font-serif text-4xl md:text-5xl font-bold gold-gradient mb-4">Promotion Packages</h1>
                 <p class="text-gray-400 text-lg max-w-2xl mx-auto">Premium packages with 50% discount on VIP tokens and exclusive benefits.</p>
             </div>
-
+            <!-- Progress Bar -->
+            <div class="glass-card rounded-2xl p-6 mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-gray-400">Presale Progress</span>
+                    <span id="progress-pct" class="gold-text font-semibold">0%</span>
+                </div>
+                <div class="w-full bg-surface-light rounded-full h-3 overflow-hidden">
+                    <div id="progress-bar" class="progress-bar h-full rounded-full" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between mt-4 text-sm">
+                    <span id="progress-raised" class="text-white font-semibold">€0.00</span>
+                    <span id="progress-target" class="text-gray-500">€500,000</span>
+                </div>
+                <div class="text-center mt-3 text-xs text-gray-500">
+                    <span id="tokens-sold">0</span> VIP tokens minted - Token Price: <span class="gold-text">€1.00</span>
+                </div>
+            </div>
             <!-- Package Selection -->
             <div class="grid md:grid-cols-2 gap-6 mb-8">
                 <!-- Holiday Pack -->
@@ -384,10 +401,29 @@ Copy<!DOCTYPE html>
                 polPrice: config.polPrice || 0.12,
                 presaleEnabled: config.presaleEnabled !== false,
                 presaleWallet: config.presaleWallet || '',
-                stripePublicKey: config.stripePublicKey || ''
+                stripePublicKey: config.stripePublicKey || '',
+                eurRaised: config.eurRaised || 0,
+                saleTargetEUR: config.saleTargetEUR || 500000,
+                tokensSold: config.tokensSold || 0
             });
+            updateProgress();
             initStripe();
         } catch (e) { console.error('Config error:', e); }
+    }
+
+    function updateProgress() {
+        const pct = CONFIG.saleTargetEUR > 0 ? (CONFIG.eurRaised / CONFIG.saleTargetEUR) * 100 : 0;
+        const progressBar = document.getElementById('progress-bar');
+        const progressPct = document.getElementById('progress-pct');
+        const progressRaised = document.getElementById('progress-raised');
+        const progressTarget = document.getElementById('progress-target');
+        const tokensSoldEl = document.getElementById('tokens-sold');
+        
+        if (progressBar) progressBar.style.width = Math.min(pct, 100) + '%';
+        if (progressPct) progressPct.textContent = pct.toFixed(2) + '%';
+        if (progressRaised) progressRaised.textContent = '€' + CONFIG.eurRaised.toLocaleString(undefined, {minimumFractionDigits: 2});
+        if (progressTarget) progressTarget.textContent = '€' + CONFIG.saleTargetEUR.toLocaleString();
+        if (tokensSoldEl) tokensSoldEl.textContent = CONFIG.tokensSold.toLocaleString();
     }
 
     function selectPackage(pkg) {
