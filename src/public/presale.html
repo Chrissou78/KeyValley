@@ -748,21 +748,66 @@
     // WALLET CONNECTION
     // ============================================
     function checkWalletConnection() {
-        let profile = sessionStorage.getItem('keavalley_profile') || localStorage.getItem('keavalley_profile');
-        
         console.log('🔍 Checking wallet connection...');
+        
+        // Check URL params first (from WalletTwo redirect)
+        const params = new URLSearchParams(window.location.search);
+        const walletFromUrl = params.get('wlt') || params.get('wallet') || params.get('address');
+        
+        if (walletFromUrl) {
+            console.log('✅ Found wallet in URL:', walletFromUrl);
+            currentWallet = walletFromUrl.toLowerCase();
+            
+            sessionData = {
+                wallet: currentWallet,
+                userId: params.get('usr') || params.get('user'),
+                code: params.get('code'),
+                timestamp: Date.now()
+            };
+            
+            // Save for future page loads
+            localStorage.setItem('keavalley_profile', JSON.stringify(sessionData));
+            sessionStorage.setItem('keavalley_profile', JSON.stringify(sessionData));
+            
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            showWalletConnected();
+            loadBalances();
+            checkReferralCode();
+            return;
+        }
+        
+        // Check storage
+        let profile = sessionStorage.getItem('keavalley_profile') || localStorage.getItem('keavalley_profile');
         
         if (profile) {
             try {
                 sessionData = JSON.parse(profile);
-                const wallet = sessionData.wallet || sessionData.walletAddress || sessionData.address || sessionData.wallet_address;
+                console.log('📦 Session data found:', sessionData);
+                
+                const wallet = sessionData.wallet 
+                    || sessionData.walletAddress 
+                    || sessionData.address 
+                    || sessionData.wallet_address
+                    || sessionData.wlt;
                 
                 if (wallet) {
+                    // Check session age (24 hours)
+                    const age = Date.now() - (sessionData.timestamp || 0);
+                    if (age > 24 * 60 * 60 * 1000) {
+                        console.log('⚠️ Session expired');
+                        localStorage.removeItem('keavalley_profile');
+                        sessionStorage.removeItem('keavalley_profile');
+                        updateBuyButton();
+                        return;
+                    }
+                    
                     currentWallet = wallet.toLowerCase();
                     showWalletConnected();
                     loadBalances();
                     checkReferralCode();
-                    console.log('✅ Wallet connected:', currentWallet);
+                    console.log('✅ Wallet connected from storage:', currentWallet);
                     return;
                 }
             } catch (e) {
@@ -774,6 +819,37 @@
         updateBuyButton();
     }
 
+    // Listen for WalletTwo messages
+    window.addEventListener('message', (event) => {
+        if (!event.origin.includes('wallettwo.com')) return;
+        
+        const data = event.data;
+        console.log('📨 WalletTwo message:', data);
+        
+        if (data && (data.type === 'wallet_login' || data.event === 'wallet_login')) {
+            const wallet = data.wallet || data.wlt || data.address;
+            
+            if (wallet) {
+                currentWallet = wallet.toLowerCase();
+                
+                sessionData = {
+                    wallet: currentWallet,
+                    userId: data.user || data.usr,
+                    email: data.email,
+                    name: data.name,
+                    timestamp: Date.now()
+                };
+                
+                localStorage.setItem('keavalley_profile', JSON.stringify(sessionData));
+                sessionStorage.setItem('keavalley_profile', JSON.stringify(sessionData));
+                
+                showWalletConnected();
+                loadBalances();
+                checkReferralCode();
+            }
+        }
+    });
+
     function connectWallet() {
         document.getElementById('connect-overlay').classList.remove('hidden');
     }
@@ -783,7 +859,7 @@
     }
 
     function redirectToWalletTwo() {
-        const redirectUri = encodeURIComponent(window.location.href);
+        const redirectUri = encodeURIComponent(window.location.origin + '/presale');
         window.location.href = `${CONFIG.walletTwoOrigin}/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=VIP_PRESALE&redirect_uri=${redirectUri}`;
     }
 
