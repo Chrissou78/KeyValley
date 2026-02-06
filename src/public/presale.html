@@ -864,12 +864,18 @@
     }
 
     function showWalletConnected() {
+        console.log('showWalletConnected called, currentWallet:', currentWallet);
+        
         document.getElementById('connect-wallet-btn').classList.add('hidden');
         document.getElementById('wallet-connected').classList.remove('hidden');
         document.getElementById('wallet-address').textContent = 
             currentWallet.slice(0, 6) + '...' + currentWallet.slice(-4);
         document.getElementById('balance-section').classList.remove('hidden');
-        updateBuyButton();
+        
+        // Force update buy button after a small delay to ensure state is set
+        setTimeout(() => {
+            updateBuyButton();
+        }, 100);
     }
 
     function disconnectWallet() {
@@ -1056,10 +1062,17 @@
         const btn = document.getElementById('buy-button');
         if (!btn) return;
         
+        console.log('updateBuyButton called:', {
+            currentWallet,
+            presaleEnabled: CONFIG.presaleEnabled,
+            selectedPayment
+        });
+        
         const eurAmount = parseFloat(document.getElementById('eur-amount')?.value) || 0;
         const purchase = window.currentPurchase || {};
 
         if (!currentWallet) {
+            console.log('❌ No wallet - showing connect button');
             btn.textContent = 'Connect Wallet to Purchase';
             btn.disabled = true;
             return;
