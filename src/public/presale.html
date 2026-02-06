@@ -761,16 +761,22 @@
             sessionData = {
                 wallet: currentWallet,
                 userId: params.get('usr') || params.get('user'),
-                code: params.get('code'),
                 timestamp: Date.now()
             };
             
-            // Save for future page loads
             localStorage.setItem('keavalley_profile', JSON.stringify(sessionData));
             sessionStorage.setItem('keavalley_profile', JSON.stringify(sessionData));
             
-            // Clean URL
-            window.history.replaceState({}, document.title, window.location.pathname);
+            // Clean URL but keep other params
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.delete('wlt');
+            newUrl.searchParams.delete('wallet');
+            newUrl.searchParams.delete('address');
+            newUrl.searchParams.delete('usr');
+            newUrl.searchParams.delete('user');
+            newUrl.searchParams.delete('code');
+            newUrl.searchParams.delete('signature');
+            window.history.replaceState({}, document.title, newUrl.pathname + newUrl.search);
             
             showWalletConnected();
             loadBalances();
@@ -793,21 +799,23 @@
                     || sessionData.wlt;
                 
                 if (wallet) {
-                    // Check session age (24 hours)
                     const age = Date.now() - (sessionData.timestamp || 0);
                     if (age > 24 * 60 * 60 * 1000) {
                         console.log('⚠️ Session expired');
                         localStorage.removeItem('keavalley_profile');
                         sessionStorage.removeItem('keavalley_profile');
+                        currentWallet = null;
                         updateBuyButton();
                         return;
                     }
                     
+                    // ✅ SET currentWallet BEFORE calling showWalletConnected
                     currentWallet = wallet.toLowerCase();
+                    console.log('✅ currentWallet set to:', currentWallet);
+                    
                     showWalletConnected();
                     loadBalances();
                     checkReferralCode();
-                    console.log('✅ Wallet connected from storage:', currentWallet);
                     return;
                 }
             } catch (e) {
@@ -815,7 +823,8 @@
             }
         }
         
-        console.log('❌ No wallet found in storage');
+        console.log('❌ No wallet found');
+        currentWallet = null;
         updateBuyButton();
     }
 
