@@ -35,6 +35,8 @@
         .glass-card { background: rgba(18, 18, 18, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(212, 175, 55, 0.1); }
         .glass-nav { background-color: rgba(18, 18, 18, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(212, 175, 55, 0.1); }
         .gold-text { color: #D4AF37; }
+        .tooltip-content { visibility: hidden; opacity: 0; transition: all 0.2s ease; }
+        .tooltip:hover .tooltip-content { visibility: visible; opacity: 1; }
         .gold-gradient { background: linear-gradient(135deg, #D4AF37 0%, #F4E5B0 50%, #D4AF37 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .btn-primary { background: linear-gradient(135deg, #D4AF37 0%, #B8960C 100%); color: #0a0a0a; font-weight: 600; transition: all 0.3s ease; }
         .btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #E5C76B 0%, #D4AF37 100%); transform: translateY(-2px); box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3); }
@@ -114,7 +116,16 @@
                 <div class="mb-8">
                     <div class="flex justify-between items-center mb-3">
                         <label class="block text-gray-300 text-sm font-medium">Investment Amount</label>
-                        <div id="bonus-badge" class="hidden"></div>
+                        <div class="flex items-center space-x-2">
+                            <div id="bonus-badge" class="hidden"></div>
+                            <div id="bonus-info-tooltip" class="tooltip relative hidden">
+                                <span class="material-symbols-outlined text-primary cursor-help text-lg">info</span>
+                                <div class="tooltip-content absolute z-50 bg-surface border border-primary/30 rounded-xl p-4 w-64 right-0 top-6">
+                                    <h4 class="text-white font-semibold text-sm mb-2">Volume Bonuses</h4>
+                                    <div id="bonus-tooltip-list" class="text-xs text-gray-300 space-y-1"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 font-semibold pointer-events-none">€</span>
@@ -368,10 +379,18 @@
 
     function displayBonusTiers() {
         if (CONFIG.bonusTiers?.length > 0) {
+            // Show the green info box
             safeClass('bonus-tiers-info', 'remove', 'hidden');
             const html = CONFIG.bonusTiers.sort((a, b) => a.min_eur - b.min_eur)
                 .map(t => '<div>€' + parseFloat(t.min_eur).toLocaleString() + '+ → <span class="text-green-400">+' + t.bonus_percent + '%</span></div>').join('');
             safeHtml('bonus-tiers-list', html);
+            
+            // Also populate the tooltip
+            safeClass('bonus-info-tooltip', 'remove', 'hidden');
+            safeHtml('bonus-tooltip-list', html);
+        } else {
+            safeClass('bonus-tiers-info', 'add', 'hidden');
+            safeClass('bonus-info-tooltip', 'add', 'hidden');
         }
     }
 
