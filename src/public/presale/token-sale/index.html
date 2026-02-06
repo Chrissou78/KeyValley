@@ -137,11 +137,6 @@
                         <p class="gold-text text-sm font-medium">= <span id="token-amount-display">100</span> VIP</p>
                     </div>
                 </div>
-
-                <div id="bonus-tiers-info" class="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl hidden">
-                    <h4 class="text-green-400 font-semibold text-sm mb-2">Volume Bonuses</h4>
-                    <div id="bonus-tiers-list" class="text-sm text-white/70 space-y-1"></div>
-                </div>
             </div>
 
             <!-- Payment Section -->
@@ -379,17 +374,11 @@
 
     function displayBonusTiers() {
         if (CONFIG.bonusTiers?.length > 0) {
-            // Show the green info box
-            safeClass('bonus-tiers-info', 'remove', 'hidden');
+            safeClass('bonus-info-tooltip', 'remove', 'hidden');
             const html = CONFIG.bonusTiers.sort((a, b) => a.min_eur - b.min_eur)
                 .map(t => '<div>€' + parseFloat(t.min_eur).toLocaleString() + '+ → <span class="text-green-400">+' + t.bonus_percent + '%</span></div>').join('');
-            safeHtml('bonus-tiers-list', html);
-            
-            // Also populate the tooltip
-            safeClass('bonus-info-tooltip', 'remove', 'hidden');
             safeHtml('bonus-tooltip-list', html);
         } else {
-            safeClass('bonus-tiers-info', 'add', 'hidden');
             safeClass('bonus-info-tooltip', 'add', 'hidden');
         }
     }
