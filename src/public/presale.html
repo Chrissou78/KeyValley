@@ -34,94 +34,26 @@
         }
     </script>
     <style>
-        body {
-            background-color: #0a0a0a;
-            color: #ffffff;
-            font-family: 'Montserrat', sans-serif;
-        }
-        .glass-card {
-            background: rgba(18, 18, 18, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(212, 175, 55, 0.1);
-        }
-        .glass-nav {
-            background-color: rgba(18, 18, 18, 0.85);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-        }
+        body { background-color: #0a0a0a; color: #ffffff; font-family: 'Montserrat', sans-serif; }
+        .glass-card { background: rgba(18, 18, 18, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(212, 175, 55, 0.1); }
+        .glass-nav { background-color: rgba(18, 18, 18, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(212, 175, 55, 0.1); }
         .gold-text { color: #D4AF37; }
-        .gold-gradient {
-            background: linear-gradient(135deg, #D4AF37 0%, #F4E5B0 50%, #D4AF37 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #D4AF37 0%, #B8960C 100%);
-            color: #0a0a0a;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        .btn-primary:hover:not(:disabled) {
-            background: linear-gradient(135deg, #E5C76B 0%, #D4AF37 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3);
-        }
+        .gold-gradient { background: linear-gradient(135deg, #D4AF37 0%, #F4E5B0 50%, #D4AF37 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .btn-primary { background: linear-gradient(135deg, #D4AF37 0%, #B8960C 100%); color: #0a0a0a; font-weight: 600; transition: all 0.3s ease; }
+        .btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #E5C76B 0%, #D4AF37 100%); transform: translateY(-2px); box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-        .input-field {
-            background-color: #1a1a1a !important;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #ffffff !important;
-            transition: all 0.3s ease;
-        }
-        .input-field:focus {
-            border-color: #D4AF37;
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
-        }
-        .input-field:-webkit-autofill,
-        .input-field:-webkit-autofill:hover,
-        .input-field:-webkit-autofill:focus,
-        .input-field:-webkit-autofill:active {
-            -webkit-box-shadow: 0 0 0 30px #1a1a1a inset !important;
-            -webkit-text-fill-color: #ffffff !important;
-            caret-color: #ffffff !important;
-        }
-        .payment-option {
-            background: rgba(26, 26, 26, 0.6);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
+        .input-field { background-color: #1a1a1a !important; border: 1px solid rgba(255, 255, 255, 0.1); color: #ffffff !important; transition: all 0.3s ease; }
+        .input-field:focus { border-color: #D4AF37; outline: none; box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2); }
+        .input-field:-webkit-autofill { -webkit-box-shadow: 0 0 0 30px #1a1a1a inset !important; -webkit-text-fill-color: #ffffff !important; }
+        .payment-option { background: rgba(26, 26, 26, 0.6); border: 2px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease; cursor: pointer; }
         .payment-option:hover { border-color: rgba(212, 175, 55, 0.5); }
-        .payment-option.selected {
-            border-color: #D4AF37;
-            background: rgba(212, 175, 55, 0.1);
-        }
-        .progress-bar {
-            background: linear-gradient(90deg, #D4AF37 0%, #E5C76B 100%);
-            transition: width 0.5s ease;
-        }
-        .overlay {
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(4px);
-        }
+        .payment-option.selected { border-color: #D4AF37; background: rgba(212, 175, 55, 0.1); }
+        .progress-bar { background: linear-gradient(90deg, #D4AF37 0%, #E5C76B 100%); transition: width 0.5s ease; }
+        .overlay { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); }
         .animate-spin { animation: spin 1s linear infinite; }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .fee-badge {
-            font-size: 0.65rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: rgba(212, 175, 55, 0.2);
-            color: #D4AF37;
-        }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .fee-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(212, 175, 55, 0.2); color: #D4AF37; }
         #card-element, .StripeElement { background-color: #1a1a1a !important; }
-        .StripeElement--focus { border-color: #D4AF37; box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2); }
-        .StripeElement--invalid { border-color: #ef4444; }
-        .StripeElement--complete { border-color: #D4AF37; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -138,9 +70,7 @@
                     <a href="/profile" class="text-gray-300 hover:text-primary transition-colors">Profile</a>
                 </nav>
                 <div id="wallet-section">
-                    <button id="connect-wallet-btn" onclick="connectWallet()" class="btn-primary px-6 py-2 rounded-lg text-sm">
-                        Connect Wallet
-                    </button>
+                    <button id="connect-wallet-btn" onclick="connectWallet()" class="btn-primary px-6 py-2 rounded-lg text-sm">Connect Wallet</button>
                     <div id="wallet-connected" class="hidden flex items-center space-x-3">
                         <span id="wallet-address" class="text-gray-300 text-sm"></span>
                         <button onclick="disconnectWallet()" class="text-gray-400 hover:text-primary transition-colors">
@@ -156,9 +86,7 @@
         <div class="max-w-4xl mx-auto">
             <div class="text-center mb-12">
                 <h1 class="font-serif text-4xl md:text-5xl font-bold gold-gradient mb-4">VIP Token Presale</h1>
-                <p class="text-gray-400 text-lg max-w-2xl mx-auto">
-                    Acquire VIP tokens at the presale price and become part of the exclusive Kea Valley community.
-                </p>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto">Acquire VIP tokens at the presale price and become part of the exclusive Kea Valley community.</p>
             </div>
 
             <div class="glass-card rounded-2xl p-6 mb-8">
@@ -174,7 +102,7 @@
                     <span id="progress-target" class="text-gray-500">€500,000</span>
                 </div>
                 <div class="text-center mt-3 text-xs text-gray-500">
-                    <span id="tokens-sold">0</span> VIP tokens minted • Token Price: <span class="gold-text">€1.00</span>
+                    <span id="tokens-sold">0</span> VIP tokens minted - Token Price: <span class="gold-text">€1.00</span>
                 </div>
             </div>
 
@@ -186,9 +114,7 @@
                     </div>
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 font-semibold pointer-events-none">€</span>
-                        <input type="number" id="eur-amount" min="10" step="1" value="100" 
-                            class="input-field w-full pl-10 pr-20 py-4 rounded-xl text-lg"
-                            oninput="updateTotals()">
+                        <input type="number" id="eur-amount" min="10" step="1" value="100" class="input-field w-full pl-10 pr-20 py-4 rounded-xl text-lg" oninput="updateTotals()">
                         <span class="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-semibold pointer-events-none">EUR</span>
                     </div>
                     <div class="flex justify-between mt-2">
@@ -235,51 +161,26 @@
 
                 <div class="border-t border-white/10 pt-6 mb-8">
                     <div class="space-y-3">
-                        <div class="flex justify-between text-gray-400">
-                            <span>Tokens</span>
-                            <span id="totalTokensDisplay" class="text-white">100 VIP</span>
-                        </div>
-                        <div class="flex justify-between text-gray-400">
-                            <span>Token Price</span>
-                            <span class="text-white">€1.00 / VIP</span>
-                        </div>
-                        <div class="flex justify-between text-gray-400">
-                            <span>Subtotal</span>
-                            <span id="subtotalEUR" class="text-white">€100.00</span>
-                        </div>
-                        <div class="flex justify-between text-gray-400">
-                            <span>Payment Fee (<span id="feePercent">1.5</span>%)</span>
-                            <span id="feeAmountEUR" class="text-white">€1.50</span>
-                        </div>
+                        <div class="flex justify-between text-gray-400"><span>Tokens</span><span id="totalTokensDisplay" class="text-white">100 VIP</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Token Price</span><span class="text-white">€1.00 / VIP</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Subtotal</span><span id="subtotalEUR" class="text-white">€100.00</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Payment Fee (<span id="feePercent">1.5</span>%)</span><span id="feeAmountEUR" class="text-white">€1.50</span></div>
                         <div class="flex justify-between text-lg font-semibold border-t border-white/10 pt-3">
                             <span class="gold-text">Total</span>
-                            <span class="gold-text">
-                                <span id="totalEUR">€101.50</span>
-                                <span id="totalUSD" class="text-sm text-gray-400 ml-2">($120.79)</span>
-                            </span>
+                            <span class="gold-text"><span id="totalEUR">€101.50</span><span id="totalUSD" class="text-sm text-gray-400 ml-2">(\.79)</span></span>
                         </div>
-                        <div class="flex justify-between text-sm text-gray-500">
-                            <span>You Pay (approx)</span>
-                            <span id="cryptoEquivalent">~846.5 POL</span>
-                        </div>
+                        <div class="flex justify-between text-sm text-gray-500"><span>You Pay (approx)</span><span id="cryptoEquivalent">~846.5 POL</span></div>
                     </div>
                 </div>
 
                 <div class="mb-8 p-4 bg-surface-light rounded-xl border border-white/5">
                     <div class="flex items-start space-x-3">
                         <span class="material-symbols-outlined text-primary">account_balance</span>
-                        <div>
-                            <p class="text-gray-300 text-sm">
-                                <strong>Prefer bank transfer?</strong> Direct SEPA transfers are available. 
-                                <a href="mailto:julie.meyer@vivapartners.net?subject=VIP%20Presale%20-%20SEPA%20Transfer%20Request" class="gold-text hover:underline">Contact us</a> for bank details.
-                            </p>
-                        </div>
+                        <div><p class="text-gray-300 text-sm"><strong>Prefer bank transfer?</strong> Direct SEPA transfers are available. <a href="mailto:julie.meyer@vivapartners.net?subject=VIP%20Presale%20-%20SEPA%20Transfer%20Request" class="gold-text hover:underline">Contact us</a> for bank details.</p></div>
                     </div>
                 </div>
 
-                <button id="buy-button" onclick="executePurchase()" class="btn-primary w-full py-4 rounded-xl text-lg font-semibold" disabled>
-                    Connect Wallet to Purchase
-                </button>
+                <button id="buy-button" onclick="executePurchase()" class="btn-primary w-full py-4 rounded-xl text-lg font-semibold" disabled>Connect Wallet to Purchase</button>
 
                 <div id="referral-section" class="mt-6 hidden">
                     <div class="flex items-center space-x-2 p-3 bg-surface-light rounded-xl">
@@ -291,8 +192,7 @@
             </div>
 
             <div class="mt-8 text-center">
-                <a href="https://polygonscan.com/token/0x6860c34db140DB7B589DaDA38859a1d3736bbE3F" target="_blank" 
-                    class="inline-flex items-center space-x-2 text-gray-400 hover:text-primary transition-colors">
+                <a href="https://polygonscan.com/token/0x6860c34db140DB7B589DaDA38859a1d3736bbE3F" target="_blank" class="inline-flex items-center space-x-2 text-gray-400 hover:text-primary transition-colors">
                     <span class="material-symbols-outlined">open_in_new</span>
                     <span>View Contract on Polygonscan</span>
                 </a>
@@ -312,15 +212,12 @@
         </div>
     </footer>
 
-    <!-- Overlays -->
     <div id="connect-overlay" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center">
         <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4 text-center">
             <span class="material-symbols-outlined text-5xl gold-text mb-4">account_balance_wallet</span>
             <h3 class="text-2xl font-serif font-bold mb-4">Connect Your Wallet</h3>
             <p class="text-gray-400 mb-6">Please connect your WalletTwo wallet to participate in the presale.</p>
-            <button onclick="redirectToWalletTwo()" class="btn-primary w-full py-3 rounded-xl font-semibold mb-3">
-                Connect with WalletTwo
-            </button>
+            <button onclick="redirectToWalletTwo()" class="btn-primary w-full py-3 rounded-xl font-semibold mb-3">Connect with WalletTwo</button>
             <button onclick="hideConnectOverlay()" class="text-gray-400 hover:text-white transition-colors">Cancel</button>
         </div>
     </div>
@@ -349,18 +246,9 @@
             <p id="result-message" class="text-gray-400 mb-6"></p>
             <div id="result-details" class="text-left mb-6 hidden">
                 <div class="bg-surface-light rounded-xl p-4 space-y-3">
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">Tokens:</span>
-                        <span id="result-tokens" class="text-white font-semibold"></span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">Payment TX:</span>
-                        <a id="result-payment-tx" href="#" target="_blank" class="gold-text hover:underline truncate ml-2"></a>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">Mint TX:</span>
-                        <a id="result-mint-tx" href="#" target="_blank" class="gold-text hover:underline truncate ml-2"></a>
-                    </div>
+                    <div class="flex justify-between"><span class="text-gray-400">Tokens:</span><span id="result-tokens" class="text-white font-semibold"></span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Payment TX:</span><a id="result-payment-tx" href="#" target="_blank" class="gold-text hover:underline truncate ml-2"></a></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Mint TX:</span><a id="result-mint-tx" href="#" target="_blank" class="gold-text hover:underline truncate ml-2"></a></div>
                 </div>
             </div>
             <button onclick="hideResultOverlay()" class="btn-primary w-full py-3 rounded-xl font-semibold">Continue</button>
@@ -371,37 +259,21 @@
         <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-serif font-bold">Complete Payment</h3>
-                <button onclick="closeStripeModal()" class="text-gray-400 hover:text-white">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
+                <button onclick="closeStripeModal()" class="text-gray-400 hover:text-white"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div class="bg-surface-light rounded-xl p-4 mb-6">
                 <h4 class="text-sm text-gray-400 mb-3">Order Summary</h4>
                 <div class="space-y-2 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">VIP Tokens</span>
-                        <span id="stripe-tokens" class="text-white">100 VIP</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">Subtotal</span>
-                        <span id="stripe-subtotal" class="text-white">€100.00</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-400">Payment Fee (4%)</span>
-                        <span id="stripe-fee" class="text-white">€4.00</span>
-                    </div>
-                    <div class="flex justify-between font-semibold border-t border-white/10 pt-2 mt-2">
-                        <span class="gold-text">Total</span>
-                        <span id="stripe-total" class="gold-text">€104.00</span>
-                    </div>
+                    <div class="flex justify-between"><span class="text-gray-400">VIP Tokens</span><span id="stripe-tokens" class="text-white">100 VIP</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Subtotal</span><span id="stripe-subtotal" class="text-white">€100.00</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Payment Fee (4%)</span><span id="stripe-fee" class="text-white">€4.00</span></div>
+                    <div class="flex justify-between font-semibold border-t border-white/10 pt-2 mt-2"><span class="gold-text">Total</span><span id="stripe-total" class="gold-text">€104.00</span></div>
                 </div>
             </div>
             <form id="stripe-form">
                 <div id="card-element" class="input-field p-4 rounded-xl mb-4"></div>
                 <div id="card-errors" class="text-red-500 text-sm mb-4 hidden"></div>
-                <button type="submit" id="stripe-submit" class="btn-primary w-full py-3 rounded-xl font-semibold">
-                    Pay €<span id="stripe-amount">104.00</span>
-                </button>
+                <button type="submit" id="stripe-submit" class="btn-primary w-full py-3 rounded-xl font-semibold">Pay €<span id="stripe-amount">104.00</span></button>
             </form>
         </div>
     </div>
@@ -440,7 +312,14 @@
     let cardElement = null;
     let sessionData = null;
 
+    function safeEl(id) { return document.getElementById(id); }
+    function safeText(id, text) { const e = safeEl(id); if (e) e.textContent = text; }
+    function safeHtml(id, html) { const e = safeEl(id); if (e) e.innerHTML = html; }
+    function safeStyle(id, prop, val) { const e = safeEl(id); if (e && e.style) e.style[prop] = val; }
+    function safeClass(id, action, cls) { const e = safeEl(id); if (e) e.classList[action](cls); }
+
     document.addEventListener('DOMContentLoaded', async () => {
+        console.log('DOM loaded');
         await loadPresaleConfig();
         checkWalletConnection();
         checkUrlParams();
@@ -452,7 +331,6 @@
                 fetch('/api/presale/config'),
                 fetch('/api/presale/bonus-tiers').catch(() => ({ json: () => ({ tiers: [] }) }))
             ]);
-            
             const config = await configRes.json();
             const tiersData = await tiersRes.json();
             
@@ -469,18 +347,15 @@
             CONFIG.saleTargetEUR = config.saleTargetEUR || 500000;
             CONFIG.bonusTiers = tiersData.tiers || [];
             
-            console.log('✅ Config loaded:', CONFIG);
-            
+            console.log('Config loaded:', CONFIG);
             updateProgress();
             updateTotals();
             displayBonusTiers();
             initStripe();
             
-            if (!CONFIG.presaleEnabled) {
-                document.getElementById('presale-inactive-overlay')?.classList.remove('hidden');
-            }
+            if (!CONFIG.presaleEnabled) safeClass('presale-inactive-overlay', 'remove', 'hidden');
         } catch (error) {
-            console.error('❌ Failed to load presale config:', error);
+            console.error('Failed to load config:', error);
         }
     }
 
@@ -489,142 +364,122 @@
         const targetEUR = CONFIG.saleTargetEUR || 500000;
         const progressPct = targetEUR > 0 ? ((eurRaised / targetEUR) * 100) : 0;
         
-        const el = (id) => document.getElementById(id);
-        if (el('progress-bar')) el('progress-bar').style.width = Math.min(progressPct, 100) + '%';
-        if (el('progress-pct')) el('progress-pct').textContent = progressPct.toFixed(2) + '%';
-        if (el('progress-raised')) el('progress-raised').textContent = '€' + eurRaised.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        if (el('progress-target')) el('progress-target').textContent = '€' + targetEUR.toLocaleString();
-        if (el('tokens-sold')) el('tokens-sold').textContent = (CONFIG.tokensSold || 0).toLocaleString();
+        safeStyle('progress-bar', 'width', Math.min(progressPct, 100) + '%');
+        safeText('progress-pct', progressPct.toFixed(2) + '%');
+        safeText('progress-raised', '€' + eurRaised.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+        safeText('progress-target', '€' + targetEUR.toLocaleString());
+        safeText('tokens-sold', (CONFIG.tokensSold || 0).toLocaleString());
     }
 
     function displayBonusTiers() {
-        const container = document.getElementById('bonus-tiers-info');
-        const list = document.getElementById('bonus-tiers-list');
-        if (!container || !list) return;
-        
         if (CONFIG.bonusTiers && CONFIG.bonusTiers.length > 0) {
-            container.classList.remove('hidden');
-            list.innerHTML = CONFIG.bonusTiers
+            safeClass('bonus-tiers-info', 'remove', 'hidden');
+            const html = CONFIG.bonusTiers
                 .sort((a, b) => parseFloat(a.min_eur) - parseFloat(b.min_eur))
                 .map(t => '<div>€' + parseFloat(t.min_eur).toLocaleString() + '+ → <span class="text-green-400">+' + t.bonus_percent + '% bonus</span></div>')
                 .join('');
+            safeHtml('bonus-tiers-list', html);
         } else {
-            container.classList.add('hidden');
+            safeClass('bonus-tiers-info', 'add', 'hidden');
         }
     }
 
     function initStripe() {
-        if (!CONFIG.stripePublicKey) {
-            console.log('⚠️ Stripe not configured');
+        if (!CONFIG.stripePublicKey || typeof Stripe === 'undefined') {
+            console.log('Stripe not configured');
             return;
         }
+        stripe = Stripe(CONFIG.stripePublicKey);
+        const elements = stripe.elements();
+        const container = safeEl('card-element');
+        if (container) container.innerHTML = '';
         
-        if (typeof Stripe !== 'undefined') {
-            stripe = Stripe(CONFIG.stripePublicKey);
-            const elements = stripe.elements();
-            
-            const cardContainer = document.getElementById('card-element');
-            if (cardContainer) cardContainer.innerHTML = '';
-            
-            cardElement = elements.create('card', {
-                hidePostalCode: true,
-                style: {
-                    base: {
-                        color: '#ffffff',
-                        fontFamily: 'Montserrat, sans-serif',
-                        fontSize: '16px',
-                        '::placeholder': { color: '#6b7280' },
-                        iconColor: '#D4AF37'
-                    },
-                    invalid: { color: '#ef4444' },
-                    complete: { color: '#D4AF37' }
-                }
-            });
-            cardElement.mount('#card-element');
-            
-            const submitBtn = document.getElementById('stripe-submit');
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        cardElement = elements.create('card', {
+            hidePostalCode: true,
+            style: {
+                base: { color: '#ffffff', fontFamily: 'Montserrat, sans-serif', fontSize: '16px', '::placeholder': { color: '#6b7280' }, iconColor: '#D4AF37' },
+                invalid: { color: '#ef4444' },
+                complete: { color: '#D4AF37' }
             }
-            
-            cardElement.on('change', (event) => {
-                const btn = document.getElementById('stripe-submit');
-                const errEl = document.getElementById('card-errors');
-                
-                if (event.error) {
-                    if (errEl) { errEl.textContent = event.error.message; errEl.classList.remove('hidden'); }
-                    if (btn) { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
-                } else {
-                    if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
-                    if (btn) {
-                        if (event.complete) { btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed'); }
-                        else { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
-                    }
+        });
+        cardElement.mount('#card-element');
+        
+        const btn = safeEl('stripe-submit');
+        if (btn) { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
+        
+        cardElement.on('change', (event) => {
+            const btn = safeEl('stripe-submit');
+            const err = safeEl('card-errors');
+            if (event.error) {
+                if (err) { err.textContent = event.error.message; err.classList.remove('hidden'); }
+                if (btn) { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
+            } else {
+                if (err) { err.textContent = ''; err.classList.add('hidden'); }
+                if (btn) {
+                    if (event.complete) { btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed'); }
+                    else { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
                 }
-            });
+            }
+        });
 
-            const stripeForm = document.getElementById('stripe-form');
-            if (stripeForm) {
-                stripeForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const btn = document.getElementById('stripe-submit');
-                    if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
+        const form = safeEl('stripe-form');
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = safeEl('stripe-submit');
+                if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
+                
+                const paymentData = JSON.parse(localStorage.getItem('stripePaymentData') || '{}');
+                if (!paymentData.clientSecret) {
+                    showResult('error', 'Payment Error', 'Payment session expired.');
+                    closeStripeModal();
+                    return;
+                }
+                
+                try {
+                    const { error, paymentIntent } = await stripe.confirmCardPayment(paymentData.clientSecret, {
+                        payment_method: { card: cardElement, billing_details: { email: sessionData?.email } }
+                    });
                     
-                    const paymentData = JSON.parse(localStorage.getItem('stripePaymentData') || '{}');
-                    if (!paymentData.clientSecret) {
-                        showResult('error', 'Payment Error', 'Payment session expired.');
-                        closeStripeModal();
+                    if (error) {
+                        const err = safeEl('card-errors');
+                        if (err) { err.textContent = error.message; err.classList.remove('hidden'); }
+                        if (btn) { btn.disabled = false; btn.textContent = 'Pay €' + (safeEl('stripe-amount')?.textContent || '0'); }
                         return;
                     }
                     
-                    try {
-                        const { error, paymentIntent } = await stripe.confirmCardPayment(paymentData.clientSecret, {
-                            payment_method: { card: cardElement, billing_details: { email: sessionData?.email } }
-                        });
-                        
-                        if (error) {
-                            const errEl = document.getElementById('card-errors');
-                            if (errEl) { errEl.textContent = error.message; errEl.classList.remove('hidden'); }
-                            if (btn) { btn.disabled = false; btn.textContent = 'Pay €' + (document.getElementById('stripe-amount')?.textContent || '0'); }
-                            return;
-                        }
-                        
-                        if (paymentIntent.status === 'succeeded') {
-                            closeStripeModal();
-                            showProcessing('Payment successful! Minting your tokens...');
-                            verifyStripePayment(paymentIntent.id, paymentData.tokenAmount);
-                        }
-                    } catch (err) {
-                        console.error('Stripe error:', err);
-                        showResult('error', 'Payment Failed', err.message);
+                    if (paymentIntent.status === 'succeeded') {
                         closeStripeModal();
+                        showProcessing('Payment successful! Minting tokens...');
+                        verifyStripePayment(paymentIntent.id, paymentData.tokenAmount);
                     }
-                });
-            }
-            console.log('✅ Stripe initialized');
+                } catch (err) {
+                    console.error('Stripe error:', err);
+                    showResult('error', 'Payment Failed', err.message);
+                    closeStripeModal();
+                }
+            });
         }
+        console.log('Stripe initialized');
     }
 
     function closeStripeModal() {
-        const modal = document.getElementById('stripe-modal');
-        if (modal) modal.classList.add('hidden');
+        safeClass('stripe-modal', 'add', 'hidden');
         localStorage.removeItem('stripePaymentData');
-        if (cardElement) { try { cardElement.clear(); } catch(e) {} }
-        const errEl = document.getElementById('card-errors');
-        if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
-        const btn = document.getElementById('stripe-submit');
+        if (cardElement) try { cardElement.clear(); } catch(e) {}
+        const err = safeEl('card-errors');
+        if (err) { err.textContent = ''; err.classList.add('hidden'); }
+        const btn = safeEl('stripe-submit');
         if (btn) { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
     }
 
     function checkWalletConnection() {
-        console.log('🔍 Checking wallet connection...');
-        
+        console.log('Checking wallet...');
         const params = new URLSearchParams(window.location.search);
         const walletFromUrl = params.get('wlt') || params.get('wallet') || params.get('address');
         
         if (walletFromUrl) {
-            console.log('✅ Found wallet in URL:', walletFromUrl);
+            console.log('Wallet from URL:', walletFromUrl);
             currentWallet = walletFromUrl.toLowerCase();
             sessionData = { wallet: currentWallet, userId: params.get('usr'), timestamp: Date.now() };
             localStorage.setItem('keavalley_profile', JSON.stringify(sessionData));
@@ -640,12 +495,12 @@
         if (profileStr) {
             try {
                 sessionData = JSON.parse(profileStr);
-                console.log('📦 Session data:', sessionData);
+                console.log('Session:', sessionData);
                 const wallet = sessionData.wallet || sessionData.walletAddress || sessionData.address || sessionData.wlt;
                 if (wallet) {
                     const age = Date.now() - (sessionData.timestamp || 0);
                     if (age > 86400000) {
-                        console.log('⚠️ Session expired');
+                        console.log('Session expired');
                         localStorage.removeItem('keavalley_profile');
                         sessionStorage.removeItem('keavalley_profile');
                         currentWallet = null;
@@ -653,44 +508,37 @@
                         return;
                     }
                     currentWallet = wallet.toLowerCase();
-                    console.log('✅ Wallet from storage:', currentWallet);
+                    console.log('Wallet from storage:', currentWallet);
                     showWalletConnected();
                     loadBalances();
                     checkReferralCode();
                     return;
                 }
             } catch (e) {
-                console.error('❌ Parse error:', e);
+                console.error('Parse error:', e);
                 localStorage.removeItem('keavalley_profile');
                 sessionStorage.removeItem('keavalley_profile');
             }
         }
-        
-        console.log('❌ No wallet found');
+        console.log('No wallet found');
         currentWallet = null;
         updateBuyButton();
     }
 
-    function connectWallet() {
-        document.getElementById('connect-overlay')?.classList.remove('hidden');
-    }
-
-    function hideConnectOverlay() {
-        document.getElementById('connect-overlay')?.classList.add('hidden');
-    }
-
+    function connectWallet() { safeClass('connect-overlay', 'remove', 'hidden'); }
+    function hideConnectOverlay() { safeClass('connect-overlay', 'add', 'hidden'); }
+    
     function redirectToWalletTwo() {
         const redirectUri = encodeURIComponent(window.location.origin + '/presale');
         window.location.href = CONFIG.walletTwoOrigin + '/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=VIP_PRESALE&redirect_uri=' + redirectUri;
     }
 
     function showWalletConnected() {
-        if (!currentWallet) return;
-        const el = (id) => document.getElementById(id);
-        if (el('connect-wallet-btn')) el('connect-wallet-btn').classList.add('hidden');
-        if (el('wallet-connected')) el('wallet-connected').classList.remove('hidden');
-        if (el('wallet-address')) el('wallet-address').textContent = currentWallet.slice(0, 6) + '...' + currentWallet.slice(-4);
-        if (el('balance-section')) el('balance-section').classList.remove('hidden');
+        if (!currentWallet) { console.log('No wallet to show'); return; }
+        safeClass('connect-wallet-btn', 'add', 'hidden');
+        safeClass('wallet-connected', 'remove', 'hidden');
+        safeText('wallet-address', currentWallet.slice(0, 6) + '...' + currentWallet.slice(-4));
+        safeClass('balance-section', 'remove', 'hidden');
         updateBuyButton();
     }
 
@@ -699,34 +547,28 @@
         localStorage.removeItem('keavalley_profile');
         currentWallet = null;
         sessionData = null;
-        const el = (id) => document.getElementById(id);
-        if (el('connect-wallet-btn')) el('connect-wallet-btn').classList.remove('hidden');
-        if (el('wallet-connected')) el('wallet-connected').classList.add('hidden');
-        if (el('balance-section')) el('balance-section').classList.add('hidden');
+        safeClass('connect-wallet-btn', 'remove', 'hidden');
+        safeClass('wallet-connected', 'add', 'hidden');
+        safeClass('balance-section', 'add', 'hidden');
         updateBuyButton();
     }
 
     async function loadBalances() {
         if (!currentWallet) return;
         const rpcs = ['https://polygon-bor-rpc.publicnode.com', 'https://polygon.llamarpc.com', 'https://polygon-rpc.com'];
-        
         for (const rpc of rpcs) {
             try {
                 const provider = new ethers.JsonRpcProvider(rpc);
                 const polBal = await provider.getBalance(currentWallet);
                 balances.POL = parseFloat(ethers.formatEther(polBal));
-                
                 const usdc = new ethers.Contract(CONFIG.usdcAddress, ['function balanceOf(address) view returns (uint256)'], provider);
                 const usdcBal = await usdc.balanceOf(currentWallet);
                 balances.USDC = parseFloat(ethers.formatUnits(usdcBal, 6));
-                
-                console.log('✅ Balances:', balances);
+                console.log('Balances:', balances);
                 updateBalanceDisplay();
                 updateBuyButton();
                 return;
-            } catch (e) {
-                console.warn('RPC failed:', rpc);
-            }
+            } catch (e) { console.warn('RPC failed:', rpc); }
         }
         balances = { POL: 0, USDC: 0 };
         updateBalanceDisplay();
@@ -734,11 +576,9 @@
     }
 
     function updateBalanceDisplay() {
-        const el = document.getElementById('balance-display');
-        if (!el) return;
-        if (selectedPayment === 'POL') el.textContent = balances.POL.toFixed(4) + ' POL';
-        else if (selectedPayment === 'USDC') el.textContent = balances.USDC.toFixed(2) + ' USDC';
-        else el.textContent = '--';
+        if (selectedPayment === 'POL') safeText('balance-display', balances.POL.toFixed(4) + ' POL');
+        else if (selectedPayment === 'USDC') safeText('balance-display', balances.USDC.toFixed(2) + ' USDC');
+        else safeText('balance-display', '--');
     }
 
     function selectPayment(method) {
@@ -752,46 +592,34 @@
     }
 
     function updateTotals() {
-        const eurInput = document.getElementById('eur-amount');
-        const eurAmount = parseFloat(eurInput?.value) || 0;
+        const eurInput = safeEl('eur-amount');
+        const eurAmount = eurInput ? (parseFloat(eurInput.value) || 0) : 0;
         const tokenPrice = CONFIG.tokenPriceEUR || 1.00;
         const baseTokens = Math.floor(eurAmount / tokenPrice);
         
         let bonusPercent = 0, bonusTokens = 0;
-        if (CONFIG.bonusTiers?.length > 0) {
+        if (CONFIG.bonusTiers && CONFIG.bonusTiers.length > 0) {
             const tier = [...CONFIG.bonusTiers].filter(t => parseFloat(t.min_eur) <= eurAmount).sort((a,b) => parseFloat(b.min_eur) - parseFloat(a.min_eur))[0];
-            if (tier) {
-                bonusPercent = parseFloat(tier.bonus_percent);
-                bonusTokens = Math.floor(baseTokens * bonusPercent / 100);
-            }
+            if (tier) { bonusPercent = parseFloat(tier.bonus_percent); bonusTokens = Math.floor(baseTokens * bonusPercent / 100); }
         }
         const totalTokens = baseTokens + bonusTokens;
         
-        const el = (id) => document.getElementById(id);
-        const tokenDisplay = el('token-amount-display');
-        if (tokenDisplay) {
-            tokenDisplay.innerHTML = bonusTokens > 0 
-                ? totalTokens.toLocaleString() + ' <span class="text-green-400 text-xs">(+' + bonusTokens + ' bonus)</span>'
-                : totalTokens.toLocaleString();
+        if (bonusTokens > 0) {
+            safeHtml('token-amount-display', totalTokens.toLocaleString() + ' <span class="text-green-400 text-xs">(+' + bonusTokens + ' bonus)</span>');
+        } else {
+            safeText('token-amount-display', totalTokens.toLocaleString());
         }
         
-        if (el('min-purchase-display')) el('min-purchase-display').textContent = (CONFIG.minPurchase || 10).toLocaleString();
+        safeText('min-purchase-display', (CONFIG.minPurchase || 10).toLocaleString());
         
-        const badge = el('bonus-badge');
+        const badge = safeEl('bonus-badge');
         if (badge) {
-            if (bonusPercent > 0) {
-                badge.innerHTML = '<span class="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-xs">+' + bonusPercent + '% BONUS</span>';
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
+            if (bonusPercent > 0) { badge.innerHTML = '<span class="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-xs">+' + bonusPercent + '% BONUS</span>'; badge.classList.remove('hidden'); }
+            else { badge.classList.add('hidden'); }
         }
         
-        if (eurInput && eurAmount < CONFIG.minPurchase && eurAmount > 0) {
-            eurInput.classList.add('border-red-500');
-        } else if (eurInput) {
-            eurInput.classList.remove('border-red-500');
-        }
+        if (eurInput && eurAmount < CONFIG.minPurchase && eurAmount > 0) eurInput.classList.add('border-red-500');
+        else if (eurInput) eurInput.classList.remove('border-red-500');
         
         const feePercent = selectedPayment === 'Card' ? CONFIG.cardFeePercent : CONFIG.cryptoFeePercent;
         const feeEUR = eurAmount * (feePercent / 100);
@@ -799,71 +627,45 @@
         const totalUSD = totalEUR * CONFIG.eurUsdRate;
         const polAmount = totalUSD / CONFIG.polPrice;
         
-        if (el('totalTokensDisplay')) el('totalTokensDisplay').textContent = totalTokens.toLocaleString() + ' VIP';
-        if (el('subtotalEUR')) el('subtotalEUR').textContent = '€' + eurAmount.toFixed(2);
-        if (el('feePercent')) el('feePercent').textContent = feePercent;
-        if (el('feeAmountEUR')) el('feeAmountEUR').textContent = '€' + feeEUR.toFixed(2);
-        if (el('totalEUR')) el('totalEUR').textContent = '€' + totalEUR.toFixed(2);
-        if (el('totalUSD')) el('totalUSD').textContent = '($' + totalUSD.toFixed(2) + ')';
+        safeText('totalTokensDisplay', totalTokens.toLocaleString() + ' VIP');
+        safeText('subtotalEUR', '€' + eurAmount.toFixed(2));
+        safeText('feePercent', feePercent.toString());
+        safeText('feeAmountEUR', '€' + feeEUR.toFixed(2));
+        safeText('totalEUR', '€' + totalEUR.toFixed(2));
+        safeText('totalUSD', '(\$' + totalUSD.toFixed(2) + ')');
         
-        const crypto = el('cryptoEquivalent');
-        if (crypto) {
-            if (selectedPayment === 'POL') crypto.textContent = '~' + polAmount.toFixed(2) + ' POL';
-            else if (selectedPayment === 'USDC') crypto.textContent = '~' + totalUSD.toFixed(2) + ' USDC';
-            else crypto.textContent = '€' + totalEUR.toFixed(2);
-        }
+        if (selectedPayment === 'POL') safeText('cryptoEquivalent', '~' + polAmount.toFixed(2) + ' POL');
+        else if (selectedPayment === 'USDC') safeText('cryptoEquivalent', '~' + totalUSD.toFixed(2) + ' USDC');
+        else safeText('cryptoEquivalent', '€' + totalEUR.toFixed(2));
         
         window.currentPurchase = { eurAmount, baseTokens, bonusTokens, totalTokens, bonusPercent, feeEUR, totalEUR, totalUSD, polAmount };
         updateBuyButton();
     }
 
     function updateBuyButton() {
-        const btn = document.getElementById('buy-button');
+        const btn = safeEl('buy-button');
         if (!btn) return;
         
-        const eurInput = document.getElementById('eur-amount');
-        const eurAmount = parseFloat(eurInput?.value) || 0;
+        const eurInput = safeEl('eur-amount');
+        const eurAmount = eurInput ? (parseFloat(eurInput.value) || 0) : 0;
         const purchase = window.currentPurchase || {};
 
-        if (!currentWallet) {
-            btn.textContent = 'Connect Wallet to Purchase';
-            btn.disabled = true;
-            return;
-        }
-        if (!CONFIG.presaleEnabled) {
-            btn.textContent = 'Presale Not Active';
-            btn.disabled = true;
-            return;
-        }
-        if (eurAmount < CONFIG.minPurchase) {
-            btn.textContent = 'Minimum €' + CONFIG.minPurchase;
-            btn.disabled = true;
-            return;
-        }
+        if (!currentWallet) { btn.textContent = 'Connect Wallet to Purchase'; btn.disabled = true; return; }
+        if (!CONFIG.presaleEnabled) { btn.textContent = 'Presale Not Active'; btn.disabled = true; return; }
+        if (eurAmount < CONFIG.minPurchase) { btn.textContent = 'Minimum €' + CONFIG.minPurchase; btn.disabled = true; return; }
 
         const totalEUR = purchase.totalEUR || 0;
         const totalUSD = purchase.totalUSD || 0;
 
-        if (selectedPayment === 'Card') {
-            btn.textContent = 'Pay €' + totalEUR.toFixed(2);
-            btn.disabled = false;
-        } else if (selectedPayment === 'POL') {
+        if (selectedPayment === 'Card') { btn.textContent = 'Pay €' + totalEUR.toFixed(2); btn.disabled = false; }
+        else if (selectedPayment === 'POL') {
             const req = purchase.polAmount || 0;
-            if (balances.POL >= req) {
-                btn.textContent = 'Pay ~' + req.toFixed(2) + ' POL';
-                btn.disabled = false;
-            } else {
-                btn.textContent = 'Insufficient POL Balance';
-                btn.disabled = true;
-            }
-        } else if (selectedPayment === 'USDC') {
-            if (balances.USDC >= totalUSD) {
-                btn.textContent = 'Pay ~' + totalUSD.toFixed(2) + ' USDC';
-                btn.disabled = false;
-            } else {
-                btn.textContent = 'Insufficient USDC Balance';
-                btn.disabled = true;
-            }
+            if (balances.POL >= req) { btn.textContent = 'Pay ~' + req.toFixed(2) + ' POL'; btn.disabled = false; }
+            else { btn.textContent = 'Insufficient POL Balance'; btn.disabled = true; }
+        }
+        else if (selectedPayment === 'USDC') {
+            if (balances.USDC >= totalUSD) { btn.textContent = 'Pay ~' + totalUSD.toFixed(2) + ' USDC'; btn.disabled = false; }
+            else { btn.textContent = 'Insufficient USDC Balance'; btn.disabled = true; }
         }
     }
 
@@ -876,23 +678,9 @@
         const baseTokens = purchase.baseTokens || 0;
         const totalTokens = purchase.totalTokens || 0;
 
-        if (eurAmount < CONFIG.minPurchase) {
-            showResult('error', 'Invalid Amount', 'Minimum purchase is €' + CONFIG.minPurchase);
-            return;
-        }
+        if (eurAmount < CONFIG.minPurchase) { showResult('error', 'Invalid Amount', 'Minimum purchase is €' + CONFIG.minPurchase); return; }
 
-        const pending = {
-            walletAddress: currentWallet,
-            tokenAmount: baseTokens,
-            expectedTotal: totalTokens,
-            bonusPercent: purchase.bonusPercent,
-            baseEUR: eurAmount,
-            feeEUR: purchase.feeEUR,
-            totalEUR: purchase.totalEUR,
-            totalUSD: purchase.totalUSD,
-            paymentMethod: selectedPayment,
-            timestamp: Date.now()
-        };
+        const pending = { walletAddress: currentWallet, tokenAmount: baseTokens, expectedTotal: totalTokens, bonusPercent: purchase.bonusPercent, baseEUR: eurAmount, feeEUR: purchase.feeEUR, totalEUR: purchase.totalEUR, totalUSD: purchase.totalUSD, paymentMethod: selectedPayment, timestamp: Date.now() };
         localStorage.setItem('pendingPurchase', JSON.stringify(pending));
 
         if (selectedPayment === 'Card') {
@@ -905,7 +693,6 @@
 
     function executeCryptoPurchase(tokenAmount, totalUSD, baseEUR, feeEUR) {
         if (!CONFIG.presaleWallet) { showResult('error', 'Error', 'Presale wallet not configured.'); return; }
-
         const baseUSD = baseEUR * CONFIG.eurUsdRate;
         const feeUSD = feeEUR * CONFIG.eurUsdRate;
         let transactions = [];
@@ -925,7 +712,6 @@
                 { type: 'native_transfer', to: CONFIG.minterWallet, amount: BigInt(Math.ceil(feePOL * 1e18)).toString(), description: 'Platform fee' }
             ];
         }
-
         const txData = encodeURIComponent(JSON.stringify({ chainId: CONFIG.chainId, transactions, metadata: { type: 'presale_purchase', tokenAmount, totalUSD, baseEUR, feeEUR, paymentMethod: selectedPayment } }));
         window.location.href = CONFIG.walletTwoOrigin + '/transaction/multi?data=' + txData + '&external_id=' + externalId + '&redirect_uri=' + redirectUri;
     }
@@ -935,24 +721,20 @@
         const totalTokens = purchase.totalTokens || tokenAmount;
         const bonusTokens = purchase.bonusTokens || 0;
         
-        const el = (id) => document.getElementById(id);
-        if (el('stripe-tokens')) {
-            el('stripe-tokens').innerHTML = bonusTokens > 0 
-                ? totalTokens + ' VIP <span class="text-green-400 text-xs">(+' + bonusTokens + ' bonus)</span>'
-                : totalTokens + ' VIP';
-        }
-        if (el('stripe-subtotal')) el('stripe-subtotal').textContent = '€' + baseEUR.toFixed(2);
-        if (el('stripe-fee')) el('stripe-fee').textContent = '€' + feeEUR.toFixed(2);
-        if (el('stripe-total')) el('stripe-total').textContent = '€' + totalEUR.toFixed(2);
-        if (el('stripe-amount')) el('stripe-amount').textContent = totalEUR.toFixed(2);
+        if (bonusTokens > 0) safeHtml('stripe-tokens', totalTokens + ' VIP <span class="text-green-400 text-xs">(+' + bonusTokens + ' bonus)</span>');
+        else safeText('stripe-tokens', totalTokens + ' VIP');
+        safeText('stripe-subtotal', '€' + baseEUR.toFixed(2));
+        safeText('stripe-fee', '€' + feeEUR.toFixed(2));
+        safeText('stripe-total', '€' + totalEUR.toFixed(2));
+        safeText('stripe-amount', totalEUR.toFixed(2));
 
-        const btn = el('stripe-submit');
+        const btn = safeEl('stripe-submit');
         if (btn) { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
-        const err = el('card-errors');
+        const err = safeEl('card-errors');
         if (err) { err.textContent = ''; err.classList.add('hidden'); }
         if (cardElement) cardElement.clear();
 
-        el('stripe-modal')?.classList.remove('hidden');
+        safeClass('stripe-modal', 'remove', 'hidden');
         createPaymentIntent(tokenAmount, totalEUR);
     }
 
@@ -984,8 +766,7 @@
                     const data = await res.json();
                     if (data.status === 'completed' && data.mintTxHash) {
                         hideProcessing();
-                        const tokens = data.totalTokens || tokenAmount;
-                        showResult('success', 'Purchase Complete!', 'Successfully purchased ' + tokens + ' VIP tokens!', { tokens, mintTx: data.mintTxHash });
+                        showResult('success', 'Purchase Complete!', 'Successfully purchased ' + (data.totalTokens || tokenAmount) + ' VIP tokens!', { tokens: data.totalTokens || tokenAmount, mintTx: data.mintTxHash });
                         localStorage.removeItem('pendingPurchase');
                         localStorage.removeItem('stripePaymentData');
                         loadPresaleConfig();
@@ -1047,59 +828,35 @@
                 const res = await fetch('/api/referral/validate/' + code);
                 if (res.ok) {
                     const data = await res.json();
-                    if (data.valid) {
-                        document.getElementById('referral-section')?.classList.remove('hidden');
-                        const el = document.getElementById('referral-code');
-                        if (el) el.textContent = code;
-                    }
+                    if (data.valid) { safeClass('referral-section', 'remove', 'hidden'); safeText('referral-code', code); }
                 }
             } catch (e) {}
         }
     }
 
-    function showProcessing(msg) {
-        const el = document.getElementById('processing-message');
-        if (el) el.textContent = msg;
-        document.getElementById('processing-overlay')?.classList.remove('hidden');
-    }
-
-    function hideProcessing() {
-        document.getElementById('processing-overlay')?.classList.add('hidden');
-    }
+    function showProcessing(msg) { safeText('processing-message', msg); safeClass('processing-overlay', 'remove', 'hidden'); }
+    function hideProcessing() { safeClass('processing-overlay', 'add', 'hidden'); }
 
     function showResult(type, title, message, details = null) {
-        const icon = document.getElementById('result-icon');
+        const icon = safeEl('result-icon');
         if (icon) {
             icon.textContent = type === 'success' ? 'check_circle' : (type === 'info' ? 'info' : 'error');
             icon.className = 'material-symbols-outlined text-5xl mb-4 ' + (type === 'success' ? 'text-green-500' : (type === 'info' ? 'text-blue-500' : 'text-red-500'));
         }
-        const titleEl = document.getElementById('result-title');
-        if (titleEl) titleEl.textContent = title;
-        const msgEl = document.getElementById('result-message');
-        if (msgEl) msgEl.textContent = message;
+        safeText('result-title', title);
+        safeText('result-message', message);
         
-        const detailsEl = document.getElementById('result-details');
+        const detailsEl = safeEl('result-details');
         if (details && detailsEl) {
             detailsEl.classList.remove('hidden');
-            const tokensEl = document.getElementById('result-tokens');
-            if (tokensEl) tokensEl.textContent = details.tokens + ' VIP';
-            if (details.paymentTx) {
-                const el = document.getElementById('result-payment-tx');
-                if (el) { el.href = CONFIG.explorer + '/tx/' + details.paymentTx; el.textContent = details.paymentTx.slice(0, 10) + '...'; }
-            }
-            if (details.mintTx) {
-                const el = document.getElementById('result-mint-tx');
-                if (el) { el.href = CONFIG.explorer + '/tx/' + details.mintTx; el.textContent = details.mintTx.slice(0, 10) + '...'; }
-            }
-        } else if (detailsEl) {
-            detailsEl.classList.add('hidden');
-        }
-        document.getElementById('result-overlay')?.classList.remove('hidden');
+            safeText('result-tokens', details.tokens + ' VIP');
+            if (details.paymentTx) { const el = safeEl('result-payment-tx'); if (el) { el.href = CONFIG.explorer + '/tx/' + details.paymentTx; el.textContent = details.paymentTx.slice(0, 10) + '...'; } }
+            if (details.mintTx) { const el = safeEl('result-mint-tx'); if (el) { el.href = CONFIG.explorer + '/tx/' + details.mintTx; el.textContent = details.mintTx.slice(0, 10) + '...'; } }
+        } else if (detailsEl) { detailsEl.classList.add('hidden'); }
+        safeClass('result-overlay', 'remove', 'hidden');
     }
 
-    function hideResultOverlay() {
-        document.getElementById('result-overlay')?.classList.add('hidden');
-    }
+    function hideResultOverlay() { safeClass('result-overlay', 'add', 'hidden'); }
 
     window.addEventListener('message', (event) => {
         if (!event.origin.includes('wallettwo.com')) return;
