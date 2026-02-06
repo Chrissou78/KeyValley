@@ -1,0 +1,690 @@
+Copy<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promotion Packages - Kea Valley</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#D4AF37',
+                        'primary-dark': '#B8960C',
+                        'primary-light': '#E5C76B',
+                        'background-dark': '#0a0a0a',
+                        'surface': '#121212',
+                        'surface-light': '#1a1a1a'
+                    },
+                    fontFamily: {
+                        'serif': ['Cormorant Garamond', 'serif'],
+                        'sans': ['Montserrat', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0a0a0a; color: #ffffff; font-family: 'Montserrat', sans-serif; }
+        .glass-card { background: rgba(18, 18, 18, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(212, 175, 55, 0.1); }
+        .glass-nav { background-color: rgba(18, 18, 18, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(212, 175, 55, 0.1); }
+        .gold-text { color: #D4AF37; }
+        .gold-gradient { background: linear-gradient(135deg, #D4AF37 0%, #F4E5B0 50%, #D4AF37 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .btn-primary { background: linear-gradient(135deg, #D4AF37 0%, #B8960C 100%); color: #0a0a0a; font-weight: 600; transition: all 0.3s ease; }
+        .btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #E5C76B 0%, #D4AF37 100%); transform: translateY(-2px); box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { background: transparent; border: 2px solid rgba(255,255,255,0.2); color: #fff; transition: all 0.3s ease; }
+        .btn-secondary:hover { border-color: #D4AF37; }
+        .btn-secondary.selected { border-color: #D4AF37; background: rgba(212, 175, 55, 0.1); }
+        .payment-option { background: rgba(26, 26, 26, 0.6); border: 2px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease; cursor: pointer; }
+        .payment-option:hover { border-color: rgba(212, 175, 55, 0.5); }
+        .payment-option.selected { border-color: #D4AF37; background: rgba(212, 175, 55, 0.1); }
+        .overlay { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); }
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .fee-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(212, 175, 55, 0.2); color: #D4AF37; }
+        .package-card { transition: all 0.3s ease; cursor: pointer; }
+        .package-card:hover { border-color: rgba(212, 175, 55, 0.5); }
+        .package-card.selected { border-color: #D4AF37; background: rgba(212, 175, 55, 0.05); box-shadow: 0 0 30px rgba(212, 175, 55, 0.2); }
+        .tooltip-content { visibility: hidden; opacity: 0; transition: all 0.2s ease; }
+        .tooltip:hover .tooltip-content { visibility: visible; opacity: 1; }
+        #card-element { background-color: #1a1a1a !important; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <header class="glass-nav fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <a href="/" class="flex items-center space-x-3">
+                    <img src="/logo.png" alt="Kea Valley" class="h-10 w-auto">
+                    <span class="font-serif text-xl font-semibold gold-text">Kea Valley</span>
+                </a>
+                <nav class="hidden md:flex items-center space-x-8">
+                    <a href="/" class="text-gray-300 hover:text-primary transition-colors">Home</a>
+                    <a href="/presale/" class="text-gray-300 hover:text-primary transition-colors">Presale</a>
+                    <a href="/presale/token-sale/" class="text-gray-300 hover:text-primary transition-colors">Token Sale</a>
+                    <a href="/presale/packages/" class="gold-text font-semibold">Packages</a>
+                    <a href="/profile" class="text-gray-300 hover:text-primary transition-colors">Profile</a>
+                </nav>
+                <div id="wallet-section">
+                    <button id="connect-wallet-btn" onclick="connectWallet()" class="btn-primary px-6 py-2 rounded-lg text-sm">Connect Wallet</button>
+                    <div id="wallet-connected" class="hidden flex items-center space-x-3">
+                        <span id="wallet-address" class="text-gray-300 text-sm"></span>
+                        <button onclick="disconnectWallet()" class="text-gray-400 hover:text-primary transition-colors">
+                            <span class="material-symbols-outlined">logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-8">
+                <a href="/presale/" class="inline-flex items-center text-gray-400 hover:text-primary mb-4 transition-colors">
+                    <span class="material-symbols-outlined mr-1">arrow_back</span>
+                    Back to Presale
+                </a>
+                <h1 class="font-serif text-4xl md:text-5xl font-bold gold-gradient mb-4">Promotion Packages</h1>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto">Premium packages with 50% discount on VIP tokens and exclusive benefits.</p>
+            </div>
+
+            <!-- Package Selection -->
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <!-- Holiday Pack -->
+                <div id="package-holiday" class="glass-card package-card rounded-2xl p-6 selected" onclick="selectPackage('holiday')">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="font-serif text-xl font-bold text-white">2026 Holiday Pack</h2>
+                            <p class="text-gray-400 text-sm">Experience Kea Island in style</p>
+                        </div>
+                        <div class="tooltip relative">
+                            <span class="material-symbols-outlined text-primary cursor-help">info</span>
+                            <div class="tooltip-content absolute z-50 bg-surface border border-primary/30 rounded-xl p-4 w-72 right-0 top-8">
+                                <p class="text-gray-300 text-sm mb-2">Each VIP token represents <span class="gold-text font-semibold">€1 equivalent</span> spent on services on Kea Island:</p>
+                                <ul class="text-gray-300 text-xs space-y-1">
+                                    <li>• 10-day luxury villa rental</li>
+                                    <li>• Fine dining experiences</li>
+                                    <li>• Island excursions & activities</li>
+                                    <li>• Wellness & spa services</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-surface-light rounded-xl p-4 mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-400">Price</span>
+                            <span class="text-2xl font-bold gold-text">€5,000</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-400">You get</span>
+                            <span class="text-white font-semibold">10,000 VIP</span>
+                        </div>
+                        <div class="text-center mt-2 text-green-400 text-sm">50% off (€0.50/token)</div>
+                    </div>
+                    <ul class="text-gray-300 text-sm space-y-2">
+                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>€10,000 value in services</li>
+                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>10-day villa accommodation</li>
+                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>Valid throughout 2026</li>
+                    </ul>
+                    <div id="holiday-check" class="mt-4 text-center">
+                        <span class="inline-flex items-center text-primary font-semibold"><span class="material-symbols-outlined mr-1">check_circle</span>Selected</span>
+                    </div>
+                </div>
+
+                <!-- Private Members Club -->
+                <div id="package-membership" class="glass-card package-card rounded-2xl p-6 relative" onclick="selectPackage('membership')">
+                    <div class="absolute -top-3 -right-3">
+                        <span class="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">Ends Feb 28</span>
+                    </div>
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="font-serif text-xl font-bold text-white">Private Members Club</h2>
+                            <p class="text-gray-400 text-sm">Annual Membership</p>
+                        </div>
+                        <div class="tooltip relative">
+                            <span class="material-symbols-outlined text-primary cursor-help">info</span>
+                            <div class="tooltip-content absolute z-50 bg-surface border border-primary/30 rounded-xl p-4 w-80 right-0 top-8">
+                                <div class="flex items-center mb-2">
+                                    <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full mr-2">Limited</span>
+                                    <span class="text-gray-400 text-xs">Until end of February</span>
+                                </div>
+                                <ul class="text-gray-300 text-xs space-y-2">
+                                    <li><strong class="text-white">Summer Holiday Pack</strong> - 10-day villa + €10,000 services</li>
+                                    <li><strong class="text-white">3 Premium Summits</strong> - <a href="https://ftewinter.com" target="_blank" class="gold-text hover:underline" onclick="event.stopPropagation()">Zurich</a> or <a href="https://keanaissance.com" target="_blank" class="gold-text hover:underline" onclick="event.stopPropagation()">Kea</a></li>
+                                    <li><strong class="text-white">Property Options</strong> - Monthly exclusive opportunities</li>
+                                    <li><strong class="text-white">Investment Access</strong> - Bi-monthly summit opportunities</li>
+                                    <li><strong class="text-white">Corporate Events</strong> - Host on Kea at discounted rates</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-surface-light rounded-xl p-4 mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-400">Price</span>
+                            <span class="text-2xl font-bold gold-text">€25,000</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-400">You get</span>
+                            <span class="text-white font-semibold">50,000 VIP</span>
+                        </div>
+                        <div class="text-center mt-2 text-green-400 text-sm">50% off (€0.50/token)</div>
+                    </div>
+                    <ul class="text-gray-300 text-sm space-y-2">
+                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>€50,000 value in services</li>
+                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>3 Summits (Zurich or Kea)</li>
+                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>Monthly property options</li>
+                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>Corporate event discounts</li>
+                    </ul>
+                    <div id="membership-check" class="mt-4 text-center hidden">
+                        <span class="inline-flex items-center text-primary font-semibold"><span class="material-symbols-outlined mr-1">check_circle</span>Selected</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Section -->
+            <div class="glass-card rounded-2xl p-8">
+                <h2 class="font-serif text-xl font-bold text-white mb-6">Payment</h2>
+
+                <!-- Payment Method -->
+                <div class="mb-8">
+                    <label class="block text-gray-300 text-sm font-medium mb-3">Payment Method</label>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="payment-option rounded-xl p-4 text-center selected" data-method="POL" onclick="selectPayment('POL')">
+                            <span class="material-symbols-outlined text-3xl text-purple-400">hexagon</span>
+                            <div class="font-semibold text-white mt-2">POL</div>
+                            <div class="text-gray-500 text-xs mt-1">Polygon Native</div>
+                            <div class="fee-badge mt-2">1.5% fee</div>
+                        </div>
+                        <div class="payment-option rounded-xl p-4 text-center" data-method="USDC" onclick="selectPayment('USDC')">
+                            <span class="material-symbols-outlined text-3xl text-green-400">paid</span>
+                            <div class="font-semibold text-white mt-2">USDC</div>
+                            <div class="text-gray-500 text-xs mt-1">Stablecoin</div>
+                            <div class="fee-badge mt-2">1.5% fee</div>
+                        </div>
+                        <div class="payment-option rounded-xl p-4 text-center" data-method="Card" onclick="selectPayment('Card')">
+                            <span class="material-symbols-outlined text-3xl text-blue-400">credit_card</span>
+                            <div class="font-semibold text-white mt-2">Card</div>
+                            <div class="text-gray-500 text-xs mt-1">Credit/Debit</div>
+                            <div class="fee-badge mt-2">4% fee</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Balance -->
+                <div id="balance-section" class="mb-8 hidden">
+                    <div class="flex items-center justify-between p-4 bg-surface-light rounded-xl">
+                        <span class="text-gray-400">Your Balance:</span>
+                        <span id="balance-display" class="font-semibold text-white">--</span>
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="border-t border-white/10 pt-6 mb-8">
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-gray-400"><span>Package</span><span id="summary-package" class="text-white">2026 Holiday Pack</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Tokens</span><span id="summary-tokens" class="text-white">10,000 VIP</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Token Price</span><span id="summary-token-price" class="text-green-400">€0.50 / VIP</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Subtotal</span><span id="summary-subtotal" class="text-white">€5,000.00</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Payment Fee (<span id="feePercent">1.5</span>%)</span><span id="summary-fee" class="text-white">€75.00</span></div>
+                        <div class="flex justify-between text-lg font-semibold border-t border-white/10 pt-3">
+                            <span class="gold-text">Total</span>
+                            <span class="gold-text"><span id="summary-total-eur">€5,075.00</span><span id="summary-total-usd" class="text-sm text-gray-400 ml-2">($6,039.25)</span></span>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-500"><span>You Pay (approx)</span><span id="summary-crypto">~50,327 POL</span></div>
+                    </div>
+                </div>
+
+                <!-- Bank Transfer -->
+                <div class="mb-8 p-4 bg-surface-light rounded-xl border border-white/5">
+                    <div class="flex items-start space-x-3">
+                        <span class="material-symbols-outlined text-primary">account_balance</span>
+                        <div><p class="text-gray-300 text-sm"><strong>Prefer bank transfer?</strong> Direct SEPA transfers are available for packages. <a href="mailto:julie.meyer@vivapartners.net?subject=VIP%20Package%20Purchase%20-%20SEPA%20Transfer" class="gold-text hover:underline">Contact us</a> for bank details.</p></div>
+                    </div>
+                </div>
+
+                <!-- Buy Button -->
+                <button id="buy-button" onclick="executePurchase()" class="btn-primary w-full py-4 rounded-xl text-lg font-semibold" disabled>Connect Wallet to Purchase</button>
+            </div>
+
+            <!-- Contract Link -->
+            <div class="mt-8 text-center">
+                <a href="https://polygonscan.com/token/0x6860c34db140DB7B589DaDA38859a1d3736bbE3F" target="_blank" class="inline-flex items-center space-x-2 text-gray-400 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">open_in_new</span>
+                    <span>View Contract on Polygonscan</span>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-surface py-12 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-6 md:mb-0">
+                    <img src="/logo.png" alt="Kea Valley" class="h-8 w-auto">
+                    <span class="font-serif text-lg gold-text">Kea Valley</span>
+                </div>
+                <div class="text-gray-500 text-sm">© 2025 Kea Valley. All rights reserved.</div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Overlays -->
+    <div id="connect-overlay" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center">
+        <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4 text-center">
+            <span class="material-symbols-outlined text-5xl gold-text mb-4">account_balance_wallet</span>
+            <h3 class="text-2xl font-serif font-bold mb-4">Connect Your Wallet</h3>
+            <p class="text-gray-400 mb-6">Connect your WalletTwo wallet to purchase packages.</p>
+            <button onclick="redirectToWalletTwo()" class="btn-primary w-full py-3 rounded-xl font-semibold mb-3">Connect with WalletTwo</button>
+            <button onclick="hideConnectOverlay()" class="text-gray-400 hover:text-white transition-colors">Cancel</button>
+        </div>
+    </div>
+
+    <div id="processing-overlay" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center">
+        <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4 text-center">
+            <div class="animate-spin w-16 h-16 border-4 border-primary border-t-transparent rounded-full mx-auto mb-6"></div>
+            <h3 class="text-2xl font-serif font-bold mb-4">Processing Purchase</h3>
+            <p id="processing-message" class="text-gray-400">Verifying your payment...</p>
+        </div>
+    </div>
+
+    <div id="result-overlay" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center">
+        <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4 text-center">
+            <span id="result-icon" class="material-symbols-outlined text-5xl mb-4"></span>
+            <h3 id="result-title" class="text-2xl font-serif font-bold mb-4"></h3>
+            <p id="result-message" class="text-gray-400 mb-6"></p>
+            <div id="result-details" class="text-left mb-6 hidden">
+                <div class="bg-surface-light rounded-xl p-4 space-y-3">
+                    <div class="flex justify-between"><span class="text-gray-400">Package:</span><span id="result-package" class="text-white font-semibold"></span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Tokens:</span><span id="result-tokens" class="text-white font-semibold"></span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">TX:</span><a id="result-tx" href="#" target="_blank" class="gold-text hover:underline truncate ml-2"></a></div>
+                </div>
+            </div>
+            <button onclick="hideResultOverlay()" class="btn-primary w-full py-3 rounded-xl font-semibold">Continue</button>
+        </div>
+    </div>
+
+    <div id="stripe-modal" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center">
+        <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-serif font-bold">Complete Payment</h3>
+                <button onclick="closeStripeModal()" class="text-gray-400 hover:text-white"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="bg-surface-light rounded-xl p-4 mb-6">
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between"><span class="text-gray-400">Package</span><span id="stripe-package" class="text-white">Holiday Pack</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">VIP Tokens</span><span id="stripe-tokens" class="text-white">10,000 VIP</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Subtotal</span><span id="stripe-subtotal" class="text-white">€5,000.00</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Fee (4%)</span><span id="stripe-fee" class="text-white">€200.00</span></div>
+                    <div class="flex justify-between font-semibold border-t border-white/10 pt-2 mt-2"><span class="gold-text">Total</span><span id="stripe-total" class="gold-text">€5,200.00</span></div>
+                </div>
+            </div>
+            <form id="stripe-form">
+                <div id="card-element" class="bg-surface-light p-4 rounded-xl mb-4"></div>
+                <div id="card-errors" class="text-red-500 text-sm mb-4 hidden"></div>
+                <button type="submit" id="stripe-submit" class="btn-primary w-full py-3 rounded-xl font-semibold">Pay €<span id="stripe-amount">5,200.00</span></button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    const CONFIG = {
+        tokenAddress: '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F',
+        usdcAddress: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+        chainId: 137,
+        explorer: 'https://polygonscan.com',
+        walletTwoOrigin: 'https://wallet.wallettwo.com',
+        minterWallet: '0xdD4104A780142EfB9566659f26d3317714a81510',
+        eurUsdRate: 1.19,
+        polPrice: 0.12,
+        presaleEnabled: true,
+        presaleWallet: null,
+        cryptoFeePercent: 1.5,
+        cardFeePercent: 4,
+        stripePublicKey: ''
+    };
+
+    const PACKAGES = {
+        holiday: { name: '2026 Holiday Pack', price: 5000, tokens: 10000, tokenPrice: 0.50 },
+        membership: { name: 'Private Members Club', price: 25000, tokens: 50000, tokenPrice: 0.50 }
+    };
+
+    let currentWallet = null;
+    let selectedPayment = 'POL';
+    let selectedPackage = 'holiday';
+    let balances = { POL: 0, USDC: 0 };
+    let stripe = null;
+    let cardElement = null;
+    let sessionData = null;
+
+    function safeEl(id) { return document.getElementById(id); }
+    function safeText(id, text) { const e = safeEl(id); if (e) e.textContent = text; }
+    function safeClass(id, action, cls) { const e = safeEl(id); if (e) e.classList[action](cls); }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadConfig();
+        checkWalletConnection();
+        checkUrlParams();
+        updateSummary();
+    });
+
+    async function loadConfig() {
+        try {
+            const res = await fetch('/api/presale/config');
+            const config = await res.json();
+            Object.assign(CONFIG, {
+                eurUsdRate: config.eurUsdRate || 1.19,
+                polPrice: config.polPrice || 0.12,
+                presaleEnabled: config.presaleEnabled !== false,
+                presaleWallet: config.presaleWallet || '',
+                stripePublicKey: config.stripePublicKey || ''
+            });
+            initStripe();
+        } catch (e) { console.error('Config error:', e); }
+    }
+
+    function selectPackage(pkg) {
+        selectedPackage = pkg;
+        safeEl('package-holiday')?.classList.toggle('selected', pkg === 'holiday');
+        safeEl('package-membership')?.classList.toggle('selected', pkg === 'membership');
+        safeClass('holiday-check', pkg === 'holiday' ? 'remove' : 'add', 'hidden');
+        safeClass('membership-check', pkg === 'membership' ? 'remove' : 'add', 'hidden');
+        updateSummary();
+    }
+
+    function selectPayment(method) {
+        selectedPayment = method;
+        document.querySelectorAll('.payment-option').forEach(el => el.classList.toggle('selected', el.dataset.method === method));
+        updateBalanceDisplay();
+        updateSummary();
+    }
+
+    function updateSummary() {
+        const pkg = PACKAGES[selectedPackage];
+        const feePercent = selectedPayment === 'Card' ? CONFIG.cardFeePercent : CONFIG.cryptoFeePercent;
+        const feeEUR = pkg.price * (feePercent / 100);
+        const totalEUR = pkg.price + feeEUR;
+        const totalUSD = totalEUR * CONFIG.eurUsdRate;
+        const polAmount = totalUSD / CONFIG.polPrice;
+
+        safeText('summary-package', pkg.name);
+        safeText('summary-tokens', pkg.tokens.toLocaleString() + ' VIP');
+        safeText('summary-token-price', '€' + pkg.tokenPrice.toFixed(2) + ' / VIP');
+        safeText('summary-subtotal', '€' + pkg.price.toLocaleString());
+        safeText('feePercent', feePercent.toString());
+        safeText('summary-fee', '€' + feeEUR.toFixed(2));
+        safeText('summary-total-eur', '€' + totalEUR.toLocaleString());
+        safeText('summary-total-usd', '($' + totalUSD.toLocaleString() + ')');
+        
+        if (selectedPayment === 'POL') safeText('summary-crypto', '~' + polAmount.toLocaleString() + ' POL');
+        else if (selectedPayment === 'USDC') safeText('summary-crypto', '~' + totalUSD.toLocaleString() + ' USDC');
+        else safeText('summary-crypto', '€' + totalEUR.toLocaleString());
+
+        window.currentPurchase = { package: selectedPackage, ...pkg, feeEUR, totalEUR, totalUSD, polAmount };
+        updateBuyButton();
+    }
+
+    function updateBalanceDisplay() {
+        if (selectedPayment === 'POL') safeText('balance-display', balances.POL.toFixed(4) + ' POL');
+        else if (selectedPayment === 'USDC') safeText('balance-display', balances.USDC.toFixed(2) + ' USDC');
+        else safeText('balance-display', '--');
+    }
+
+    function updateBuyButton() {
+        const btn = safeEl('buy-button');
+        if (!btn) return;
+        const p = window.currentPurchase || {};
+        
+        if (!currentWallet) { btn.textContent = 'Connect Wallet to Purchase'; btn.disabled = true; return; }
+        if (!CONFIG.presaleEnabled) { btn.textContent = 'Presale Not Active'; btn.disabled = true; return; }
+        
+        if (selectedPayment === 'Card') { btn.textContent = 'Pay €' + p.totalEUR?.toLocaleString(); btn.disabled = false; }
+        else if (selectedPayment === 'POL') {
+            if (balances.POL >= p.polAmount) { btn.textContent = 'Pay ~' + p.polAmount?.toLocaleString() + ' POL'; btn.disabled = false; }
+            else { btn.textContent = 'Insufficient POL'; btn.disabled = true; }
+        } else if (selectedPayment === 'USDC') {
+            if (balances.USDC >= p.totalUSD) { btn.textContent = 'Pay ~' + p.totalUSD?.toLocaleString() + ' USDC'; btn.disabled = false; }
+            else { btn.textContent = 'Insufficient USDC'; btn.disabled = true; }
+        }
+    }
+
+    function checkWalletConnection() {
+        const params = new URLSearchParams(window.location.search);
+        const walletFromUrl = params.get('wlt') || params.get('wallet') || params.get('address');
+        
+        if (walletFromUrl) {
+            currentWallet = walletFromUrl.toLowerCase();
+            sessionData = { wallet: currentWallet, timestamp: Date.now() };
+            localStorage.setItem('keavalley_profile', JSON.stringify(sessionData));
+            window.history.replaceState({}, document.title, window.location.pathname);
+            showWalletConnected();
+            loadBalances();
+            return;
+        }
+        
+        const profileStr = localStorage.getItem('keavalley_profile') || sessionStorage.getItem('keavalley_profile');
+        if (profileStr) {
+            try {
+                sessionData = JSON.parse(profileStr);
+                const wallet = sessionData.wallet || sessionData.walletAddress || sessionData.address;
+                if (wallet && Date.now() - (sessionData.timestamp || 0) < 86400000) {
+                    currentWallet = wallet.toLowerCase();
+                    showWalletConnected();
+                    loadBalances();
+                    return;
+                }
+            } catch (e) {}
+        }
+        updateBuyButton();
+    }
+
+    function connectWallet() { safeClass('connect-overlay', 'remove', 'hidden'); }
+    function hideConnectOverlay() { safeClass('connect-overlay', 'add', 'hidden'); }
+    
+    function redirectToWalletTwo() {
+        const uri = encodeURIComponent(window.location.origin + '/presale/packages/');
+        window.location.href = CONFIG.walletTwoOrigin + '/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=VIP_PACKAGE&redirect_uri=' + uri;
+    }
+
+    function showWalletConnected() {
+        if (!currentWallet) return;
+        safeClass('connect-wallet-btn', 'add', 'hidden');
+        safeClass('wallet-connected', 'remove', 'hidden');
+        safeText('wallet-address', currentWallet.slice(0, 6) + '...' + currentWallet.slice(-4));
+        safeClass('balance-section', 'remove', 'hidden');
+        updateBuyButton();
+    }
+
+    function disconnectWallet() {
+        localStorage.removeItem('keavalley_profile');
+        sessionStorage.removeItem('keavalley_profile');
+        currentWallet = null;
+        safeClass('connect-wallet-btn', 'remove', 'hidden');
+        safeClass('wallet-connected', 'add', 'hidden');
+        safeClass('balance-section', 'add', 'hidden');
+        updateBuyButton();
+    }
+
+    async function loadBalances() {
+        if (!currentWallet) return;
+        const rpcs = ['https://polygon-bor-rpc.publicnode.com', 'https://polygon.llamarpc.com', 'https://polygon-rpc.com'];
+        for (const rpc of rpcs) {
+            try {
+                const provider = new ethers.JsonRpcProvider(rpc);
+                balances.POL = parseFloat(ethers.formatEther(await provider.getBalance(currentWallet)));
+                const usdc = new ethers.Contract(CONFIG.usdcAddress, ['function balanceOf(address) view returns (uint256)'], provider);
+                balances.USDC = parseFloat(ethers.formatUnits(await usdc.balanceOf(currentWallet), 6));
+                updateBalanceDisplay();
+                updateBuyButton();
+                return;
+            } catch (e) {}
+        }
+    }
+
+    async function executePurchase() {
+        if (!currentWallet) { connectWallet(); return; }
+        const p = window.currentPurchase || {};
+        
+        localStorage.setItem('pendingPurchase', JSON.stringify({ ...p, walletAddress: currentWallet, paymentMethod: selectedPayment, timestamp: Date.now() }));
+        
+        if (selectedPayment === 'Card') {
+            if (!stripe) { showResult('error', 'Error', 'Card payments not configured.'); return; }
+            openStripeCheckout(p);
+        } else {
+            executeCryptoPurchase(p);
+        }
+    }
+
+    function executeCryptoPurchase(p) {
+        if (!CONFIG.presaleWallet) { showResult('error', 'Error', 'Presale wallet not configured.'); return; }
+        const baseUSD = p.price * CONFIG.eurUsdRate;
+        const feeUSD = p.feeEUR * CONFIG.eurUsdRate;
+        const redirectUri = encodeURIComponent(window.location.origin + '/presale/packages/?purchase=complete');
+        let transactions;
+        
+        if (selectedPayment === 'USDC') {
+            transactions = [
+                { type: 'erc20_transfer', token: CONFIG.usdcAddress, to: CONFIG.presaleWallet, amount: Math.floor(baseUSD * 1e6).toString(), description: p.name },
+                { type: 'erc20_transfer', token: CONFIG.usdcAddress, to: CONFIG.minterWallet, amount: Math.ceil(feeUSD * 1e6).toString(), description: 'Fee' }
+            ];
+        } else {
+            const basePOL = baseUSD / CONFIG.polPrice;
+            const feePOL = feeUSD / CONFIG.polPrice;
+            transactions = [
+                { type: 'native_transfer', to: CONFIG.presaleWallet, amount: BigInt(Math.floor(basePOL * 1e18)).toString(), description: p.name },
+                { type: 'native_transfer', to: CONFIG.minterWallet, amount: BigInt(Math.ceil(feePOL * 1e18)).toString(), description: 'Fee' }
+            ];
+        }
+        
+        const txData = encodeURIComponent(JSON.stringify({ chainId: CONFIG.chainId, transactions, metadata: { type: 'package_purchase', package: p.package, tokens: p.tokens } }));
+        window.location.href = CONFIG.walletTwoOrigin + '/transaction/multi?data=' + txData + '&external_id=package-' + Date.now() + '&redirect_uri=' + redirectUri;
+    }
+
+    function initStripe() {
+        if (!CONFIG.stripePublicKey || typeof Stripe === 'undefined') return;
+        stripe = Stripe(CONFIG.stripePublicKey);
+        const elements = stripe.elements();
+        cardElement = elements.create('card', { hidePostalCode: true, style: { base: { color: '#fff', fontFamily: 'Montserrat', fontSize: '16px', '::placeholder': { color: '#6b7280' } } } });
+        cardElement.mount('#card-element');
+        
+        cardElement.on('change', (e) => {
+            const btn = safeEl('stripe-submit');
+            const err = safeEl('card-errors');
+            if (e.error) { if (err) { err.textContent = e.error.message; err.classList.remove('hidden'); } if (btn) btn.disabled = true; }
+            else { if (err) err.classList.add('hidden'); if (btn) btn.disabled = !e.complete; }
+        });
+        
+        safeEl('stripe-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = safeEl('stripe-submit');
+            if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
+            const paymentData = JSON.parse(localStorage.getItem('stripePaymentData') || '{}');
+            if (!paymentData.clientSecret) { showResult('error', 'Error', 'Session expired.'); closeStripeModal(); return; }
+            
+            try {
+                const { error, paymentIntent } = await stripe.confirmCardPayment(paymentData.clientSecret, { payment_method: { card: cardElement } });
+                if (error) { safeEl('card-errors').textContent = error.message; safeEl('card-errors').classList.remove('hidden'); if (btn) { btn.disabled = false; btn.textContent = 'Pay €' + paymentData.totalEUR; } return; }
+                if (paymentIntent.status === 'succeeded') { closeStripeModal(); showProcessing('Payment successful! Minting tokens...'); verifyStripePayment(paymentIntent.id); }
+            } catch (err) { showResult('error', 'Error', err.message); closeStripeModal(); }
+        });
+    }
+
+    function openStripeCheckout(p) {
+        safeText('stripe-package', p.name);
+        safeText('stripe-tokens', p.tokens.toLocaleString() + ' VIP');
+        safeText('stripe-subtotal', '€' + p.price.toLocaleString());
+        safeText('stripe-fee', '€' + p.feeEUR.toFixed(2));
+        safeText('stripe-total', '€' + p.totalEUR.toLocaleString());
+        safeText('stripe-amount', p.totalEUR.toLocaleString());
+        if (cardElement) cardElement.clear();
+        safeClass('stripe-modal', 'remove', 'hidden');
+        createPaymentIntent(p);
+    }
+
+    async function createPaymentIntent(p) {
+        try {
+            const res = await fetch('/api/presale/create-payment-intent', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ walletAddress: currentWallet, tokenAmount: p.tokens, totalEUR: p.totalEUR, purchaseType: 'package_' + p.package })
+            });
+            const data = await res.json();
+            localStorage.setItem('stripePaymentData', JSON.stringify({ clientSecret: data.clientSecret, paymentIntentId: data.paymentIntentId, ...p }));
+        } catch (e) { showResult('error', 'Error', 'Failed to initialize payment.'); closeStripeModal(); }
+    }
+
+    function closeStripeModal() { safeClass('stripe-modal', 'add', 'hidden'); localStorage.removeItem('stripePaymentData'); if (cardElement) cardElement.clear(); }
+
+    async function verifyStripePayment(paymentIntentId) {
+        for (let i = 0; i < 60; i++) {
+            try {
+                const res = await fetch('/api/presale/purchase-status/' + paymentIntentId);
+                const data = await res.json();
+                if (data.status === 'completed') { 
+                    hideProcessing(); 
+                    const p = PACKAGES[selectedPackage];
+                    showResult('success', 'Purchase Complete!', p.name + ' purchased successfully!', { package: p.name, tokens: p.tokens, tx: data.mintTxHash }); 
+                    localStorage.removeItem('pendingPurchase'); 
+                    return; 
+                }
+                if (data.status === 'failed') { hideProcessing(); showResult('error', 'Failed', data.error); return; }
+            } catch (e) {}
+            await new Promise(r => setTimeout(r, 1000));
+        }
+        hideProcessing();
+        showResult('info', 'Processing', 'Payment received. Tokens will arrive shortly.');
+    }
+
+    function checkUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('purchase') === 'complete') {
+            const txHash = params.get('tx_hash');
+            if (txHash) { showProcessing('Verifying payment...'); verifyCryptoPayment(txHash); }
+        }
+    }
+
+    async function verifyCryptoPayment(txHash) {
+        try {
+            const pending = JSON.parse(localStorage.getItem('pendingPurchase') || '{}');
+            const res = await fetch('/api/presale/verify-payment', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ txHash, walletAddress: currentWallet, tokenAmount: pending.tokens, totalEUR: pending.totalEUR, paymentMethod: pending.paymentMethod, purchaseType: 'package_' + pending.package })
+            });
+            const data = await res.json();
+            hideProcessing();
+            if (data.success) { 
+                showResult('success', 'Complete!', pending.name + ' purchased!', { package: pending.name, tokens: pending.tokens, tx: data.mintTxHash || txHash }); 
+                localStorage.removeItem('pendingPurchase'); 
+            }
+            else showResult('error', 'Failed', data.error);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (e) { hideProcessing(); showResult('error', 'Error', e.message); }
+    }
+
+    function showProcessing(msg) { safeText('processing-message', msg); safeClass('processing-overlay', 'remove', 'hidden'); }
+    function hideProcessing() { safeClass('processing-overlay', 'add', 'hidden'); }
+    function showResult(type, title, message, details) {
+        const icon = safeEl('result-icon');
+        if (icon) { icon.textContent = type === 'success' ? 'check_circle' : type === 'info' ? 'info' : 'error'; icon.className = 'material-symbols-outlined text-5xl mb-4 ' + (type === 'success' ? 'text-green-500' : type === 'info' ? 'text-blue-500' : 'text-red-500'); }
+        safeText('result-title', title);
+        safeText('result-message', message);
+        if (details) { safeClass('result-details', 'remove', 'hidden'); safeText('result-package', details.package); safeText('result-tokens', details.tokens?.toLocaleString() + ' VIP'); if (details.tx) { const el = safeEl('result-tx'); if (el) { el.href = CONFIG.explorer + '/tx/' + details.tx; el.textContent = details.tx.slice(0,10) + '...'; } } }
+        else safeClass('result-details', 'add', 'hidden');
+        safeClass('result-overlay', 'remove', 'hidden');
+    }
+    function hideResultOverlay() { safeClass('result-overlay', 'add', 'hidden'); }
+
+    window.addEventListener('message', (e) => {
+        if (!e.origin.includes('wallettwo.com')) return;
+        const wallet = e.data?.wallet || e.data?.wlt || e.data?.address;
+        if (wallet) { currentWallet = wallet.toLowerCase(); sessionData = { wallet: currentWallet, timestamp: Date.now() }; localStorage.setItem('keavalley_profile', JSON.stringify(sessionData)); showWalletConnected(); loadBalances(); }
+    });
+    </script>
+</body>
+</html>
