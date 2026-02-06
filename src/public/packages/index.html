@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promotion Packages - Kea Valley</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#D4AF37',
+                        'primary-dark': '#B8960C',
+                        'primary-light': '#E5C76B',
+                        'background-dark': '#0a0a0a',
+                        'surface': '#121212',
+                        'surface-light': '#1a1a1a'
+                    },
+                    fontFamily: {
+                        'serif': ['Cormorant Garamond', 'serif'],
+                        'sans': ['Montserrat', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0a0a0a; color: #ffffff; font-family: 'Montserrat', sans-serif; }
+        .glass-card { background: rgba(18, 18, 18, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(212, 175, 55, 0.1); }
+        .glass-nav { background-color: rgba(18, 18, 18, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(212, 175, 55, 0.1); }
+        .gold-text { color: #D4AF37; }
+        .gold-gradient { background: linear-gradient(135deg, #D4AF37 0%, #F4E5B0 50%, #D4AF37 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .btn-primary { background: linear-gradient(135deg, #D4AF37 0%, #B8960C 100%); color: #0a0a0a; font-weight: 600; transition: all 0.3s ease; }
+        .btn-primary:hover { background: linear-gradient(135deg, #E5C76B 0%, #D4AF37 100%); transform: translateY(-2px); box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3); }
+        .package-card { transition: all 0.3s ease; }
+        .package-card:hover { transform: translateY(-5px); border-color: rgba(212, 175, 55, 0.5); }
+        .tooltip { position: relative; }
+        .tooltip .tooltip-content { visibility: hidden; opacity: 0; position: absolute; z-index: 50; background: #1a1a1a; border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; padding: 16px; width: 320px; left: 50%; transform: translateX(-50%); top: calc(100% + 10px); transition: all 0.2s ease; }
+        .tooltip:hover .tooltip-content { visibility: visible; opacity: 1; }
+        .badge-urgent { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Navigation -->
+    <header class="glass-nav fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <a href="/" class="flex items-center space-x-3">
+                    <img src="/logo.png" alt="Kea Valley" class="h-10 w-auto">
+                    <span class="font-serif text-xl font-semibold gold-text">Kea Valley</span>
+                </a>
+                <nav class="hidden md:flex items-center space-x-8">
+                    <a href="/" class="text-gray-300 hover:text-primary transition-colors">Home</a>
+                    <a href="/presale" class="text-gray-300 hover:text-primary transition-colors">Token Sale</a>
+                    <a href="/packages" class="gold-text font-semibold">Packages</a>
+                    <a href="/profile" class="text-gray-300 hover:text-primary transition-colors">Profile</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-16">
+                <h1 class="font-serif text-4xl md:text-5xl font-bold gold-gradient mb-4">Exclusive Promotion Packages</h1>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto">Premium membership options for the discerning traveler and investor. Experience the best of Kea Island.</p>
+            </div>
+
+            <!-- Packages Grid -->
+            <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                
+                <!-- Package 1: Holiday Pack -->
+                <div class="glass-card package-card rounded-2xl p-8 flex flex-col">
+                    <div class="flex items-start justify-between mb-6">
+                        <div>
+                            <h2 class="font-serif text-2xl font-bold text-white mb-2">2026 Holiday Pack</h2>
+                            <p class="text-gray-400">Experience Kea Island in style</p>
+                        </div>
+                        <div class="tooltip">
+                            <span class="material-symbols-outlined text-primary cursor-help text-2xl">info</span>
+                            <div class="tooltip-content">
+                                <h4 class="font-semibold text-white mb-2">What's Included</h4>
+                                <p class="text-gray-300 text-sm leading-relaxed">
+                                    Each VIP token represents <span class="gold-text font-semibold">€1 equivalent</span> to be spent on services on Kea Island, including:
+                                </p>
+                                <ul class="text-gray-300 text-sm mt-3 space-y-2">
+                                    <li class="flex items-start">
+                                        <span class="material-symbols-outlined text-primary text-base mr-2">villa</span>
+                                        <span>10-day luxury villa rental</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="material-symbols-outlined text-primary text-base mr-2">restaurant</span>
+                                        <span>Fine dining experiences</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="material-symbols-outlined text-primary text-base mr-2">sailing</span>
+                                        <span>Island excursions & activities</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="material-symbols-outlined text-primary text-base mr-2">spa</span>
+                                        <span>Wellness & spa services</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-grow">
+                        <div class="bg-surface-light rounded-xl p-6 mb-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-gray-400">Package Price</span>
+                                <span class="font-serif text-3xl font-bold gold-text">€5,000</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-400">VIP Tokens Included</span>
+                                <span class="text-white font-semibold text-xl">10,000 VIP</span>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-white/10">
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-500">Effective Token Price</span>
+                                    <span class="text-green-400 font-semibold">€0.50 / VIP (50% off)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center text-gray-300">
+                                <span class="material-symbols-outlined text-green-500 mr-3">check_circle</span>
+                                10,000 VIP tokens (€10,000 value)
+                            </li>
+                            <li class="flex items-center text-gray-300">
+                                <span class="material-symbols-outlined text-green-500 mr-3">check_circle</span>
+                                10-day luxury villa accommodation
+                            </li>
+                            <li class="flex items-center text-gray-300">
+                                <span class="material-symbols-outlined text-green-500 mr-3">check_circle</span>
+                                Island services & experiences
+                            </li>
+                            <li class="flex items-center text-gray-300">
+                                <span class="material-symbols-outlined text-green-500 mr-3">check_circle</span>
+                                Valid throughout 2026
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button onclick="purchasePackage('holiday', 5000, 10000)" class="btn-primary w-full py-4 rounded-xl text-lg font-semibold">
+                        Purchase Holiday Pack
+                    </button>
+                </div>
+
+                <!-- Package 2: Private Members Club -->
+                <div class="glass-card package-card rounded-2xl p-8 flex flex-col relative overflow-hidden">
+                    <!-- Urgent Badge -->
+                    <div class="absolute top-4 right-4">
+                        <span class="badge-urgent text-white text-xs font-bold px-3 py-1 rounded-full">
+                            Ends Feb 28
+                        </span>
+                    </div>
+
+                    <div class="flex items-start justify-between mb-6">
+                        <div>
+                            <h2 class="font-serif text-2xl font-bold text-white mb-2">Private Members Club</h2>
+                            <p class="text-gray-400">Annual Membership</p>
+                        </div>
+                        <div class="tooltip">
+                            <span class="material-symbols-outlined text-primary cursor-help text-2xl">info</span>
+                            <div class="tooltip-content" style="width: 380px; right: 0; left: auto; transform: none;">
+                                <div class="flex items-center mb-3">
+                                    <span class="badge-urgent text-white text-xs font-bold px-2 py-1 rounded-full mr-2">Limited Time</span>
+                                    <span class="text-gray-400 text-sm">Available until end of February</span>
+                                </div>
+                                <h4 class="font-semibold text-white mb-3">Exclusive Benefits</h4>
+                                <ul class="text-gray-300 text-sm space-y-3">
+                                    <li class="flex items-start">
+                                        <span class="material-symbols-outlined text-primary text-base mr-2">villa</span>
+                                        <span><strong class="text-white">Summer Holiday Pack</strong> - 10-day villa + €10,000 in services</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="material-symbols-outlined text-primary text-base mr-2">groups</span>
+                                        <span><strong class="text-white">3 Premium Summits</strong> - Zurich (<a href="https://ftewinter.com" target="_blank" class="gold-text hover:underline">FTE Winter</a>) or Kea (<a href="https://keanaissance.com" target="_blank" class="gold-text hover:underline">Keanaissance</a>)</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="material-symbols-outlined text-primary text-base mr-2">real_estate_agent</span>
+                                        <span><strong class="text-white">Property Purchase Options</strong> - Monthly exclusive opportunities</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="material-symbols-outlined text-primary text-base mr-2">trending_up</span>
+                                        <span><strong class="text-white">Summit Investment Opportunities</strong> - Bi-monthly access</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <span class="material-symbols-outlined text-primary text-base mr-2">business</span>
+                                        <span><strong class="text-white">Corporate Events</strong> - Host on Kea at discounted rates</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-grow">
+                        <div class="bg-surface-light rounded-xl p-6 mb-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-gray-400">Annual Membership</span>
+                                <span class="font-serif text-3xl font-bold gold-text">€25,000</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-400">VIP Tokens Included</span>
+                                <span class="text-white font-semibold text-xl">50,000 VIP</span>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-white/10">
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-500">Effective Token Price</span>
+                                    <span class="text-green-400 font-semibold">€0.50 / VIP (50% off)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center text-gray-300">
+                                <span class="material-symbols-outlined text-green-500 mr-3">check_circle</span>
+                                50,000 VIP tokens (€50,000 value)
+                            </li>
+                            <li class="flex items-center text-gray-300">
+                                <span class="material-symbols-outlined text-green-500 mr-3">check_circle</span>
+                                Summer Holiday Pack included
+                            </li>
+                            <li class="flex items-center text-gray-300">
+                                <span class="material-symbols-outlined text-green-500 mr-3">check_circle</span>
+                                3 Summits (Zurich or Kea)
+                            </li>
+                            <li class="flex items-center text-gray-300">
+                                <span class="material-symbols-outlined text-green-500 mr-3">check_circle</span>
+                                Monthly property options
+                            </li>
+                            <li class="flex items-center text-gray-300">
+                                <span class="material-symbols-outlined text-green-500 mr-3">check_circle</span>
+                                Bi-monthly investment access
+                            </li>
+                            <li class="flex items-center text-gray-300">
+                                <span class="material-symbols-outlined text-green-500 mr-3">check_circle</span>
+                                Discounted corporate events
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button onclick="purchasePackage('membership', 25000, 50000)" class="btn-primary w-full py-4 rounded-xl text-lg font-semibold">
+                        Join Private Members Club
+                    </button>
+                </div>
+            </div>
+
+            <!-- Additional Info -->
+            <div class="mt-16 text-center">
+                <p class="text-gray-500 text-sm mb-4">
+                    All packages include VIP tokens on Polygon network. Tokens can be used for services or held for future value.
+                </p>
+                <div class="flex justify-center space-x-6">
+                    <a href="/presale" class="text-gray-400 hover:text-primary transition-colors flex items-center">
+                        <span class="material-symbols-outlined mr-2">token</span>
+                        Individual Token Sale
+                    </a>
+                    <a href="mailto:julie.meyer@vivapartners.net?subject=Kea%20Valley%20Package%20Inquiry" class="text-gray-400 hover:text-primary transition-colors flex items-center">
+                        <span class="material-symbols-outlined mr-2">mail</span>
+                        Contact Us
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-surface py-12 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-6 md:mb-0">
+                    <img src="/logo.png" alt="Kea Valley" class="h-8 w-auto">
+                    <span class="font-serif text-lg gold-text">Kea Valley</span>
+                </div>
+                <div class="text-gray-500 text-sm">© 2025 Kea Valley. All rights reserved.</div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Purchase Modal -->
+    <div id="purchase-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="modal-title" class="text-xl font-serif font-bold">Purchase Package</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div id="modal-content">
+                <p class="text-gray-400 mb-6">Connect your wallet to complete the purchase.</p>
+                <div class="bg-surface-light rounded-xl p-4 mb-6">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-400">Package</span>
+                        <span id="modal-package" class="text-white font-semibold">-</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-400">Price</span>
+                        <span id="modal-price" class="gold-text font-semibold">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Tokens</span>
+                        <span id="modal-tokens" class="text-white font-semibold">-</span>
+                    </div>
+                </div>
+                <button onclick="redirectToContact()" class="btn-primary w-full py-3 rounded-xl font-semibold mb-3">
+                    Contact to Purchase
+                </button>
+                <p class="text-gray-500 text-xs text-center">
+                    For packages over €5,000, please contact us directly for bank transfer or crypto payment options.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedPackage = null;
+
+        function purchasePackage(type, price, tokens) {
+            selectedPackage = { type, price, tokens };
+            
+            const title = type === 'holiday' ? '2026 Holiday Pack' : 'Private Members Club';
+            document.getElementById('modal-title').textContent = 'Purchase ' + title;
+            document.getElementById('modal-package').textContent = title;
+            document.getElementById('modal-price').textContent = '€' + price.toLocaleString();
+            document.getElementById('modal-tokens').textContent = tokens.toLocaleString() + ' VIP';
+            
+            document.getElementById('purchase-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('purchase-modal').classList.add('hidden');
+            selectedPackage = null;
+        }
+
+        function redirectToContact() {
+            const subject = encodeURIComponent('Kea Valley Package Purchase - ' + (selectedPackage?.type === 'holiday' ? '2026 Holiday Pack' : 'Private Members Club'));
+            const body = encodeURIComponent(
+                'I would like to purchase the ' + (selectedPackage?.type === 'holiday' ? '2026 Holiday Pack (€5,000)' : 'Private Members Club Annual Membership (€25,000)') + '.\n\n' +
+                'Please provide payment details.\n\n' +
+                'My wallet address: [Please provide your Polygon wallet address]'
+            );
+            window.location.href = 'mailto:julie.meyer@vivapartners.net?subject=' + subject + '&body=' + body;
+        }
+
+        // Close modal on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // Close modal on background click
+        document.getElementById('purchase-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'purchase-modal') closeModal();
+        });
+    </script>
+</body>
+</html>
