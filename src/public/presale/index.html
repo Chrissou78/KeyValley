@@ -42,6 +42,34 @@
 </head>
 <script>
     document.addEventListener('DOMContentLoaded', async () => {
+        checkWalletConnection();
+        loadPresaleProgress();
+    });
+
+    function checkWalletConnection() {
+        const profileStr = localStorage.getItem('keavalley_profile') || sessionStorage.getItem('keavalley_profile');
+        if (profileStr) {
+            try {
+                const sessionData = JSON.parse(profileStr);
+                const wallet = sessionData.wallet || sessionData.walletAddress || sessionData.address;
+                if (wallet && Date.now() - (sessionData.timestamp || 0) < 86400000) {
+                    showWalletConnected(wallet.toLowerCase());
+                }
+            } catch (e) {}
+        }
+    }
+
+    function showWalletConnected(wallet) {
+        const connectBtn = document.getElementById('connect-wallet-btn');
+        const walletConnected = document.getElementById('wallet-connected');
+        const walletAddress = document.getElementById('wallet-address');
+        
+        if (connectBtn) connectBtn.classList.add('hidden');
+        if (walletConnected) walletConnected.classList.remove('hidden');
+        if (walletAddress) walletAddress.textContent = wallet.slice(0, 6) + '...' + wallet.slice(-4);
+    }
+
+    async function loadPresaleProgress() {
         try {
             const res = await fetch('/api/presale/config');
             const config = await res.json();
@@ -65,7 +93,7 @@
         } catch (e) {
             console.error('Failed to load presale config:', e);
         }
-    });
+    }
 </script>
 <body class="min-h-screen">
     <header class="glass-nav fixed top-0 left-0 right-0 z-50">
@@ -77,17 +105,17 @@
                 </a>
                 <nav class="hidden md:flex items-center space-x-8">
                     <a href="/" class="text-gray-300 hover:text-primary transition-colors">Home</a>
-                    <a href="/presale/" class="text-gray-300 hover:text-primary transition-colors">Presale</a>
+                    <a href="/presale/" class="gold-text font-semibold">Presale</a>
                     <a href="/claim" class="text-gray-300 hover:text-primary transition-colors">Claim Tokens</a>
                     <a href="/profile" class="text-gray-300 hover:text-primary transition-colors">Profile</a>
                 </nav>
                 <div id="wallet-section">
-                    <button id="connect-wallet-btn" onclick="connectWallet()" class="btn-primary px-6 py-2 rounded-lg text-sm">Connect Wallet</button>
+                    <a href="/profile" id="connect-wallet-btn" class="btn-primary px-6 py-2 rounded-lg text-sm">Connect Wallet</a>
                     <div id="wallet-connected" class="hidden flex items-center space-x-3">
                         <span id="wallet-address" class="text-gray-300 text-sm"></span>
-                        <button onclick="disconnectWallet()" class="text-gray-400 hover:text-primary transition-colors">
-                            <span class="material-symbols-outlined">logout</span>
-                        </button>
+                        <a href="/profile" class="text-gray-400 hover:text-primary transition-colors">
+                            <span class="material-symbols-outlined">account_circle</span>
+                        </a>
                     </div>
                 </div>
             </div>
