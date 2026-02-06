@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -49,9 +49,7 @@
             backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(212, 175, 55, 0.1);
         }
-        .gold-text {
-            color: #D4AF37;
-        }
+        .gold-text { color: #D4AF37; }
         .gold-gradient {
             background: linear-gradient(135deg, #D4AF37 0%, #F4E5B0 50%, #D4AF37 100%);
             -webkit-background-clip: text;
@@ -69,10 +67,7 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3);
         }
-        .btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
         .input-field {
             background-color: #1a1a1a !important;
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -84,7 +79,6 @@
             outline: none;
             box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
         }
-        /* Fix autofill background */
         .input-field:-webkit-autofill,
         .input-field:-webkit-autofill:hover,
         .input-field:-webkit-autofill:focus,
@@ -92,21 +86,6 @@
             -webkit-box-shadow: 0 0 0 30px #1a1a1a inset !important;
             -webkit-text-fill-color: #ffffff !important;
             caret-color: #ffffff !important;
-            transition: background-color 5000s ease-in-out 0s;
-        }
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover,
-        input:-webkit-autofill:focus,
-        input:-webkit-autofill:active {
-            -webkit-box-shadow: 0 0 0 30px #1a1a1a inset !important;
-            -webkit-text-fill-color: #ffffff !important;
-            caret-color: #ffffff !important;
-            transition: background-color 5000s ease-in-out 0s;
-        }
-        /* Force input background */
-        input[type="number"] {
-            background-color: #1a1a1a !important;
-            color: #ffffff !important;
         }
         .payment-option {
             background: rgba(26, 26, 26, 0.6);
@@ -114,9 +93,7 @@
             transition: all 0.3s ease;
             cursor: pointer;
         }
-        .payment-option:hover {
-            border-color: rgba(212, 175, 55, 0.5);
-        }
+        .payment-option:hover { border-color: rgba(212, 175, 55, 0.5); }
         .payment-option.selected {
             border-color: #D4AF37;
             background: rgba(212, 175, 55, 0.1);
@@ -129,9 +106,7 @@
             background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(4px);
         }
-        .animate-spin {
-            animation: spin 1s linear infinite;
-        }
+        .animate-spin { animation: spin 1s linear infinite; }
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -143,28 +118,13 @@
             background: rgba(212, 175, 55, 0.2);
             color: #D4AF37;
         }
-        
-        /* Stripe card element dark theme */
-        #card-element {
-            background-color: #1a1a1a !important;
-        }
-        .StripeElement {
-            background-color: #1a1a1a !important;
-        }
-        .StripeElement--focus {
-            border-color: #D4AF37;
-            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
-        }
-        .StripeElement--invalid {
-            border-color: #ef4444;
-        }
-        .StripeElement--complete {
-            border-color: #D4AF37;
-        }
+        #card-element, .StripeElement { background-color: #1a1a1a !important; }
+        .StripeElement--focus { border-color: #D4AF37; box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2); }
+        .StripeElement--invalid { border-color: #ef4444; }
+        .StripeElement--complete { border-color: #D4AF37; }
     </style>
 </head>
 <body class="min-h-screen">
-    <!-- Header -->
     <header class="glass-nav fixed top-0 left-0 right-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
@@ -192,10 +152,8 @@
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div class="max-w-4xl mx-auto">
-            <!-- Presale Header -->
             <div class="text-center mb-12">
                 <h1 class="font-serif text-4xl md:text-5xl font-bold gold-gradient mb-4">VIP Token Presale</h1>
                 <p class="text-gray-400 text-lg max-w-2xl mx-auto">
@@ -203,7 +161,6 @@
                 </p>
             </div>
 
-            <!-- Progress Section -->
             <div class="glass-card rounded-2xl p-6 mb-8">
                 <div class="flex justify-between items-center mb-4">
                     <span class="text-gray-400">Presale Progress</span>
@@ -217,13 +174,11 @@
                     <span id="progress-target" class="text-gray-500">€500,000</span>
                 </div>
                 <div class="text-center mt-3 text-xs text-gray-500">
-                    <span id="tokens-info"><span id="tokens-sold">0</span> VIP tokens minted • Token Price: <span class="gold-text">€1.00</span></span>
+                    <span id="tokens-sold">0</span> VIP tokens minted • Token Price: <span class="gold-text">€1.00</span>
                 </div>
             </div>
 
-            <!-- Purchase Card -->
             <div class="glass-card rounded-2xl p-8">
-                <!-- EUR Amount Input -->
                 <div class="mb-8">
                     <div class="flex justify-between items-center mb-3">
                         <label class="block text-gray-300 text-sm font-medium">Investment Amount</label>
@@ -233,25 +188,20 @@
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 font-semibold pointer-events-none">€</span>
                         <input type="number" id="eur-amount" min="10" step="1" value="100" 
                             class="input-field w-full pl-10 pr-20 py-4 rounded-xl text-lg"
-                            oninput="updateTotals()"
-                            style="background-color: #1a1a1a !important; color: #ffffff !important;">
+                            oninput="updateTotals()">
                         <span class="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-semibold pointer-events-none">EUR</span>
                     </div>
                     <div class="flex justify-between mt-2">
-                        <p class="text-gray-500 text-sm">Min: €<span id="min-purchase-display">-</span></p>
-                        <p class="gold-text text-sm font-medium">= <span id="token-amount-display">-</span> VIP</p>
+                        <p class="text-gray-500 text-sm">Min: €<span id="min-purchase-display">10</span></p>
+                        <p class="gold-text text-sm font-medium">= <span id="token-amount-display">100</span> VIP</p>
                     </div>
                 </div>
 
-                <!-- Bonus Tiers Info -->
                 <div id="bonus-tiers-info" class="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl hidden">
                     <h4 class="text-green-400 font-semibold text-sm mb-2">🎁 Volume Bonuses</h4>
-                    <div id="bonus-tiers-list" class="text-sm text-white/70 space-y-1">
-                        <!-- Filled by JS -->
-                    </div>
+                    <div id="bonus-tiers-list" class="text-sm text-white/70 space-y-1"></div>
                 </div>
 
-                <!-- Payment Method Selection -->
                 <div class="mb-8">
                     <label class="block text-gray-300 text-sm font-medium mb-3">Payment Method</label>
                     <div class="grid grid-cols-3 gap-4">
@@ -276,7 +226,6 @@
                     </div>
                 </div>
 
-                <!-- Balance Display -->
                 <div id="balance-section" class="mb-8 hidden">
                     <div class="flex items-center justify-between p-4 bg-surface-light rounded-xl">
                         <span class="text-gray-400">Your Balance:</span>
@@ -284,7 +233,6 @@
                     </div>
                 </div>
 
-                <!-- Total Section - All in EUR with USD equivalent -->
                 <div class="border-t border-white/10 pt-6 mb-8">
                     <div class="space-y-3">
                         <div class="flex justify-between text-gray-400">
@@ -312,12 +260,11 @@
                         </div>
                         <div class="flex justify-between text-sm text-gray-500">
                             <span>You Pay (approx)</span>
-                            <span id="cryptoEquivalent">~1006.6 POL</span>
+                            <span id="cryptoEquivalent">~846.5 POL</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- SEPA Info -->
                 <div class="mb-8 p-4 bg-surface-light rounded-xl border border-white/5">
                     <div class="flex items-start space-x-3">
                         <span class="material-symbols-outlined text-primary">account_balance</span>
@@ -330,12 +277,10 @@
                     </div>
                 </div>
 
-                <!-- Buy Button -->
                 <button id="buy-button" onclick="executePurchase()" class="btn-primary w-full py-4 rounded-xl text-lg font-semibold" disabled>
                     Connect Wallet to Purchase
                 </button>
 
-                <!-- Referral Code Section -->
                 <div id="referral-section" class="mt-6 hidden">
                     <div class="flex items-center space-x-2 p-3 bg-surface-light rounded-xl">
                         <span class="material-symbols-outlined text-primary">card_giftcard</span>
@@ -345,7 +290,6 @@
                 </div>
             </div>
 
-            <!-- Token Info -->
             <div class="mt-8 text-center">
                 <a href="https://polygonscan.com/token/0x6860c34db140DB7B589DaDA38859a1d3736bbE3F" target="_blank" 
                     class="inline-flex items-center space-x-2 text-gray-400 hover:text-primary transition-colors">
@@ -356,7 +300,6 @@
         </div>
     </main>
 
-    <!-- Footer -->
     <footer class="bg-surface py-12 md:py-16 border-t border-white/5">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row justify-between items-center">
@@ -364,14 +307,12 @@
                     <img src="/logo.png" alt="Kea Valley" class="h-8 w-auto">
                     <span class="font-serif text-lg gold-text">Kea Valley</span>
                 </div>
-                <div class="text-gray-500 text-sm">
-                    © 2025 Kea Valley. All rights reserved.
-                </div>
+                <div class="text-gray-500 text-sm">© 2025 Kea Valley. All rights reserved.</div>
             </div>
         </div>
     </footer>
 
-    <!-- Connect Wallet Overlay -->
+    <!-- Overlays -->
     <div id="connect-overlay" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center">
         <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4 text-center">
             <span class="material-symbols-outlined text-5xl gold-text mb-4">account_balance_wallet</span>
@@ -380,25 +321,19 @@
             <button onclick="redirectToWalletTwo()" class="btn-primary w-full py-3 rounded-xl font-semibold mb-3">
                 Connect with WalletTwo
             </button>
-            <button onclick="hideConnectOverlay()" class="text-gray-400 hover:text-white transition-colors">
-                Cancel
-            </button>
+            <button onclick="hideConnectOverlay()" class="text-gray-400 hover:text-white transition-colors">Cancel</button>
         </div>
     </div>
 
-    <!-- Presale Inactive Overlay -->
     <div id="presale-inactive-overlay" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center">
         <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4 text-center">
             <span class="material-symbols-outlined text-5xl text-yellow-500 mb-4">schedule</span>
             <h3 class="text-2xl font-serif font-bold mb-4">Presale Not Active</h3>
-            <p class="text-gray-400 mb-6">The presale is currently not active. Please check back later or follow our announcements.</p>
-            <a href="/" class="btn-primary inline-block px-8 py-3 rounded-xl font-semibold">
-                Return Home
-            </a>
+            <p class="text-gray-400 mb-6">The presale is currently not active. Please check back later.</p>
+            <a href="/" class="btn-primary inline-block px-8 py-3 rounded-xl font-semibold">Return Home</a>
         </div>
     </div>
 
-    <!-- Processing Overlay -->
     <div id="processing-overlay" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center">
         <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4 text-center">
             <div class="animate-spin w-16 h-16 border-4 border-primary border-t-transparent rounded-full mx-auto mb-6"></div>
@@ -407,7 +342,6 @@
         </div>
     </div>
 
-    <!-- Result Overlay -->
     <div id="result-overlay" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center">
         <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4 text-center">
             <span id="result-icon" class="material-symbols-outlined text-5xl mb-4"></span>
@@ -429,13 +363,10 @@
                     </div>
                 </div>
             </div>
-            <button onclick="hideResultOverlay()" class="btn-primary w-full py-3 rounded-xl font-semibold">
-                Continue
-            </button>
+            <button onclick="hideResultOverlay()" class="btn-primary w-full py-3 rounded-xl font-semibold">Continue</button>
         </div>
     </div>
 
-    <!-- Stripe Modal -->
     <div id="stripe-modal" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center">
         <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4">
             <div class="flex justify-between items-center mb-6">
@@ -444,8 +375,6 @@
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
-            
-            <!-- Order Summary -->
             <div class="bg-surface-light rounded-xl p-4 mb-6">
                 <h4 class="text-sm text-gray-400 mb-3">Order Summary</h4>
                 <div class="space-y-2 text-sm">
@@ -467,9 +396,8 @@
                     </div>
                 </div>
             </div>
-
             <form id="stripe-form">
-                <div id="card-element" class="input-field p-4 rounded-xl mb-4" style="background-color: #1a1a1a;"></div>
+                <div id="card-element" class="input-field p-4 rounded-xl mb-4"></div>
                 <div id="card-errors" class="text-red-500 text-sm mb-4 hidden"></div>
                 <button type="submit" id="stripe-submit" class="btn-primary w-full py-3 rounded-xl font-semibold">
                     Pay €<span id="stripe-amount">104.00</span>
@@ -479,9 +407,6 @@
     </div>
 
     <script>
-    // ============================================
-    // CONFIGURATION
-    // ============================================
     const CONFIG = {
         tokenAddress: '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F',
         tokenName: 'Kea Valley VIP',
@@ -494,7 +419,6 @@
         usdcDecimals: 6,
         walletTwoOrigin: 'https://wallet.wallettwo.com',
         minterWallet: '0xdD4104A780142EfB9566659f26d3317714a81510',
-        // Presale defaults (overridden by API)
         totalTokens: 1000000,
         tokensSold: 0,
         tokenPriceEUR: 1.00,
@@ -504,10 +428,8 @@
         presaleWallet: null,
         minPurchase: 10,
         maxPurchase: 100000,
-        // Fees
         cryptoFeePercent: 1.5,
         cardFeePercent: 4,
-        // Bonus tiers
         bonusTiers: []
     };
 
@@ -518,9 +440,6 @@
     let cardElement = null;
     let sessionData = null;
 
-    // ============================================
-    // INITIALIZATION
-    // ============================================
     document.addEventListener('DOMContentLoaded', async () => {
         await loadPresaleConfig();
         checkWalletConnection();
@@ -529,7 +448,6 @@
 
     async function loadPresaleConfig() {
         try {
-            // Load config and bonus tiers in parallel
             const [configRes, tiersRes] = await Promise.all([
                 fetch('/api/presale/config'),
                 fetch('/api/presale/bonus-tiers').catch(() => ({ json: () => ({ tiers: [] }) }))
@@ -538,7 +456,6 @@
             const config = await configRes.json();
             const tiersData = await tiersRes.json();
             
-            // Update CONFIG with DB values
             CONFIG.totalTokens = config.totalTokens || 1000000;
             CONFIG.tokensSold = config.tokensSold || 0;
             CONFIG.tokenPriceEUR = config.tokenPrice || 1.00;
@@ -554,59 +471,42 @@
             
             console.log('✅ Config loaded:', CONFIG);
             
-            // Update UI
             updateProgress();
             updateTotals();
             displayBonusTiers();
             initStripe();
             
-            // Handle presale disabled
             if (!CONFIG.presaleEnabled) {
                 document.getElementById('presale-inactive-overlay')?.classList.remove('hidden');
             }
-            
         } catch (error) {
             console.error('❌ Failed to load presale config:', error);
         }
     }
 
-    function closeStripeModal() {
-        document.getElementById('stripe-modal').classList.add('hidden');
+    function updateProgress() {
+        const eurRaised = CONFIG.eurRaised || 0;
+        const targetEUR = CONFIG.saleTargetEUR || 500000;
+        const progressPct = targetEUR > 0 ? ((eurRaised / targetEUR) * 100) : 0;
         
-        // Clear any stored payment data
-        localStorage.removeItem('stripePaymentData');
-        
-        // Reset card element if exists
-        if (cardElement) {
-            cardElement.clear();
-        }
-        
-        // Reset error display
-        const errorDisplay = document.getElementById('card-errors');
-        if (errorDisplay) {
-            errorDisplay.textContent = '';
-            errorDisplay.classList.add('hidden');
-        }
-        
-        // Reset submit button
-        const submitBtn = document.getElementById('stripe-submit');
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        }
+        const el = (id) => document.getElementById(id);
+        if (el('progress-bar')) el('progress-bar').style.width = Math.min(progressPct, 100) + '%';
+        if (el('progress-pct')) el('progress-pct').textContent = progressPct.toFixed(2) + '%';
+        if (el('progress-raised')) el('progress-raised').textContent = '€' + eurRaised.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        if (el('progress-target')) el('progress-target').textContent = '€' + targetEUR.toLocaleString();
+        if (el('tokens-sold')) el('tokens-sold').textContent = (CONFIG.tokensSold || 0).toLocaleString();
     }
 
     function displayBonusTiers() {
         const container = document.getElementById('bonus-tiers-info');
         const list = document.getElementById('bonus-tiers-list');
-        
         if (!container || !list) return;
         
         if (CONFIG.bonusTiers && CONFIG.bonusTiers.length > 0) {
             container.classList.remove('hidden');
             list.innerHTML = CONFIG.bonusTiers
                 .sort((a, b) => parseFloat(a.min_eur) - parseFloat(b.min_eur))
-                .map(t => `<div>€${parseFloat(t.min_eur).toLocaleString()}+ → <span class="text-green-400">+${t.bonus_percent}% bonus</span></div>`)
+                .map(t => '<div>€' + parseFloat(t.min_eur).toLocaleString() + '+ → <span class="text-green-400">+' + t.bonus_percent + '% bonus</span></div>')
                 .join('');
         } else {
             container.classList.add('hidden');
@@ -615,7 +515,7 @@
 
     function initStripe() {
         if (!CONFIG.stripePublicKey) {
-            console.log('⚠️ Stripe key not loaded yet');
+            console.log('⚠️ Stripe not configured');
             return;
         }
         
@@ -624,24 +524,20 @@
             const elements = stripe.elements();
             
             const cardContainer = document.getElementById('card-element');
-            if (cardContainer) {
-                cardContainer.innerHTML = '';
-            }
+            if (cardContainer) cardContainer.innerHTML = '';
             
             cardElement = elements.create('card', {
                 hidePostalCode: true,
-                disableLink: true,
                 style: {
                     base: {
                         color: '#ffffff',
                         fontFamily: 'Montserrat, sans-serif',
                         fontSize: '16px',
-                        backgroundColor: '#1a1a1a',
                         '::placeholder': { color: '#6b7280' },
                         iconColor: '#D4AF37'
                     },
-                    invalid: { color: '#ef4444', iconColor: '#ef4444' },
-                    complete: { color: '#D4AF37', iconColor: '#D4AF37' }
+                    invalid: { color: '#ef4444' },
+                    complete: { color: '#D4AF37' }
                 }
             });
             cardElement.mount('#card-element');
@@ -653,75 +549,44 @@
             }
             
             cardElement.on('change', (event) => {
-                const submitBtn = document.getElementById('stripe-submit');
-                const errorDisplay = document.getElementById('card-errors');
+                const btn = document.getElementById('stripe-submit');
+                const errEl = document.getElementById('card-errors');
                 
                 if (event.error) {
-                    if (errorDisplay) {
-                        errorDisplay.textContent = event.error.message;
-                        errorDisplay.classList.remove('hidden');
-                    }
-                    if (submitBtn) {
-                        submitBtn.disabled = true;
-                        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                    }
+                    if (errEl) { errEl.textContent = event.error.message; errEl.classList.remove('hidden'); }
+                    if (btn) { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
                 } else {
-                    if (errorDisplay) {
-                        errorDisplay.textContent = '';
-                        errorDisplay.classList.add('hidden');
-                    }
-                    if (submitBtn) {
-                        if (event.complete) {
-                            submitBtn.disabled = false;
-                            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                        } else {
-                            submitBtn.disabled = true;
-                            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                        }
+                    if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
+                    if (btn) {
+                        if (event.complete) { btn.disabled = false; btn.classList.remove('opacity-50', 'cursor-not-allowed'); }
+                        else { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
                     }
                 }
             });
-            
-            // ✅ MOVE THE FORM HANDLER HERE - inside initStripe()
+
             const stripeForm = document.getElementById('stripe-form');
             if (stripeForm) {
                 stripeForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
-                    
-                    const submitBtn = document.getElementById('stripe-submit');
-                    if (submitBtn) {
-                        submitBtn.disabled = true;
-                        submitBtn.textContent = 'Processing...';
-                    }
+                    const btn = document.getElementById('stripe-submit');
+                    if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
                     
                     const paymentData = JSON.parse(localStorage.getItem('stripePaymentData') || '{}');
-                    
                     if (!paymentData.clientSecret) {
-                        showResult('error', 'Payment Error', 'Payment session expired. Please try again.');
+                        showResult('error', 'Payment Error', 'Payment session expired.');
                         closeStripeModal();
                         return;
                     }
                     
                     try {
                         const { error, paymentIntent } = await stripe.confirmCardPayment(paymentData.clientSecret, {
-                            payment_method: {
-                                card: cardElement,
-                                billing_details: {
-                                    email: sessionData?.email
-                                }
-                            }
+                            payment_method: { card: cardElement, billing_details: { email: sessionData?.email } }
                         });
                         
                         if (error) {
-                            const errorDisplay = document.getElementById('card-errors');
-                            if (errorDisplay) {
-                                errorDisplay.textContent = error.message;
-                                errorDisplay.classList.remove('hidden');
-                            }
-                            if (submitBtn) {
-                                submitBtn.disabled = false;
-                                submitBtn.textContent = `Pay €${document.getElementById('stripe-amount')?.textContent || '0.00'}`;
-                            }
+                            const errEl = document.getElementById('card-errors');
+                            if (errEl) { errEl.textContent = error.message; errEl.classList.remove('hidden'); }
+                            if (btn) { btn.disabled = false; btn.textContent = 'Pay €' + (document.getElementById('stripe-amount')?.textContent || '0'); }
                             return;
                         }
                         
@@ -730,7 +595,6 @@
                             showProcessing('Payment successful! Minting your tokens...');
                             verifyStripePayment(paymentIntent.id, paymentData.tokenAmount);
                         }
-                        
                     } catch (err) {
                         console.error('Stripe error:', err);
                         showResult('error', 'Payment Failed', err.message);
@@ -738,69 +602,49 @@
                     }
                 });
             }
-            
             console.log('✅ Stripe initialized');
         }
     }
 
+    function closeStripeModal() {
+        const modal = document.getElementById('stripe-modal');
+        if (modal) modal.classList.add('hidden');
+        localStorage.removeItem('stripePaymentData');
+        if (cardElement) { try { cardElement.clear(); } catch(e) {} }
+        const errEl = document.getElementById('card-errors');
+        if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
+        const btn = document.getElementById('stripe-submit');
+        if (btn) { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
+    }
 
-    // ============================================
-    // WALLET CONNECTION
-    // ============================================
     function checkWalletConnection() {
         console.log('🔍 Checking wallet connection...');
         
-        // Check URL params first (from WalletTwo redirect)
         const params = new URLSearchParams(window.location.search);
         const walletFromUrl = params.get('wlt') || params.get('wallet') || params.get('address');
         
         if (walletFromUrl) {
             console.log('✅ Found wallet in URL:', walletFromUrl);
             currentWallet = walletFromUrl.toLowerCase();
-            
-            sessionData = {
-                wallet: currentWallet,
-                userId: params.get('usr') || params.get('user'),
-                timestamp: Date.now()
-            };
-            
+            sessionData = { wallet: currentWallet, userId: params.get('usr'), timestamp: Date.now() };
             localStorage.setItem('keavalley_profile', JSON.stringify(sessionData));
             sessionStorage.setItem('keavalley_profile', JSON.stringify(sessionData));
-            
-            // Clean URL but keep other params
-            const newUrl = new URL(window.location.href);
-            newUrl.searchParams.delete('wlt');
-            newUrl.searchParams.delete('wallet');
-            newUrl.searchParams.delete('address');
-            newUrl.searchParams.delete('usr');
-            newUrl.searchParams.delete('user');
-            newUrl.searchParams.delete('code');
-            newUrl.searchParams.delete('signature');
-            window.history.replaceState({}, document.title, newUrl.pathname + newUrl.search);
-            
+            window.history.replaceState({}, document.title, window.location.pathname);
             showWalletConnected();
             loadBalances();
             checkReferralCode();
             return;
         }
         
-        // Check storage
-        let profile = sessionStorage.getItem('keavalley_profile') || localStorage.getItem('keavalley_profile');
-        
-        if (profile) {
+        const profileStr = sessionStorage.getItem('keavalley_profile') || localStorage.getItem('keavalley_profile');
+        if (profileStr) {
             try {
-                sessionData = JSON.parse(profile);
-                console.log('📦 Session data found:', sessionData);
-                
-                const wallet = sessionData.wallet 
-                    || sessionData.walletAddress 
-                    || sessionData.address 
-                    || sessionData.wallet_address
-                    || sessionData.wlt;
-                
+                sessionData = JSON.parse(profileStr);
+                console.log('📦 Session data:', sessionData);
+                const wallet = sessionData.wallet || sessionData.walletAddress || sessionData.address || sessionData.wlt;
                 if (wallet) {
                     const age = Date.now() - (sessionData.timestamp || 0);
-                    if (age > 24 * 60 * 60 * 1000) {
+                    if (age > 86400000) {
                         console.log('⚠️ Session expired');
                         localStorage.removeItem('keavalley_profile');
                         sessionStorage.removeItem('keavalley_profile');
@@ -808,18 +652,17 @@
                         updateBuyButton();
                         return;
                     }
-                    
-                    // ✅ SET currentWallet BEFORE calling showWalletConnected
                     currentWallet = wallet.toLowerCase();
-                    console.log('✅ currentWallet set to:', currentWallet);
-                    
+                    console.log('✅ Wallet from storage:', currentWallet);
                     showWalletConnected();
                     loadBalances();
                     checkReferralCode();
                     return;
                 }
             } catch (e) {
-                console.error('❌ Failed to parse session:', e);
+                console.error('❌ Parse error:', e);
+                localStorage.removeItem('keavalley_profile');
+                sessionStorage.removeItem('keavalley_profile');
             }
         }
         
@@ -828,63 +671,27 @@
         updateBuyButton();
     }
 
-    // Listen for WalletTwo messages
-    window.addEventListener('message', (event) => {
-        if (!event.origin.includes('wallettwo.com')) return;
-        
-        const data = event.data;
-        console.log('📨 WalletTwo message:', data);
-        
-        if (data && (data.type === 'wallet_login' || data.event === 'wallet_login')) {
-            const wallet = data.wallet || data.wlt || data.address;
-            
-            if (wallet) {
-                currentWallet = wallet.toLowerCase();
-                
-                sessionData = {
-                    wallet: currentWallet,
-                    userId: data.user || data.usr,
-                    email: data.email,
-                    name: data.name,
-                    timestamp: Date.now()
-                };
-                
-                localStorage.setItem('keavalley_profile', JSON.stringify(sessionData));
-                sessionStorage.setItem('keavalley_profile', JSON.stringify(sessionData));
-                
-                showWalletConnected();
-                loadBalances();
-                checkReferralCode();
-            }
-        }
-    });
-
     function connectWallet() {
-        document.getElementById('connect-overlay').classList.remove('hidden');
+        document.getElementById('connect-overlay')?.classList.remove('hidden');
     }
 
     function hideConnectOverlay() {
-        document.getElementById('connect-overlay').classList.add('hidden');
+        document.getElementById('connect-overlay')?.classList.add('hidden');
     }
 
     function redirectToWalletTwo() {
         const redirectUri = encodeURIComponent(window.location.origin + '/presale');
-        window.location.href = `${CONFIG.walletTwoOrigin}/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=VIP_PRESALE&redirect_uri=${redirectUri}`;
+        window.location.href = CONFIG.walletTwoOrigin + '/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=VIP_PRESALE&redirect_uri=' + redirectUri;
     }
 
     function showWalletConnected() {
-        console.log('showWalletConnected called, currentWallet:', currentWallet);
-        
-        document.getElementById('connect-wallet-btn').classList.add('hidden');
-        document.getElementById('wallet-connected').classList.remove('hidden');
-        document.getElementById('wallet-address').textContent = 
-            currentWallet.slice(0, 6) + '...' + currentWallet.slice(-4);
-        document.getElementById('balance-section').classList.remove('hidden');
-        
-        // Force update buy button after a small delay to ensure state is set
-        setTimeout(() => {
-            updateBuyButton();
-        }, 100);
+        if (!currentWallet) return;
+        const el = (id) => document.getElementById(id);
+        if (el('connect-wallet-btn')) el('connect-wallet-btn').classList.add('hidden');
+        if (el('wallet-connected')) el('wallet-connected').classList.remove('hidden');
+        if (el('wallet-address')) el('wallet-address').textContent = currentWallet.slice(0, 6) + '...' + currentWallet.slice(-4);
+        if (el('balance-section')) el('balance-section').classList.remove('hidden');
+        updateBuyButton();
     }
 
     function disconnectWallet() {
@@ -892,70 +699,48 @@
         localStorage.removeItem('keavalley_profile');
         currentWallet = null;
         sessionData = null;
-        document.getElementById('connect-wallet-btn').classList.remove('hidden');
-        document.getElementById('wallet-connected').classList.add('hidden');
-        document.getElementById('balance-section').classList.add('hidden');
+        const el = (id) => document.getElementById(id);
+        if (el('connect-wallet-btn')) el('connect-wallet-btn').classList.remove('hidden');
+        if (el('wallet-connected')) el('wallet-connected').classList.add('hidden');
+        if (el('balance-section')) el('balance-section').classList.add('hidden');
         updateBuyButton();
     }
 
     async function loadBalances() {
         if (!currentWallet) return;
-
-        const rpcUrls = [
-            'https://polygon-bor-rpc.publicnode.com',
-            'https://polygon.llamarpc.com',
-            'https://rpc.ankr.com/polygon',
-            'https://polygon-rpc.com'
-        ];
-
-        for (const rpcUrl of rpcUrls) {
+        const rpcs = ['https://polygon-bor-rpc.publicnode.com', 'https://polygon.llamarpc.com', 'https://polygon-rpc.com'];
+        
+        for (const rpc of rpcs) {
             try {
-                console.log(`🔄 Trying RPC: ${rpcUrl}`);
-                const provider = new ethers.JsonRpcProvider(rpcUrl);
+                const provider = new ethers.JsonRpcProvider(rpc);
+                const polBal = await provider.getBalance(currentWallet);
+                balances.POL = parseFloat(ethers.formatEther(polBal));
                 
-                const polBalance = await provider.getBalance(currentWallet);
-                balances.POL = parseFloat(ethers.formatEther(polBalance));
-
-                const usdcContract = new ethers.Contract(
-                    CONFIG.usdcAddress,
-                    ['function balanceOf(address) view returns (uint256)'],
-                    provider
-                );
-                const usdcBalance = await usdcContract.balanceOf(currentWallet);
-                balances.USDC = parseFloat(ethers.formatUnits(usdcBalance, CONFIG.usdcDecimals));
-
-                console.log(`✅ Balances - POL: ${balances.POL}, USDC: ${balances.USDC}`);
+                const usdc = new ethers.Contract(CONFIG.usdcAddress, ['function balanceOf(address) view returns (uint256)'], provider);
+                const usdcBal = await usdc.balanceOf(currentWallet);
+                balances.USDC = parseFloat(ethers.formatUnits(usdcBal, 6));
+                
+                console.log('✅ Balances:', balances);
                 updateBalanceDisplay();
                 updateBuyButton();
                 return;
-                
-            } catch (error) {
-                console.warn(`⚠️ RPC ${rpcUrl} failed:`, error.message);
-                continue;
+            } catch (e) {
+                console.warn('RPC failed:', rpc);
             }
         }
-        
-        console.error('❌ All RPCs failed');
-        balances.POL = 0;
-        balances.USDC = 0;
+        balances = { POL: 0, USDC: 0 };
         updateBalanceDisplay();
         updateBuyButton();
     }
 
     function updateBalanceDisplay() {
-        const display = document.getElementById('balance-display');
-        if (selectedPayment === 'POL') {
-            display.textContent = `${balances.POL.toFixed(4)} POL`;
-        } else if (selectedPayment === 'USDC') {
-            display.textContent = `${balances.USDC.toFixed(2)} USDC`;
-        } else {
-            display.textContent = '--';
-        }
+        const el = document.getElementById('balance-display');
+        if (!el) return;
+        if (selectedPayment === 'POL') el.textContent = balances.POL.toFixed(4) + ' POL';
+        else if (selectedPayment === 'USDC') el.textContent = balances.USDC.toFixed(2) + ' USDC';
+        else el.textContent = '--';
     }
 
-    // ============================================
-    // PAYMENT SELECTION
-    // ============================================
     function selectPayment(method) {
         selectedPayment = method;
         document.querySelectorAll('.payment-option').forEach(el => {
@@ -966,104 +751,69 @@
         updateBuyButton();
     }
 
-    // ============================================
-    // CALCULATIONS
-    // ============================================
     function updateTotals() {
         const eurInput = document.getElementById('eur-amount');
         const eurAmount = parseFloat(eurInput?.value) || 0;
-        
         const tokenPrice = CONFIG.tokenPriceEUR || 1.00;
-        const minPurchase = CONFIG.minPurchase || 10;
         const baseTokens = Math.floor(eurAmount / tokenPrice);
         
-        // Calculate bonus
-        let bonusPercent = 0;
-        let bonusTokens = 0;
-        
-        if (CONFIG.bonusTiers && CONFIG.bonusTiers.length > 0) {
-            const matchingTier = [...CONFIG.bonusTiers]
-                .filter(t => parseFloat(t.min_eur) <= eurAmount)
-                .sort((a, b) => parseFloat(b.min_eur) - parseFloat(a.min_eur))[0];
-            
-            if (matchingTier) {
-                bonusPercent = parseFloat(matchingTier.bonus_percent);
+        let bonusPercent = 0, bonusTokens = 0;
+        if (CONFIG.bonusTiers?.length > 0) {
+            const tier = [...CONFIG.bonusTiers].filter(t => parseFloat(t.min_eur) <= eurAmount).sort((a,b) => parseFloat(b.min_eur) - parseFloat(a.min_eur))[0];
+            if (tier) {
+                bonusPercent = parseFloat(tier.bonus_percent);
                 bonusTokens = Math.floor(baseTokens * bonusPercent / 100);
             }
         }
-        
         const totalTokens = baseTokens + bonusTokens;
         
-        // Update token display
-        const tokenDisplay = document.getElementById('token-amount-display');
+        const el = (id) => document.getElementById(id);
+        const tokenDisplay = el('token-amount-display');
         if (tokenDisplay) {
-            if (bonusTokens > 0) {
-                tokenDisplay.innerHTML = `${totalTokens.toLocaleString()} <span class="text-green-400 text-xs">(+${bonusTokens} bonus)</span>`;
-            } else {
-                tokenDisplay.textContent = totalTokens.toLocaleString();
-            }
+            tokenDisplay.innerHTML = bonusTokens > 0 
+                ? totalTokens.toLocaleString() + ' <span class="text-green-400 text-xs">(+' + bonusTokens + ' bonus)</span>'
+                : totalTokens.toLocaleString();
         }
         
-        // Update min purchase display
-        const minDisplay = document.getElementById('min-purchase-display');
-        if (minDisplay) minDisplay.textContent = minPurchase.toLocaleString();
+        if (el('min-purchase-display')) el('min-purchase-display').textContent = (CONFIG.minPurchase || 10).toLocaleString();
         
-        // Show bonus badge
-        const bonusBadge = document.getElementById('bonus-badge');
-        if (bonusBadge) {
+        const badge = el('bonus-badge');
+        if (badge) {
             if (bonusPercent > 0) {
-                bonusBadge.innerHTML = `<span class="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-xs">+${bonusPercent}% BONUS</span>`;
-                bonusBadge.classList.remove('hidden');
+                badge.innerHTML = '<span class="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-xs">+' + bonusPercent + '% BONUS</span>';
+                badge.classList.remove('hidden');
             } else {
-                bonusBadge.classList.add('hidden');
+                badge.classList.add('hidden');
             }
         }
         
-        // Validate minimum
-        if (eurAmount < minPurchase && eurAmount > 0) {
-            eurInput?.classList.add('border-red-500');
-        } else {
-            eurInput?.classList.remove('border-red-500');
+        if (eurInput && eurAmount < CONFIG.minPurchase && eurAmount > 0) {
+            eurInput.classList.add('border-red-500');
+        } else if (eurInput) {
+            eurInput.classList.remove('border-red-500');
         }
         
-        // Calculate fees
         const feePercent = selectedPayment === 'Card' ? CONFIG.cardFeePercent : CONFIG.cryptoFeePercent;
         const feeEUR = eurAmount * (feePercent / 100);
         const totalEUR = eurAmount + feeEUR;
         const totalUSD = totalEUR * CONFIG.eurUsdRate;
         const polAmount = totalUSD / CONFIG.polPrice;
         
-        // Update displays
-        document.getElementById('totalTokensDisplay').textContent = `${totalTokens.toLocaleString()} VIP`;
-        document.getElementById('subtotalEUR').textContent = `€${eurAmount.toFixed(2)}`;
-        document.getElementById('feePercent').textContent = feePercent;
-        document.getElementById('feeAmountEUR').textContent = `€${feeEUR.toFixed(2)}`;
-        document.getElementById('totalEUR').textContent = `€${totalEUR.toFixed(2)}`;
-        document.getElementById('totalUSD').textContent = `($${totalUSD.toFixed(2)})`;
+        if (el('totalTokensDisplay')) el('totalTokensDisplay').textContent = totalTokens.toLocaleString() + ' VIP';
+        if (el('subtotalEUR')) el('subtotalEUR').textContent = '€' + eurAmount.toFixed(2);
+        if (el('feePercent')) el('feePercent').textContent = feePercent;
+        if (el('feeAmountEUR')) el('feeAmountEUR').textContent = '€' + feeEUR.toFixed(2);
+        if (el('totalEUR')) el('totalEUR').textContent = '€' + totalEUR.toFixed(2);
+        if (el('totalUSD')) el('totalUSD').textContent = '($' + totalUSD.toFixed(2) + ')';
         
-        // Crypto equivalent
-        if (selectedPayment === 'POL') {
-            document.getElementById('cryptoEquivalent').textContent = `~${polAmount.toFixed(2)} POL`;
-        } else if (selectedPayment === 'USDC') {
-            document.getElementById('cryptoEquivalent').textContent = `~${totalUSD.toFixed(2)} USDC`;
-        } else {
-            document.getElementById('cryptoEquivalent').textContent = `€${totalEUR.toFixed(2)}`;
+        const crypto = el('cryptoEquivalent');
+        if (crypto) {
+            if (selectedPayment === 'POL') crypto.textContent = '~' + polAmount.toFixed(2) + ' POL';
+            else if (selectedPayment === 'USDC') crypto.textContent = '~' + totalUSD.toFixed(2) + ' USDC';
+            else crypto.textContent = '€' + totalEUR.toFixed(2);
         }
         
-        // Store for purchase
-        window.currentPurchase = {
-            eurAmount,
-            baseTokens,
-            bonusTokens,
-            totalTokens,
-            bonusPercent,
-            feeEUR,
-            totalEUR,
-            totalUSD,
-            polAmount
-        };
-        
-        // Update buy button
+        window.currentPurchase = { eurAmount, baseTokens, bonusTokens, totalTokens, bonusPercent, feeEUR, totalEUR, totalUSD, polAmount };
         updateBuyButton();
     }
 
@@ -1071,30 +821,22 @@
         const btn = document.getElementById('buy-button');
         if (!btn) return;
         
-        console.log('updateBuyButton called:', {
-            currentWallet,
-            presaleEnabled: CONFIG.presaleEnabled,
-            selectedPayment
-        });
-        
-        const eurAmount = parseFloat(document.getElementById('eur-amount')?.value) || 0;
+        const eurInput = document.getElementById('eur-amount');
+        const eurAmount = parseFloat(eurInput?.value) || 0;
         const purchase = window.currentPurchase || {};
 
         if (!currentWallet) {
-            console.log('❌ No wallet - showing connect button');
             btn.textContent = 'Connect Wallet to Purchase';
             btn.disabled = true;
             return;
         }
-
         if (!CONFIG.presaleEnabled) {
             btn.textContent = 'Presale Not Active';
             btn.disabled = true;
             return;
         }
-
         if (eurAmount < CONFIG.minPurchase) {
-            btn.textContent = `Minimum €${CONFIG.minPurchase}`;
+            btn.textContent = 'Minimum €' + CONFIG.minPurchase;
             btn.disabled = true;
             return;
         }
@@ -1103,12 +845,12 @@
         const totalUSD = purchase.totalUSD || 0;
 
         if (selectedPayment === 'Card') {
-            btn.textContent = `Pay €${totalEUR.toFixed(2)}`;
+            btn.textContent = 'Pay €' + totalEUR.toFixed(2);
             btn.disabled = false;
         } else if (selectedPayment === 'POL') {
-            const requiredPOL = purchase.polAmount || 0;
-            if (balances.POL >= requiredPOL) {
-                btn.textContent = `Pay ~${requiredPOL.toFixed(2)} POL`;
+            const req = purchase.polAmount || 0;
+            if (balances.POL >= req) {
+                btn.textContent = 'Pay ~' + req.toFixed(2) + ' POL';
                 btn.disabled = false;
             } else {
                 btn.textContent = 'Insufficient POL Balance';
@@ -1116,7 +858,7 @@
             }
         } else if (selectedPayment === 'USDC') {
             if (balances.USDC >= totalUSD) {
-                btn.textContent = `Pay ~${totalUSD.toFixed(2)} USDC`;
+                btn.textContent = 'Pay ~' + totalUSD.toFixed(2) + ' USDC';
                 btn.disabled = false;
             } else {
                 btn.textContent = 'Insufficient USDC Balance';
@@ -1125,47 +867,24 @@
         }
     }
 
-    function updateProgress() {
-        const eurRaised = CONFIG.eurRaised || 0;
-        const targetEUR = CONFIG.saleTargetEUR || 500000;
-        const progressPct = targetEUR > 0 ? ((eurRaised / targetEUR) * 100) : 0;
-        
-        document.getElementById('progress-bar').style.width = `${Math.min(progressPct, 100)}%`;
-        document.getElementById('progress-pct').textContent = progressPct.toFixed(2) + '%';
-        document.getElementById('progress-raised').textContent = '€' + eurRaised.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        document.getElementById('progress-target').textContent = '€' + targetEUR.toLocaleString();
-        document.getElementById('tokens-sold').textContent = (CONFIG.tokensSold || 0).toLocaleString();
-    }
-
-    // ============================================
-    // PURCHASE EXECUTION
-    // ============================================
     async function executePurchase() {
-        if (!currentWallet) {
-            connectWallet();
-            return;
-        }
-
-        if (!CONFIG.presaleEnabled) {
-            showResult('error', 'Presale Not Active', 'The presale is currently not available.');
-            return;
-        }
+        if (!currentWallet) { connectWallet(); return; }
+        if (!CONFIG.presaleEnabled) { showResult('error', 'Presale Not Active', 'The presale is not available.'); return; }
 
         const purchase = window.currentPurchase || {};
         const eurAmount = purchase.eurAmount || 0;
-        const baseTokens = purchase.baseTokens || 0;  // ✅ Use baseTokens, not totalTokens
-        const totalTokens = purchase.totalTokens || 0; // For display only
+        const baseTokens = purchase.baseTokens || 0;
+        const totalTokens = purchase.totalTokens || 0;
 
         if (eurAmount < CONFIG.minPurchase) {
-            showResult('error', 'Invalid Amount', `Minimum purchase is €${CONFIG.minPurchase}.`);
+            showResult('error', 'Invalid Amount', 'Minimum purchase is €' + CONFIG.minPurchase);
             return;
         }
 
-        // Store pending purchase - send BASE tokens, server will add bonus
-        const pendingPurchase = {
+        const pending = {
             walletAddress: currentWallet,
-            tokenAmount: baseTokens,        // ✅ FIXED: Send base tokens only
-            expectedTotal: totalTokens,     // For reference/display
+            tokenAmount: baseTokens,
+            expectedTotal: totalTokens,
             bonusPercent: purchase.bonusPercent,
             baseEUR: eurAmount,
             feeEUR: purchase.feeEUR,
@@ -1174,403 +893,230 @@
             paymentMethod: selectedPayment,
             timestamp: Date.now()
         };
-        localStorage.setItem('pendingPurchase', JSON.stringify(pendingPurchase));
+        localStorage.setItem('pendingPurchase', JSON.stringify(pending));
 
         if (selectedPayment === 'Card') {
-            if (!stripe) {
-                showResult('error', 'Payment Error', 'Card payments are not configured. Please try crypto payment.');
-                return;
-            }
-            // ✅ Pass baseTokens to Stripe, not totalTokens
+            if (!stripe) { showResult('error', 'Payment Error', 'Card payments not configured.'); return; }
             openStripeCheckout(baseTokens, eurAmount, purchase.feeEUR, purchase.totalEUR);
         } else {
-            // ✅ Pass baseTokens to crypto purchase
             executeCryptoPurchase(baseTokens, purchase.totalUSD, eurAmount, purchase.feeEUR);
         }
     }
 
     function executeCryptoPurchase(tokenAmount, totalUSD, baseEUR, feeEUR) {
+        if (!CONFIG.presaleWallet) { showResult('error', 'Error', 'Presale wallet not configured.'); return; }
+
         const baseUSD = baseEUR * CONFIG.eurUsdRate;
         const feeUSD = feeEUR * CONFIG.eurUsdRate;
-
-        if (!CONFIG.presaleWallet) {
-            showResult('error', 'Configuration Error', 'Presale wallet not configured.');
-            return;
-        }
-
         let transactions = [];
-        const externalId = `presale-${Date.now()}`;
-        const redirectUri = encodeURIComponent(`${window.location.origin}/presale?purchase=complete`);
+        const externalId = 'presale-' + Date.now();
+        const redirectUri = encodeURIComponent(window.location.origin + '/presale?purchase=complete');
 
         if (selectedPayment === 'USDC') {
-            const baseUsdcAmount = Math.floor(baseUSD * 1e6);
-            const feeUsdcAmount = Math.ceil(feeUSD * 1e6);
-
             transactions = [
-                {
-                    type: 'erc20_transfer',
-                    token: CONFIG.usdcAddress,
-                    to: CONFIG.presaleWallet,
-                    amount: baseUsdcAmount.toString(),
-                    description: `VIP Presale: ${baseUSD.toFixed(2)} USDC`
-                },
-                {
-                    type: 'erc20_transfer',
-                    token: CONFIG.usdcAddress,
-                    to: CONFIG.minterWallet,
-                    amount: feeUsdcAmount.toString(),
-                    description: `Platform fee: ${feeUSD.toFixed(2)} USDC`
-                }
+                { type: 'erc20_transfer', token: CONFIG.usdcAddress, to: CONFIG.presaleWallet, amount: Math.floor(baseUSD * 1e6).toString(), description: 'VIP Presale' },
+                { type: 'erc20_transfer', token: CONFIG.usdcAddress, to: CONFIG.minterWallet, amount: Math.ceil(feeUSD * 1e6).toString(), description: 'Platform fee' }
             ];
         } else {
             const basePOL = baseUSD / CONFIG.polPrice;
             const feePOL = feeUSD / CONFIG.polPrice;
-            const baseWei = BigInt(Math.floor(basePOL * 1e18)).toString();
-            const feeWei = BigInt(Math.ceil(feePOL * 1e18)).toString();
-
             transactions = [
-                {
-                    type: 'native_transfer',
-                    to: CONFIG.presaleWallet,
-                    amount: baseWei,
-                    description: `VIP Presale: ${basePOL.toFixed(4)} POL`
-                },
-                {
-                    type: 'native_transfer',
-                    to: CONFIG.minterWallet,
-                    amount: feeWei,
-                    description: `Platform fee: ${feePOL.toFixed(4)} POL`
-                }
+                { type: 'native_transfer', to: CONFIG.presaleWallet, amount: BigInt(Math.floor(basePOL * 1e18)).toString(), description: 'VIP Presale' },
+                { type: 'native_transfer', to: CONFIG.minterWallet, amount: BigInt(Math.ceil(feePOL * 1e18)).toString(), description: 'Platform fee' }
             ];
         }
 
-        const txData = encodeURIComponent(JSON.stringify({
-            chainId: CONFIG.chainId,
-            transactions,
-            metadata: {
-                type: 'presale_purchase',
-                tokenAmount,           // ✅ Base tokens only
-                totalUSD,
-                baseEUR,
-                feeEUR,
-                paymentMethod: selectedPayment
-            }
-        }));
-
-        window.location.href = `${CONFIG.walletTwoOrigin}/transaction/multi?data=${txData}&external_id=${externalId}&redirect_uri=${redirectUri}`;
+        const txData = encodeURIComponent(JSON.stringify({ chainId: CONFIG.chainId, transactions, metadata: { type: 'presale_purchase', tokenAmount, totalUSD, baseEUR, feeEUR, paymentMethod: selectedPayment } }));
+        window.location.href = CONFIG.walletTwoOrigin + '/transaction/multi?data=' + txData + '&external_id=' + externalId + '&redirect_uri=' + redirectUri;
     }
 
-    // ============================================
-    // STRIPE CHECKOUT
-    // ============================================
     function openStripeCheckout(tokenAmount, baseEUR, feeEUR, totalEUR) {
-        // Calculate what user will receive (for display)
         const purchase = window.currentPurchase || {};
         const totalTokens = purchase.totalTokens || tokenAmount;
         const bonusTokens = purchase.bonusTokens || 0;
         
-        // Show total tokens user will receive (with bonus)
-        if (bonusTokens > 0) {
-            document.getElementById('stripe-tokens').innerHTML = `${totalTokens} VIP <span class="text-green-400 text-xs">(+${bonusTokens} bonus)</span>`;
-        } else {
-            document.getElementById('stripe-tokens').textContent = `${totalTokens} VIP`;
+        const el = (id) => document.getElementById(id);
+        if (el('stripe-tokens')) {
+            el('stripe-tokens').innerHTML = bonusTokens > 0 
+                ? totalTokens + ' VIP <span class="text-green-400 text-xs">(+' + bonusTokens + ' bonus)</span>'
+                : totalTokens + ' VIP';
         }
-        
-        document.getElementById('stripe-subtotal').textContent = `€${baseEUR.toFixed(2)}`;
-        document.getElementById('stripe-fee').textContent = `€${feeEUR.toFixed(2)}`;
-        document.getElementById('stripe-total').textContent = `€${totalEUR.toFixed(2)}`;
-        document.getElementById('stripe-amount').textContent = totalEUR.toFixed(2);
+        if (el('stripe-subtotal')) el('stripe-subtotal').textContent = '€' + baseEUR.toFixed(2);
+        if (el('stripe-fee')) el('stripe-fee').textContent = '€' + feeEUR.toFixed(2);
+        if (el('stripe-total')) el('stripe-total').textContent = '€' + totalEUR.toFixed(2);
+        if (el('stripe-amount')) el('stripe-amount').textContent = totalEUR.toFixed(2);
 
-        const submitBtn = document.getElementById('stripe-submit');
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        }
-        
-        const errorDisplay = document.getElementById('card-errors');
-        if (errorDisplay) {
-            errorDisplay.textContent = '';
-            errorDisplay.classList.add('hidden');
-        }
-        
+        const btn = el('stripe-submit');
+        if (btn) { btn.disabled = true; btn.classList.add('opacity-50', 'cursor-not-allowed'); }
+        const err = el('card-errors');
+        if (err) { err.textContent = ''; err.classList.add('hidden'); }
         if (cardElement) cardElement.clear();
 
-        document.getElementById('stripe-modal').classList.remove('hidden');
-        
-        // ✅ Pass base tokens to payment intent
+        el('stripe-modal')?.classList.remove('hidden');
         createPaymentIntent(tokenAmount, totalEUR);
     }
 
     async function createPaymentIntent(tokenAmount, totalEUR) {
         try {
             const purchase = window.currentPurchase || {};
-            
-            const response = await fetch('/api/presale/create-payment-intent', {
+            const res = await fetch('/api/presale/create-payment-intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    walletAddress: currentWallet,
-                    tokenAmount,          // ✅ Base tokens - server adds bonus
-                    totalEUR,
-                    baseAmount: purchase.eurAmount,  // ✅ Add base EUR for bonus calculation
-                    feeAmount: purchase.feeEUR,
-                    email: sessionData?.email
-                })
+                body: JSON.stringify({ walletAddress: currentWallet, tokenAmount, totalEUR, baseAmount: purchase.eurAmount, feeAmount: purchase.feeEUR, email: sessionData?.email })
             });
-
-            if (!response.ok) throw new Error('Failed to create payment intent');
-
-            const data = await response.json();
-            localStorage.setItem('stripePaymentData', JSON.stringify({
-                clientSecret: data.clientSecret,
-                paymentIntentId: data.paymentIntentId,
-                tokenAmount,              // Base tokens
-                totalEUR,
-                expectedTotalTokens: purchase.totalTokens  // For display after purchase
-            }));
-
-        } catch (error) {
-            console.error('Payment intent error:', error);
+            if (!res.ok) throw new Error('Failed to create payment intent');
+            const data = await res.json();
+            localStorage.setItem('stripePaymentData', JSON.stringify({ clientSecret: data.clientSecret, paymentIntentId: data.paymentIntentId, tokenAmount, totalEUR, expectedTotalTokens: purchase.totalTokens }));
+        } catch (e) {
+            console.error('Payment intent error:', e);
             showResult('error', 'Payment Error', 'Failed to initialize payment.');
             closeStripeModal();
         }
     }
 
     async function verifyStripePayment(paymentIntentId, tokenAmount) {
-        try {
-            showProcessing('Payment received! Minting your tokens...');
-            
-            const paymentData = JSON.parse(localStorage.getItem('stripePaymentData') || '{}');
-            let attempts = 0;
-            const maxAttempts = 60;
-            
-            while (attempts < maxAttempts) {
-                try {
-                    const response = await fetch(`/api/presale/purchase-status/${paymentIntentId}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log(`🔄 Poll ${attempts + 1}: ${data.status}`);
-                        
-                        if (data.status === 'completed' && data.mintTxHash) {
-                            hideProcessing();
-                            
-                            // Show actual tokens minted (base + bonus from server)
-                            const tokensReceived = data.totalTokens || data.tokenAmount || tokenAmount;
-                            const bonusTokens = data.bonusTokens || 0;
-                            
-                            let message = `Successfully purchased ${tokensReceived} VIP tokens!`;
-                            if (bonusTokens > 0) {
-                                message = `Successfully purchased ${tokensReceived} VIP tokens (includes +${bonusTokens} bonus)!`;
-                            }
-                            
-                            showResult('success', 'Purchase Complete!', message,
-                                { tokens: tokensReceived, mintTx: data.mintTxHash }
-                            );
-                            localStorage.removeItem('pendingPurchase');
-                            localStorage.removeItem('stripePaymentData');
-                            loadPresaleConfig();
-                            return;
-                        }
-                        
-                        if (data.status === 'mint_failed' || data.status === 'failed') {
-                            hideProcessing();
-                            showResult('error', 'Minting Failed', data.error || 'Contact support.');
-                            return;
-                        }
+        showProcessing('Payment received! Minting tokens...');
+        let attempts = 0;
+        while (attempts < 60) {
+            try {
+                const res = await fetch('/api/presale/purchase-status/' + paymentIntentId);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.status === 'completed' && data.mintTxHash) {
+                        hideProcessing();
+                        const tokens = data.totalTokens || tokenAmount;
+                        showResult('success', 'Purchase Complete!', 'Successfully purchased ' + tokens + ' VIP tokens!', { tokens, mintTx: data.mintTxHash });
+                        localStorage.removeItem('pendingPurchase');
+                        localStorage.removeItem('stripePaymentData');
+                        loadPresaleConfig();
+                        return;
                     }
-                } catch (e) {
-                    console.warn('Poll error:', e);
+                    if (data.status === 'failed' || data.status === 'mint_failed') {
+                        hideProcessing();
+                        showResult('error', 'Failed', data.error || 'Contact support.');
+                        return;
+                    }
                 }
-                
-                attempts++;
-                await new Promise(r => setTimeout(r, 1000));
-            }
-            
-            hideProcessing();
-            showResult('info', 'Processing', 'Payment received. Tokens will arrive shortly.');
-            localStorage.removeItem('pendingPurchase');
-            localStorage.removeItem('stripePaymentData');
-            
-        } catch (error) {
-            hideProcessing();
-            showResult('error', 'Error', error.message);
+            } catch (e) {}
+            attempts++;
+            await new Promise(r => setTimeout(r, 1000));
         }
+        hideProcessing();
+        showResult('info', 'Processing', 'Payment received. Tokens will arrive shortly.');
     }
 
-    async function verifyCryptoPayment(txHash) {
-        try {
-            const pendingPurchase = JSON.parse(localStorage.getItem('pendingPurchase') || '{}');
-
-            const response = await fetch('/api/presale/verify-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    txHash,
-                    walletAddress: currentWallet || pendingPurchase.walletAddress,
-                    tokenAmount: pendingPurchase.tokenAmount,  // ✅ Now this is base tokens
-                    totalEUR: pendingPurchase.totalEUR,
-                    totalUSD: pendingPurchase.totalUSD,
-                    paymentMethod: pendingPurchase.paymentMethod,
-                    referrerCode: localStorage.getItem('referralCode')
-                })
-            });
-
-            const data = await response.json();
-            hideProcessing();
-
-            if (data.success) {
-                // Show actual tokens received (with bonus from server)
-                const tokensReceived = data.totalTokens || pendingPurchase.expectedTotal || pendingPurchase.tokenAmount;
-                const bonusTokens = data.bonusTokens || 0;
-                
-                let message = data.message || `Successfully purchased ${tokensReceived} VIP tokens!`;
-                if (bonusTokens > 0 && !data.message) {
-                    message = `Successfully purchased ${tokensReceived} VIP tokens (includes +${bonusTokens} bonus)!`;
-                }
-                
-                showResult('success', 'Purchase Complete!', message,
-                    { tokens: tokensReceived, paymentTx: txHash, mintTx: data.mintTxHash }
-                );
-                localStorage.removeItem('pendingPurchase');
-                localStorage.removeItem('referralCode');
-                loadPresaleConfig();
-            } else {
-                showResult('error', 'Verification Failed', data.error || 'Contact support.');
-            }
-
-            window.history.replaceState({}, document.title, window.location.pathname);
-
-        } catch (error) {
-            hideProcessing();
-            showResult('error', 'Verification Error', error.message);
-        }
-    }
-    // ============================================
-    // URL PARAMS & CRYPTO VERIFICATION
-    // ============================================
     function checkUrlParams() {
         const params = new URLSearchParams(window.location.search);
-        
         if (params.get('purchase') === 'complete') {
             const txHash = params.get('tx_hash');
-            if (txHash) {
-                showProcessing('Verifying crypto payment...');
-                verifyCryptoPayment(txHash);
-            }
+            if (txHash) { showProcessing('Verifying payment...'); verifyCryptoPayment(txHash); }
         }
-
         const ref = params.get('ref');
-        if (ref) {
-            localStorage.setItem('referralCode', ref);
-        }
+        if (ref) localStorage.setItem('referralCode', ref);
     }
 
     async function verifyCryptoPayment(txHash) {
         try {
-            const pendingPurchase = JSON.parse(localStorage.getItem('pendingPurchase') || '{}');
-
-            const response = await fetch('/api/presale/verify-payment', {
+            const pending = JSON.parse(localStorage.getItem('pendingPurchase') || '{}');
+            const res = await fetch('/api/presale/verify-payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    txHash,
-                    walletAddress: currentWallet || pendingPurchase.walletAddress,
-                    tokenAmount: pendingPurchase.tokenAmount,
-                    totalEUR: pendingPurchase.totalEUR,
-                    totalUSD: pendingPurchase.totalUSD,
-                    paymentMethod: pendingPurchase.paymentMethod,
-                    referrerCode: localStorage.getItem('referralCode')
-                })
+                body: JSON.stringify({ txHash, walletAddress: currentWallet || pending.walletAddress, tokenAmount: pending.tokenAmount, totalEUR: pending.totalEUR, totalUSD: pending.totalUSD, paymentMethod: pending.paymentMethod, referrerCode: localStorage.getItem('referralCode') })
             });
-
-            const data = await response.json();
+            const data = await res.json();
             hideProcessing();
-
             if (data.success) {
-                showResult('success', 'Purchase Complete!',
-                    data.message || `Successfully purchased ${pendingPurchase.tokenAmount} VIP tokens!`,
-                    { tokens: pendingPurchase.tokenAmount, paymentTx: txHash, mintTx: data.mintTxHash }
-                );
+                showResult('success', 'Purchase Complete!', data.message || 'Tokens purchased!', { tokens: data.totalTokens || pending.tokenAmount, paymentTx: txHash, mintTx: data.mintTxHash });
                 localStorage.removeItem('pendingPurchase');
                 localStorage.removeItem('referralCode');
                 loadPresaleConfig();
             } else {
                 showResult('error', 'Verification Failed', data.error || 'Contact support.');
             }
-
             window.history.replaceState({}, document.title, window.location.pathname);
-
-        } catch (error) {
+        } catch (e) {
             hideProcessing();
-            showResult('error', 'Verification Error', error.message);
+            showResult('error', 'Error', e.message);
         }
     }
 
-    // ============================================
-    // REFERRAL
-    // ============================================
     async function checkReferralCode() {
-        const savedCode = localStorage.getItem('referralCode');
-        if (savedCode && currentWallet) {
+        const code = localStorage.getItem('referralCode');
+        if (code && currentWallet) {
             try {
-                const response = await fetch(`/api/referral/validate/${savedCode}`);
-                if (response.ok) {
-                    const data = await response.json();
+                const res = await fetch('/api/referral/validate/' + code);
+                if (res.ok) {
+                    const data = await res.json();
                     if (data.valid) {
-                        document.getElementById('referral-section').classList.remove('hidden');
-                        document.getElementById('referral-code').textContent = savedCode;
+                        document.getElementById('referral-section')?.classList.remove('hidden');
+                        const el = document.getElementById('referral-code');
+                        if (el) el.textContent = code;
                     }
                 }
-            } catch (e) {
-                console.error('Referral validation failed:', e);
-            }
+            } catch (e) {}
         }
     }
 
-    // ============================================
-    // UI HELPERS
-    // ============================================
-    function showProcessing(message) {
-        document.getElementById('processing-message').textContent = message;
-        document.getElementById('processing-overlay').classList.remove('hidden');
+    function showProcessing(msg) {
+        const el = document.getElementById('processing-message');
+        if (el) el.textContent = msg;
+        document.getElementById('processing-overlay')?.classList.remove('hidden');
     }
 
     function hideProcessing() {
-        document.getElementById('processing-overlay').classList.add('hidden');
+        document.getElementById('processing-overlay')?.classList.add('hidden');
     }
 
     function showResult(type, title, message, details = null) {
         const icon = document.getElementById('result-icon');
-        icon.textContent = type === 'success' ? 'check_circle' : (type === 'info' ? 'info' : 'error');
-        icon.className = `material-symbols-outlined text-5xl mb-4 ${
-            type === 'success' ? 'text-green-500' : (type === 'info' ? 'text-blue-500' : 'text-red-500')
-        }`;
+        if (icon) {
+            icon.textContent = type === 'success' ? 'check_circle' : (type === 'info' ? 'info' : 'error');
+            icon.className = 'material-symbols-outlined text-5xl mb-4 ' + (type === 'success' ? 'text-green-500' : (type === 'info' ? 'text-blue-500' : 'text-red-500'));
+        }
+        const titleEl = document.getElementById('result-title');
+        if (titleEl) titleEl.textContent = title;
+        const msgEl = document.getElementById('result-message');
+        if (msgEl) msgEl.textContent = message;
         
-        document.getElementById('result-title').textContent = title;
-        document.getElementById('result-message').textContent = message;
-
-        if (details) {
-            document.getElementById('result-details').classList.remove('hidden');
-            document.getElementById('result-tokens').textContent = `${details.tokens} VIP`;
-            
+        const detailsEl = document.getElementById('result-details');
+        if (details && detailsEl) {
+            detailsEl.classList.remove('hidden');
+            const tokensEl = document.getElementById('result-tokens');
+            if (tokensEl) tokensEl.textContent = details.tokens + ' VIP';
             if (details.paymentTx) {
-                document.getElementById('result-payment-tx').href = `${CONFIG.explorer}/tx/${details.paymentTx}`;
-                document.getElementById('result-payment-tx').textContent = details.paymentTx.slice(0, 10) + '...';
+                const el = document.getElementById('result-payment-tx');
+                if (el) { el.href = CONFIG.explorer + '/tx/' + details.paymentTx; el.textContent = details.paymentTx.slice(0, 10) + '...'; }
             }
             if (details.mintTx) {
-                document.getElementById('result-mint-tx').href = `${CONFIG.explorer}/tx/${details.mintTx}`;
-                document.getElementById('result-mint-tx').textContent = details.mintTx.slice(0, 10) + '...';
+                const el = document.getElementById('result-mint-tx');
+                if (el) { el.href = CONFIG.explorer + '/tx/' + details.mintTx; el.textContent = details.mintTx.slice(0, 10) + '...'; }
             }
-        } else {
-            document.getElementById('result-details').classList.add('hidden');
+        } else if (detailsEl) {
+            detailsEl.classList.add('hidden');
         }
-
-        document.getElementById('result-overlay').classList.remove('hidden');
+        document.getElementById('result-overlay')?.classList.remove('hidden');
     }
 
     function hideResultOverlay() {
-        document.getElementById('result-overlay').classList.add('hidden');
+        document.getElementById('result-overlay')?.classList.add('hidden');
     }
-</script>
+
+    window.addEventListener('message', (event) => {
+        if (!event.origin.includes('wallettwo.com')) return;
+        const data = event.data;
+        if (data && (data.type === 'wallet_login' || data.wallet || data.wlt)) {
+            const wallet = data.wallet || data.wlt || data.address;
+            if (wallet) {
+                currentWallet = wallet.toLowerCase();
+                sessionData = { wallet: currentWallet, userId: data.user, email: data.email, timestamp: Date.now() };
+                localStorage.setItem('keavalley_profile', JSON.stringify(sessionData));
+                sessionStorage.setItem('keavalley_profile', JSON.stringify(sessionData));
+                showWalletConnected();
+                loadBalances();
+                checkReferralCode();
+            }
+        }
+    });
+    </script>
 </body>
 </html>
