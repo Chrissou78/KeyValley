@@ -8,8 +8,15 @@ require('dotenv').config();
 const db = require('./db-postgres');
 const minter = require('./minter');
 const { getNetworkConfig } = require('./config/networks');
-const DEFAULT_REFERRER_WALLET = '0xdD4104A780142EfB9566659f26d3317714a81510'.toLowerCase();
 
+// ===========================================
+// Key Constants
+// ===========================================
+const DEFAULT_REFERRER_WALLET = '0xdD4104A780142EfB9566659f26d3317714a81510'.toLowerCase();
+const MINTER_ADDRESS = process.env.MINTER_ADDRESS || '0xdD4104A780142EfB9566659f26d3317714a81510';
+const VIP_TOKEN_ADDRESS = '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F';
+const USDC_ADDRESS = process.env.USDC_ADDRESS || '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
+const POLYGON_RPC = process.env.POLYGON_RPC || 'https://polygon-rpc.com';
 
 // ===========================================
 // Stripe Setup (Optional - graceful fallback)
@@ -32,14 +39,18 @@ try {
 // ===========================================
 const PRESALE_CONFIG = {
     presaleEnabled: true,
-    saleTargetEUR: 500000,        // Target: €500,000 to raise
-    totalTokens: 1000000,          // 1M VIP tokens available
-    tokenPrice: 1.00,              // €1 per VIP token
-    minPurchase: 10,               // Min €10
-    maxPurchase: 10000,            // Max €10,000
-    presaleWallet: process.env.PRESALE_WALLET || '0x...',
-    tokenAddress: '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F',
-    tokenDecimals: 18
+    saleTargetEUR: 500000,
+    totalTokens: 1000000,
+    tokenPrice: 1.00,
+    minPurchase: 10,
+    maxPurchase: 10000,
+    presaleWallet: process.env.PRESALE_WALLET || '0xdD4104A780142EfB9566659f26d3317714a81510',
+    tokenAddress: VIP_TOKEN_ADDRESS,
+    tokenDecimals: 18,
+    chainId: 137,
+    usdcAddress: USDC_ADDRESS,
+    cryptoFeePercent: 0.015,
+    cardFeePercent: 0.04
 };
 
 // Load presale settings from DB on startup
@@ -59,22 +70,22 @@ async function loadPresaleSettings() {
 }
 
 // ===========================================
-// Blockchain Constants
-// ===========================================
-const POLYGON_RPC = process.env.POLYGON_RPC || 'https://polygon-rpc.com';
-const VIP_TOKEN_ADDRESS = '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F';
-const USDC_ADDRESS = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
-
 // Minimal ABIs
+// ===========================================
 const VIP_TOKEN_ABI = [
     'function mint(address to, uint256 amount) external',
     'function balanceOf(address account) view returns (uint256)',
-    'function decimals() view returns (uint8)'
+    'function decimals() view returns (uint8)',
+    'function symbol() view returns (string)',
+    'function transfer(address to, uint256 amount) returns (bool)'
 ];
 
 const ERC20_ABI = [
     'function balanceOf(address account) view returns (uint256)',
     'function decimals() view returns (uint8)',
+    'function symbol() view returns (string)',
+    'function transfer(address to, uint256 amount) returns (bool)',
+    'function approve(address spender, uint256 amount) returns (bool)',
     'event Transfer(address indexed from, address indexed to, uint256 value)'
 ];
 
@@ -83,428 +94,91 @@ const ERC20_ABI = [
 // ===========================================
 const app = express();
 const PORT = process.env.API_PORT || 3000;
-const MINT_AMOUNT = parseInt(process.env.MINT_AMOUNT) || 2;
-
-app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-    if (!stripe) {
-        return res.status(503).send('Stripe not configured');
-    }
-    
-    const sig = req.headers['stripe-signature'];
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    
-    if (!webhookSecret) {
-        console.error('❌ STRIPE_WEBHOOK_SECRET not configured');
-        return res.status(500).send('Webhook secret not configured');
-    }
-    
-    let event;
-    try {
-        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-    } catch (err) {
-        console.error('❌ Webhook signature verification failed:', err.message);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-    
-    console.log('\n' + '='.repeat(60));
-    console.log('📨 STRIPE WEBHOOK:', event.type);
-    console.log('='.repeat(60));
-    
-    if (event.type === 'checkout.session.completed' || event.type === 'payment_intent.succeeded') {
-        let walletAddress, tokenAmount, paymentId, totalAmount, baseAmount, feeAmount;
-        
-        if (event.type === 'checkout.session.completed') {
-            const session = event.data.object;
-            walletAddress = session.metadata?.walletAddress;
-            tokenAmount = session.metadata?.tokenAmount;
-            paymentId = session.id;
-            totalAmount = (session.amount_total || 0) / 100;
-            baseAmount = parseFloat(session.metadata?.baseAmount) || totalAmount;
-            feeAmount = parseFloat(session.metadata?.feeAmount) || 0;
-        } else {
-            const paymentIntent = event.data.object;
-            walletAddress = paymentIntent.metadata?.walletAddress;
-            tokenAmount = paymentIntent.metadata?.tokenAmount;
-            paymentId = paymentIntent.id;
-            totalAmount = (paymentIntent.amount || 0) / 100;
-            baseAmount = parseFloat(paymentIntent.metadata?.baseAmount) || totalAmount;
-            feeAmount = parseFloat(paymentIntent.metadata?.feeAmount) || 0;
-        }
-        
-        if (!walletAddress || !tokenAmount) {
-            console.error('❌ Missing metadata in Stripe event');
-            return res.json({ received: true, error: 'Missing metadata' });
-        }
-        
-        console.log('\n💳 PAYMENT DETAILS:');
-        console.log('   Payment ID:', paymentId);
-        console.log('   Buyer Wallet:', walletAddress);
-        console.log('   Token Amount:', tokenAmount, 'VIP');
-        console.log('   Base Amount: €' + baseAmount.toFixed(2));
-        console.log('   Fee Amount: €' + feeAmount.toFixed(2), '(4%)');
-        console.log('   Total Charged: €' + totalAmount.toFixed(2));
-        
-        try {
-            const normalizedAddress = walletAddress.toLowerCase();
-            
-            // Get actual Stripe fee from the charge
-            let actualStripeFee = 0;
-            let stripeFeePct = 0;
-            const paymentIntent = event.data.object;
-            
-            if (paymentIntent.latest_charge) {
-                try {
-                    const charge = await stripe.charges.retrieve(paymentIntent.latest_charge, {
-                        expand: ['balance_transaction']
-                    });
-                    if (charge.balance_transaction && typeof charge.balance_transaction === 'object') {
-                        actualStripeFee = charge.balance_transaction.fee / 100;
-                        stripeFeePct = (actualStripeFee / totalAmount) * 100;
-                    }
-                } catch (e) {
-                    console.log('   ⚠️ Could not fetch balance transaction');
-                }
-            }
-            
-            console.log('\n💰 FEE BREAKDOWN:');
-            console.log('   Actual Stripe Fee: €' + actualStripeFee.toFixed(2), `(${stripeFeePct.toFixed(2)}%)`);
-            console.log('   Estimated Stripe Fee (3%): €' + (totalAmount * 0.03).toFixed(2));
-            
-            if (stripeFeePct <= 3) {
-                console.log('   ✅ Stripe fee within 3% budget');
-            } else {
-                console.log('   ⚠️ Stripe fee exceeds 3% budget by €' + (actualStripeFee - totalAmount * 0.03).toFixed(2));
-            }
-            
-            console.log('   Platform Fee (1%): €' + (baseAmount * 0.01).toFixed(2));
-            
-            // Calculate connected account transfer
-            const platformKeeps = feeAmount;
-            const toConnectedAccount = baseAmount;
-            
-            console.log('\n💸 FUND DISTRIBUTION:');
-            console.log('   Total Received: €' + totalAmount.toFixed(2));
-            console.log('   → Platform Keeps: €' + platformKeeps.toFixed(2), '(covers Stripe + platform fee)');
-            console.log('   → To Connected Account: €' + toConnectedAccount.toFixed(2));
-            if (process.env.STRIPE_DESTINATION_ACCOUNT) {
-                console.log('   Connected Account ID:', process.env.STRIPE_DESTINATION_ACCOUNT);
-            } else {
-                console.log('   ⚠️ No connected account configured');
-            }
-            
-            // Fetch live EUR/USD rate
-            let eurUsdRate = 1.19;
-            try {
-                const rateRes = await fetch('https://api.exchangerate-api.com/v4/latest/EUR');
-                if (rateRes.ok) {
-                    const rateData = await rateRes.json();
-                    eurUsdRate = rateData.rates?.USD || 1.19;
-                }
-            } catch (e) {
-                // Use default
-            }
-            
-            const usdAmount = totalAmount * eurUsdRate;
-            console.log('\n💱 CONVERSION:');
-            console.log('   EUR/USD Rate:', eurUsdRate.toFixed(4));
-            console.log('   USD Equivalent: $' + usdAmount.toFixed(2));
-            
-            // Check if already processed
-            const existing = await db.pool.query(
-                'SELECT id, status, mint_tx_hash FROM presale_purchases WHERE stripe_payment_intent = $1 OR payment_tx_hash = $1',
-                [paymentId]
-            );
-            
-            if (existing.rows.length > 0) {
-                const purchase = existing.rows[0];
-                if (purchase.status === 'completed' && purchase.mint_tx_hash) {
-                    console.log('\n⚠️ ALREADY PROCESSED');
-                    console.log('   Purchase ID:', purchase.id);
-                    console.log('   Mint TX:', purchase.mint_tx_hash);
-                    return res.json({ received: true, status: 'already_processed' });
-                }
-            }
-            
-            // ==================== GET REFERRER - WITH DEFAULT FALLBACK ====================
-            let referrerWallet = null;
-            let referrerCode = null;
-            let isDefaultReferrer = false;
-            
-            console.log('\n🎁 REFERRAL CHECK:');
-            
-            try {
-                const registrantResult = await db.pool.query(
-                    'SELECT referrer_wallet, referrer_code FROM registrants WHERE address = $1',
-                    [normalizedAddress]
-                );
-                
-                if (registrantResult.rows.length > 0 && registrantResult.rows[0].referrer_wallet) {
-                    referrerWallet = registrantResult.rows[0].referrer_wallet.toLowerCase();
-                    referrerCode = registrantResult.rows[0].referrer_code;
-                    console.log('   ✅ Referrer from registration:', referrerWallet);
-                    console.log('   Referral Code:', referrerCode);
-                }
-            } catch (refLookupError) {
-                console.log('   ⚠️ Referrer lookup error:', refLookupError.message);
-            }
-            
-            // Use default referrer if none found
-            if (!referrerWallet) {
-                referrerWallet = DEFAULT_REFERRER_WALLET;
-                referrerCode = 'DEFAULT';
-                isDefaultReferrer = true;
-                console.log('   ℹ️ No referrer found - using default owner wallet');
-                console.log('   Default Referrer:', referrerWallet);
-            }
-            
-            // Record purchase with referrer
-            let purchaseId;
-            if (existing.rows.length > 0) {
-                purchaseId = existing.rows[0].id;
-                await db.pool.query(`
-                    UPDATE presale_purchases 
-                    SET status = 'paid', 
-                        eur_amount = $2,
-                        usd_amount = $3,
-                        platform_fee = $4,
-                        net_amount = $5,
-                        actual_stripe_fee = $6,
-                        referrer_bonus = $7,
-                        updated_at = NOW()
-                    WHERE id = $1
-                `, [purchaseId, totalAmount, usdAmount, feeAmount, baseAmount, actualStripeFee, referrerWallet]);
-            } else {
-                const purchaseResult = await db.pool.query(`
-                    INSERT INTO presale_purchases 
-                    (wallet_address, token_amount, eur_amount, usd_amount, payment_method, 
-                    stripe_payment_intent, payment_amount, platform_fee, net_amount, actual_stripe_fee, 
-                    referrer_bonus, status, created_at)
-                    VALUES ($1, $2, $3, $4, 'stripe', $5, $6, $7, $8, $9, $10, 'paid', NOW())
-                    RETURNING id
-                `, [normalizedAddress, tokenAmount, totalAmount, usdAmount, paymentId, totalAmount, feeAmount, baseAmount, actualStripeFee, referrerWallet]);
-                purchaseId = purchaseResult.rows[0].id;
-            }
-            
-            console.log('\n📝 PURCHASE RECORDED:');
-            console.log('   Purchase ID:', purchaseId);
-            console.log('   EUR Amount: €' + totalAmount.toFixed(2));
-            console.log('   Platform Fee: €' + feeAmount.toFixed(2));
-            console.log('   Net Amount: €' + baseAmount.toFixed(2));
-            console.log('   Referrer:', referrerWallet, isDefaultReferrer ? '(default)' : '');
-            
-            // Mint tokens
-            console.log('\n🎯 MINTING TOKENS:');
-            console.log('   Recipient:', normalizedAddress);
-            console.log('   Amount:', tokenAmount, 'VIP');
-
-            await minter.initialize();
-            console.log('   ✅ Minter initialized');
-
-            let mintResult;
-            try {
-                mintResult = await minter.mintToAddress(normalizedAddress, parseFloat(tokenAmount), true); 
-            } catch (mintError) {
-                console.error('   ❌ Mint error:', mintError.message);
-                mintResult = { error: mintError.message };
-            }
-
-            if (mintResult && !mintResult.error && (mintResult.receipt || mintResult.hash || mintResult.txHash)) {
-                const txHash = mintResult.txHash || mintResult.receipt?.hash || mintResult.hash;
-                
-                await db.pool.query(`
-                    UPDATE presale_purchases 
-                    SET status = 'completed', mint_tx_hash = $1, minted_at = NOW()
-                    WHERE id = $2
-                `, [txHash, purchaseId]);
-                
-                console.log('   ✅ MINTED SUCCESSFULLY!');
-                console.log('   TX Hash:', txHash);
-                console.log('   Explorer: https://polygonscan.com/tx/' + txHash);
-                
-                // Update presale config tokens sold
-                try {
-                    await db.pool.query(`
-                        UPDATE presale_config 
-                        SET tokens_sold = COALESCE(tokens_sold, 0) + $1, updated_at = NOW() 
-                        WHERE id = 1
-                    `, [parseFloat(tokenAmount)]);
-                    console.log(`\n📊 PRESALE CONFIG UPDATED: +${tokenAmount} tokens sold`);
-                } catch (configError) {
-                    console.error('   ⚠️ Failed to update presale_config:', configError.message);
-                }
-                
-                // ==================== PROCESS REFERRAL BONUS (INCLUDING DEFAULT) ====================
-                console.log('\n🎁 REFERRAL BONUS PROCESSING:');
-                
-                // Don't give bonus to self
-                if (referrerWallet && referrerWallet !== normalizedAddress) {
-                    try {
-                        const settingsResult = await db.pool.query(
-                            'SELECT * FROM referral_settings WHERE id = 1'
-                        );
-                        
-                        if (settingsResult.rows.length > 0 && settingsResult.rows[0].enabled) {
-                            const settings = settingsResult.rows[0];
-                            const minPurchase = parseFloat(settings.min_purchase_for_bonus) || 0;
-                            
-                            console.log('   Referral Enabled:', settings.enabled);
-                            console.log('   Min Purchase: $' + minPurchase);
-                            console.log('   Purchase Amount: $' + usdAmount.toFixed(2));
-                            console.log('   Is Default Referrer:', isDefaultReferrer);
-                            
-                            if (usdAmount >= minPurchase) {
-                                let bonusAmount = 0;
-                                
-                                if (settings.presale_bonus_type === 'fixed') {
-                                    bonusAmount = parseFloat(settings.presale_bonus_amount) || 0;
-                                    console.log('   Bonus Type: Fixed');
-                                } else if (settings.presale_bonus_type === 'percentage') {
-                                    bonusAmount = (parseFloat(tokenAmount) * parseFloat(settings.presale_bonus_amount)) / 100;
-                                    console.log('   Bonus Type: Percentage (' + settings.presale_bonus_amount + '%)');
-                                }
-                                
-                                console.log('   Bonus Amount:', bonusAmount, 'VIP');
-                                
-                                if (bonusAmount > 0) {
-                                    console.log('\n   🎁 MINTING REFERRAL BONUS:');
-                                    console.log('   Recipient:', referrerWallet, isDefaultReferrer ? '(owner wallet)' : '');
-                                    console.log('   Amount:', bonusAmount, 'VIP');
-                                    
-                                    const bonusMintResult = await minter.mintToAddress(referrerWallet, bonusAmount, true);
-                                    const bonusTxHash = bonusMintResult.txHash || bonusMintResult.receipt?.hash || bonusMintResult.hash;
-                                    
-                                    if (bonusTxHash) {
-                                        // Update purchase with bonus info
-                                        await db.pool.query(`
-                                            UPDATE presale_purchases 
-                                            SET referral_bonus_amount = $1, referral_bonus_paid = true
-                                            WHERE id = $2
-                                        `, [bonusAmount, purchaseId]);
-                                        
-                                        // Only update referral stats for non-default referrers
-                                        if (!isDefaultReferrer) {
-                                            await db.pool.query(`
-                                                UPDATE referrals 
-                                                SET presale_bonus_paid = COALESCE(presale_bonus_paid, 0) + $1,
-                                                    presale_bonus_tx = $2
-                                                WHERE referee_wallet = $3
-                                            `, [bonusAmount, bonusTxHash, normalizedAddress]);
-                                            
-                                            await db.pool.query(`
-                                                UPDATE referral_codes 
-                                                SET total_presale_purchases = COALESCE(total_presale_purchases, 0) + 1,
-                                                    total_bonus_earned = COALESCE(total_bonus_earned, 0) + $1,
-                                                    updated_at = NOW()
-                                                WHERE code = $2
-                                            `, [bonusAmount, referrerCode]);
-                                        }
-                                        
-                                        console.log('   ✅ REFERRAL BONUS MINTED!');
-                                        console.log('   TX Hash:', bonusTxHash);
-                                        console.log('   Explorer: https://polygonscan.com/tx/' + bonusTxHash);
-                                    } else {
-                                        console.log('   ❌ Referral bonus mint failed');
-                                    }
-                                }
-                            } else {
-                                console.log('   ⏭️ Purchase below minimum for referral bonus');
-                            }
-                        } else {
-                            console.log('   ⏭️ Referral bonuses disabled');
-                        }
-                    } catch (refError) {
-                        console.error('   ⚠️ Referral bonus error:', refError.message);
-                    }
-                } else {
-                    console.log('   ⏭️ Skipping - referrer is same as buyer');
-                }
-                
-            } else {
-                console.log('   ❌ MINTING FAILED:', mintResult?.error);
-                await db.pool.query(`
-                    UPDATE presale_purchases 
-                    SET status = 'pending_mint', 
-                        error_message = $1,
-                        platform_fee = 0,
-                        net_amount = 0
-                    WHERE id = $2
-                `, [mintResult?.error || 'Unknown error', purchaseId]);
-            }
-            
-            console.log('\n' + '='.repeat(60));
-            console.log('✅ WEBHOOK PROCESSING COMPLETE');
-            console.log('='.repeat(60) + '\n');
-            
-        } catch (error) {
-            console.error('\n❌ ERROR PROCESSING WEBHOOK:', error);
-            console.log('='.repeat(60) + '\n');
-        }
-    }
-    
-    res.json({ received: true });
-});
-
-app.get('/api/presale/purchase-status/:paymentIntentId', async (req, res) => {
-    try {
-        const { paymentIntentId } = req.params;
-        
-        const result = await db.pool.query(
-            `SELECT status, mint_tx_hash, token_amount, error_message 
-             FROM presale_purchases 
-             WHERE stripe_payment_intent = $1 OR payment_tx_hash = $1`,
-            [paymentIntentId]
-        );
-        
-        if (result.rows.length === 0) {
-            return res.json({ status: 'pending', message: 'Waiting for payment confirmation...' });
-        }
-        
-        const purchase = result.rows[0];
-        res.json({
-            status: purchase.status,
-            mintTxHash: purchase.mint_tx_hash,
-            tokenAmount: purchase.token_amount,
-            error: purchase.error_message
-        });
-    } catch (error) {
-        console.error('❌ Purchase status error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
-// Serve static files with proper MIME types
-app.use(express.static(path.join(__dirname, 'public'), {
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-        } else if (filePath.endsWith('.mjs')) {
-            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-        } else if (filePath.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css; charset=utf-8');
-        } else if (filePath.endsWith('.json')) {
-            res.setHeader('Content-Type', 'application/json; charset=utf-8');
-        }
-    }
-}));
-
-// Ensure DB is initialized for each request (Vercel serverless)
-app.use(async (req, res, next) => {
-    try {
-        await db.initDb();
-        next();
-    } catch (error) {
-        console.error('DB initialization error:', error);
-        next();
-    }
-});
 
 // ===========================================
-// Admin Authentication Middleware (WalletTwo)
+// SINGLE calculateTokenBonus Definition
+// ===========================================
+async function calculateTokenBonus(eurAmount) {
+    try {
+        const result = await db.pool.query(`
+            SELECT min_eur, bonus_percent 
+            FROM presale_bonus_tiers 
+            WHERE is_active = true AND min_eur <= $1 
+            ORDER BY min_eur DESC 
+            LIMIT 1
+        `, [eurAmount]);
+        
+        if (result.rows.length > 0) {
+            return {
+                bonusPercent: parseFloat(result.rows[0].bonus_percent),
+                minEur: parseFloat(result.rows[0].min_eur)
+            };
+        }
+        return { bonusPercent: 0, minEur: 0 };
+    } catch (error) {
+        console.error('Error calculating bonus:', error);
+        return { bonusPercent: 0, minEur: 0 };
+    }
+}
+
+// ===========================================
+// Referral Helper Functions
+// ===========================================
+function generateReferralCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+async function getReferralSettings() {
+    try {
+        const result = await db.pool.query('SELECT * FROM referral_settings WHERE id = 1');
+        if (result.rows.length === 0) {
+            return {
+                enabled: false,
+                bonusType: 'fixed',
+                bonusAmount: 5,
+                presaleBonusType: 'percentage',
+                presaleBonusAmount: 5,
+                minPurchaseForBonus: 10
+            };
+        }
+        const s = result.rows[0];
+        return {
+            enabled: s.enabled,
+            bonusType: s.bonus_type || 'fixed',
+            bonusAmount: parseFloat(s.bonus_amount) || 5,
+            presaleBonusType: s.presale_bonus_type || 'percentage',
+            presaleBonusAmount: parseFloat(s.presale_bonus_amount) || 5,
+            minPurchaseForBonus: parseFloat(s.min_purchase_for_bonus) || 10
+        };
+    } catch (error) {
+        console.error('Error getting referral settings:', error);
+        return {
+            enabled: false,
+            bonusType: 'fixed',
+            bonusAmount: 5,
+            presaleBonusType: 'percentage',
+            presaleBonusAmount: 5,
+            minPurchaseForBonus: 10
+        };
+    }
+}
+
+// Validate Ethereum address
+function validateAddress(address) {
+    try {
+        return ethers.isAddress(address);
+    } catch {
+        return false;
+    }
+}
+
+// ===========================================
+// Admin Authentication Middleware
 // ===========================================
 async function requireAdminAuth(req, res, next) {
     const sessionId = req.cookies?.admin_session;
@@ -538,19 +212,752 @@ async function requireAdminAuth(req, res, next) {
     next();
 }
 
-// Validate Ethereum address
-function validateAddress(address) {
-    try {
-        return ethers.isAddress(address);
-    } catch {
-        return false;
+async function ensureDefaultData() {
+  try {
+    // Ensure presale_config row exists
+    const configCheck = await db.pool.query('SELECT id FROM presale_config WHERE id = 1');
+    if (configCheck.rows.length === 0) {
+      await db.pool.query(`
+        INSERT INTO presale_config (id, presale_enabled, sale_target_eur, total_tokens, token_price, min_purchase, max_purchase, presale_wallet)
+        VALUES (1, TRUE, 500000, 1000000, 1.00, 10, 10000, $1)
+      `, [process.env.PRESALE_WALLET || '0xdD4104A780142EfB9566659f26d3317714a81510']);
+      console.log('✅ Default presale config created');
     }
+
+    // Ensure default bonus tiers exist
+    const tiersCheck = await db.pool.query('SELECT id FROM presale_bonus_tiers WHERE active = TRUE LIMIT 1');
+    if (tiersCheck.rows.length === 0) {
+      const defaultTiers = [
+        { min_eur: 100, bonus_percent: 5, label: '€100+ (5% Bonus)' },
+        { min_eur: 1000, bonus_percent: 25, label: '€1,000+ (25% Bonus)' },
+        { min_eur: 10000, bonus_percent: 50, label: '€10,000+ (50% Bonus)' }
+      ];
+      for (const tier of defaultTiers) {
+        await db.pool.query(
+          'INSERT INTO presale_bonus_tiers (min_eur, bonus_percent, label, active) VALUES ($1, $2, $3, TRUE)',
+          [tier.min_eur, tier.bonus_percent, tier.label]
+        );
+      }
+      console.log('✅ Default bonus tiers created: €100→5%, €1000→25%, €10000→50%');
+    }
+
+    // Ensure default referral settings exist
+    const settingsCheck = await db.pool.query("SELECT id FROM app_settings WHERE key = 'referral_settings'");
+    if (settingsCheck.rows.length === 0) {
+      const defaultSettings = {
+        enabled: true,
+        claimBonusType: 'fixed',
+        claimBonusAmount: 2,
+        presaleBonusType: 'percentage',
+        presaleBonusAmount: 5,
+        autoPayBonus: true,
+        minPayoutThreshold: 0,
+        minPurchaseForBonus: 10
+      };
+      await db.pool.query(
+        "INSERT INTO app_settings (key, value) VALUES ('referral_settings', $1)",
+        [JSON.stringify(defaultSettings)]
+      );
+      console.log('✅ Default referral settings created');
+    }
+
+    // Ensure default mint amount setting exists
+    const mintCheck = await db.pool.query("SELECT id FROM app_settings WHERE key = 'mint_amount'");
+    if (mintCheck.rows.length === 0) {
+      await db.pool.query(
+        "INSERT INTO app_settings (key, value) VALUES ('mint_amount', $1)",
+        [JSON.stringify({ amount: parseInt(process.env.MINT_AMOUNT) || 2 })]
+      );
+      console.log('✅ Default mint amount setting created');
+    }
+
+    // Ensure default admin exists
+    const adminCheck = await db.pool.query('SELECT id FROM admin_whitelist LIMIT 1');
+    if (adminCheck.rows.length === 0 && process.env.DEFAULT_ADMIN_EMAIL) {
+      await db.pool.query(
+        'INSERT INTO admin_whitelist (email, role) VALUES ($1, $2)',
+        [process.env.DEFAULT_ADMIN_EMAIL, 'super_admin']
+      );
+      console.log('✅ Default admin created:', process.env.DEFAULT_ADMIN_EMAIL);
+    }
+
+  } catch (error) {
+    console.error('❌ Error ensuring default data:', error);
+  }
 }
 
-// ===========================================
-// Public Pages (No Auth Required)
-// ===========================================
+async function ensureDatabaseTables() {
+  const client = await db.pool.connect();
+  try {
+    await client.query('BEGIN');
 
+    // Registrants table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS registrants (
+        id SERIAL PRIMARY KEY,
+        wallet_address VARCHAR(42) UNIQUE NOT NULL,
+        email VARCHAR(255),
+        name VARCHAR(255),
+        source VARCHAR(50) DEFAULT 'manual',
+        minted BOOLEAN DEFAULT FALSE,
+        mint_tx_hash VARCHAR(66),
+        minted_at TIMESTAMP,
+        referrer_wallet VARCHAR(42),
+        referrer_code VARCHAR(20),
+        metadata JSONB DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await client.query('CREATE INDEX IF NOT EXISTS idx_registrants_wallet ON registrants(wallet_address)');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_registrants_referrer ON registrants(referrer_wallet)');
+
+    // Presale purchases table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS presale_purchases (
+        id SERIAL PRIMARY KEY,
+        wallet_address VARCHAR(42) NOT NULL,
+        email VARCHAR(255),
+        token_amount DECIMAL(18,6) NOT NULL,
+        eur_amount DECIMAL(18,2),
+        usd_amount DECIMAL(18,2),
+        payment_method VARCHAR(20) NOT NULL,
+        payment_amount DECIMAL(18,6),
+        payment_tx_hash VARCHAR(66),
+        stripe_payment_intent VARCHAR(100),
+        platform_fee DECIMAL(18,6),
+        net_amount DECIMAL(18,6),
+        actual_stripe_fee DECIMAL(18,6),
+        referrer_wallet VARCHAR(42),
+        referrer_code VARCHAR(20),
+        referrer_bonus DECIMAL(18,6) DEFAULT 0,
+        referral_bonus_amount DECIMAL(18,6) DEFAULT 0,
+        referral_bonus_tx VARCHAR(66),
+        referral_bonus_paid BOOLEAN DEFAULT FALSE,
+        purchase_bonus_percent DECIMAL(5,2) DEFAULT 0,
+        purchase_bonus_tokens DECIMAL(18,6) DEFAULT 0,
+        purchase_bonus_tx VARCHAR(66),
+        status VARCHAR(20) DEFAULT 'pending',
+        mint_tx_hash VARCHAR(66),
+        minted_at TIMESTAMP,
+        error_message TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await client.query('CREATE INDEX IF NOT EXISTS idx_purchases_wallet ON presale_purchases(wallet_address)');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_purchases_status ON presale_purchases(status)');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_purchases_stripe ON presale_purchases(stripe_payment_intent)');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_purchases_tx ON presale_purchases(payment_tx_hash)');
+
+    // Presale config table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS presale_config (
+        id INTEGER PRIMARY KEY DEFAULT 1,
+        presale_enabled BOOLEAN DEFAULT TRUE,
+        sale_target_eur DECIMAL(18,2) DEFAULT 500000,
+        total_tokens DECIMAL(18,2) DEFAULT 1000000,
+        tokens_sold DECIMAL(18,6) DEFAULT 0,
+        eur_raised DECIMAL(18,2) DEFAULT 0,
+        token_price DECIMAL(10,4) DEFAULT 1.00,
+        min_purchase DECIMAL(18,2) DEFAULT 10,
+        max_purchase DECIMAL(18,2) DEFAULT 10000,
+        presale_wallet VARCHAR(42),
+        crypto_fee_percent DECIMAL(5,4) DEFAULT 0.015,
+        card_fee_percent DECIMAL(5,4) DEFAULT 0.04,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    // Presale bonus tiers table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS presale_bonus_tiers (
+        id SERIAL PRIMARY KEY,
+        min_eur DECIMAL(18,2) NOT NULL,
+        bonus_percent DECIMAL(5,2) NOT NULL,
+        label VARCHAR(100),
+        active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    // App settings table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS app_settings (
+        id SERIAL PRIMARY KEY,
+        key VARCHAR(100) UNIQUE NOT NULL,
+        value JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    // Referral codes table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS referral_codes (
+        id SERIAL PRIMARY KEY,
+        code VARCHAR(20) UNIQUE NOT NULL,
+        owner_wallet VARCHAR(42) NOT NULL,
+        owner_email VARCHAR(255),
+        enabled BOOLEAN DEFAULT TRUE,
+        total_referrals INTEGER DEFAULT 0,
+        total_claims INTEGER DEFAULT 0,
+        total_presale_purchases INTEGER DEFAULT 0,
+        total_bonus_earned DECIMAL(18,6) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await client.query('CREATE INDEX IF NOT EXISTS idx_referral_codes_code ON referral_codes(code)');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_referral_codes_wallet ON referral_codes(owner_wallet)');
+
+    // Referrals tracking table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS referrals (
+        id SERIAL PRIMARY KEY,
+        referrer_wallet VARCHAR(42) NOT NULL,
+        referrer_code VARCHAR(20),
+        referred_wallet VARCHAR(42) NOT NULL,
+        referred_email VARCHAR(255),
+        source VARCHAR(20) DEFAULT 'claim',
+        signup_bonus_paid BOOLEAN DEFAULT FALSE,
+        signup_bonus_amount DECIMAL(18,6) DEFAULT 0,
+        signup_bonus_tx VARCHAR(66),
+        presale_bonus_paid BOOLEAN DEFAULT FALSE,
+        presale_bonus_amount DECIMAL(18,6) DEFAULT 0,
+        presale_bonus_tx VARCHAR(66),
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(referred_wallet)
+      )
+    `);
+    await client.query('CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_wallet)');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_referrals_referred ON referrals(referred_wallet)');
+
+    // Claims table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS claims (
+        id SERIAL PRIMARY KEY,
+        wallet_address VARCHAR(42) UNIQUE NOT NULL,
+        token_amount DECIMAL(18,6) NOT NULL,
+        tx_hash VARCHAR(66),
+        status VARCHAR(20) DEFAULT 'pending',
+        referrer_wallet VARCHAR(42),
+        referrer_code VARCHAR(20),
+        claimed_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    // Admin sessions table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS admin_sessions (
+        id SERIAL PRIMARY KEY,
+        session_id VARCHAR(64) UNIQUE NOT NULL,
+        admin_email VARCHAR(255) NOT NULL,
+        wallet_address VARCHAR(42),
+        created_at TIMESTAMP DEFAULT NOW(),
+        expires_at TIMESTAMP NOT NULL
+      )
+    `);
+    await client.query('CREATE INDEX IF NOT EXISTS idx_admin_sessions_sid ON admin_sessions(session_id)');
+
+    // Admin whitelist table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS admin_whitelist (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        wallet_address VARCHAR(42),
+        role VARCHAR(20) DEFAULT 'admin',
+        last_login TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    await client.query('COMMIT');
+    console.log('✅ Database tables ensured');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('❌ Database setup error:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+
+// ===========================================
+// STRIPE WEBHOOK - Must be BEFORE express.json()
+// ===========================================
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    if (!stripe) {
+        console.error('❌ Stripe not initialized');
+        return res.status(503).send('Stripe not configured');
+    }
+    
+    const sig = req.headers['stripe-signature'];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    if (!webhookSecret) {
+        console.error('❌ STRIPE_WEBHOOK_SECRET not configured');
+        return res.status(500).send('Webhook secret not configured');
+    }
+    
+    let event;
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err) {
+        console.error('❌ Webhook signature verification failed:', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+    
+    console.log('\n' + '='.repeat(70));
+    console.log('📨 STRIPE WEBHOOK RECEIVED');
+    console.log('='.repeat(70));
+    console.log('   Event Type:', event.type);
+    console.log('   Event ID:', event.id);
+    console.log('   Timestamp:', new Date().toISOString());
+    
+    if (event.type !== 'checkout.session.completed' && event.type !== 'payment_intent.succeeded') {
+        console.log('   ℹ️ Ignoring event type:', event.type);
+        return res.json({ received: true, ignored: true });
+    }
+    
+    let walletAddress, tokenAmount, paymentId, totalAmount, baseAmount, feeAmount;
+    
+    if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        walletAddress = session.metadata?.walletAddress;
+        tokenAmount = session.metadata?.tokenAmount;
+        paymentId = session.id;
+        totalAmount = (session.amount_total || 0) / 100;
+        baseAmount = parseFloat(session.metadata?.baseAmount) || totalAmount;
+        feeAmount = parseFloat(session.metadata?.feeAmount) || 0;
+    } else {
+        const paymentIntent = event.data.object;
+        walletAddress = paymentIntent.metadata?.walletAddress;
+        tokenAmount = paymentIntent.metadata?.tokenAmount;
+        paymentId = paymentIntent.id;
+        totalAmount = (paymentIntent.amount || 0) / 100;
+        baseAmount = parseFloat(paymentIntent.metadata?.baseAmount) || totalAmount;
+        feeAmount = parseFloat(paymentIntent.metadata?.feeAmount) || 0;
+    }
+    
+    if (!walletAddress || !tokenAmount) {
+        console.error('❌ Missing metadata');
+        return res.json({ received: true, error: 'Missing metadata' });
+    }
+    
+    if (!ethers.isAddress(walletAddress)) {
+        console.error('❌ Invalid wallet address format:', walletAddress);
+        return res.json({ received: true, error: 'Invalid wallet address' });
+    }
+    
+    console.log('\n💳 PAYMENT DETAILS:');
+    console.log('   Payment ID:', paymentId);
+    console.log('   Buyer Wallet:', walletAddress);
+    console.log('   Base Tokens:', tokenAmount, 'VIP');
+    console.log('   Base Amount: €' + baseAmount.toFixed(2));
+    console.log('   Fee Amount: €' + feeAmount.toFixed(2), '(4%)');
+    console.log('   Total Charged: €' + totalAmount.toFixed(2));
+    
+    try {
+        const normalizedAddress = walletAddress.toLowerCase();
+        const networkConfig = getNetworkConfig();
+        
+        // Get actual Stripe fee
+        let actualStripeFee = 0;
+        let stripeFeePct = 0;
+        const paymentIntentObj = event.data.object;
+        
+        if (paymentIntentObj.latest_charge) {
+            try {
+                const charge = await stripe.charges.retrieve(paymentIntentObj.latest_charge, {
+                    expand: ['balance_transaction']
+                });
+                if (charge.balance_transaction && typeof charge.balance_transaction === 'object') {
+                    actualStripeFee = charge.balance_transaction.fee / 100;
+                    stripeFeePct = totalAmount > 0 ? (actualStripeFee / totalAmount) * 100 : 0;
+                }
+            } catch (e) {
+                console.log('   ⚠️ Could not fetch balance transaction:', e.message);
+            }
+        }
+        
+        console.log('\n💰 FEE BREAKDOWN:');
+        console.log('   Actual Stripe Fee: €' + actualStripeFee.toFixed(2), `(${stripeFeePct.toFixed(2)}%)`);
+        console.log('   Our Platform Fee: €' + feeAmount.toFixed(2), '(4%)');
+        console.log('   Net to Business: €' + (baseAmount - actualStripeFee).toFixed(2));
+        
+        // Currency conversion
+        let eurUsdRate = 1.19;
+        try {
+            const rateRes = await fetch('https://api.exchangerate-api.com/v4/latest/EUR');
+            if (rateRes.ok) {
+                const rateData = await rateRes.json();
+                eurUsdRate = rateData.rates?.USD || 1.19;
+            }
+        } catch (e) {
+            console.log('   ⚠️ Using default EUR/USD rate:', eurUsdRate);
+        }
+        
+        const usdAmount = totalAmount * eurUsdRate;
+        
+        console.log('\n💱 CONVERSION:');
+        console.log('   EUR/USD Rate:', eurUsdRate.toFixed(4));
+        console.log('   USD Equivalent: $' + usdAmount.toFixed(2));
+        
+        // Check for duplicates
+        const existing = await db.pool.query(
+            'SELECT id, status, mint_tx_hash FROM presale_purchases WHERE stripe_payment_intent = $1 OR payment_tx_hash = $1',
+            [paymentId]
+        );
+        
+        if (existing.rows.length > 0) {
+            const purchase = existing.rows[0];
+            if (purchase.status === 'completed' && purchase.mint_tx_hash) {
+                console.log('\n⚠️ ALREADY PROCESSED');
+                return res.json({ 
+                    received: true, 
+                    status: 'already_processed', 
+                    purchaseId: purchase.id,
+                    mintTxHash: purchase.mint_tx_hash
+                });
+            }
+        }
+        
+        // Get referrer
+        let referrerWallet = null;
+        let referrerCode = null;
+        let isDefaultReferrer = false;
+        
+        console.log('\n👥 REFERRAL LOOKUP:');
+        
+        try {
+            const registrantResult = await db.pool.query(
+                'SELECT referrer_wallet, referrer_code FROM registrants WHERE address = $1',
+                [normalizedAddress]
+            );
+            
+            if (registrantResult.rows.length > 0 && registrantResult.rows[0].referrer_wallet) {
+                referrerWallet = registrantResult.rows[0].referrer_wallet.toLowerCase();
+                referrerCode = registrantResult.rows[0].referrer_code;
+                console.log('   ✅ From registration:', referrerWallet);
+            }
+        } catch (refLookupError) {
+            console.log('   ⚠️ Lookup error:', refLookupError.message);
+        }
+        
+        if (!referrerWallet) {
+            referrerWallet = DEFAULT_REFERRER_WALLET;
+            referrerCode = 'DEFAULT';
+            isDefaultReferrer = true;
+            console.log('   ℹ️ Using default referrer:', referrerWallet);
+        }
+        
+        // Calculate purchase bonus
+        console.log('\n🎁 PURCHASE BONUS CALCULATION:');
+        console.log('   Base Amount (EUR): €' + baseAmount.toFixed(2));
+        
+        const bonusInfo = await calculateTokenBonus(baseAmount);
+        const baseTokens = parseFloat(tokenAmount);
+        let bonusTokens = 0;
+        
+        if (bonusInfo.bonusPercent > 0) {
+            bonusTokens = Math.floor(baseTokens * bonusInfo.bonusPercent / 100);
+            console.log('   ✅ BONUS TIER REACHED!');
+            console.log('      Tier: ' + bonusInfo.bonusPercent + '% (min €' + bonusInfo.minEur + ')');
+            console.log('      Bonus Tokens: +' + bonusTokens);
+        } else {
+            console.log('   ℹ️ No bonus tier reached');
+        }
+        
+        const totalTokensToMint = baseTokens + bonusTokens;
+        console.log('   📦 TOTAL TO MINT: ' + totalTokensToMint + ' VIP');
+        // Record/Update purchase
+        let purchaseId;
+        
+        if (existing.rows.length > 0) {
+            purchaseId = existing.rows[0].id;
+            await db.pool.query(`
+                UPDATE presale_purchases 
+                SET status = 'paid', 
+                    eur_amount = $2, 
+                    usd_amount = $3, 
+                    platform_fee = $4, 
+                    net_amount = $5,
+                    actual_stripe_fee = $6, 
+                    referrer_bonus = $7,
+                    purchase_bonus_percent = $8, 
+                    purchase_bonus_tokens = $9,
+                    updated_at = NOW()
+                WHERE id = $1
+            `, [
+                purchaseId, 
+                totalAmount, 
+                usdAmount, 
+                feeAmount, 
+                baseAmount, 
+                actualStripeFee, 
+                referrerWallet, 
+                bonusInfo.bonusPercent, 
+                bonusTokens
+            ]);
+            console.log('\n📝 UPDATED EXISTING PURCHASE:', purchaseId);
+        } else {
+            const purchaseResult = await db.pool.query(`
+                INSERT INTO presale_purchases 
+                (wallet_address, token_amount, eur_amount, usd_amount, payment_method, 
+                 stripe_payment_intent, payment_amount, platform_fee, net_amount, actual_stripe_fee, 
+                 referrer_bonus, purchase_bonus_percent, purchase_bonus_tokens, status, created_at)
+                VALUES ($1, $2, $3, $4, 'stripe', $5, $6, $7, $8, $9, $10, $11, $12, 'paid', NOW())
+                RETURNING id
+            `, [
+                normalizedAddress, 
+                baseTokens,
+                totalAmount, 
+                usdAmount, 
+                paymentId, 
+                totalAmount, 
+                feeAmount, 
+                baseAmount, 
+                actualStripeFee, 
+                referrerWallet, 
+                bonusInfo.bonusPercent, 
+                bonusTokens
+            ]);
+            purchaseId = purchaseResult.rows[0].id;
+            console.log('\n📝 CREATED NEW PURCHASE:', purchaseId);
+        }
+        
+        // Mint tokens
+        console.log('\n🎯 MINTING TOKENS...');
+        console.log('   Recipient:', normalizedAddress);
+        console.log('   Amount:', totalTokensToMint, 'VIP');
+
+        await minter.initialize();
+
+        let mintResult;
+        try {
+            mintResult = await minter.mintToAddress(normalizedAddress, totalTokensToMint, true); 
+        } catch (mintError) {
+            console.error('   ❌ Mint exception:', mintError.message);
+            mintResult = { error: mintError.message };
+        }
+
+        const mintSuccess = mintResult && !mintResult.error && (mintResult.receipt || mintResult.hash || mintResult.txHash || mintResult.success);
+        
+        if (mintSuccess) {
+            const mintTxHash = mintResult.txHash || mintResult.receipt?.hash || mintResult.hash || mintResult.transactionHash;
+            
+            console.log('   ✅ MINTED SUCCESSFULLY!');
+            console.log('   TX Hash:', mintTxHash);
+            console.log('   Explorer:', networkConfig.explorer + '/tx/' + mintTxHash);
+            
+            await db.pool.query(`
+                UPDATE presale_purchases 
+                SET status = 'completed', 
+                    mint_tx_hash = $1, 
+                    purchase_bonus_tx = $1, 
+                    minted_at = NOW()
+                WHERE id = $2
+            `, [mintTxHash, purchaseId]);
+            
+            // Update presale stats
+            console.log('\n📊 UPDATING PRESALE STATS...');
+            try {
+                await db.pool.query(`
+                    UPDATE presale_config 
+                    SET tokens_sold = COALESCE(tokens_sold, 0) + $1,
+                        eur_raised = COALESCE(eur_raised, 0) + $2,
+                        updated_at = NOW() 
+                    WHERE id = 1
+                `, [totalTokensToMint, baseAmount]);
+                console.log('   ✅ +' + totalTokensToMint + ' tokens sold');
+            } catch (configError) {
+                console.error('   ⚠️ Config update error:', configError.message);
+            }
+            
+            // Process referral bonus
+            console.log('\n🎁 REFERRAL BONUS PROCESSING:');
+            console.log('   Referrer:', referrerWallet);
+            console.log('   Is Default:', isDefaultReferrer);
+            
+            let referralBonusPaid = false;
+            let referralBonusAmount = 0;
+            let referralBonusTxHash = null;
+            
+            if (referrerWallet && referrerWallet.toLowerCase() !== normalizedAddress.toLowerCase()) {
+                try {
+                    const settingsResult = await db.pool.query(
+                        'SELECT * FROM referral_settings WHERE id = 1'
+                    );
+                    
+                    if (settingsResult.rows.length > 0 && settingsResult.rows[0].enabled) {
+                        const settings = settingsResult.rows[0];
+                        const minPurchase = parseFloat(settings.min_purchase_for_bonus) || 0;
+                        
+                        if (usdAmount >= minPurchase) {
+                            if (settings.presale_bonus_type === 'fixed') {
+                                referralBonusAmount = parseFloat(settings.presale_bonus_amount) || 0;
+                            } else if (settings.presale_bonus_type === 'percentage') {
+                                referralBonusAmount = (baseTokens * parseFloat(settings.presale_bonus_amount)) / 100;
+                            }
+                            
+                            console.log('   Calculated Bonus:', referralBonusAmount, 'VIP');
+                            
+                            if (referralBonusAmount > 0) {
+                                console.log('   🎯 Minting referral bonus to:', referrerWallet);
+                                
+                                try {
+                                    const bonusMintResult = await minter.mintToAddress(referrerWallet, referralBonusAmount, true);
+                                    
+                                    if (bonusMintResult && !bonusMintResult.error) {
+                                        referralBonusTxHash = bonusMintResult.txHash || bonusMintResult.receipt?.hash || bonusMintResult.hash;
+                                        
+                                        if (referralBonusTxHash) {
+                                            referralBonusPaid = true;
+                                            console.log('   ✅ Referral bonus minted!');
+                                            console.log('   TX:', referralBonusTxHash);
+                                            
+                                            await db.pool.query(`
+                                                UPDATE presale_purchases 
+                                                SET referral_bonus_amount = $1, 
+                                                    referral_bonus_paid = true,
+                                                    referral_bonus_tx = $3
+                                                WHERE id = $2
+                                            `, [referralBonusAmount, purchaseId, referralBonusTxHash]);
+                                            
+                                            if (!isDefaultReferrer && referrerCode && referrerCode !== 'DEFAULT') {
+                                                await db.pool.query(`
+                                                    UPDATE referral_codes 
+                                                    SET total_presale_purchases = COALESCE(total_presale_purchases, 0) + 1,
+                                                        total_bonus_earned = COALESCE(total_bonus_earned, 0) + $1,
+                                                        updated_at = NOW()
+                                                    WHERE code = $2
+                                                `, [referralBonusAmount, referrerCode]);
+                                                
+                                                try {
+                                                    await db.pool.query(`
+                                                        INSERT INTO referrals 
+                                                        (referrer_wallet, referred_wallet, referral_code, presale_bonus_paid, bonus_tx_hash, created_at)
+                                                        VALUES ($1, $2, $3, $4, $5, NOW())
+                                                        ON CONFLICT (referred_wallet) 
+                                                        DO UPDATE SET 
+                                                            presale_bonus_paid = COALESCE(referrals.presale_bonus_paid, 0) + $4,
+                                                            bonus_tx_hash = $5,
+                                                            updated_at = NOW()
+                                                    `, [referrerWallet, normalizedAddress, referrerCode, referralBonusAmount, referralBonusTxHash]);
+                                                } catch (refInsertError) {
+                                                    console.log('   ⚠️ Could not record referral:', refInsertError.message);
+                                                }
+                                            }
+                                        }
+                                    }
+                                } catch (bonusMintError) {
+                                    console.error('   ❌ Referral bonus mint exception:', bonusMintError.message);
+                                }
+                            }
+                        } else {
+                            console.log('   ⏭️ Below minimum purchase for referral bonus');
+                        }
+                    } else {
+                        console.log('   ⏭️ Referral bonuses disabled');
+                    }
+                } catch (refError) {
+                    console.error('   ⚠️ Referral bonus error:', refError.message);
+                }
+            } else {
+                console.log('   ⏭️ No eligible referrer');
+            }
+            
+            console.log('\n' + '='.repeat(70));
+            console.log('✅ WEBHOOK PROCESSING COMPLETE');
+            console.log('='.repeat(70) + '\n');
+            
+            return res.json({ 
+                received: true,
+                success: true,
+                purchaseId,
+                mintTxHash,
+                baseTokens,
+                bonusTokens,
+                totalTokens: totalTokensToMint,
+                referralBonus: referralBonusPaid ? {
+                    amount: referralBonusAmount,
+                    txHash: referralBonusTxHash,
+                    referrer: referrerWallet
+                } : null
+            });
+            
+        } else {
+            console.log('\n❌ MINTING FAILED');
+            console.log('   Error:', mintResult?.error || 'Unknown error');
+            
+            await db.pool.query(`
+                UPDATE presale_purchases 
+                SET status = 'pending_mint', 
+                    error_message = $1
+                WHERE id = $2
+            `, [mintResult?.error || 'Unknown minting error', purchaseId]);
+            
+            return res.json({ 
+                received: true,
+                success: false,
+                purchaseId,
+                status: 'pending_mint',
+                error: mintResult?.error || 'Minting failed'
+            });
+        }
+        
+    } catch (error) {
+        console.error('\n❌ WEBHOOK PROCESSING ERROR:', error);
+        return res.json({ 
+            received: true, 
+            success: false,
+            error: 'Internal processing error'
+        });
+    }
+});
+
+// ===========================================
+// MIDDLEWARE - Must be AFTER Stripe webhook
+// ===========================================
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public'), {
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        } else if (filePath.endsWith('.mjs')) {
+            res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        } else if (filePath.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css; charset=utf-8');
+        } else if (filePath.endsWith('.json')) {
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        }
+    }
+}));
+
+// Ensure DB is initialized
+app.use(async (req, res, next) => {
+    try {
+        await db.initDb();
+        next();
+    } catch (error) {
+        console.error('DB initialization error:', error);
+        next();
+    }
+});
+
+// ===========================================
+// Public Pages
+// ===========================================
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -567,7 +974,6 @@ app.get('/presale', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'presale.html'));
 });
 
-// Login page - redirect to dashboard if already authenticated
 app.get('/login', async (req, res) => {
     const sessionId = req.cookies?.admin_session;
     if (sessionId) {
@@ -586,10 +992,6 @@ app.get('/login', async (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login', 'index.html'));
 });
 
-// ===========================================
-// Protected Pages (Admin Auth Required)
-// ===========================================
-
 app.get('/dashboard', requireAdminAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
@@ -597,7 +999,6 @@ app.get('/dashboard', requireAdminAuth, (req, res) => {
 // ===========================================
 // WalletTwo Token Exchange Proxy
 // ===========================================
-
 app.post('/api/wallettwo/exchange', async (req, res) => {
     const { code } = req.body;
     
@@ -608,35 +1009,26 @@ app.post('/api/wallettwo/exchange', async (req, res) => {
     try {
         console.log('🔄 Exchanging WalletTwo code for token...');
         
-        // Exchange code for access token
         const exchangeResponse = await fetch(`https://api.wallettwo.com/auth/consent?code=${code}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
         });
         
-        console.log('📡 Exchange response status:', exchangeResponse.status);
-        
         if (!exchangeResponse.ok) {
             const errorText = await exchangeResponse.text();
-            console.error('❌ Exchange failed:', exchangeResponse.status, errorText);
             return res.status(exchangeResponse.status).json({ error: 'Exchange failed', details: errorText });
         }
         
         const tokenData = await exchangeResponse.json();
-        console.log('✅ Token received:', Object.keys(tokenData));
         
-        // Fetch user info with the token
         if (tokenData.access_token) {
             const userResponse = await fetch('https://api.wallettwo.com/auth/userinfo', {
                 method: 'GET',
                 headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
             });
             
-            console.log('📡 User info response status:', userResponse.status);
-            
             if (userResponse.ok) {
                 const userData = await userResponse.json();
-                console.log('✅ User data received:', Object.keys(userData));
                 return res.json({
                     access_token: tokenData.access_token,
                     user: userData
@@ -653,46 +1045,33 @@ app.post('/api/wallettwo/exchange', async (req, res) => {
 });
 
 // ===========================================
-// Admin Authentication API (WalletTwo)
+// Admin Authentication API
 // ===========================================
-
-// Authenticate admin (called after WalletTwo login)
 app.post('/api/admin/auth', async (req, res) => {
     try {
         const { email, walletAddress, name } = req.body;
         
         if (!email) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Email is required' 
-            });
+            return res.status(400).json({ success: false, error: 'Email is required' });
         }
         
         console.log('[Admin Auth] Checking:', email);
         
-        // Check if email is whitelisted
         const isWhitelisted = await db.isAdminWhitelisted(email);
         
         if (!isWhitelisted) {
             console.log('[Admin Auth] Not whitelisted:', email);
-            return res.status(403).json({ 
-                success: false, 
-                error: 'Access denied. Your email is not authorized.' 
-            });
+            return res.status(403).json({ success: false, error: 'Access denied. Your email is not authorized.' });
         }
         
-        // Update wallet address if provided
         if (walletAddress) {
             await db.updateAdminWallet(email, walletAddress);
         }
         
-        // Update last login
         await db.updateAdminLastLogin(email);
         
-        // Get admin info
         const admin = await db.getAdminByEmail(email);
         
-        // Create session
         const sessionId = crypto.randomBytes(32).toString('hex');
         await db.createSession(sessionId, email, 24);
         
@@ -722,7 +1101,6 @@ app.post('/api/admin/auth', async (req, res) => {
     }
 });
 
-// Check admin session
 app.get('/api/admin/session', async (req, res) => {
     try {
         const sessionId = req.cookies?.admin_session;
@@ -759,7 +1137,6 @@ app.get('/api/admin/session', async (req, res) => {
     }
 });
 
-// Admin logout
 app.post('/api/admin/logout', async (req, res) => {
     const sessionId = req.cookies?.admin_session;
     if (sessionId) {
@@ -769,7 +1146,6 @@ app.post('/api/admin/logout', async (req, res) => {
     res.json({ success: true });
 });
 
-// Get all admins (super_admin only)
 app.get('/api/admin/whitelist', requireAdminAuth, async (req, res) => {
     try {
         if (req.admin.role !== 'super_admin') {
@@ -783,7 +1159,6 @@ app.get('/api/admin/whitelist', requireAdminAuth, async (req, res) => {
     }
 });
 
-// Add admin (super_admin only)
 app.post('/api/admin/whitelist', requireAdminAuth, async (req, res) => {
     try {
         if (req.admin.role !== 'super_admin') {
@@ -801,7 +1176,6 @@ app.post('/api/admin/whitelist', requireAdminAuth, async (req, res) => {
     }
 });
 
-// Remove admin (super_admin only)
 app.delete('/api/admin/whitelist/:email', requireAdminAuth, async (req, res) => {
     try {
         if (req.admin.role !== 'super_admin') {
@@ -814,11 +1188,9 @@ app.delete('/api/admin/whitelist/:email', requireAdminAuth, async (req, res) => 
         res.status(500).json({ error: error.message || 'Failed to remove admin' });
     }
 });
-
 // ===========================================
-// Wallet Connection API (Profile page)
+// Wallet Connection API
 // ===========================================
-
 app.post('/api/wallet/connect', async (req, res) => {
     try {
         const { walletAddress, email, name, source } = req.body;
@@ -826,17 +1198,13 @@ app.post('/api/wallet/connect', async (req, res) => {
         console.log('[Wallet Connect] Received:', { walletAddress, email, name, source });
 
         if (!walletAddress || !ethers.isAddress(walletAddress)) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Invalid wallet address' 
-            });
+            return res.status(400).json({ success: false, error: 'Invalid wallet address' });
         }
 
         const normalizedAddress = walletAddress.toLowerCase();
         let registrant = await db.getRegistrant(normalizedAddress);
 
         if (registrant) {
-            // Update existing
             if ((email && !registrant.email) || name) {
                 try {
                     await db.pool.query(
@@ -847,7 +1215,6 @@ app.post('/api/wallet/connect', async (req, res) => {
                          WHERE LOWER(address) = $3`,
                         [email || null, JSON.stringify(name || null), normalizedAddress]
                     );
-                    console.log(`[Wallet Connect] Updated: ${normalizedAddress}, email: ${email}`);
                 } catch (updateErr) {
                     console.error('[Wallet Connect] Update error:', updateErr.message);
                 }
@@ -861,7 +1228,6 @@ app.post('/api/wallet/connect', async (req, res) => {
             });
         }
 
-        // Insert new
         try {
             await db.pool.query(
                 `INSERT INTO registrants (address, email, source, metadata, registered_at, updated_at) 
@@ -872,7 +1238,6 @@ app.post('/api/wallet/connect', async (req, res) => {
                     updated_at = NOW()`,
                 [normalizedAddress, email || null, source || 'wallettwo', JSON.stringify({ name: name || null })]
             );
-            console.log(`[Wallet Connect] Created: ${normalizedAddress}, email: ${email}`);
         } catch (insertErr) {
             console.error('[Wallet Connect] Insert error:', insertErr.message);
         }
@@ -886,10 +1251,7 @@ app.post('/api/wallet/connect', async (req, res) => {
 
     } catch (error) {
         console.error('[Wallet Connect] Error:', error);
-        return res.status(500).json({ 
-            success: false, 
-            error: 'Failed to save wallet connection' 
-        });
+        return res.status(500).json({ success: false, error: 'Failed to save wallet connection' });
     }
 });
 
@@ -898,10 +1260,7 @@ app.get('/api/wallet/info/:address', async (req, res) => {
         const { address } = req.params;
 
         if (!address || !ethers.isAddress(address)) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Invalid wallet address' 
-            });
+            return res.status(400).json({ success: false, error: 'Invalid wallet address' });
         }
 
         const normalizedAddress = address.toLowerCase();
@@ -928,268 +1287,189 @@ app.get('/api/wallet/info/:address', async (req, res) => {
 
     } catch (error) {
         console.error('[Wallet Info] Error:', error);
-        return res.status(500).json({ 
-            success: false, 
-            error: 'Failed to get wallet info' 
-        });
+        return res.status(500).json({ success: false, error: 'Failed to get wallet info' });
     }
 });
 
 // ===========================================
-// Public Claim API (No Auth Required)
+// Public Claim API
 // ===========================================
-
 app.post('/api/claim/register', async (req, res) => {
-    try {
-        const { wallet_address, signature, message } = req.body;
-        
-        console.log('\n📥 CLAIM REQUEST:', { 
-            wallet_address, 
-            signature: signature ? 'provided' : 'none', 
-            message: message ? 'provided' : 'none'
-        });
+  try {
+    const { wallet_address, signature, message } = req.body;
 
-        // ==================== VALIDATION ====================
-        if (!wallet_address || !ethers.isAddress(wallet_address)) {
-            console.log('❌ Invalid wallet address');
-            return res.status(400).json({ 
-                status: 'error',
-                error: 'Invalid wallet address',
-                message: 'Please provide a valid Polygon wallet address'
-            });
-        }
-
-        const normalizedAddress = ethers.getAddress(wallet_address).toLowerCase();
-        console.log('📍 Normalized address:', normalizedAddress);
-
-        // ==================== SIGNATURE VERIFICATION (Optional) ====================
-        let signatureValid = false;
-        if (signature && message) {
-            try {
-                const recoveredAddress = ethers.verifyMessage(message, signature);
-                signatureValid = recoveredAddress.toLowerCase() === normalizedAddress;
-                console.log('🔐 Signature verification:', signatureValid ? '✅ Valid' : '❌ Invalid');
-            } catch (sigError) {
-                console.log('⚠️ Signature verification error:', sigError.message);
-            }
-        }
-
-        // ==================== INITIALIZE MINTER ====================
-        await minter.initialize();
-        const networkConfig = getNetworkConfig();
-        
-        let mintAmount = parseInt(process.env.MINT_AMOUNT) || 2;
-        try {
-            const mintSetting = await db.pool.query(
-                "SELECT value FROM app_settings WHERE key = 'mint_amount'"
-            );
-            if (mintSetting.rows.length > 0) {
-                mintAmount = parseInt(mintSetting.rows[0].value) || mintAmount;
-            }
-        } catch (e) {
-            console.log('Using default mint amount');
-        }
-        
-        // ==================== CHECK EXISTING REGISTRATION ====================
-        let existingRegistrant = await db.getRegistrant(normalizedAddress);
-        
-        // Check if already minted
-        if (existingRegistrant && existingRegistrant.minted) {
-            console.log('📋 Already claimed - TX:', existingRegistrant.tx_hash);
-            return res.status(409).json({
-                status: 'already_claimed',
-                message: 'This wallet has already claimed VIP tokens',
-                tx_hash: existingRegistrant.tx_hash,
-                explorer_url: existingRegistrant.tx_hash 
-                    ? `${networkConfig.explorer}/tx/${existingRegistrant.tx_hash}` 
-                    : `${networkConfig.explorer}/address/${normalizedAddress}`,
-                claimed_at: existingRegistrant.minted_at,
-                claim_amount: existingRegistrant.claim_amount || mintAmount
-            });
-        }
-
-        // ==================== REGISTER NEW USER ====================
-        if (!existingRegistrant) {
-            await db.addRegistrant(normalizedAddress, signature, { 
-                source: 'claim_page',
-                signatureVerified: signatureValid
-            });
-            console.log('📝 Added new wallet to PostgreSQL DB');
-        }
-
-        // ==================== MINT TOKENS ====================
-        console.log(`🎯 Initiating mint of ${mintAmount} VIP tokens...`);
-
-        try {
-            const result = await minter.mintToAddress(normalizedAddress, mintAmount);
-            
-            // Handle skip case (minter detected existing tokens)
-            if (result.skipped) {
-                console.log('⏭️ Mint skipped - user already has tokens');
-                
-                // Mark as minted even if skipped
-                await db.pool.query(`
-                    UPDATE registrants 
-                    SET minted = true, minted_at = NOW(), claim_amount = 0, tx_hash = 'skipped'
-                    WHERE address = $1
-                `, [normalizedAddress]);
-                
-                return res.status(409).json({
-                    status: 'already_claimed',
-                    message: 'Wallet already has VIP tokens',
-                    balance: result.balance,
-                    symbol: 'VIP',
-                    explorer_url: `${networkConfig.explorer}/address/${normalizedAddress}`
-                });
-            }
-
-            // Successful mint
-            const txHash = result.receipt.hash || result.hash || result.transactionHash;
-            
-            // Update with minted flag and claim_amount
-            await db.pool.query(`
-                UPDATE registrants 
-                SET minted = true, minted_at = NOW(), claim_amount = $1, tx_hash = $2
-                WHERE address = $3
-            `, [mintAmount, txHash, normalizedAddress]);
-            
-            console.log('✅ Mint successful!');
-            console.log('   TX Hash:', txHash);
-            console.log('   Amount:', mintAmount, 'VIP');
-
-            // ==================== PROCESS REFERRAL BONUS ====================
-            let referralBonus = null;
-            try {
-                const referrerResult = await db.pool.query(
-                    'SELECT referrer_wallet, referrer_code FROM registrants WHERE address = $1 AND referrer_wallet IS NOT NULL',
-                    [normalizedAddress]
-                );
-                
-                if (referrerResult.rows.length > 0 && referrerResult.rows[0].referrer_wallet) {
-                    const referrerWallet = referrerResult.rows[0].referrer_wallet;
-                    const referrerCode = referrerResult.rows[0].referrer_code;
-                    
-                    console.log('🎁 User has referrer:', referrerWallet);
-                    
-                    const settingsResult = await db.pool.query(
-                        'SELECT * FROM referral_settings WHERE id = 1'
-                    );
-                    
-                    if (settingsResult.rows.length > 0 && settingsResult.rows[0].enabled) {
-                        const settings = settingsResult.rows[0];
-                        let bonusAmount = 0;
-                        
-                        if (settings.bonus_type === 'fixed') {
-                            bonusAmount = parseFloat(settings.bonus_amount) || 0;
-                        } else if (settings.bonus_type === 'percentage') {
-                            bonusAmount = (mintAmount * parseFloat(settings.bonus_amount)) / 100;
-                        }
-                        
-                        console.log('🎁 Claim bonus calculation:', {
-                            type: settings.bonus_type,
-                            rate: settings.bonus_amount,
-                            claimAmount: mintAmount,
-                            calculatedBonus: bonusAmount
-                        });
-                        
-                        if (bonusAmount > 0) {
-                            const existingBonus = await db.pool.query(
-                                'SELECT signup_bonus_paid FROM referrals WHERE referee_wallet = $1',
-                                [normalizedAddress]
-                            );
-                            
-                            const alreadyPaid = existingBonus.rows.length > 0 && 
-                                parseFloat(existingBonus.rows[0].signup_bonus_paid) > 0;
-                            
-                            if (!alreadyPaid) {
-                                console.log(`🎁 Minting ${bonusAmount} VIP claim bonus to referrer ${referrerWallet}...`);
-                                
-                                try {
-                                    const bonusResult = await minter.mintToAddress(referrerWallet, bonusAmount, true);
-                                    const bonusTxHash = bonusResult.receipt?.hash || bonusResult.hash || 'bonus-minted';
-                                    
-                                    await db.pool.query(`
-                                        UPDATE referrals 
-                                        SET signup_bonus_paid = $1
-                                        WHERE referee_wallet = $2
-                                    `, [bonusAmount, normalizedAddress]);
-                                    
-                                    await db.pool.query(`
-                                        UPDATE referral_codes 
-                                        SET total_claims = total_claims + 1,
-                                            total_bonus_earned = total_bonus_earned + $1,
-                                            updated_at = NOW()
-                                        WHERE code = $2
-                                    `, [bonusAmount, referrerCode]);
-                                    
-                                    referralBonus = {
-                                        referrer: referrerWallet,
-                                        amount: bonusAmount,
-                                        txHash: bonusTxHash,
-                                        type: 'claim'
-                                    };
-                                    
-                                    console.log('✅ Referral claim bonus minted! TX:', bonusTxHash);
-                                } catch (bonusError) {
-                                    console.error('⚠️ Failed to mint referral bonus:', bonusError.message);
-                                }
-                            } else {
-                                console.log('ℹ️ Signup bonus already paid for this referral');
-                            }
-                        }
-                    }
-                }
-            } catch (refError) {
-                console.error('⚠️ Referral bonus processing error:', refError.message);
-            }
-
-            // ==================== SUCCESS RESPONSE ====================
-            const response = {
-                status: 'minted',
-                message: `Successfully minted ${mintAmount} VIP tokens!`,
-                tx_hash: txHash,
-                explorer_url: `${networkConfig.explorer}/tx/${txHash}`,
-                token_url: `${networkConfig.explorer}/token/${process.env.VIP_TOKEN_ADDRESS || '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F'}?a=${normalizedAddress}`,
-                amount: mintAmount,
-                symbol: 'VIP',
-                network: 'Polygon'
-            };
-            
-            if (referralBonus) {
-                response.referral_bonus = referralBonus;
-            }
-
-            return res.status(201).json(response);
-
-        } catch (mintError) {
-            console.error('❌ Mint error:', mintError.message);
-            console.error('   Stack:', mintError.stack);
-            
-            const isGasError = mintError.message.includes('gas') || mintError.message.includes('insufficient');
-            const isNetworkError = mintError.message.includes('network') || mintError.message.includes('timeout');
-            
-            return res.status(500).json({
-                status: 'error',
-                message: isGasError 
-                    ? 'Minting temporarily unavailable due to network congestion. Please try again later.'
-                    : isNetworkError
-                        ? 'Network error occurred. Please try again in a few moments.'
-                        : 'Failed to mint tokens. Please try again later.',
-                error: process.env.NODE_ENV === 'development' ? mintError.message : undefined,
-                retry: true
-            });
-        }
-
-    } catch (error) {
-        console.error('❌ CLAIM ERROR:', error.message);
-        console.error('   Stack:', error.stack);
-        
-        return res.status(500).json({
-            status: 'error',
-            message: 'Server error occurred. Please try again later.',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
+    if (!wallet_address || !ethers.isAddress(wallet_address)) {
+      return res.status(400).json({ error: 'Invalid wallet address' });
     }
+
+    const wallet = wallet_address.toLowerCase();
+
+    // Check if already claimed
+    const existingClaim = await db.pool.query(
+      'SELECT id, tx_hash, token_amount FROM claims WHERE wallet_address = $1',
+      [wallet]
+    );
+
+    if (existingClaim.rows.length > 0) {
+      const claim = existingClaim.rows[0];
+      
+      // Get current balance for display
+      let balance = claim.token_amount;
+      try {
+        const provider = new ethers.JsonRpcProvider(POLYGON_RPC);
+        const contract = new ethers.Contract(VIP_TOKEN_ADDRESS, VIP_TOKEN_ABI, provider);
+        const rawBalance = await contract.balanceOf(wallet);
+        balance = parseFloat(ethers.formatUnits(rawBalance, 18));
+      } catch (e) {
+        console.log('Could not fetch on-chain balance');
+      }
+
+      return res.status(409).json({
+        status: 'already_claimed',
+        message: 'This wallet has already claimed tokens.',
+        balance: balance,
+        tx_hash: claim.tx_hash,
+        explorer_url: claim.tx_hash ? `${networkConfig?.explorer || 'https://polygonscan.com'}/tx/${claim.tx_hash}` : null
+      });
+    }
+
+    // Also check registrants table for minted status
+    const existingReg = await db.pool.query(
+      'SELECT minted, mint_tx_hash FROM registrants WHERE wallet_address = $1 AND minted = TRUE',
+      [wallet]
+    );
+
+    if (existingReg.rows.length > 0 && existingReg.rows[0].minted) {
+      return res.status(409).json({
+        status: 'already_claimed',
+        message: 'This wallet has already received tokens.',
+        tx_hash: existingReg.rows[0].mint_tx_hash,
+        explorer_url: existingReg.rows[0].mint_tx_hash 
+          ? `${networkConfig?.explorer || 'https://polygonscan.com'}/tx/${existingReg.rows[0].mint_tx_hash}` 
+          : null
+      });
+    }
+
+    // Get mint amount from settings
+    const mintSettings = await db.pool.query(
+      "SELECT value FROM app_settings WHERE key = 'mint_amount'"
+    );
+    const mintAmount = mintSettings.rows[0]?.value?.amount || parseInt(process.env.MINT_AMOUNT) || 2;
+
+    // Optional: Verify signature if provided
+    if (signature && message) {
+      try {
+        const recoveredAddress = ethers.verifyMessage(message, signature);
+        if (recoveredAddress.toLowerCase() !== wallet) {
+          return res.status(400).json({ error: 'Invalid signature' });
+        }
+      } catch (e) {
+        console.log('Signature verification skipped or failed:', e.message);
+      }
+    }
+
+    // Initialize minter and mint tokens
+    const minter = require('./minter');
+    await minter.initialize();
+
+    const mintResult = await minter.mintToAddress(wallet, mintAmount, true);
+
+    if (!mintResult.success) {
+      console.error('Mint failed:', mintResult.error);
+      return res.status(500).json({ 
+        error: 'Minting failed', 
+        message: 'Failed to mint tokens. Please try again later.' 
+      });
+    }
+
+    const txHash = mintResult.txHash || mintResult.receipt?.hash || mintResult.hash || mintResult.transactionHash;
+    const explorer = networkConfig?.explorer || 'https://polygonscan.com';
+
+    // Record the claim
+    await db.pool.query(
+      `INSERT INTO claims (wallet_address, token_amount, tx_hash, status, claimed_at, created_at)
+       VALUES ($1, $2, $3, 'completed', NOW(), NOW())
+       ON CONFLICT (wallet_address) DO UPDATE SET tx_hash = $3, status = 'completed', claimed_at = NOW()`,
+      [wallet, mintAmount, txHash]
+    );
+
+    // Update or create registrant
+    await db.pool.query(
+      `INSERT INTO registrants (wallet_address, minted, mint_tx_hash, minted_at, source, created_at)
+       VALUES ($1, TRUE, $2, NOW(), 'claim', NOW())
+       ON CONFLICT (wallet_address) DO UPDATE SET minted = TRUE, mint_tx_hash = $2, minted_at = NOW()`,
+      [wallet, txHash]
+    );
+
+    // Process referral bonus if applicable
+    let referralBonus = null;
+    try {
+      const referral = await db.pool.query(
+        'SELECT referrer_wallet, referrer_code FROM referrals WHERE referred_wallet = $1',
+        [wallet]
+      );
+
+      if (referral.rows.length > 0 && referral.rows[0].referrer_wallet) {
+        const settings = await getReferralSettings();
+        
+        if (settings.enabled && settings.claimBonusAmount > 0) {
+          const referrerWallet = referral.rows[0].referrer_wallet;
+          const referrerCode = referral.rows[0].referrer_code;
+          
+          let bonusAmount = settings.claimBonusType === 'fixed' 
+            ? settings.claimBonusAmount 
+            : (mintAmount * settings.claimBonusAmount) / 100;
+
+          if (bonusAmount > 0) {
+            const bonusResult = await minter.mintToAddress(referrerWallet, bonusAmount, true);
+            
+            if (bonusResult.success) {
+              const bonusTxHash = bonusResult.txHash || bonusResult.receipt?.hash;
+              
+              await db.pool.query(
+                `UPDATE referrals 
+                 SET signup_bonus_paid = TRUE, signup_bonus_amount = $1, signup_bonus_tx = $2, updated_at = NOW()
+                 WHERE referred_wallet = $3`,
+                [bonusAmount, bonusTxHash, wallet]
+              );
+
+              await db.pool.query(
+                `UPDATE referral_codes 
+                 SET total_bonus_earned = total_bonus_earned + $1, updated_at = NOW()
+                 WHERE code = $2`,
+                [bonusAmount, referrerCode]
+              );
+
+              referralBonus = { amount: bonusAmount, txHash: bonusTxHash, referrer: referrerWallet };
+              console.log(`✅ Referral bonus: ${bonusAmount} VIP to ${referrerWallet}`);
+            }
+          }
+        }
+      }
+    } catch (refError) {
+      console.error('Referral bonus error (non-fatal):', refError.message);
+    }
+
+    console.log(`✅ Claim successful: ${mintAmount} VIP to ${wallet} (tx: ${txHash})`);
+
+    res.status(201).json({
+      success: true,
+      status: 'claimed',
+      message: `Successfully claimed ${mintAmount} VIP tokens!`,
+      token_amount: mintAmount,
+      tx_hash: txHash,
+      explorer_url: `${explorer}/tx/${txHash}`,
+      wallet_address: wallet,
+      referral_bonus: referralBonus
+    });
+
+  } catch (error) {
+    console.error('Claim register error:', error);
+    res.status(500).json({ 
+      error: 'Claim processing failed',
+      message: 'An unexpected error occurred. Please try again.'
+    });
+  }
 });
 
 app.get('/api/claim/status/:address', async (req, res) => {
@@ -1250,9 +1530,8 @@ app.get('/api/claim/status/:address', async (req, res) => {
 });
 
 // ===========================================
-// Protected API Endpoints (Admin Auth Required)
+// Admin Registrant Endpoints
 // ===========================================
-
 app.post('/api/register', requireAdminAuth, async (req, res) => {
     const { wallet_address } = req.body;
     
@@ -1365,10 +1644,7 @@ app.get('/api/wallet-info', requireAdminAuth, async (req, res) => {
         });
     } catch (error) {
         console.error('Wallet info error:', error);
-        res.status(500).json({ 
-            error: 'Failed to get wallet info',
-            details: error.message 
-        });
+        res.status(500).json({ error: 'Failed to get wallet info', details: error.message });
     }
 });
 
@@ -1410,6 +1686,7 @@ app.post('/api/mint-now', requireAdminAuth, async (req, res) => {
         
         await minter.initialize();
         const networkConfig = getNetworkConfig();
+        const MINT_AMOUNT = parseInt(process.env.MINT_AMOUNT) || 2;
         
         let mintedCount = 0;
         let skippedCount = 0;
@@ -1473,7 +1750,6 @@ app.post('/api/sync', requireAdminAuth, async (req, res) => {
                 if (hasTokens) {
                     await db.markAsMinted(registrant.address, 'ALREADY_HAD_TOKENS');
                     synced++;
-                    console.log(`🔄 Synced: ${registrant.address} already has tokens`);
                 }
             } catch (error) {
                 console.error(`Error checking ${registrant.address}:`, error.message);
@@ -1502,7 +1778,6 @@ app.post('/api/full-sync', requireAdminAuth, async (req, res) => {
         
         const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY || '';
         const POLYGONSCAN_API = 'https://api.polygonscan.com/api';
-        const VIP_TOKEN_ADDRESS = networkConfig.tokenAddress || '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F';
         const minterAddress = minter.wallet?.address || process.env.MINTER_ADDRESS || '';
         
         const registrants = await db.getAllRegistrants();
@@ -1688,7 +1963,6 @@ app.post('/api/mint-manual', requireAdminAuth, async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 });
-
 // ===========================================
 // Presale API Endpoints
 // ===========================================
@@ -1696,7 +1970,6 @@ app.post('/api/mint-manual', requireAdminAuth, async (req, res) => {
 // Get presale config (public)
 app.get('/api/presale/config', async (req, res) => {
     try {
-        // Load settings from database
         let dbConfig = {};
         try {
             const configResult = await db.pool.query('SELECT * FROM presale_config WHERE id = 1');
@@ -1707,7 +1980,6 @@ app.get('/api/presale/config', async (req, res) => {
             console.log('⚠️ Could not load presale_config from DB:', dbErr.message);
         }
         
-        // Update in-memory config from DB
         PRESALE_CONFIG.saleTargetEUR = parseFloat(dbConfig.sale_target_eur) || PRESALE_CONFIG.saleTargetEUR || 500000;
         PRESALE_CONFIG.tokenPrice = parseFloat(dbConfig.token_price) || PRESALE_CONFIG.tokenPrice || 1.00;
         PRESALE_CONFIG.minPurchase = parseFloat(dbConfig.min_purchase) || PRESALE_CONFIG.minPurchase || 10;
@@ -1715,7 +1987,6 @@ app.get('/api/presale/config', async (req, res) => {
         PRESALE_CONFIG.presaleEnabled = dbConfig.presale_enabled !== false;
         PRESALE_CONFIG.totalTokens = parseFloat(dbConfig.total_tokens) || PRESALE_CONFIG.totalTokens || 1000000;
         
-        // Get EUR raised and tokens sold from completed purchases
         let eurRaised = 0;
         let tokensSold = 0;
         try {
@@ -1734,7 +2005,6 @@ app.get('/api/presale/config', async (req, res) => {
             console.error('❌ Failed to get sales from DB:', dbErr.message);
         }
         
-        // Fetch live EUR/USD rate
         let eurUsdRate = 1.19;
         try {
             const rateRes = await fetch('https://api.exchangerate-api.com/v4/latest/EUR');
@@ -1744,7 +2014,6 @@ app.get('/api/presale/config', async (req, res) => {
             console.log('⚠️ Using fallback EUR/USD rate:', eurUsdRate);
         }
         
-        // Fetch POL price
         let polPrice = 0.12;
         try {
             const polRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=polygon-ecosystem-token&vs_currencies=usd');
@@ -1757,27 +2026,19 @@ app.get('/api/presale/config', async (req, res) => {
         const saleTargetEUR = PRESALE_CONFIG.saleTargetEUR || 500000;
         const progressPct = ((eurRaised / saleTargetEUR) * 100);
 
-        console.log(`📊 Config: €${eurRaised} / €${saleTargetEUR} (${progressPct.toFixed(2)}%)`);
-
         res.json({
-            // EUR-based progress
             eurRaised: eurRaised,
             saleTargetEUR: saleTargetEUR,
             progressPct: parseFloat(progressPct.toFixed(2)),
-            
-            // Token info
             tokensSold: tokensSold,
             totalTokens: PRESALE_CONFIG.totalTokens || 1000000,
             tokenPrice: PRESALE_CONFIG.tokenPrice || 1.00,
-            
-            // Rates
             eurUsdRate: eurUsdRate,
             polPrice: polPrice,
-            
-            // Config
             presaleEnabled: PRESALE_CONFIG.presaleEnabled !== false,
             presaleWallet: PRESALE_CONFIG.presaleWallet,
             minPurchase: PRESALE_CONFIG.minPurchase || 10,
+            maxPurchase: PRESALE_CONFIG.maxPurchase || 10000,
             stripePublicKey: process.env.STRIPE_PUBLIC_KEY
         });
     } catch (error) {
@@ -1786,7 +2047,7 @@ app.get('/api/presale/config', async (req, res) => {
     }
 });
 
-// Create Payment Intent for custom Stripe Elements
+// Create Payment Intent for Stripe Elements
 app.post('/api/presale/create-payment-intent', async (req, res) => {
     if (!stripe) {
         return res.status(503).json({ error: 'Card payments not available' });
@@ -1808,31 +2069,21 @@ app.post('/api/presale/create-payment-intent', async (req, res) => {
         const normalizedAddress = walletAddress.toLowerCase();
         const baseEUR = tokenAmount * PRESALE_CONFIG.tokenPrice;
         
-        // Fee structure
-        const stripeFeePercent = 3;    // Estimated Stripe fee (covers most cards)
-        const platformFeePercent = 1;  // Platform fee
-        const totalFeePercent = stripeFeePercent + platformFeePercent; // 4%
+        const stripeFeePercent = 3;
+        const platformFeePercent = 1;
+        const totalFeePercent = stripeFeePercent + platformFeePercent;
         
         const feeEUR = baseEUR * (totalFeePercent / 100);
         const totalEUR = baseEUR + feeEUR;
         const amountCents = Math.round(totalEUR * 100);
         
-        // Platform keeps the 4% fee, connected account gets baseEUR
-        // But we need to account for actual Stripe fees which come out of the total
-        // Stripe fee is typically: 1.5% + €0.25 (EU cards) or 3.25% + €0.25 (non-EU)
-        // We estimate 3% to be safe, actual fee is deducted by Stripe
-        
-        const platformFeeCents = Math.round(feeEUR * 100); // 4% in cents
-        const connectedAccountCents = amountCents - platformFeeCents; // Base amount to connected account
+        const platformFeeCents = Math.round(feeEUR * 100);
+        const connectedAccountCents = amountCents - platformFeeCents;
         
         console.log('💳 Creating Payment Intent:', { 
             wallet: normalizedAddress, 
             tokens: tokenAmount, 
-            base: `€${baseEUR.toFixed(2)}`,
-            fee: `€${feeEUR.toFixed(2)} (${totalFeePercent}%)`,
-            total: `€${totalEUR.toFixed(2)}`,
-            toConnectedAccount: `€${(connectedAccountCents / 100).toFixed(2)}`,
-            platformKeeps: `€${(platformFeeCents / 100).toFixed(2)}`
+            total: `€${totalEUR.toFixed(2)}`
         });
         
         const paymentIntentConfig = {
@@ -1844,8 +2095,6 @@ app.post('/api/presale/create-payment-intent', async (req, res) => {
                 tokenAmount: tokenAmount.toString(),
                 baseAmount: baseEUR.toFixed(2),
                 feeAmount: feeEUR.toFixed(2),
-                stripeFeeEstimate: (baseEUR * stripeFeePercent / 100).toFixed(2),
-                platformFee: (baseEUR * platformFeePercent / 100).toFixed(2),
                 feePercent: totalFeePercent.toString(),
                 source: 'presale'
             },
@@ -1853,16 +2102,11 @@ app.post('/api/presale/create-payment-intent', async (req, res) => {
             description: `${tokenAmount} VIP Tokens - Kea Valley Presale`
         };
         
-        // Add destination charge if connected account is configured
         if (process.env.STRIPE_DESTINATION_ACCOUNT) {
-            // Platform receives payment, then transfers to connected account
-            // application_fee_amount is what platform KEEPS
             paymentIntentConfig.transfer_data = {
                 destination: process.env.STRIPE_DESTINATION_ACCOUNT,
-                amount: connectedAccountCents  // Amount to transfer to connected account
+                amount: connectedAccountCents
             };
-            
-            console.log(`💸 Destination charge: €${(connectedAccountCents / 100).toFixed(2)} to ${process.env.STRIPE_DESTINATION_ACCOUNT}`);
         }
         
         const paymentIntent = await stripe.paymentIntents.create(paymentIntentConfig);
@@ -1886,65 +2130,44 @@ app.post('/api/presale/create-payment-intent', async (req, res) => {
     }
 });
 
-// ===========================================
-// Referral System API
-// ===========================================
-
-// Generate unique referral code
-function generateReferralCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing chars (0,O,1,I)
-    let code = '';
-    for (let i = 0; i < 8; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return code;
-}
-
-// Get referral settings
-async function getReferralSettings() {
+// Get purchase status
+app.get('/api/presale/purchase-status/:paymentIntentId', async (req, res) => {
     try {
-        const result = await db.pool.query('SELECT setting_key, setting_value FROM referral_settings');
-        const settings = {};
-        result.rows.forEach(row => {
-            settings[row.setting_key] = row.setting_value;
+        const { paymentIntentId } = req.params;
+        
+        const result = await db.pool.query(
+            `SELECT status, mint_tx_hash, token_amount, error_message 
+             FROM presale_purchases 
+             WHERE stripe_payment_intent = $1 OR payment_tx_hash = $1`,
+            [paymentIntentId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.json({ status: 'pending', message: 'Waiting for payment confirmation...' });
+        }
+        
+        const purchase = result.rows[0];
+        res.json({
+            status: purchase.status,
+            mintTxHash: purchase.mint_tx_hash,
+            tokenAmount: purchase.token_amount,
+            error: purchase.error_message
         });
-        return {
-            enabled: settings.enabled === 'true',
-            claimBonusType: settings.claim_bonus_type || 'fixed',
-            claimBonusAmount: parseFloat(settings.claim_bonus_amount) || 1,
-            presaleBonusType: settings.presale_bonus_type || 'percentage',
-            presaleBonusAmount: parseFloat(settings.presale_bonus_amount) || 5,
-            autoPayBonus: settings.auto_pay_bonus === 'true',
-            minPayoutThreshold: parseFloat(settings.min_payout_threshold) || 10
-        };
     } catch (error) {
-        console.error('Error getting referral settings:', error);
-        return {
-            enabled: false,
-            claimBonusType: 'fixed',
-            claimBonusAmount: 1,
-            presaleBonusType: 'percentage',
-            presaleBonusAmount: 5,
-            autoPayBonus: false,
-            minPayoutThreshold: 10
-        };
+        console.error('❌ Purchase status error:', error);
+        res.status(500).json({ error: error.message });
     }
-}
+});
 
-// Admin manual mint for cash/direct transfers
-app.post('/api/presale/admin/manual-mint', async (req, res) => {
+// ===========================================
+// Admin Manual Mint (Cash/Direct Transfers)
+// ===========================================
+app.post('/api/presale/admin/manual-mint', requireAdminAuth, async (req, res) => {
     console.log('🚀 Manual mint endpoint hit');
     
     try {
-        // Auth check
-        const sessionId = req.cookies?.admin_session;
-        if (!sessionId) {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
-        
         const { walletAddress, eurAmount } = req.body;
         
-        // Validation
         if (!walletAddress || !ethers.isAddress(walletAddress)) {
             return res.status(400).json({ error: 'Invalid wallet address' });
         }
@@ -1956,86 +2179,68 @@ app.post('/api/presale/admin/manual-mint', async (req, res) => {
         const normalizedAddress = walletAddress.toLowerCase();
         const tokenPrice = PRESALE_CONFIG.tokenPrice || 1.00;
         const calculatedTokens = eurAmount / tokenPrice;
-        const platformFee = eurAmount * 0.01; // 1% fee
+        const platformFee = eurAmount * 0.01;
         const feeCents = Math.round(platformFee * 100);
         
         console.log(`📝 Manual mint request: ${calculatedTokens} VIP to ${normalizedAddress}`);
-        console.log(`💶 EUR: ${eurAmount} @ €${tokenPrice}/VIP`);
-        console.log(`💰 Platform fee: €${platformFee.toFixed(2)} (${feeCents} cents)`);
         
-        // ==================== STRIPE FEE TRANSFER FIRST ====================
         let stripeTransferId = null;
         
-        if (!stripe) {
-            console.error('❌ Stripe not initialized');
-            return res.status(500).json({ error: 'Stripe not configured' });
-        }
-        
-        if (!process.env.STRIPE_DESTINATION_ACCOUNT) {
-            console.error('❌ STRIPE_DESTINATION_ACCOUNT not set');
-            return res.status(500).json({ error: 'Connected account not configured' });
-        }
-        
-        if (!process.env.STRIPE_ACCOUNT_ID) {
-            console.error('❌ STRIPE_ACCOUNT_ID not set');
-            return res.status(500).json({ error: 'Platform account not configured' });
-        }
-        
-        // Check connected account balance
-        console.log(`💳 Checking connected account balance...`);
-        
-        let availableCents = 0;
-        try {
-            const balance = await stripe.balance.retrieve({
-                stripeAccount: process.env.STRIPE_DESTINATION_ACCOUNT
-            });
+        // Only process Stripe fee transfer if configured
+        if (stripe && process.env.STRIPE_DESTINATION_ACCOUNT && process.env.STRIPE_ACCOUNT_ID) {
+            console.log(`💳 Checking connected account balance...`);
             
-            const eurBalance = balance.available.find(b => b.currency === 'eur');
-            availableCents = eurBalance ? eurBalance.amount : 0;
+            let availableCents = 0;
+            try {
+                const balance = await stripe.balance.retrieve({
+                    stripeAccount: process.env.STRIPE_DESTINATION_ACCOUNT
+                });
+                
+                const eurBalance = balance.available.find(b => b.currency === 'eur');
+                availableCents = eurBalance ? eurBalance.amount : 0;
+                
+                console.log(`💰 Connected account EUR balance: €${(availableCents / 100).toFixed(2)}`);
+            } catch (balanceError) {
+                console.error(`❌ Balance check failed:`, balanceError.message);
+                return res.status(500).json({ error: 'Failed to check connected account balance' });
+            }
             
-            console.log(`💰 Connected account EUR balance: €${(availableCents / 100).toFixed(2)}`);
-        } catch (balanceError) {
-            console.error(`❌ Balance check failed:`, balanceError.message);
-            return res.status(500).json({ error: 'Failed to check connected account balance' });
-        }
-        
-        // Check sufficient balance
-        if (availableCents < feeCents) {
-            console.error(`❌ Insufficient balance: need €${platformFee.toFixed(2)}, have €${(availableCents / 100).toFixed(2)}`);
-            return res.status(400).json({ 
-                error: 'Insufficient balance in connected account',
-                required: platformFee,
-                available: availableCents / 100
-            });
-        }
-        
-        // Transfer fee
-        console.log(`💳 Transferring €${platformFee.toFixed(2)} from connected account to platform...`);
-        
-        try {
-            const transfer = await stripe.transfers.create({
-                amount: feeCents,
-                currency: 'eur',
-                destination: process.env.STRIPE_ACCOUNT_ID,
-                description: `Manual mint fee - ${calculatedTokens} VIP to ${normalizedAddress.slice(0, 8)}...`,
-                metadata: {
-                    type: 'manual_mint_fee',
-                    walletAddress: normalizedAddress,
-                    tokenAmount: calculatedTokens.toString(),
-                    eurAmount: eurAmount.toString()
-                }
-            }, {
-                stripeAccount: process.env.STRIPE_DESTINATION_ACCOUNT
-            });
+            if (availableCents < feeCents) {
+                console.error(`❌ Insufficient balance: need €${platformFee.toFixed(2)}, have €${(availableCents / 100).toFixed(2)}`);
+                return res.status(400).json({ 
+                    error: 'Insufficient balance in connected account',
+                    required: platformFee,
+                    available: availableCents / 100
+                });
+            }
             
-            stripeTransferId = transfer.id;
-            console.log(`✅ Fee transferred: ${stripeTransferId}`);
-        } catch (transferError) {
-            console.error(`❌ Fee transfer failed:`, transferError.message);
-            return res.status(500).json({ error: 'Fee transfer failed: ' + transferError.message });
+            console.log(`💳 Transferring €${platformFee.toFixed(2)} from connected account to platform...`);
+            
+            try {
+                const transfer = await stripe.transfers.create({
+                    amount: feeCents,
+                    currency: 'eur',
+                    destination: process.env.STRIPE_ACCOUNT_ID,
+                    description: `Manual mint fee - ${calculatedTokens} VIP to ${normalizedAddress.slice(0, 8)}...`,
+                    metadata: {
+                        type: 'manual_mint_fee',
+                        walletAddress: normalizedAddress,
+                        tokenAmount: calculatedTokens.toString(),
+                        eurAmount: eurAmount.toString()
+                    }
+                }, {
+                    stripeAccount: process.env.STRIPE_DESTINATION_ACCOUNT
+                });
+                
+                stripeTransferId = transfer.id;
+                console.log(`✅ Fee transferred: ${stripeTransferId}`);
+            } catch (transferError) {
+                console.error(`❌ Fee transfer failed:`, transferError.message);
+                return res.status(500).json({ error: 'Fee transfer failed: ' + transferError.message });
+            }
+        } else {
+            console.log('⚠️ Stripe not configured for fee transfer, proceeding without');
         }
-        
-        // ==================== FEE COLLECTED - NOW MINT ====================
         
         // Get EUR/USD rate
         let eurUsdRate = 1.19;
@@ -2049,7 +2254,7 @@ app.post('/api/presale/admin/manual-mint', async (req, res) => {
         
         const usdAmount = eurAmount * eurUsdRate;
         
-        // Record purchase in DB
+        // Record purchase
         console.log(`📝 Recording purchase in DB...`);
         const purchaseResult = await db.pool.query(`
             INSERT INTO presale_purchases 
@@ -2061,52 +2266,51 @@ app.post('/api/presale/admin/manual-mint', async (req, res) => {
         const purchaseId = purchaseResult.rows[0].id;
         console.log(`✅ Purchase recorded: ID ${purchaseId}`);
         
-        // Mint tokens to buyer
+        // Mint tokens
         console.log(`🔧 Initializing minter...`);
         await minter.initialize();
         
         console.log(`🎯 Minting ${calculatedTokens} VIP to ${normalizedAddress}...`);
         const mintResult = await minter.mintToAddress(normalizedAddress, parseFloat(calculatedTokens), true);
         
-        if (!mintResult.success) {
+        if (!mintResult.success && !mintResult.txHash && !mintResult.receipt) {
             console.error(`❌ Mint failed:`, mintResult.error);
             await db.pool.query(`UPDATE presale_purchases SET status = 'mint_failed' WHERE id = $1`, [purchaseId]);
-            // Note: Fee already transferred - may need manual refund
             return res.status(500).json({ 
-                error: 'Minting failed (fee was collected)', 
+                error: 'Minting failed', 
                 details: mintResult.error,
                 stripeTransferId,
-                needsRefund: true
+                needsRefund: !!stripeTransferId
             });
         }
         
-        console.log(`✅ Minted! TX: ${mintResult.txHash}`);
+        const mintTxHash = mintResult.txHash || mintResult.receipt?.hash || mintResult.hash;
+        console.log(`✅ Minted! TX: ${mintTxHash}`);
         
-        // Update purchase with TX hash
+        // Update purchase
         await db.pool.query(`
             UPDATE presale_purchases 
-            SET mint_tx_hash = $1, status = 'completed'
+            SET mint_tx_hash = $1, status = 'completed', minted_at = NOW()
             WHERE id = $2
-        `, [mintResult.txHash, purchaseId]);
-        console.log(`✅ Purchase updated`);
+        `, [mintTxHash, purchaseId]);
         
-        // ==================== UPDATE PRESALE CONFIG TOKENS SOLD ====================
+        // Update presale config
         try {
             await db.pool.query(`
                 UPDATE presale_config 
-                SET tokens_sold = COALESCE(tokens_sold, 0) + $1, updated_at = NOW() 
+                SET tokens_sold = COALESCE(tokens_sold, 0) + $1,
+                    eur_raised = COALESCE(eur_raised, 0) + $2,
+                    updated_at = NOW() 
                 WHERE id = 1
-            `, [parseFloat(calculatedTokens)]);
+            `, [parseFloat(calculatedTokens), eurAmount]);
             console.log(`📊 PRESALE CONFIG UPDATED: +${calculatedTokens} tokens sold`);
         } catch (configError) {
             console.error('⚠️ Failed to update presale_config:', configError.message);
         }
         
-        // ==================== REFERRAL BONUS ====================
+        // Process referral bonus
         let referralBonusTx = null;
         let referralBonusAmount = 0;
-        
-        console.log(`🔍 Checking referral for ${normalizedAddress}...`);
         
         try {
             const referralResult = await db.pool.query(`
@@ -2121,8 +2325,6 @@ app.post('/api/presale/admin/manual-mint', async (req, res) => {
                 const referrerWallet = row.referrer_wallet || row.owner_wallet;
                 const referrerCode = row.referrer_code;
                 
-                console.log(`👤 Referrer found: ${referrerWallet} (code: ${referrerCode})`);
-                
                 if (referrerWallet) {
                     const settingsResult = await db.pool.query(`
                         SELECT * FROM referral_settings WHERE id = 1
@@ -2131,8 +2333,6 @@ app.post('/api/presale/admin/manual-mint', async (req, res) => {
                     const settings = settingsResult.rows[0] || {};
                     const minPurchase = parseFloat(settings.min_purchase_for_bonus) || 0;
                     
-                    console.log(`⚙️ Referral: enabled=${settings.enabled}, min=${minPurchase}`);
-                    
                     if (settings.enabled && eurAmount >= minPurchase) {
                         const bonusType = settings.presale_bonus_type || 'percentage';
                         const bonusValue = parseFloat(settings.presale_bonus_amount) || 5;
@@ -2140,8 +2340,6 @@ app.post('/api/presale/admin/manual-mint', async (req, res) => {
                         referralBonusAmount = bonusType === 'percentage'
                             ? (calculatedTokens * bonusValue) / 100
                             : bonusValue;
-                        
-                        console.log(`🧮 Bonus: ${referralBonusAmount} VIP`);
                         
                         if (referralBonusAmount > 0) {
                             console.log(`🎁 Minting referral bonus to ${referrerWallet}...`);
@@ -2152,8 +2350,8 @@ app.post('/api/presale/admin/manual-mint', async (req, res) => {
                                 true
                             );
                             
-                            if (bonusMintResult.success) {
-                                referralBonusTx = bonusMintResult.txHash;
+                            if (bonusMintResult.success || bonusMintResult.txHash || bonusMintResult.receipt) {
+                                referralBonusTx = bonusMintResult.txHash || bonusMintResult.receipt?.hash;
                                 console.log(`✅ Referral bonus TX: ${referralBonusTx}`);
                                 
                                 await db.pool.query(`
@@ -2164,37 +2362,32 @@ app.post('/api/presale/admin/manual-mint', async (req, res) => {
                                 
                                 await db.pool.query(`
                                     UPDATE referral_codes 
-                                    SET total_bonus_earned = COALESCE(total_bonus_earned, 0) + $1
+                                    SET total_bonus_earned = COALESCE(total_bonus_earned, 0) + $1,
+                                        total_presale_purchases = COALESCE(total_presale_purchases, 0) + 1,
+                                        updated_at = NOW()
                                     WHERE code = $2
                                 `, [referralBonusAmount, referrerCode]);
-                                
-                                console.log(`✅ Referral stats updated`);
-                            } else {
-                                console.error(`❌ Referral mint failed:`, bonusMintResult.error);
                             }
                         }
-                    } else {
-                        console.log(`⏭️ Referral skipped`);
                     }
                 }
-            } else {
-                console.log(`ℹ️ No referrer for ${normalizedAddress}`);
             }
         } catch (refError) {
             console.error('⚠️ Referral error (non-fatal):', refError.message);
         }
         
-        // ==================== SUCCESS ====================
         console.log(`🎉 Manual mint complete!`);
         
+        const networkConfig = getNetworkConfig();
         return res.json({
             success: true,
             purchaseId,
-            txHash: mintResult.txHash,
+            txHash: mintTxHash,
             tokenAmount: calculatedTokens,
             eurAmount,
             platformFee,
             stripeTransferId,
+            explorer_url: `${networkConfig.explorer}/tx/${mintTxHash}`,
             referralBonus: referralBonusAmount > 0 ? {
                 amount: referralBonusAmount,
                 txHash: referralBonusTx
@@ -2203,18 +2396,13 @@ app.post('/api/presale/admin/manual-mint', async (req, res) => {
         
     } catch (error) {
         console.error('❌ Manual mint error:', error.message);
-        console.error(error.stack);
         return res.status(500).json({ error: error.message });
     }
 });
 
-app.get('/api/presale/admin/manual-mints', async (req, res) => {
+// Get manual mints list
+app.get('/api/presale/admin/manual-mints', requireAdminAuth, async (req, res) => {
     try {
-        const sessionId = req.cookies?.admin_session;
-        if (!sessionId) {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
-        
         const result = await db.pool.query(`
             SELECT id, wallet_address, token_amount, eur_amount, usd_amount, 
                    mint_tx_hash, status, created_at
@@ -2231,7 +2419,8 @@ app.get('/api/presale/admin/manual-mints', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-// Get fee summary for cash payments (for settlement)
+
+// Fee summary for cash payments
 app.get('/api/presale/admin/fee-summary', requireAdminAuth, async (req, res) => {
     try {
         const result = await db.pool.query(`
@@ -2265,7 +2454,11 @@ app.get('/api/presale/admin/fee-summary', requireAdminAuth, async (req, res) => 
     }
 });
 
-// Get referral code info (for displaying in profile)
+// ===========================================
+// Referral System Endpoints
+// ===========================================
+
+// Get referral code info for wallet
 app.get('/api/referral/code/:wallet', async (req, res) => {
     try {
         const { wallet } = req.params;
@@ -2285,7 +2478,6 @@ app.get('/api/referral/code/:wallet', async (req, res) => {
         
         const code = result.rows[0];
         
-        // Get recent referrals
         const referrals = await db.pool.query(
             `SELECT referred_wallet, referred_email, source, bonus_amount, bonus_paid, created_at
              FROM referral_tracking
@@ -2315,7 +2507,7 @@ app.get('/api/referral/code/:wallet', async (req, res) => {
     }
 });
 
-// Validate referral code (used by claim/presale pages)
+// Validate referral code
 app.get('/api/referral/validate/:code', async (req, res) => {
     try {
         const { code } = req.params;
@@ -2351,7 +2543,7 @@ app.get('/api/referral/validate/:code', async (req, res) => {
     }
 });
 
-// Track referral (called when someone registers/purchases with a referral code)
+// Track referral
 app.post('/api/referral/track', async (req, res) => {
     try {
         const { referralCode, referredWallet, referredEmail, source, purchaseAmount } = req.body;
@@ -2366,7 +2558,6 @@ app.post('/api/referral/track', async (req, res) => {
             return res.json({ success: false, error: 'Referral program disabled' });
         }
         
-        // Get referral code info
         const codeResult = await db.pool.query(
             'SELECT * FROM referral_codes WHERE UPPER(code) = UPPER($1) AND enabled = true',
             [referralCode]
@@ -2378,12 +2569,10 @@ app.post('/api/referral/track', async (req, res) => {
         
         const referrerWallet = codeResult.rows[0].owner_wallet;
         
-        // Prevent self-referral
         if (referredWallet.toLowerCase() === referrerWallet.toLowerCase()) {
             return res.json({ success: false, error: 'Cannot use own referral code' });
         }
         
-        // Check if already referred
         const existingReferral = await db.pool.query(
             'SELECT id FROM referral_tracking WHERE LOWER(referred_wallet) = $1 AND source = $2',
             [referredWallet.toLowerCase(), source]
@@ -2393,11 +2582,10 @@ app.post('/api/referral/track', async (req, res) => {
             return res.json({ success: false, error: 'Wallet already referred for this action' });
         }
         
-        // Calculate bonus
         let bonusType, bonusAmount;
         if (source === 'claim') {
-            bonusType = settings.claimBonusType;
-            bonusAmount = settings.claimBonusAmount;
+            bonusType = settings.bonusType;
+            bonusAmount = settings.bonusAmount;
         } else if (source === 'presale') {
             bonusType = settings.presaleBonusType;
             if (bonusType === 'percentage' && purchaseAmount) {
@@ -2407,7 +2595,6 @@ app.post('/api/referral/track', async (req, res) => {
             }
         }
         
-        // Insert tracking record
         await db.pool.query(
             `INSERT INTO referral_tracking 
              (referral_code, referred_wallet, referred_email, referrer_wallet, source, bonus_type, bonus_amount, created_at)
@@ -2415,7 +2602,6 @@ app.post('/api/referral/track', async (req, res) => {
             [referralCode.toUpperCase(), referredWallet.toLowerCase(), referredEmail, referrerWallet, source, bonusType, bonusAmount]
         );
         
-        // Update referral code stats
         const updateField = source === 'claim' ? 'total_claims' : 'total_presale_purchases';
         await db.pool.query(
             `UPDATE referral_codes 
@@ -2426,8 +2612,6 @@ app.post('/api/referral/track', async (req, res) => {
              WHERE UPPER(code) = UPPER($2)`,
             [bonusAmount, referralCode]
         );
-        
-        console.log(`[Referral] Tracked: ${referredWallet} via ${referralCode}, bonus: ${bonusAmount} VIP`);
         
         res.json({
             success: true,
@@ -2442,299 +2626,12 @@ app.post('/api/referral/track', async (req, res) => {
     }
 });
 
-// ===========================================
-// Admin Referral Endpoints
-// ===========================================
-
-// Get all referral codes (admin)
-app.get('/api/admin/referrals', requireAdminAuth, async (req, res) => {
-    try {
-        const codes = await db.pool.query(
-            `SELECT rc.*, 
-                    (SELECT COUNT(*) FROM referral_tracking WHERE referral_code = rc.code) as referral_count
-             FROM referral_codes rc
-             ORDER BY rc.created_at DESC
-             LIMIT 100`
-        );
-        
-        const settings = await getReferralSettings();
-        
-        // Get overall stats
-        const stats = await db.pool.query(`
-            SELECT 
-                COUNT(DISTINCT referral_code) as active_codes,
-                COUNT(*) as total_referrals,
-                SUM(CASE WHEN source = 'claim' THEN 1 ELSE 0 END) as claim_referrals,
-                SUM(CASE WHEN source = 'presale' THEN 1 ELSE 0 END) as presale_referrals,
-                SUM(bonus_amount) as total_bonus_owed,
-                SUM(CASE WHEN bonus_paid THEN bonus_amount ELSE 0 END) as total_bonus_paid
-            FROM referral_tracking
-        `);
-        
-        res.json({
-            success: true,
-            codes: codes.rows,
-            settings,
-            stats: stats.rows[0]
-        });
-    } catch (error) {
-        console.error('[Admin Referral] Get all error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get referrals' });
-    }
-});
-
-// Update referral settings (admin)
-app.post('/api/admin/referrals/settings', requireAdminAuth, async (req, res) => {
-    try {
-        const { enabled, claimBonusType, claimBonusAmount, presaleBonusType, presaleBonusAmount, autoPayBonus, minPayoutThreshold } = req.body;
-        
-        const updates = [
-            ['enabled', String(enabled)],
-            ['claim_bonus_type', claimBonusType],
-            ['claim_bonus_amount', String(claimBonusAmount)],
-            ['presale_bonus_type', presaleBonusType],
-            ['presale_bonus_amount', String(presaleBonusAmount)],
-            ['auto_pay_bonus', String(autoPayBonus)],
-            ['min_payout_threshold', String(minPayoutThreshold)]
-        ];
-        
-        for (const [key, value] of updates) {
-            if (value !== undefined) {
-                await db.pool.query(
-                    `INSERT INTO referral_settings (setting_key, setting_value, updated_at)
-                     VALUES ($1, $2, NOW())
-                     ON CONFLICT (setting_key) DO UPDATE SET setting_value = $2, updated_at = NOW()`,
-                    [key, value]
-                );
-            }
-        }
-        
-        console.log('[Admin Referral] Settings updated');
-        
-        res.json({ success: true });
-    } catch (error) {
-        console.error('[Admin Referral] Update settings error:', error);
-        res.status(500).json({ success: false, error: 'Failed to update settings' });
-    }
-});
-
-// Enable/disable a referral code (admin)
-app.post('/api/admin/referrals/toggle/:code', requireAdminAuth, async (req, res) => {
-    try {
-        const { code } = req.params;
-        const { enabled } = req.body;
-        
-        await db.pool.query(
-            'UPDATE referral_codes SET enabled = $1, updated_at = NOW() WHERE UPPER(code) = UPPER($2)',
-            [enabled, code]
-        );
-        
-        console.log(`[Admin Referral] Code ${code} ${enabled ? 'enabled' : 'disabled'}`);
-        
-        res.json({ success: true });
-    } catch (error) {
-        console.error('[Admin Referral] Toggle error:', error);
-        res.status(500).json({ success: false, error: 'Failed to toggle code' });
-    }
-});
-
-// POST /api/admin/presale/settings - Save presale settings
-app.post('/api/admin/presale/settings', async (req, res) => {
-    try {
-        const { saleTargetEUR, tokenPrice, minPurchase, presaleWallet, presaleEnabled } = req.body;
-        
-        console.log('📝 Saving presale settings:', { saleTargetEUR, tokenPrice, minPurchase, presaleWallet, presaleEnabled });
-        
-        // Update in-memory config
-        PRESALE_CONFIG.saleTargetEUR = saleTargetEUR || 500000;
-        PRESALE_CONFIG.tokenPrice = tokenPrice || 1.00;
-        PRESALE_CONFIG.minPurchase = minPurchase || 10;
-        PRESALE_CONFIG.presaleWallet = presaleWallet || PRESALE_CONFIG.presaleWallet;
-        PRESALE_CONFIG.presaleEnabled = presaleEnabled !== false;
-        
-        // Save to database
-        await db.pool.query(`
-            INSERT INTO presale_config (id, sale_target_eur, token_price, min_purchase, presale_wallet, presale_enabled, updated_at)
-            VALUES (1, $1, $2, $3, $4, $5, NOW())
-            ON CONFLICT (id) DO UPDATE SET
-                sale_target_eur = $1,
-                token_price = $2,
-                min_purchase = $3,
-                presale_wallet = $4,
-                presale_enabled = $5,
-                updated_at = NOW()
-        `, [saleTargetEUR, tokenPrice, minPurchase, presaleWallet, presaleEnabled]);
-        
-        console.log('✅ Presale settings saved');
-        
-        res.json({ success: true });
-        
-    } catch (error) {
-        console.error('❌ Failed to save presale settings:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get('/api/admin/presale/stats', async (req, res) => {
-    try {
-        const stats = await db.pool.query(`
-            SELECT 
-                COUNT(*) FILTER (WHERE status IN ('completed', 'minted', 'paid', 'pending_mint')) as total_purchases,
-                COALESCE(SUM(token_amount) FILTER (WHERE status IN ('completed', 'minted')), 0) as tokens_sold,
-                COALESCE(SUM(net_amount) FILTER (WHERE status IN ('completed', 'minted')), 0) as eur_raised,
-                COALESCE(SUM(eur_amount) FILTER (WHERE status IN ('completed', 'minted')), 0) as eur_gross,
-                COALESCE(SUM(platform_fee) FILTER (WHERE status IN ('completed', 'minted')), 0) as total_fees,
-                COUNT(DISTINCT wallet_address) FILTER (WHERE status IN ('completed', 'minted', 'paid', 'pending_mint')) as unique_buyers,
-                COUNT(*) FILTER (WHERE status = 'pending_mint') as pending_mint,
-                COUNT(*) FILTER (WHERE status = 'paid') as paid,
-                COUNT(*) FILTER (WHERE status IN ('completed', 'minted')) as minted
-            FROM presale_purchases
-        `);
-        
-        const row = stats.rows[0];
-        
-        const eurRaised = parseFloat(row.eur_raised) || 0;
-        const eurGross = parseFloat(row.eur_gross) || 0;
-        const totalFees = parseFloat(row.total_fees) || 0;
-        const saleTargetEUR = PRESALE_CONFIG.saleTargetEUR || 500000;
-        const progressPct = ((eurRaised / saleTargetEUR) * 100).toFixed(2);
-        
-        console.log(`📊 Presale: €${eurRaised} net / €${eurGross} gross (fees: €${totalFees}) - ${progressPct}%`);
-        
-        res.json({
-            eurRaised: eurRaised,
-            eurGross: eurGross,
-            totalFees: totalFees,
-            saleTargetEUR: saleTargetEUR,
-            progressPct: parseFloat(progressPct),
-            tokensSold: parseFloat(row.tokens_sold) || 0,
-            totalTokens: PRESALE_CONFIG.totalTokens || 1000000,
-            tokenPriceEUR: PRESALE_CONFIG.tokenPrice || 1.00,
-            totalPurchases: parseInt(row.total_purchases) || 0,
-            uniqueBuyers: parseInt(row.unique_buyers) || 0,
-            pendingMint: parseInt(row.pending_mint) || 0,
-            paid: parseInt(row.paid) || 0,
-            minted: parseInt(row.minted) || 0
-        });
-    } catch (error) {
-        console.error('❌ Stats error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get('/api/admin/presale/purchases', async (req, res) => {
-    try {
-        const result = await db.pool.query(`
-            SELECT 
-                id,
-                wallet_address,
-                token_amount,
-                eur_amount,
-                usd_amount,
-                platform_fee,
-                net_amount,
-                payment_method,
-                stripe_payment_intent,
-                payment_tx_hash,
-                status,
-                mint_tx_hash,
-                referrer_bonus,
-                referral_bonus_amount,
-                referral_bonus_paid,
-                error_message,
-                created_at,
-                minted_at
-            FROM presale_purchases
-            ORDER BY created_at DESC
-            LIMIT 100
-        `);
-        
-        console.log(`📋 Returning ${result.rows.length} presale purchases`);
-        
-        res.json({ purchases: result.rows });
-        
-    } catch (error) {
-        console.error('❌ Presale purchases fetch error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Get referral details for a specific code (admin)
-app.get('/api/admin/referrals/:code', requireAdminAuth, async (req, res) => {
-    try {
-        const { code } = req.params;
-        
-        const codeResult = await db.pool.query(
-            'SELECT * FROM referral_codes WHERE UPPER(code) = UPPER($1)',
-            [code]
-        );
-        
-        if (codeResult.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'Code not found' });
-        }
-        
-        const referrals = await db.pool.query(
-            `SELECT * FROM referral_tracking WHERE referral_code = $1 ORDER BY created_at DESC`,
-            [code.toUpperCase()]
-        );
-        
-        res.json({
-            success: true,
-            code: codeResult.rows[0],
-            referrals: referrals.rows
-        });
-    } catch (error) {
-        console.error('[Admin Referral] Get details error:', error);
-        res.status(500).json({ success: false, error: 'Failed to get details' });
-    }
-});
-
-// Pay out referral bonus (admin manual action)
-app.post('/api/admin/referrals/payout', requireAdminAuth, async (req, res) => {
-    try {
-        const { referrerWallet, amount } = req.body;
-        
-        if (!referrerWallet || !amount) {
-            return res.status(400).json({ success: false, error: 'Missing wallet or amount' });
-        }
-        
-        // Mint bonus tokens to referrer
-        const mintResult = await mintPresaleTokens(referrerWallet, amount);
-        
-        if (mintResult.success) {
-            // Mark bonuses as paid
-            await db.pool.query(
-                `UPDATE referral_tracking 
-                 SET bonus_paid = true, bonus_tx_hash = $1
-                 WHERE LOWER(referrer_wallet) = LOWER($2) AND bonus_paid = false`,
-                [mintResult.txHash, referrerWallet]
-            );
-            
-            res.json({
-                success: true,
-                txHash: mintResult.txHash,
-                amount
-            });
-        } else {
-            res.status(500).json({ success: false, error: mintResult.error || 'Minting failed' });
-        }
-    } catch (error) {
-        console.error('[Admin Referral] Payout error:', error);
-        res.status(500).json({ success: false, error: 'Failed to process payout' });
-    }
-});
-
-// ============================================
-// SIMPLIFIED REFERRAL SYSTEM (v2)
-// ============================================
-
-// GET /api/referral/settings - Get referral settings (public)
+// Get referral settings (public)
 app.get('/api/referral/settings', async (req, res) => {
     try {
         const result = await db.pool.query('SELECT * FROM referral_settings WHERE id = 1');
         
         if (result.rows.length === 0) {
-            // Return defaults if no settings exist
             return res.json({
                 enabled: false,
                 bonusType: 'fixed',
@@ -2760,14 +2657,13 @@ app.get('/api/referral/settings', async (req, res) => {
     }
 });
 
-// POST /api/referral/settings - Update referral settings (admin)
+// Update referral settings (admin)
 app.post('/api/referral/settings', requireAdminAuth, async (req, res) => {
     try {
         const { enabled, bonusType, bonusAmount, presaleBonusType, presaleBonusAmount, minPurchaseForBonus } = req.body;
         
         console.log('📝 Saving referral settings:', { enabled, bonusType, bonusAmount });
         
-        // Update the settings
         const result = await db.pool.query(`
             UPDATE referral_settings 
             SET enabled = $1, 
@@ -2782,14 +2678,13 @@ app.post('/api/referral/settings', requireAdminAuth, async (req, res) => {
         `, [enabled, bonusType, bonusAmount, presaleBonusType, presaleBonusAmount, minPurchaseForBonus]);
         
         if (result.rows.length === 0) {
-            // Insert if doesn't exist
             await db.pool.query(`
                 INSERT INTO referral_settings (id, enabled, bonus_type, bonus_amount, presale_bonus_type, presale_bonus_amount, min_purchase_for_bonus, updated_at)
                 VALUES (1, $1, $2, $3, $4, $5, $6, NOW())
             `, [enabled, bonusType, bonusAmount, presaleBonusType, presaleBonusAmount, minPurchaseForBonus]);
         }
         
-        console.log('✅ Referral settings saved:', { enabled });
+        console.log('✅ Referral settings saved');
         res.json({ success: true, message: 'Referral settings updated' });
     } catch (error) {
         console.error('❌ Error updating referral settings:', error);
@@ -2797,7 +2692,65 @@ app.post('/api/referral/settings', requireAdminAuth, async (req, res) => {
     }
 });
 
-// GET /api/referral/status/:wallet - Get referral status for a user
+app.post('/api/admin/presale/fulfill-all', requireAdminAuth, async (req, res) => {
+  try {
+    const pending = await db.pool.query(
+      `SELECT id, wallet_address, token_amount, purchase_bonus_tokens 
+       FROM presale_purchases 
+       WHERE status IN ('paid', 'pending_mint') 
+       ORDER BY created_at ASC 
+       LIMIT 50`
+    );
+
+    if (pending.rows.length === 0) {
+      return res.json({ success: true, message: 'No pending orders to fulfill', fulfilled: 0 });
+    }
+
+    const minter = require('./minter');
+    await minter.initialize();
+
+    let fulfilled = 0;
+    let failed = 0;
+    const results = [];
+
+    for (const p of pending.rows) {
+      try {
+        const totalTokens = parseFloat(p.token_amount) + (parseFloat(p.purchase_bonus_tokens) || 0);
+        const mintResult = await minter.mintToAddress(p.wallet_address, totalTokens, true);
+
+        if (mintResult.success) {
+          const mintTxHash = mintResult.txHash || mintResult.receipt?.hash;
+          await db.pool.query(
+            `UPDATE presale_purchases 
+             SET status = 'completed', mint_tx_hash = $1, minted_at = NOW(), updated_at = NOW() 
+             WHERE id = $2`,
+            [mintTxHash, p.id]
+          );
+          await db.pool.query(
+            `UPDATE presale_config SET tokens_sold = tokens_sold + $1, updated_at = NOW() WHERE id = 1`,
+            [totalTokens]
+          );
+          fulfilled++;
+          results.push({ id: p.id, success: true, txHash: mintTxHash });
+        } else {
+          failed++;
+          results.push({ id: p.id, success: false, error: mintResult.error });
+        }
+      } catch (e) {
+        failed++;
+        results.push({ id: p.id, success: false, error: e.message });
+      }
+    }
+
+    res.json({ success: true, fulfilled, failed, total: pending.rows.length, results });
+
+  } catch (error) {
+    console.error('Batch fulfill error:', error);
+    res.status(500).json({ error: 'Failed to fulfill orders' });
+  }
+});
+
+// Get referral status for wallet
 app.get('/api/referral/status/:wallet', async (req, res) => {
     try {
         const { wallet } = req.params;
@@ -2807,19 +2760,14 @@ app.get('/api/referral/status/:wallet', async (req, res) => {
         }
         
         const normalizedAddress = wallet.toLowerCase();
-        console.log('📋 Getting referral status for:', normalizedAddress);
 
-        // Get settings
         const settingsResult = await db.pool.query(
             'SELECT * FROM referral_settings WHERE id = 1'
         );
         
         const settings = settingsResult.rows[0] || { enabled: false };
         const programEnabled = settings.enabled === true;
-        
-        console.log('📋 Program enabled:', programEnabled);
 
-        // Check if user has a referrer set
         const registrantResult = await db.pool.query(
             'SELECT referrer_wallet, referrer_code, referrer_set_at FROM registrants WHERE address = $1',
             [normalizedAddress]
@@ -2828,7 +2776,6 @@ app.get('/api/referral/status/:wallet', async (req, res) => {
         const registrant = registrantResult.rows[0];
         const hasReferrer = !!(registrant?.referrer_wallet);
 
-        // Get user's own referral code
         const codeResult = await db.pool.query(
             'SELECT code, enabled, created_at, total_referrals, total_bonus_earned FROM referral_codes WHERE owner_wallet = $1',
             [normalizedAddress]
@@ -2836,8 +2783,7 @@ app.get('/api/referral/status/:wallet', async (req, res) => {
         
         const myCodeData = codeResult.rows[0];
 
-        // Build response
-        const response = {
+        res.json({
             hasReferrer,
             referrerWallet: registrant?.referrer_wallet || null,
             referrerCode: registrant?.referrer_code || null,
@@ -2856,17 +2802,14 @@ app.get('/api/referral/status/:wallet', async (req, res) => {
                 presaleType: settings.presale_bonus_type || 'percentage',
                 presaleAmount: parseFloat(settings.presale_bonus_amount) || 0
             }
-        };
-
-        res.json(response);
+        });
 
     } catch (error) {
         console.error('❌ Referral status error:', error.message);
         res.status(500).json({ error: 'Failed to get referral status' });
     }
 });
-
-// POST /api/referral/set - Set referrer for a user (one-time only)
+// Set referrer for user (one-time)
 app.post('/api/referral/set', async (req, res) => {
     try {
         const { walletAddress, referralCode } = req.body;
@@ -2884,7 +2827,6 @@ app.post('/api/referral/set', async (req, res) => {
         const normalizedAddress = walletAddress.toLowerCase();
         const code = referralCode.toUpperCase();
 
-        // Check if program enabled
         const settingsResult = await db.pool.query(
             'SELECT * FROM referral_settings WHERE id = 1'
         );
@@ -2894,9 +2836,7 @@ app.post('/api/referral/set', async (req, res) => {
         }
 
         const settings = settingsResult.rows[0];
-        console.log('⚙️ Settings:', { bonus_type: settings.bonus_type, bonus_amount: settings.bonus_amount });
 
-        // Check if user already has a referrer
         const existingReferrer = await db.pool.query(
             'SELECT referrer_wallet FROM registrants WHERE address = $1 AND referrer_wallet IS NOT NULL',
             [normalizedAddress]
@@ -2906,7 +2846,6 @@ app.post('/api/referral/set', async (req, res) => {
             return res.status(400).json({ success: false, error: 'You already have a referrer set. This cannot be changed.' });
         }
 
-        // Validate the referral code exists and is active
         const codeResult = await db.pool.query(
             'SELECT owner_wallet, enabled FROM referral_codes WHERE code = $1',
             [code]
@@ -2917,18 +2856,15 @@ app.post('/api/referral/set', async (req, res) => {
         }
 
         const referrerWallet = codeResult.rows[0].owner_wallet;
-        console.log('👤 Referrer wallet:', referrerWallet);
 
         if (!codeResult.rows[0].enabled) {
             return res.status(400).json({ success: false, error: 'This referral code is no longer active' });
         }
 
-        // Prevent self-referral
         if (referrerWallet.toLowerCase() === normalizedAddress) {
             return res.status(400).json({ success: false, error: 'You cannot use your own referral code' });
         }
 
-        // ==================== CHECK IF USER HAS CLAIMED ====================
         const registrantResult = await db.pool.query(
             'SELECT minted, claim_amount FROM registrants WHERE address = $1',
             [normalizedAddress]
@@ -2937,56 +2873,39 @@ app.post('/api/referral/set', async (req, res) => {
         const hasClaimed = registrantResult.rows[0]?.minted === true;
         const claimAmount = parseFloat(registrantResult.rows[0]?.claim_amount) || 2;
 
-        console.log('📋 User claim status:', { hasClaimed, claimAmount });
-
         let immediateBonus = 0;
         let bonusTxHash = null;
 
-        // ==================== UPDATE DATABASE ====================
-        
-        // Update registrant with referrer info
+        // Update registrant with referrer
         await db.pool.query(`
             UPDATE registrants 
             SET referrer_wallet = $1, referrer_code = $2, referrer_set_at = NOW()
             WHERE address = $3
         `, [referrerWallet, code, normalizedAddress]);
-        console.log('📝 Updated registrant with referrer');
 
-        // Update referral_codes stats
         await db.pool.query(`
             UPDATE referral_codes 
             SET total_referrals = total_referrals + 1, updated_at = NOW()
             WHERE code = $1
         `, [code]);
-        console.log('📝 Updated referral code stats');
 
-        // Create referral record
         await db.pool.query(`
             INSERT INTO referrals (referrer_wallet, referrer_code, referee_wallet, signup_bonus_paid, presale_bonus_paid, created_at)
             VALUES ($1, $2, $3, 0, 0, NOW())
             ON CONFLICT (referee_wallet) DO NOTHING
         `, [referrerWallet, code, normalizedAddress]);
-        console.log('📝 Created referral record');
 
-        // ==================== MINT BONUS IF USER HAS ALREADY CLAIMED ====================
+        // Mint bonus if user already claimed
         if (hasClaimed && claimAmount > 0) {
-            console.log('🎁 User has already claimed, calculating bonus on claim amount...');
+            console.log('🎁 User has already claimed, calculating bonus...');
             
             await minter.initialize();
             
-            // Calculate bonus based on CLAIM AMOUNT (not current balance)
             if (settings.bonus_type === 'fixed') {
                 immediateBonus = parseFloat(settings.bonus_amount) || 0;
             } else if (settings.bonus_type === 'percentage') {
                 immediateBonus = (claimAmount * parseFloat(settings.bonus_amount)) / 100;
             }
-            
-            console.log('🎁 Claim bonus calculation:', {
-                type: settings.bonus_type,
-                rate: settings.bonus_amount,
-                claimAmount,
-                calculatedBonus: immediateBonus
-            });
             
             if (immediateBonus > 0) {
                 try {
@@ -2997,14 +2916,12 @@ app.post('/api/referral/set', async (req, res) => {
                     
                     console.log('✅ Bonus minted! TX:', bonusTxHash);
                     
-                    // Update referral record with bonus paid
                     await db.pool.query(`
                         UPDATE referrals 
                         SET signup_bonus_paid = $1
                         WHERE referee_wallet = $2
                     `, [immediateBonus, normalizedAddress]);
                     
-                    // Update referral_codes stats
                     await db.pool.query(`
                         UPDATE referral_codes 
                         SET total_bonus_earned = total_bonus_earned + $1,
@@ -3013,17 +2930,12 @@ app.post('/api/referral/set', async (req, res) => {
                         WHERE code = $2
                     `, [immediateBonus, code]);
                     
-                    console.log('📝 Updated bonus stats in DB');
-                    
                 } catch (mintError) {
                     console.error('❌ Failed to mint immediate bonus:', mintError.message);
                 }
             }
-        } else {
-            console.log('ℹ️ User has not claimed yet - bonus will be paid on claim or presale purchase');
         }
 
-        // ==================== SUCCESS RESPONSE ====================
         const response = {
             success: true,
             message: 'Referrer linked successfully!',
@@ -3037,23 +2949,17 @@ app.post('/api/referral/set', async (req, res) => {
                 reason: 'Bonus for previous claim'
             };
             response.message = `Referrer linked! They received ${immediateBonus.toFixed(4)} VIP bonus.`;
-        } else if (hasClaimed && claimAmount > 0 && immediateBonus > 0) {
-            response.message = 'Referrer linked! Bonus minting failed but will be retried.';
-        } else {
-            response.message = 'Referrer linked! They will receive bonuses when you claim or purchase.';
         }
 
-        console.log('✅ Referrer set successfully');
         return res.json(response);
 
     } catch (error) {
         console.error('❌ SET REFERRER ERROR:', error.message);
-        console.error('   Stack:', error.stack);
         return res.status(500).json({ success: false, error: 'Failed to set referrer' });
     }
 });
 
-// POST /api/referral/generate - Generate referral code for user
+// Generate referral code for user
 app.post('/api/referral/generate', async (req, res) => {
     try {
         const { walletAddress } = req.body;
@@ -3066,7 +2972,6 @@ app.post('/api/referral/generate', async (req, res) => {
 
         const normalizedAddress = walletAddress.toLowerCase();
 
-        // Check if program enabled
         const settingsResult = await db.pool.query(
             'SELECT enabled FROM referral_settings WHERE id = 1'
         );
@@ -3075,14 +2980,12 @@ app.post('/api/referral/generate', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Referral program is currently disabled' });
         }
 
-        // Check existing code
         const existingCode = await db.pool.query(
             'SELECT code, enabled FROM referral_codes WHERE owner_wallet = $1',
             [normalizedAddress]
         );
 
         if (existingCode.rows.length > 0) {
-            console.log('📋 Code already exists:', existingCode.rows[0].code);
             return res.json({
                 success: true,
                 code: existingCode.rows[0].code,
@@ -3091,21 +2994,11 @@ app.post('/api/referral/generate', async (req, res) => {
             });
         }
 
-        // Generate unique code
-        const generateCode = () => {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let code = '';
-            for (let i = 0; i < 8; i++) {
-                code += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return code;
-        };
-
         let newCode;
         let attempts = 0;
 
         while (attempts < 10) {
-            newCode = generateCode();
+            newCode = generateReferralCode();
             const duplicate = await db.pool.query(
                 'SELECT id FROM referral_codes WHERE code = $1',
                 [newCode]
@@ -3118,7 +3011,6 @@ app.post('/api/referral/generate', async (req, res) => {
             return res.status(500).json({ success: false, error: 'Failed to generate unique code' });
         }
 
-        // Insert new code
         await db.pool.query(`
             INSERT INTO referral_codes 
             (owner_wallet, code, enabled, total_referrals, total_claims, total_presale_purchases, total_bonus_earned, created_at, updated_at) 
@@ -3140,204 +3032,9 @@ app.post('/api/referral/generate', async (req, res) => {
     }
 });
 
-// GET /api/members - Proxy to WalletTwo members API
-app.get('/api/members', async (req, res) => {
-    try {
-        const apiKey = process.env.WALLETTWO_API_KEY;
-        const companyId = process.env.WALLETTWO_COMPANY_ID;
-        
-        if (!apiKey || !companyId) {
-            console.error('❌ Missing WALLETTWO_API_KEY or WALLETTWO_COMPANY_ID');
-            return res.status(500).json({ error: 'WalletTwo API not configured' });
-        }
-        
-        console.log('📋 Fetching members from WalletTwo...');
-        
-        const response = await fetch(`https://api.wallettwo.com/company/api/company/${companyId}/members`, {
-            method: 'GET',
-            headers: {
-                'x-api-key': apiKey,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            console.error('❌ WalletTwo API error:', response.status, response.statusText);
-            return res.status(response.status).json({ error: 'Failed to fetch members' });
-        }
-        
-        const members = await response.json();
-        console.log(`✅ Fetched ${members.length || 0} members from WalletTwo`);
-        
-        res.json(members);
-        
-    } catch (error) {
-        console.error('❌ Members API error:', error.message);
-        res.status(500).json({ error: 'Failed to fetch members' });
-    }
-});
-
-// GET /api/members/sync - Sync members to local DB
-app.get('/api/members/sync', requireAdminAuth, async (req, res) => {
-    try {
-        const apiKey = process.env.WALLETTWO_API_KEY;
-        const companyId = process.env.WALLETTWO_COMPANY_ID;
-        
-        if (!apiKey || !companyId) {
-            return res.status(500).json({ 
-                error: 'WalletTwo API not configured',
-                missing: { apiKey: !apiKey, companyId: !companyId }
-            });
-        }
-        
-        console.log('🔄 Syncing members from WalletTwo...');
-        
-        const response = await fetch(
-            `https://api.wallettwo.com/company/api/company/${companyId}/members`,
-            {
-                headers: {
-                    'x-api-key': apiKey,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-        
-        if (!response.ok) {
-            const error = await response.text();
-            console.error('❌ WalletTwo API error:', response.status, error);
-            return res.status(response.status).json({ error: 'Failed to fetch members' });
-        }
-        
-        const data = await response.json();
-        const members = data.members || [];
-        
-        console.log(`📋 Found ${members.length} members from WalletTwo`);
-        
-        let synced = 0;
-        let updated = 0;
-        let skipped = 0;
-        
-        for (const member of members) {
-            // Get wallet - WalletTwo uses 'wallet' field
-            let wallet = member.wallet || '';
-            
-            // Validate wallet address
-            if (!wallet || typeof wallet !== 'string') {
-                console.log(`⚠️ Skipping ${member.email || 'unknown'}: no wallet`);
-                skipped++;
-                continue;
-            }
-            
-            // Normalize: trim whitespace and lowercase
-            wallet = wallet.trim().toLowerCase();
-            
-            // Validate format (0x + 40 hex chars)
-            if (!wallet.match(/^0x[a-f0-9]{40}$/)) {
-                console.log(`⚠️ Skipping ${member.email || 'unknown'}: invalid wallet format "${wallet}"`);
-                skipped++;
-                continue;
-            }
-            
-            const email = member.email || '';
-            const displayName = member.displayName || `${member.givenName || ''} ${member.familyName || ''}`.trim();
-            
-            try {
-                // Check if exists
-                const existing = await db.pool.query(
-                    'SELECT id FROM registrants WHERE address = $1',
-                    [wallet]
-                );
-                
-                if (existing.rows.length > 0) {
-                    await db.pool.query(`
-                        UPDATE registrants 
-                        SET email = COALESCE(NULLIF($1, ''), email),
-                            updated_at = NOW()
-                        WHERE address = $2
-                    `, [email, wallet]);
-                    updated++;
-                    console.log(`✏️ Updated: ${wallet.substring(0, 10)}... (${email})`);
-                } else {
-                    await db.pool.query(`
-                        INSERT INTO registrants (address, email, source, registered_at)
-                        VALUES ($1, $2, 'wallettwo_sync', NOW())
-                    `, [wallet, email]);
-                    synced++;
-                    console.log(`➕ Added: ${wallet.substring(0, 10)}... (${email})`);
-                }
-            } catch (dbError) {
-                console.error(`❌ DB error for ${wallet}:`, dbError.message);
-                skipped++;
-            }
-        }
-        
-        console.log(`✅ Sync complete: ${synced} new, ${updated} updated, ${skipped} skipped`);
-        
-        res.json({
-            success: true,
-            total: members.length,
-            synced,
-            updated,
-            skipped
-        });
-        
-    } catch (error) {
-        console.error('❌ Sync error:', error.message);
-        res.status(500).json({ error: 'Sync failed', message: error.message });
-    }
-});
-
-// ============================================================
-// CLAIM SETTINGS ENDPOINTS
-// ============================================================
-
-// GET /api/admin/claim/settings
-app.get('/api/admin/claim/settings', requireAdminAuth, async (req, res) => {
-    try {
-        const result = await db.pool.query(
-            "SELECT value FROM app_settings WHERE key = 'mint_amount'"
-        );
-        
-        const mintAmount = result.rows.length > 0 
-            ? parseInt(result.rows[0].value)
-            : parseInt(process.env.MINT_AMOUNT) || 2;
-        
-        res.json({ mintAmount });
-    } catch (error) {
-        console.error('Error getting claim settings:', error);
-        res.json({ mintAmount: parseInt(process.env.MINT_AMOUNT) || 2 });
-    }
-});
-
-// POST /api/admin/claim/settings
-app.post('/api/admin/claim/settings', requireAdminAuth, async (req, res) => {
-    try {
-        const { mintAmount } = req.body;
-        
-        if (!mintAmount || mintAmount < 1 || mintAmount > 100) {
-            return res.status(400).json({ success: false, error: 'Invalid mint amount (1-100)' });
-        }
-        
-        await db.pool.query(`
-            INSERT INTO app_settings (key, value, updated_at) 
-            VALUES ('mint_amount', $1, NOW())
-            ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()
-        `, [mintAmount.toString()]);
-        
-        console.log('✅ Mint amount updated to:', mintAmount);
-        
-        res.json({ success: true, mintAmount });
-    } catch (error) {
-        console.error('Error saving claim settings:', error);
-        res.status(500).json({ success: false, error: 'Failed to save settings' });
-    }
-});
-
-// ============================================
-// ADMIN REFERRAL ENDPOINTS (Simplified v2)
-// ============================================
-
-// GET /api/admin/referral/stats - Get referral statistics
+// ===========================================
+// Admin Referral Endpoints
+// ===========================================
 app.get('/api/admin/referral/stats', requireAdminAuth, async (req, res) => {
     try {
         const stats = await db.pool.query(`
@@ -3357,8 +3054,6 @@ app.get('/api/admin/referral/stats', requireAdminAuth, async (req, res) => {
     }
 });
 
-
-// GET /api/admin/referral/codes
 app.get('/api/admin/referral/codes', requireAdminAuth, async (req, res) => {
     try {
         const result = await db.pool.query(`
@@ -3377,8 +3072,6 @@ app.get('/api/admin/referral/codes', requireAdminAuth, async (req, res) => {
     }
 });
 
-
-// GET /api/admin/referral/list
 app.get('/api/admin/referral/list', requireAdminAuth, async (req, res) => {
     try {
         const result = await db.pool.query(`
@@ -3398,8 +3091,26 @@ app.get('/api/admin/referral/list', requireAdminAuth, async (req, res) => {
     }
 });
 
+// Alias for dashboard compatibility
+app.get('/api/admin/referral/activity', requireAdminAuth, async (req, res) => {
+    try {
+        const result = await db.pool.query(`
+            SELECT 
+                id, referrer_wallet, referrer_code, referee_wallet,
+                referee_email, signup_bonus_paid, presale_bonus_paid,
+                presale_bonus_tx, created_at
+            FROM referrals
+            ORDER BY created_at DESC
+            LIMIT 100
+        `);
+        
+        res.json(result.rows);
+    } catch (error) {
+        console.error('❌ Admin referral activity error:', error.message);
+        res.status(500).json([]);
+    }
+});
 
-// POST /api/admin/referral/code/:code/toggle
 app.post('/api/admin/referral/code/:code/toggle', requireAdminAuth, async (req, res) => {
     try {
         const { code } = req.params;
@@ -3423,11 +3134,433 @@ app.post('/api/admin/referral/code/:code/toggle', requireAdminAuth, async (req, 
     }
 });
 
+app.post('/api/admin/referral/create-code', requireAdminAuth, async (req, res) => {
+    try {
+        const { walletAddress, email } = req.body;
+        
+        if (!walletAddress || !ethers.isAddress(walletAddress)) {
+            return res.status(400).json({ error: 'Invalid wallet address' });
+        }
+        
+        const normalizedAddress = walletAddress.toLowerCase();
+        
+        // Check existing
+        const existing = await db.pool.query(
+            'SELECT code FROM referral_codes WHERE owner_wallet = $1',
+            [normalizedAddress]
+        );
+        
+        if (existing.rows.length > 0) {
+            return res.json({ success: true, code: existing.rows[0].code, existing: true });
+        }
+        
+        let newCode;
+        let attempts = 0;
+        while (attempts < 10) {
+            newCode = generateReferralCode();
+            const dup = await db.pool.query('SELECT id FROM referral_codes WHERE code = $1', [newCode]);
+            if (dup.rows.length === 0) break;
+            attempts++;
+        }
+        
+        await db.pool.query(`
+            INSERT INTO referral_codes 
+            (owner_wallet, owner_email, code, enabled, total_referrals, total_claims, total_presale_purchases, total_bonus_earned, created_at, updated_at)
+            VALUES ($1, $2, $3, true, 0, 0, 0, 0, NOW(), NOW())
+        `, [normalizedAddress, email || null, newCode]);
+        
+        res.json({ success: true, code: newCode, existing: false });
+    } catch (error) {
+        console.error('❌ Create referral code error:', error.message);
+        res.status(500).json({ error: 'Failed to create code' });
+    }
+});
+
+// ===========================================
+// Members API (WalletTwo Proxy)
+// ===========================================
+app.get('/api/members', async (req, res) => {
+    try {
+        const apiKey = process.env.WALLETTWO_API_KEY;
+        const companyId = process.env.WALLETTWO_COMPANY_ID;
+        
+        if (!apiKey || !companyId) {
+            return res.status(500).json({ error: 'WalletTwo API not configured' });
+        }
+        
+        const response = await fetch(`https://api.wallettwo.com/company/api/company/${companyId}/members`, {
+            method: 'GET',
+            headers: {
+                'x-api-key': apiKey,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            return res.status(response.status).json({ error: 'Failed to fetch members' });
+        }
+        
+        const members = await response.json();
+        res.json(members);
+        
+    } catch (error) {
+        console.error('❌ Members API error:', error.message);
+        res.status(500).json({ error: 'Failed to fetch members' });
+    }
+});
+
+app.post('/api/members/sync', requireAdminAuth, async (req, res) => {
+    try {
+        const apiKey = process.env.WALLETTWO_API_KEY;
+        const companyId = process.env.WALLETTWO_COMPANY_ID;
+        
+        if (!apiKey || !companyId) {
+            return res.status(500).json({ error: 'WalletTwo API not configured' });
+        }
+        
+        const response = await fetch(
+            `https://api.wallettwo.com/company/api/company/${companyId}/members`,
+            { headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' } }
+        );
+        
+        if (!response.ok) {
+            return res.status(response.status).json({ error: 'Failed to fetch members' });
+        }
+        
+        const data = await response.json();
+        const members = data.members || [];
+        
+        let synced = 0, updated = 0, skipped = 0;
+        
+        for (const member of members) {
+            let wallet = member.wallet || '';
+            if (!wallet || typeof wallet !== 'string') { skipped++; continue; }
+            
+            wallet = wallet.trim().toLowerCase();
+            if (!wallet.match(/^0x[a-f0-9]{40}$/)) { skipped++; continue; }
+            
+            const email = member.email || '';
+            
+            try {
+                const existing = await db.pool.query(
+                    'SELECT id FROM registrants WHERE address = $1',
+                    [wallet]
+                );
+                
+                if (existing.rows.length > 0) {
+                    await db.pool.query(`
+                        UPDATE registrants 
+                        SET email = COALESCE(NULLIF($1, ''), email), updated_at = NOW()
+                        WHERE address = $2
+                    `, [email, wallet]);
+                    updated++;
+                } else {
+                    await db.pool.query(`
+                        INSERT INTO registrants (address, email, source, registered_at)
+                        VALUES ($1, $2, 'wallettwo_sync', NOW())
+                    `, [wallet, email]);
+                    synced++;
+                }
+            } catch (dbError) {
+                skipped++;
+            }
+        }
+        
+        res.json({ success: true, total: members.length, synced, updated, skipped });
+        
+    } catch (error) {
+        console.error('❌ Sync error:', error.message);
+        res.status(500).json({ error: 'Sync failed' });
+    }
+});
+
+app.get('/api/members/sync', requireAdminAuth, async (req, res) => {
+  try {
+    if (!process.env.WALLETTWO_API_KEY || !process.env.WALLETTWO_COMPANY_ID) {
+      return res.status(503).json({ error: 'WalletTwo not configured' });
+    }
+
+    const response = await fetch(
+      `https://api.wallettwo.com/company/${process.env.WALLETTWO_COMPANY_ID}/members`,
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.WALLETTWO_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`WalletTwo API error: ${response.status}`);
+    }
+
+    const members = await response.json();
+    let synced = 0, updated = 0, errors = 0;
+
+    for (const member of members) {
+      if (!member.wallet_address) continue;
+
+      try {
+        const normalizedWallet = member.wallet_address.toLowerCase();
+        const existing = await db.pool.query(
+          'SELECT id FROM registrants WHERE wallet_address = $1',
+          [normalizedWallet]
+        );
+
+        if (existing.rows.length > 0) {
+          await db.pool.query(
+            `UPDATE registrants 
+             SET email = COALESCE($1, email), 
+                 name = COALESCE($2, name), 
+                 source = $3, 
+                 updated_at = NOW() 
+             WHERE wallet_address = $4`,
+            [member.email, member.name, 'wallettwo_sync', normalizedWallet]
+          );
+          updated++;
+        } else {
+          await db.pool.query(
+            `INSERT INTO registrants (wallet_address, email, name, source, created_at) 
+             VALUES ($1, $2, $3, $4, NOW())`,
+            [normalizedWallet, member.email, member.name, 'wallettwo_sync']
+          );
+          synced++;
+        }
+      } catch (e) {
+        console.error('Sync error for member:', member.wallet_address, e.message);
+        errors++;
+      }
+    }
+
+    res.json({
+      success: true,
+      total: members.length,
+      synced,
+      updated,
+      errors
+    });
+
+  } catch (error) {
+    console.error('Members sync error:', error);
+    res.status(500).json({ error: 'Failed to sync members' });
+  }
+});
+
+// ===========================================
+// Claim Settings Endpoints
+// ===========================================
+app.get('/api/admin/claim/settings', requireAdminAuth, async (req, res) => {
+    try {
+        const result = await db.pool.query(
+            "SELECT value FROM app_settings WHERE key = 'mint_amount'"
+        );
+        
+        const mintAmount = result.rows.length > 0 
+            ? parseInt(result.rows[0].value)
+            : parseInt(process.env.MINT_AMOUNT) || 2;
+        
+        res.json({ mintAmount });
+    } catch (error) {
+        res.json({ mintAmount: parseInt(process.env.MINT_AMOUNT) || 2 });
+    }
+});
+
+app.post('/api/admin/claim/settings', requireAdminAuth, async (req, res) => {
+    try {
+        const { mintAmount } = req.body;
+        
+        if (!mintAmount || mintAmount < 1 || mintAmount > 100) {
+            return res.status(400).json({ success: false, error: 'Invalid mint amount (1-100)' });
+        }
+        
+        await db.pool.query(`
+            INSERT INTO app_settings (key, value, updated_at) 
+            VALUES ('mint_amount', $1, NOW())
+            ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()
+        `, [mintAmount.toString()]);
+        
+        res.json({ success: true, mintAmount });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Failed to save settings' });
+    }
+});
+
+// ===========================================
+// Admin Presale Endpoints
+// ===========================================
+app.post('/api/admin/presale/settings', requireAdminAuth, async (req, res) => {
+    try {
+        const { saleTargetEUR, tokenPrice, minPurchase, presaleWallet, presaleEnabled } = req.body;
+        
+        PRESALE_CONFIG.saleTargetEUR = saleTargetEUR || 500000;
+        PRESALE_CONFIG.tokenPrice = tokenPrice || 1.00;
+        PRESALE_CONFIG.minPurchase = minPurchase || 10;
+        PRESALE_CONFIG.presaleWallet = presaleWallet || PRESALE_CONFIG.presaleWallet;
+        PRESALE_CONFIG.presaleEnabled = presaleEnabled !== false;
+        
+        await db.pool.query(`
+            INSERT INTO presale_config (id, sale_target_eur, token_price, min_purchase, presale_wallet, presale_enabled, updated_at)
+            VALUES (1, $1, $2, $3, $4, $5, NOW())
+            ON CONFLICT (id) DO UPDATE SET
+                sale_target_eur = $1, token_price = $2, min_purchase = $3,
+                presale_wallet = $4, presale_enabled = $5, updated_at = NOW()
+        `, [saleTargetEUR, tokenPrice, minPurchase, presaleWallet, presaleEnabled]);
+        
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/admin/presale/stats', requireAdminAuth, async (req, res) => {
+    try {
+        const stats = await db.pool.query(`
+            SELECT 
+                COUNT(*) FILTER (WHERE status IN ('completed', 'minted', 'paid', 'pending_mint')) as total_purchases,
+                COALESCE(SUM(token_amount) FILTER (WHERE status IN ('completed', 'minted')), 0) as tokens_sold,
+                COALESCE(SUM(net_amount) FILTER (WHERE status IN ('completed', 'minted')), 0) as eur_raised,
+                COALESCE(SUM(eur_amount) FILTER (WHERE status IN ('completed', 'minted')), 0) as eur_gross,
+                COALESCE(SUM(platform_fee) FILTER (WHERE status IN ('completed', 'minted')), 0) as total_fees,
+                COUNT(DISTINCT wallet_address) FILTER (WHERE status IN ('completed', 'minted', 'paid', 'pending_mint')) as unique_buyers,
+                COUNT(*) FILTER (WHERE status = 'pending_mint') as pending_mint,
+                COUNT(*) FILTER (WHERE status = 'paid') as paid,
+                COUNT(*) FILTER (WHERE status IN ('completed', 'minted')) as minted
+            FROM presale_purchases
+        `);
+        
+        const row = stats.rows[0];
+        const eurRaised = parseFloat(row.eur_raised) || 0;
+        const saleTargetEUR = PRESALE_CONFIG.saleTargetEUR || 500000;
+        
+        res.json({
+            eurRaised,
+            eurGross: parseFloat(row.eur_gross) || 0,
+            totalFees: parseFloat(row.total_fees) || 0,
+            saleTargetEUR,
+            progressPct: parseFloat(((eurRaised / saleTargetEUR) * 100).toFixed(2)),
+            tokensSold: parseFloat(row.tokens_sold) || 0,
+            totalTokens: PRESALE_CONFIG.totalTokens || 1000000,
+            tokenPriceEUR: PRESALE_CONFIG.tokenPrice || 1.00,
+            totalPurchases: parseInt(row.total_purchases) || 0,
+            uniqueBuyers: parseInt(row.unique_buyers) || 0,
+            pendingMint: parseInt(row.pending_mint) || 0,
+            paid: parseInt(row.paid) || 0,
+            minted: parseInt(row.minted) || 0
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/admin/presale/purchases', requireAdminAuth, async (req, res) => {
+    try {
+        const result = await db.pool.query(`
+            SELECT 
+                id, wallet_address, token_amount, eur_amount, usd_amount,
+                platform_fee, net_amount, payment_method, stripe_payment_intent,
+                payment_tx_hash, status, mint_tx_hash, referrer_bonus,
+                referral_bonus_amount, referral_bonus_paid, error_message,
+                created_at, minted_at
+            FROM presale_purchases
+            ORDER BY created_at DESC
+            LIMIT 100
+        `);
+        
+        res.json({ purchases: result.rows });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ===========================================
+// Bonus Tiers Endpoints (SINGLE DEFINITION)
+// ===========================================
+app.get('/api/admin/presale/bonus-tiers', requireAdminAuth, async (req, res) => {
+    try {
+        const result = await db.pool.query(`
+            SELECT id, min_eur, bonus_percent, is_active
+            FROM presale_bonus_tiers
+            ORDER BY min_eur ASC
+        `);
+        
+        res.json({ tiers: result.rows });
+    } catch (error) {
+        console.error('❌ Failed to fetch bonus tiers:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/admin/presale/bonus-tiers', requireAdminAuth, async (req, res) => {
+    const { tiers } = req.body;
+    
+    if (!Array.isArray(tiers)) {
+        return res.status(400).json({ error: 'Tiers must be an array' });
+    }
+    
+    console.log('📝 Saving bonus tiers:', tiers);
+    
+    try {
+        await db.pool.query('BEGIN');
+        
+        await db.pool.query('UPDATE presale_bonus_tiers SET is_active = false');
+        
+        for (const tier of tiers) {
+            const minEur = parseFloat(tier.min_eur) || 0;
+            const bonusPercent = parseFloat(tier.bonus_percent) || 0;
+            
+            if (minEur > 0 && bonusPercent > 0) {
+                const existing = await db.pool.query(
+                    'SELECT id FROM presale_bonus_tiers WHERE min_eur = $1',
+                    [minEur]
+                );
+                
+                if (existing.rows.length > 0) {
+                    await db.pool.query(`
+                        UPDATE presale_bonus_tiers 
+                        SET bonus_percent = $1, is_active = true, updated_at = NOW()
+                        WHERE min_eur = $2
+                    `, [bonusPercent, minEur]);
+                } else {
+                    await db.pool.query(`
+                        INSERT INTO presale_bonus_tiers (min_eur, bonus_percent, is_active, created_at, updated_at)
+                        VALUES ($1, $2, true, NOW(), NOW())
+                    `, [minEur, bonusPercent]);
+                }
+            }
+        }
+        
+        await db.pool.query('DELETE FROM presale_bonus_tiers WHERE is_active = false');
+        await db.pool.query('COMMIT');
+        
+        console.log('✅ Bonus tiers saved successfully');
+        res.json({ success: true });
+        
+    } catch (error) {
+        await db.pool.query('ROLLBACK');
+        console.error('❌ Failed to save bonus tiers:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/presale/bonus-tiers', async (req, res) => {
+    try {
+        const result = await db.pool.query(`
+            SELECT min_eur, bonus_percent
+            FROM presale_bonus_tiers
+            WHERE is_active = true
+            ORDER BY min_eur ASC
+        `);
+        
+        res.json({ tiers: result.rows });
+    } catch (error) {
+        console.error('❌ Failed to fetch bonus tiers:', error);
+        res.json({ tiers: [] });
+    }
+});
+
 // ===========================================
 // Presale Payment Verification & Auto-Mint
 // ===========================================
-
-// Verify payment transaction on-chain
 async function verifyTransaction(txHash, expectedFrom, expectedUSD, paymentMethod) {
     try {
         const provider = new ethers.JsonRpcProvider(POLYGON_RPC);
@@ -3442,36 +3575,28 @@ async function verifyTransaction(txHash, expectedFrom, expectedUSD, paymentMetho
             return { success: false, error: 'Transaction failed on-chain' };
         }
         
-        // Verify sender
         if (tx.from.toLowerCase() !== expectedFrom.toLowerCase()) {
             return { success: false, error: 'Transaction sender mismatch' };
         }
         
-        // Verify recipient is presale wallet
         const presaleWallet = (PRESALE_CONFIG.presaleWallet || process.env.PRESALE_WALLET || '').toLowerCase();
         
         if (!presaleWallet) {
-            console.log('⚠️ No presale wallet configured, skipping recipient check');
             return { success: true };
         }
         
         if (paymentMethod === 'POL') {
-            // Native transfer - check tx.to and tx.value
             if (tx.to && tx.to.toLowerCase() !== presaleWallet) {
                 return { success: false, error: 'Payment not sent to presale wallet' };
             }
         } else if (paymentMethod === 'USDC') {
-            // ERC20 transfer - check logs for Transfer event
             const erc20Interface = new ethers.Interface(ERC20_ABI);
             let foundTransfer = false;
             
             for (const log of receipt.logs) {
                 if (log.address.toLowerCase() === USDC_ADDRESS.toLowerCase()) {
                     try {
-                        const parsed = erc20Interface.parseLog({
-                            topics: log.topics,
-                            data: log.data
-                        });
+                        const parsed = erc20Interface.parseLog({ topics: log.topics, data: log.data });
                         if (parsed && parsed.name === 'Transfer') {
                             const to = parsed.args[1].toLowerCase();
                             if (to === presaleWallet) {
@@ -3479,9 +3604,7 @@ async function verifyTransaction(txHash, expectedFrom, expectedUSD, paymentMetho
                                 break;
                             }
                         }
-                    } catch (e) {
-                        // Not a Transfer event, continue
-                    }
+                    } catch (e) {}
                 }
             }
             
@@ -3492,427 +3615,213 @@ async function verifyTransaction(txHash, expectedFrom, expectedUSD, paymentMetho
         
         return { success: true };
     } catch (error) {
-        console.error('TX verification error:', error);
         return { success: false, error: 'Verification failed: ' + error.message };
     }
 }
 
-// Mint tokens using owner wallet
-async function mintPresaleTokens(toAddress, amount) {
-    const PRIVATE_KEY = process.env.PRIVATE_KEY;
-    
-    if (!PRIVATE_KEY) {
-        console.error('❌ PRIVATE_KEY not configured for presale minting');
-        return { success: false, error: 'Minting not configured' };
-    }
-    
-    try {
-        const provider = new ethers.JsonRpcProvider(POLYGON_RPC);
-        const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
-        const tokenContract = new ethers.Contract(VIP_TOKEN_ADDRESS, VIP_TOKEN_ABI, wallet);
-        
-        // Convert amount to wei (18 decimals)
-        const amountWei = ethers.parseUnits(amount.toString(), 18);
-        
-        console.log(`🎯 Presale minting ${amount} VIP tokens to ${toAddress}`);
-        
-        // Estimate gas
-        const gasEstimate = await tokenContract.mint.estimateGas(toAddress, amountWei);
-        const feeData = await provider.getFeeData();
-        
-        // Send mint transaction
-        const tx = await tokenContract.mint(toAddress, amountWei, {
-            gasLimit: gasEstimate * 120n / 100n, // 20% buffer
-            maxFeePerGas: feeData.maxFeePerGas,
-            maxPriorityFeePerGas: feeData.maxPriorityFeePerGas
-        });
-        
-        console.log(`📤 Presale mint TX sent: ${tx.hash}`);
-        
-        // Wait for confirmation
-        const receipt = await tx.wait();
-        
-        if (receipt.status === 1) {
-            console.log(`✅ Presale mint confirmed: ${tx.hash}`);
-            return { success: true, txHash: tx.hash };
-        } else {
-            return { success: false, error: 'Mint transaction failed' };
-        }
-    } catch (error) {
-        console.error('❌ Presale mint error:', error);
-        return { success: false, error: error.message };
-    }
-}
-
-// Verify payment and mint tokens endpoint
 app.post('/api/presale/verify-payment', async (req, res) => {
-    const { 
-        txHash, 
-        walletAddress, 
-        tokenAmount, 
-        totalEUR, 
-        totalUSD, 
-        paymentMethod,
-        referrerCode
-    } = req.body;
+    const { txHash, walletAddress, tokenAmount, totalEUR, totalUSD, paymentMethod, referrerCode } = req.body;
     
-    console.log('\n💰 PRESALE PAYMENT VERIFICATION:', { 
-        txHash, 
-        walletAddress, 
-        tokenAmount, 
-        totalEUR,
-        totalUSD,
-        paymentMethod,
-        referrerCode: referrerCode || 'none'
-    });
+    console.log('\n' + '='.repeat(60));
+    console.log('💰 PRESALE PAYMENT VERIFICATION');
+    console.log('='.repeat(60));
     
-    // ==================== VALIDATION ====================
     if (!txHash || !walletAddress || !tokenAmount) {
-        console.log('❌ Missing required fields');
-        return res.status(400).json({ 
-            success: false, 
-            error: 'Missing required fields',
-            required: ['txHash', 'walletAddress', 'tokenAmount']
-        });
+        return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
     
     if (!ethers.isAddress(walletAddress)) {
-        console.log('❌ Invalid wallet address:', walletAddress);
-        return res.status(400).json({ 
-            success: false, 
-            error: 'Invalid wallet address' 
-        });
+        return res.status(400).json({ success: false, error: 'Invalid wallet address' });
     }
     
     const normalizedAddress = ethers.getAddress(walletAddress).toLowerCase();
     const networkConfig = getNetworkConfig();
     
-    // ==================== CALCULATE AMOUNTS ====================
     const cryptoFeePercent = 0.015;
     const eurAmountTotal = parseFloat(totalEUR) || 0;
     const netAmountEUR = eurAmountTotal / (1 + cryptoFeePercent);
     const platformFeeEUR = eurAmountTotal - netAmountEUR;
     const usdAmountTotal = parseFloat(totalUSD) || 0;
     
-    console.log(`💰 Crypto payment breakdown:`);
-    console.log(`   Total charged: €${eurAmountTotal.toFixed(2)}`);
-    console.log(`   Platform fee (1.5%): €${platformFeeEUR.toFixed(2)}`);
-    console.log(`   Net invested: €${netAmountEUR.toFixed(2)}`);
-    
     try {
-        // ==================== CHECK DUPLICATE ====================
+        // Check duplicate
         const existing = await db.pool.query(
             'SELECT id, status, mint_tx_hash FROM presale_purchases WHERE payment_tx_hash = $1',
             [txHash]
         );
         
         if (existing.rows.length > 0) {
-            const existingPurchase = existing.rows[0];
-            console.log('⚠️ Transaction already processed - ID:', existingPurchase.id);
-            
-            if (existingPurchase.status === 'completed' && existingPurchase.mint_tx_hash) {
+            const ep = existing.rows[0];
+            if (ep.status === 'completed' && ep.mint_tx_hash) {
                 return res.status(400).json({ 
                     success: false, 
                     error: 'Transaction already processed',
-                    status: existingPurchase.status,
-                    mintTxHash: existingPurchase.mint_tx_hash,
-                    explorer_url: `${networkConfig.explorer}/tx/${existingPurchase.mint_tx_hash}`
+                    mintTxHash: ep.mint_tx_hash
                 });
             }
-            
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Transaction already processed',
-                status: existingPurchase.status,
-                purchaseId: existingPurchase.id
-            });
+            return res.status(400).json({ success: false, error: 'Transaction already processed' });
         }
         
-        // ==================== VERIFY ON-CHAIN ====================
-        console.log('🔍 Verifying transaction on Polygon...');
-        
+        // Verify on-chain
         const txVerified = await verifyTransaction(txHash, normalizedAddress, totalUSD, paymentMethod);
         
         if (!txVerified.success) {
-            console.log('❌ Transaction verification failed:', txVerified.error);
-            return res.status(400).json({ 
-                success: false, 
-                error: txVerified.error || 'Transaction verification failed'
-            });
+            return res.status(400).json({ success: false, error: txVerified.error });
         }
         
-        console.log('✅ Transaction verified');
-        
-        // ==================== TRANSFER FEE ====================
-        let feeTxHash = null;
-        const minterWallet = process.env.MINTER_ADDRESS || '0xdD4104A780142EfB9566659f26d3317714a81510';
-        const presaleWalletPrivateKey = process.env.PRESALE_WALLET_PRIVATE_KEY;
-        
-        if (presaleWalletPrivateKey && txVerified.amount > 0) {
-            try {
-                console.log(`💳 Transferring 1.5% fee to minter wallet...`);
-                
-                const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
-                const presaleWalletSigner = new ethers.Wallet(presaleWalletPrivateKey, provider);
-                
-                if (paymentMethod === 'USDC' || paymentMethod === 'usdc') {
-                    const usdcAddress = process.env.USDC_ADDRESS || '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359';
-                    const usdcAbi = ['function transfer(address to, uint256 amount) returns (bool)'];
-                    const usdcContract = new ethers.Contract(usdcAddress, usdcAbi, presaleWalletSigner);
-                    
-                    const feeAmountUSD = usdAmountTotal * cryptoFeePercent;
-                    const feeAmountUSDC = Math.floor(feeAmountUSD * 1e6);
-                    
-                    if (feeAmountUSDC > 0) {
-                        const feeTx = await usdcContract.transfer(minterWallet, feeAmountUSDC);
-                        const feeReceipt = await feeTx.wait();
-                        feeTxHash = feeReceipt.hash;
-                        console.log(`✅ USDC fee transferred: ${feeTxHash}`);
-                    }
-                } else if (paymentMethod === 'POL' || paymentMethod === 'pol' || paymentMethod === 'matic') {
-                    const feeAmountPOL = txVerified.amount * cryptoFeePercent;
-                    const feeAmountWei = ethers.parseEther(feeAmountPOL.toFixed(18));
-                    
-                    if (feeAmountWei > 0) {
-                        const feeTx = await presaleWalletSigner.sendTransaction({
-                            to: minterWallet,
-                            value: feeAmountWei
-                        });
-                        const feeReceipt = await feeTx.wait();
-                        feeTxHash = feeReceipt.hash;
-                        console.log(`✅ POL fee transferred: ${feeTxHash}`);
-                    }
-                }
-            } catch (feeError) {
-                console.error('⚠️ Fee transfer failed (non-fatal):', feeError.message);
-            }
-        }
-        
-        // ==================== GET REFERRER - WITH DEFAULT FALLBACK ====================
+        // Get referrer
         let referrerWallet = null;
         let usedReferrerCode = null;
         let isDefaultReferrer = false;
         
-        console.log('\n🎁 REFERRAL CHECK:');
-        
-        // First check if user has a referrer from registration
         try {
-            const registrantResult = await db.pool.query(
+            const reg = await db.pool.query(
                 'SELECT referrer_wallet, referrer_code FROM registrants WHERE address = $1',
                 [normalizedAddress]
             );
-            
-            if (registrantResult.rows.length > 0 && registrantResult.rows[0].referrer_wallet) {
-                referrerWallet = registrantResult.rows[0].referrer_wallet.toLowerCase();
-                usedReferrerCode = registrantResult.rows[0].referrer_code;
-                console.log('   ✅ Referrer from registration:', referrerWallet);
+            if (reg.rows.length > 0 && reg.rows[0].referrer_wallet) {
+                referrerWallet = reg.rows[0].referrer_wallet.toLowerCase();
+                usedReferrerCode = reg.rows[0].referrer_code;
             }
-        } catch (refLookupError) {
-            console.log('   ⚠️ Referrer lookup error:', refLookupError.message);
-        }
+        } catch (e) {}
         
-        // If referrer code provided in request, try to use it
         if (!referrerWallet && referrerCode && referrerCode !== 'DEFAULT') {
             try {
-                const codeResult = await db.pool.query(
-                    'SELECT wallet_address FROM referral_codes WHERE code = $1 AND is_active = true',
+                const code = await db.pool.query(
+                    'SELECT owner_wallet FROM referral_codes WHERE code = $1 AND enabled = true',
                     [referrerCode.toUpperCase()]
                 );
-                if (codeResult.rows.length > 0) {
-                    referrerWallet = codeResult.rows[0].wallet_address.toLowerCase();
+                if (code.rows.length > 0) {
+                    referrerWallet = code.rows[0].owner_wallet.toLowerCase();
                     usedReferrerCode = referrerCode.toUpperCase();
-                    console.log('   ✅ Referrer from code:', referrerWallet);
                 }
-            } catch (e) {
-                console.log('   ⚠️ Code lookup error:', e.message);
-            }
+            } catch (e) {}
         }
         
-        // Use default referrer if none found
         if (!referrerWallet) {
             referrerWallet = DEFAULT_REFERRER_WALLET;
             usedReferrerCode = 'DEFAULT';
             isDefaultReferrer = true;
-            console.log('   ℹ️ No referrer found - using default owner wallet');
-            console.log('   Default Referrer:', referrerWallet);
         }
         
-        // ==================== RECORD PURCHASE ====================
-        console.log('\n📝 Recording purchase...');
+        // Calculate bonus
+        const bonusInfo = await calculateTokenBonus(netAmountEUR);
+        const baseTokens = parseFloat(tokenAmount);
+        let bonusTokens = 0;
         
+        if (bonusInfo.bonusPercent > 0) {
+            bonusTokens = Math.floor(baseTokens * bonusInfo.bonusPercent / 100);
+        }
+        
+        const totalTokensToMint = baseTokens + bonusTokens;
+        
+        // Record purchase
         const purchaseResult = await db.pool.query(`
             INSERT INTO presale_purchases 
             (wallet_address, token_amount, eur_amount, usd_amount, payment_method, payment_tx_hash, 
-             referrer_bonus, referral_bonus_amount, referral_bonus_paid, platform_fee, net_amount, fee_tx_hash, status, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 0, false, $8, $9, $10, 'paid', NOW())
+             referrer_bonus, platform_fee, net_amount, purchase_bonus_percent, purchase_bonus_tokens, status, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'paid', NOW())
             RETURNING id
-        `, [
-            normalizedAddress, 
-            tokenAmount, 
-            eurAmountTotal,
-            usdAmountTotal,
-            paymentMethod, 
-            txHash,
-            referrerWallet,
-            platformFeeEUR,
-            netAmountEUR,
-            feeTxHash
-        ]);
+        `, [normalizedAddress, baseTokens, eurAmountTotal, usdAmountTotal, paymentMethod, txHash,
+            referrerWallet, platformFeeEUR, netAmountEUR, bonusInfo.bonusPercent, bonusTokens]);
         
         const purchaseId = purchaseResult.rows[0].id;
-        console.log('   ✅ Purchase ID:', purchaseId);
-        console.log('   Referrer:', referrerWallet, isDefaultReferrer ? '(default)' : '');
         
-        // ==================== MINT TOKENS ====================
-        console.log(`\n🎯 Minting ${tokenAmount} VIP tokens...`);
-        
+        // Mint tokens
         await minter.initialize();
         
         let mintResult;
         try {
-            mintResult = await minter.mintToAddress(normalizedAddress, parseFloat(tokenAmount), true); 
-        } catch (mintInitError) {
-            console.error('❌ Minter error:', mintInitError.message);
-            mintResult = { success: false, error: mintInitError.message };
+            mintResult = await minter.mintToAddress(normalizedAddress, totalTokensToMint, true);
+        } catch (mintError) {
+            mintResult = { error: mintError.message };
         }
         
-        if (mintResult && (mintResult.success || mintResult.receipt || mintResult.hash)) {
-            const mintTxHash = mintResult.receipt?.hash || mintResult.hash || mintResult.transactionHash;
-            
-            console.log('✅ Tokens minted! TX:', mintTxHash);
+        if (mintResult && (mintResult.success || mintResult.receipt || mintResult.hash || mintResult.txHash)) {
+            const mintTxHash = mintResult.txHash || mintResult.receipt?.hash || mintResult.hash;
             
             await db.pool.query(`
                 UPDATE presale_purchases 
-                SET status = 'completed', mint_tx_hash = $1, minted_at = NOW()
+                SET status = 'completed', mint_tx_hash = $1, purchase_bonus_tx = $1, minted_at = NOW()
                 WHERE id = $2
             `, [mintTxHash, purchaseId]);
             
-            // Update presale config
+            // Update presale stats
             try {
                 await db.pool.query(`
                     UPDATE presale_config 
-                    SET tokens_sold = COALESCE(tokens_sold, 0) + $1, updated_at = NOW() 
+                    SET tokens_sold = COALESCE(tokens_sold, 0) + $1,
+                        eur_raised = COALESCE(eur_raised, 0) + $2,
+                        updated_at = NOW() 
                     WHERE id = 1
-                `, [parseFloat(tokenAmount)]);
-                console.log(`📊 Presale config updated: +${tokenAmount} tokens`);
-            } catch (configError) {
-                console.error('⚠️ Config update error:', configError.message);
-            }
+                `, [totalTokensToMint, netAmountEUR]);
+            } catch (e) {}
             
-            // ==================== PROCESS REFERRAL BONUS (INCLUDING DEFAULT) ====================
+            // Process referral bonus
             let referralBonus = null;
             
-            console.log('\n🎁 REFERRAL BONUS PROCESSING:');
-            console.log('   Referrer:', referrerWallet);
-            console.log('   Is Default:', isDefaultReferrer);
-            
-            // Don't give bonus to self
             if (referrerWallet && referrerWallet !== normalizedAddress) {
                 try {
-                    const settingsResult = await db.pool.query(
-                        'SELECT * FROM referral_settings WHERE id = 1'
-                    );
+                    const settings = await db.pool.query('SELECT * FROM referral_settings WHERE id = 1');
                     
-                    if (settingsResult.rows.length > 0 && settingsResult.rows[0].enabled) {
-                        const settings = settingsResult.rows[0];
-                        const purchaseUSD = usdAmountTotal;
-                        const minPurchase = parseFloat(settings.min_purchase_for_bonus) || 0;
+                    if (settings.rows.length > 0 && settings.rows[0].enabled) {
+                        const s = settings.rows[0];
+                        const minPurchase = parseFloat(s.min_purchase_for_bonus) || 0;
                         
-                        console.log('   Min Purchase: $' + minPurchase);
-                        console.log('   Purchase Amount: $' + purchaseUSD.toFixed(2));
-                        
-                        if (purchaseUSD >= minPurchase) {
-                            let bonusAmount = 0;
+                        if (usdAmountTotal >= minPurchase) {
+                            let refBonus = 0;
                             
-                            if (settings.presale_bonus_type === 'fixed') {
-                                bonusAmount = parseFloat(settings.presale_bonus_amount) || 0;
-                            } else if (settings.presale_bonus_type === 'percentage') {
-                                bonusAmount = (parseFloat(tokenAmount) * parseFloat(settings.presale_bonus_amount)) / 100;
+                            if (s.presale_bonus_type === 'fixed') {
+                                refBonus = parseFloat(s.presale_bonus_amount) || 0;
+                            } else if (s.presale_bonus_type === 'percentage') {
+                                refBonus = (baseTokens * parseFloat(s.presale_bonus_amount)) / 100;
                             }
                             
-                            console.log('   Bonus Amount:', bonusAmount, 'VIP');
-                            
-                            if (bonusAmount > 0) {
-                                console.log(`   🎁 Minting ${bonusAmount} VIP to referrer...`);
+                            if (refBonus > 0) {
+                                const bonusMint = await minter.mintToAddress(referrerWallet, refBonus, true);
+                                const bonusTx = bonusMint.txHash || bonusMint.receipt?.hash || bonusMint.hash;
                                 
-                                try {
-                                    const bonusMintResult = await minter.mintToAddress(referrerWallet, bonusAmount, true);
-                                    const bonusTxHash = bonusMintResult.receipt?.hash || bonusMintResult.hash || 'bonus-minted';
-                                    
-                                    // Update purchase with bonus info
+                                if (bonusTx) {
                                     await db.pool.query(`
                                         UPDATE presale_purchases 
                                         SET referral_bonus_amount = $1, referral_bonus_paid = true
                                         WHERE id = $2
-                                    `, [bonusAmount, purchaseId]);
+                                    `, [refBonus, purchaseId]);
                                     
-                                    // Only update referral stats for non-default referrers
-                                    if (!isDefaultReferrer) {
+                                    if (!isDefaultReferrer && usedReferrerCode) {
                                         await db.pool.query(`
-                                            UPDATE referrals 
-                                            SET presale_bonus_paid = COALESCE(presale_bonus_paid, 0) + $1
-                                            WHERE referee_wallet = $2
-                                        `, [bonusAmount, normalizedAddress]);
-                                        
-                                        if (usedReferrerCode) {
-                                            await db.pool.query(`
-                                                UPDATE referral_codes 
-                                                SET total_presale_purchases = COALESCE(total_presale_purchases, 0) + 1,
-                                                    total_bonus_earned = COALESCE(total_bonus_earned, 0) + $1,
-                                                    updated_at = NOW()
-                                                WHERE code = $2
-                                            `, [bonusAmount, usedReferrerCode]);
-                                        }
+                                            UPDATE referral_codes 
+                                            SET total_presale_purchases = COALESCE(total_presale_purchases, 0) + 1,
+                                                total_bonus_earned = COALESCE(total_bonus_earned, 0) + $1,
+                                                updated_at = NOW()
+                                            WHERE code = $2
+                                        `, [refBonus, usedReferrerCode]);
                                     }
                                     
-                                    referralBonus = {
-                                        referrer: referrerWallet,
-                                        amount: bonusAmount,
-                                        txHash: bonusTxHash,
-                                        isDefault: isDefaultReferrer
+                                    referralBonus = { 
+                                        referrer: referrerWallet, 
+                                        amount: refBonus, 
+                                        txHash: bonusTx
                                     };
-                                    
-                                    console.log('   ✅ Referral bonus minted! TX:', bonusTxHash);
-                                    
-                                } catch (bonusMintError) {
-                                    console.error('   ⚠️ Bonus mint failed:', bonusMintError.message);
-                                    await db.pool.query(`
-                                        UPDATE presale_purchases 
-                                        SET referral_bonus_amount = $1, referral_bonus_paid = false
-                                        WHERE id = $2
-                                    `, [bonusAmount, purchaseId]);
                                 }
                             }
-                        } else {
-                            console.log('   ⏭️ Below minimum for bonus');
                         }
-                    } else {
-                        console.log('   ⏭️ Referral bonuses disabled');
                     }
-                } catch (refError) {
-                    console.error('   ⚠️ Referral error:', refError.message);
-                }
-            } else {
-                console.log('   ⏭️ Skipping - referrer is same as buyer');
+                } catch (e) {}
             }
-            
-            // ==================== SUCCESS RESPONSE ====================
-            console.log('\n✅ PRESALE PURCHASE COMPLETED');
             
             const response = {
                 success: true,
-                message: `Successfully purchased ${tokenAmount} VIP tokens!`,
+                message: `Successfully purchased ${totalTokensToMint} VIP tokens!`,
                 purchaseId,
-                tokenAmount: parseFloat(tokenAmount),
+                baseTokens,
+                bonusTokens,
+                bonusPercent: bonusInfo.bonusPercent,
+                totalTokens: totalTokensToMint,
+                eurAmount: eurAmountTotal,
                 mintTxHash,
                 paymentTxHash: txHash,
-                eurAmount: eurAmountTotal,
-                platformFee: platformFeeEUR,
-                netAmount: netAmountEUR,
-                feeTxHash,
-                explorer_url: `${networkConfig.explorer}/tx/${mintTxHash}`,
-                payment_explorer_url: `${networkConfig.explorer}/tx/${txHash}`,
-                token_url: `${networkConfig.explorer}/token/${process.env.VIP_TOKEN_ADDRESS || '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F'}?a=${normalizedAddress}`
+                explorer_url: `${networkConfig.explorer}/tx/${mintTxHash}`
             };
             
             if (referralBonus) {
@@ -3922,38 +3831,28 @@ app.post('/api/presale/verify-payment', async (req, res) => {
             return res.json(response);
             
         } else {
-            console.log('⚠️ Minting failed - marking for manual retry');
-            
             await db.pool.query(`
                 UPDATE presale_purchases 
-                SET status = 'pending_mint', 
-                    platform_fee = 0,
-                    net_amount = 0,
-                    error_message = $1
+                SET status = 'pending_mint', error_message = $1
                 WHERE id = $2
             `, [mintResult?.error || 'Minting failed', purchaseId]);
             
             return res.status(500).json({
                 success: false,
                 error: 'Token minting failed',
-                message: 'Your payment was received. Tokens will be sent within 24 hours.',
+                message: 'Payment received. Tokens will be sent within 24 hours.',
                 purchaseId,
-                paymentTxHash: txHash,
                 status: 'pending_mint'
             });
         }
         
     } catch (error) {
-        console.error('❌ VERIFY PAYMENT ERROR:', error.message);
-        
-        return res.status(500).json({ 
-            success: false, 
-            error: 'Server error during payment verification'
-        });
+        console.error('❌ VERIFY PAYMENT ERROR:', error);
+        return res.status(500).json({ success: false, error: 'Server error' });
     }
 });
 
-// Get purchases for a wallet (JSON)
+// Get purchases for wallet
 app.get('/api/presale/purchases/:address', async (req, res) => {
     try {
         const { address } = req.params;
@@ -3970,335 +3869,98 @@ app.get('/api/presale/purchases/:address', async (req, res) => {
             ORDER BY created_at DESC
         `, [address]);
         
-        res.json({
-            success: true,
-            purchases: result.rows
-        });
+        res.json({ success: true, purchases: result.rows });
     } catch (error) {
-        console.error('Error fetching purchases:', error);
         res.json({ success: true, purchases: [] });
     }
 });
 
-// Legacy endpoint for backward compatibility
-app.post('/api/presale/purchase', async (req, res) => {
+app.post('/api/admin/presale/mint/:purchaseId', requireAdminAuth, async (req, res) => {
     try {
-        const { wallet_address, token_amount, payment_method, payment_amount } = req.body;
-        
-        if (!wallet_address || !ethers.isAddress(wallet_address)) {
-            return res.status(400).json({ error: 'Invalid wallet address' });
-        }
-        
-        if (!token_amount || token_amount < PRESALE_CONFIG.minPurchase || token_amount > PRESALE_CONFIG.maxPurchase) {
-            return res.status(400).json({ error: 'Invalid token amount' });
-        }
-        
-        const normalizedAddress = wallet_address.toLowerCase();
-        const usdAmount = token_amount * PRESALE_CONFIG.tokenPrice;
-        
-        let purchase = { id: Date.now() };
-        try {
-            purchase = await db.addPresalePurchase({
-                wallet_address: normalizedAddress,
-                token_amount,
-                payment_method,
-                payment_amount,
-                usd_amount: usdAmount,
-                status: 'pending_payment'
-            });
-        } catch (e) {
-            console.log('Could not save purchase:', e.message);
-        }
-        
-        res.json({
-            success: true,
-            purchase_id: purchase.id,
-            message: 'Purchase recorded.',
-            payment_wallet: PRESALE_CONFIG.presaleWallet || process.env.PRESALE_WALLET || 'Contact support'
-        });
-        
-    } catch (error) {
-        res.status(500).json({ error: 'Purchase failed' });
-    }
-});
-
-// Stripe checkout (disabled but kept for compatibility)
-app.post('/api/presale/create-checkout', async (req, res) => {
-    if (!stripe) {
-        return res.status(503).json({ 
-            error: 'Card payments not available',
-            message: 'Please use crypto (POL or USDC).'
-        });
-    }
-    
-    try {
-        const { walletAddress, tokenAmount, email, embedded } = req.body;
-        
-        if (!walletAddress || !ethers.isAddress(walletAddress)) {
-            return res.status(400).json({ error: 'Invalid wallet address' });
-        }
-        
-        if (!tokenAmount || tokenAmount < PRESALE_CONFIG.minPurchase || tokenAmount > PRESALE_CONFIG.maxPurchase) {
-            return res.status(400).json({ 
-                error: `Token amount must be between ${PRESALE_CONFIG.minPurchase} and ${PRESALE_CONFIG.maxPurchase}` 
-            });
-        }
-        
-        const normalizedAddress = walletAddress.toLowerCase();
-        const unitPrice = Math.round(PRESALE_CONFIG.tokenPrice * 100);
-        
-        console.log('💳 Creating Stripe checkout:', { 
-            wallet: normalizedAddress, 
-            tokens: tokenAmount, 
-            embedded: !!embedded
-        });
-        
-        const sessionConfig = {
-            payment_method_types: ['card'],
-            customer_email: email || undefined,
-            line_items: [{
-                price_data: {
-                    currency: 'eur',
-                    product_data: {
-                        name: 'Kea Valley VIP Token',
-                        description: `${tokenAmount} VIP Tokens at €${PRESALE_CONFIG.tokenPrice} each`,
-                        images: ['https://kea-valley.com/logo.png']
-                    },
-                    unit_amount: unitPrice
-                },
-                quantity: parseInt(tokenAmount)
-            }],
-            mode: 'payment',
-            metadata: {
-                walletAddress: normalizedAddress,
-                tokenAmount: tokenAmount.toString(),
-                source: 'presale'
-            }
-        };
-        
-        // Embedded checkout uses ui_mode and return_url
-        if (embedded) {
-            sessionConfig.ui_mode = 'embedded';
-            sessionConfig.return_url = `${req.headers.origin || 'https://kea-valley.com'}/presale?purchase=complete&session_id={CHECKOUT_SESSION_ID}`;
-        } else {
-            sessionConfig.success_url = `${req.headers.origin || 'https://kea-valley.com'}/presale?purchase=complete&session_id={CHECKOUT_SESSION_ID}`;
-            sessionConfig.cancel_url = `${req.headers.origin || 'https://kea-valley.com'}/presale?purchase=cancelled`;
-        }
-        
-        const session = await stripe.checkout.sessions.create(sessionConfig);
-        
-        console.log('✅ Stripe session created:', session.id);
-        
-        res.json({ 
-            success: true, 
-            sessionId: session.id,
-            clientSecret: session.client_secret, // For embedded checkout
-            url: session.url // For redirect checkout (fallback)
-        });
-        
-    } catch (error) {
-        console.error('❌ Stripe checkout error:', error);
-        res.status(500).json({ 
-            error: 'Failed to create checkout session',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
-    }
-});
-
-// ===========================================
-// Admin Presale Endpoints
-// ===========================================
-
-// Get admin settings
-app.get('/api/presale/admin/settings', requireAdminAuth, async (req, res) => {
-    res.json({
-        success: true,
-        settings: {
-            enabled: PRESALE_CONFIG.enabled,
-            tokenPrice: PRESALE_CONFIG.tokenPrice,
-            totalTokens: PRESALE_CONFIG.totalTokens,
-            minPurchase: PRESALE_CONFIG.minPurchase,
-            maxPurchase: PRESALE_CONFIG.maxPurchase,
-            presaleWallet: PRESALE_CONFIG.presaleWallet || process.env.PRESALE_WALLET || ''
-        }
-    });
-});
-
-// Update admin settings
-app.post('/api/presale/admin/settings', requireAdminAuth, async (req, res) => {
-    try {
-        const { enabled, tokenPrice, totalTokens, minPurchase, maxPurchase, presaleWallet } = req.body;
-        
-        // Update in-memory config
-        if (typeof enabled === 'boolean') PRESALE_CONFIG.enabled = enabled;
-        if (tokenPrice !== undefined) PRESALE_CONFIG.tokenPrice = parseFloat(tokenPrice);
-        if (totalTokens !== undefined) PRESALE_CONFIG.totalTokens = parseInt(totalTokens);
-        if (minPurchase !== undefined) PRESALE_CONFIG.minPurchase = parseInt(minPurchase);
-        if (maxPurchase !== undefined) PRESALE_CONFIG.maxPurchase = parseInt(maxPurchase);
-        if (presaleWallet !== undefined) PRESALE_CONFIG.presaleWallet = presaleWallet;
-        
-        // Persist to DB
-        try {
-            await db.pool.query(`
-                INSERT INTO app_settings (key, value, updated_at) 
-                VALUES ('presale_config', $1, NOW())
-                ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()
-            `, [JSON.stringify({
-                enabled: PRESALE_CONFIG.enabled,
-                tokenPrice: PRESALE_CONFIG.tokenPrice,
-                totalTokens: PRESALE_CONFIG.totalTokens,
-                minPurchase: PRESALE_CONFIG.minPurchase,
-                maxPurchase: PRESALE_CONFIG.maxPurchase,
-                presaleWallet: PRESALE_CONFIG.presaleWallet
-            })]);
-            console.log('✅ Presale settings saved to DB');
-        } catch (dbError) {
-            console.log('⚠️ Could not persist settings to DB:', dbError.message);
-        }
-        
-        console.log('✅ Presale settings updated:', PRESALE_CONFIG);
-        
-        res.json({ success: true, settings: PRESALE_CONFIG });
-    } catch (error) {
-        console.error('Error saving settings:', error);
-        res.status(500).json({ error: 'Failed to save settings' });
-    }
-});
-
-// Admin stats
-app.get('/api/presale/admin/stats', requireAdminAuth, async (req, res) => {
-    try {
-        const stats = await db.pool.query(`
-            SELECT 
-                COUNT(*) as total_purchases,
-                COUNT(DISTINCT wallet_address) as unique_buyers,
-                COALESCE(SUM(token_amount), 0) as total_tokens,
-                COALESCE(SUM(usd_amount), 0) as total_usd,
-                COALESCE(SUM(eur_amount), 0) as total_eur,
-                COUNT(CASE WHEN status = 'pending_mint' THEN 1 END) as pending_mint
-            FROM presale_purchases
-            WHERE status IN ('paid', 'pending_mint', 'completed', 'minted')
-        `);
-        
-        res.json({
-            success: true,
-            stats: stats.rows[0]
-        });
-    } catch (error) {
-        console.error('Error fetching stats:', error);
-        res.status(500).json({ error: 'Failed to fetch stats' });
-    }
-});
-
-// Admin purchases list
-app.get('/api/presale/admin/purchases', requireAdminAuth, async (req, res) => {
-    try {
-        const result = await db.pool.query(`
-            SELECT p.*, r.email
-            FROM presale_purchases p
-            LEFT JOIN registrants r ON LOWER(p.wallet_address) = LOWER(r.address)
-            ORDER BY p.created_at DESC
-            LIMIT 100
-        `);
-        
-        res.json({
-            success: true,
-            purchases: result.rows,
-            config: PRESALE_CONFIG
-        });
-    } catch (error) {
-        console.error('Error fetching purchases:', error);
-        res.status(500).json({ error: 'Failed to fetch purchases' });
-    }
-});
-
-// Admin fulfill (manual mint for pending purchases)
-app.post('/api/presale/admin/fulfill', requireAdminAuth, async (req, res) => {
-    try {
-        const { purchase_id } = req.body;
+        const { purchaseId } = req.params;
         
         const purchaseResult = await db.pool.query(
             'SELECT * FROM presale_purchases WHERE id = $1',
-            [purchase_id]
+            [purchaseId]
         );
         
         if (purchaseResult.rows.length === 0) {
-            return res.status(404).json({ error: 'Purchase not found' });
+            return res.status(404).json({ success: false, error: 'Purchase not found' });
         }
         
         const purchase = purchaseResult.rows[0];
         
         if (purchase.status === 'completed' || purchase.status === 'minted') {
-            return res.status(400).json({ error: 'Already fulfilled' });
+            return res.status(400).json({ success: false, error: 'Already minted' });
         }
         
-        // Mint tokens
-        const mintResult = await mintPresaleTokens(purchase.wallet_address, purchase.token_amount);
+        // Calculate total tokens including bonus
+        const baseTokens = parseFloat(purchase.token_amount) || 0;
+        const bonusTokens = parseFloat(purchase.purchase_bonus_tokens) || 0;
+        const totalTokens = baseTokens + bonusTokens;
         
-        if (mintResult.success) {
+        await minter.initialize();
+        const networkConfig = getNetworkConfig();
+        
+        const mintResult = await minter.mintToAddress(purchase.wallet_address, totalTokens, true);
+        
+        if (mintResult && (mintResult.success || mintResult.txHash || mintResult.receipt)) {
+            const txHash = mintResult.txHash || mintResult.receipt?.hash || mintResult.hash;
+            
             await db.pool.query(`
                 UPDATE presale_purchases 
                 SET status = 'completed', mint_tx_hash = $1, minted_at = NOW()
                 WHERE id = $2
-            `, [mintResult.txHash, purchase_id]);
+            `, [txHash, purchaseId]);
             
-            // Update presale config tokens sold
+            // Update presale config
             try {
                 await db.pool.query(`
                     UPDATE presale_config 
-                    SET tokens_sold = COALESCE(tokens_sold, 0) + $1, updated_at = NOW() 
+                    SET tokens_sold = COALESCE(tokens_sold, 0) + $1,
+                        updated_at = NOW() 
                     WHERE id = 1
-                `, [parseFloat(purchase.token_amount)]);
-                console.log(`📊 PRESALE CONFIG UPDATED: +${purchase.token_amount} tokens sold`);
-            } catch (configError) {
-                console.error('⚠️ Failed to update presale_config:', configError.message);
-            }
+                `, [totalTokens]);
+            } catch (e) {}
             
-            res.json({
+            return res.json({
                 success: true,
-                tx_hash: mintResult.txHash,
-                explorer_url: `https://polygonscan.com/tx/${mintResult.txHash}`
+                txHash,
+                tokenAmount: totalTokens,
+                explorer_url: `${networkConfig.explorer}/tx/${txHash}`
             });
         } else {
-            res.status(500).json({ error: mintResult.error || 'Minting failed' });
+            return res.status(500).json({ 
+                success: false, 
+                error: mintResult?.error || 'Minting failed' 
+            });
         }
+        
     } catch (error) {
-        console.error('Fulfill error:', error);
-        res.status(500).json({ error: error.message });
+        console.error('❌ Manual mint error:', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
 // ===========================================
-// Health Check (Public)
+// Health Check
 // ===========================================
-
 app.get('/api/health', async (req, res) => {
     const healthData = {
         status: 'ok',
         timestamp: new Date().toISOString(),
-        network: process.env.NETWORK || 'not set',
+        network: process.env.NETWORK || 'polygon',
         stripe: stripe ? 'configured' : 'not configured',
         presale: {
-            enabled: PRESALE_CONFIG.enabled,
+            enabled: PRESALE_CONFIG.presaleEnabled,
             tokenPrice: PRESALE_CONFIG.tokenPrice + ' EUR',
             presaleWallet: PRESALE_CONFIG.presaleWallet ? 'configured' : 'not set'
-        },
-        env: {
-            NETWORK: process.env.NETWORK ? 'SET' : 'NOT SET',
-            TOKEN_ADDRESS_POLYGON: process.env.TOKEN_ADDRESS_POLYGON ? 'SET' : 'NOT SET',
-            PRIVATE_KEY: process.env.PRIVATE_KEY ? 'SET' : 'NOT SET',
-            PRESALE_WALLET: process.env.PRESALE_WALLET ? 'SET' : 'NOT SET',
-            MINT_AMOUNT: process.env.MINT_AMOUNT || '2 (default)',
-            DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'NOT SET'
         }
     };
 
     try {
         const dbConnected = await db.testConnection();
         healthData.database = { status: dbConnected ? 'connected' : 'disconnected', type: 'PostgreSQL' };
-        if (dbConnected) {
-            healthData.database.stats = await db.getStats();
-        }
     } catch (dbError) {
         healthData.database = { status: 'error', error: dbError.message };
     }
@@ -4322,7 +3984,6 @@ app.get('/api/health', async (req, res) => {
 // ===========================================
 // Catch-all
 // ===========================================
-
 app.get('*', (req, res) => {
     res.redirect('/');
 });
@@ -4330,37 +3991,95 @@ app.get('*', (req, res) => {
 // ===========================================
 // Start Server
 // ===========================================
-
 async function startServer() {
-    try {
-        await db.initDb();
-        console.log('✅ PostgreSQL database initialized');
-        
-        // Load presale settings from DB
-        await loadPresaleSettings();
-        
-        return new Promise((resolve) => {
-            const server = app.listen(PORT, () => {
-                console.log('\n' + '='.repeat(50));
-                console.log('  KEA VALLEY AUTO-MINTER');
-                console.log('='.repeat(50));
-                console.log(`  🌐 Server:    http://localhost:${PORT}`);
-                console.log(`  📊 Dashboard: http://localhost:${PORT}/dashboard`);
-                console.log(`  🎁 Claim:     http://localhost:${PORT}/claim`);
-                console.log(`  👤 Profile:   http://localhost:${PORT}/profile`);
-                console.log(`  💰 Presale:   http://localhost:${PORT}/presale`);
-                console.log(`  🔐 Login:     http://localhost:${PORT}/login`);
-                console.log('='.repeat(50));
-                console.log(`  💎 Presale:   ${PRESALE_CONFIG.enabled ? 'ENABLED' : 'DISABLED'}`);
-                console.log(`  💵 Price:     €${PRESALE_CONFIG.tokenPrice}`);
-                console.log('='.repeat(50) + '\n');
-                resolve(server);
-            });
-        });
-    } catch (error) {
-        console.error('❌ Failed to start server:', error);
-        throw error;
-    }
+  try {
+    console.log('\n========================================');
+    console.log('🚀 KEA VALLEY PRESALE SERVER');
+    console.log('========================================\n');
+
+    // Initialize database
+    console.log('📦 Initializing database connection...');
+    await db.initialize();
+
+    // Ensure tables exist - CALLED HERE
+    console.log('📋 Ensuring database tables...');
+    await ensureDatabaseTables();
+
+    // Seed default data - CALLED HERE
+    console.log('🌱 Ensuring default data...');
+    await ensureDefaultData();
+
+    // Load presale settings into memory
+    console.log('⚙️ Loading presale settings...');
+    await loadPresaleSettings();
+
+    // Start HTTP server
+    const PORT = process.env.PORT || 3000;
+    const server = app.listen(PORT, () => {
+      console.log(`\n✅ Server running on port ${PORT}\n`);
+    });
+
+    // Graceful shutdown handlers
+    process.on('SIGTERM', () => gracefulShutdown(server, 'SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown(server, 'SIGINT'));
+
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
 }
 
-module.exports = { app, startServer };
+async function gracefulShutdown(server, signal) {
+  console.log(`\n⚠️ ${signal} received. Shutting down...`);
+  server.close(async () => {
+    try {
+      await db.pool.end();
+      console.log('✅ Shutdown complete');
+    } catch (e) {
+      console.error('Shutdown error:', e);
+    }
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(1), 10000);
+}
+
+// Handle graceful shutdown
+process.on('SIGTERM', async () => {
+    console.log('SIGTERM received, shutting down...');
+    try {
+        await db.pool.end();
+        console.log('Database pool closed');
+    } catch (e) {}
+    process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+    console.log('\nSIGINT received, shutting down...');
+    try {
+        await db.pool.end();
+        console.log('Database pool closed');
+    } catch (e) {}
+    process.exit(0);
+});
+
+// Start if run directly
+if (require.main === module) {
+    startServer().catch(err => {
+        console.error('Failed to start:', err);
+        process.exit(1);
+    });
+}
+
+module.exports = {
+  app,
+  db,
+  PRESALE_CONFIG,
+  VIP_TOKEN_ADDRESS,
+  USDC_ADDRESS,
+  DEFAULT_REFERRER_WALLET,
+  MINTER_ADDRESS,
+  calculateTokenBonus,
+  getReferralSettings,
+  validateAddress,
+  startServer
+};

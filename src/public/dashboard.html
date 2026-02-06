@@ -812,6 +812,41 @@
                     </div>
                 </div>
                 
+                <!-- Purchase Bonus Tiers -->
+                <div class="glass-card rounded-xl p-6">
+                    <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
+                        <svg class="w-5 h-5 gold-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path>
+                        </svg>
+                        Purchase Bonus Tiers
+                    </h3>
+                    <p class="text-white/60 text-sm mb-4">Token bonus based on EUR investment. Only the highest matching tier applies (non-cumulative).</p>
+                    
+                    <div id="bonus-tiers-container" class="space-y-3">
+                        <p class="text-white/40 text-sm">Loading...</p>
+                    </div>
+                    
+                    <button onclick="addBonusTier()" class="mt-4 text-sm text-[#ee9d2b] hover:text-[#d4a543] flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Add Tier
+                    </button>
+                    
+                    <div class="pt-4 mt-4 border-t border-white/10">
+                        <button onclick="saveBonusTiers()" class="btn-gold w-full">Save Bonus Tiers</button>
+                        <span id="bonus-tiers-status" class="ml-4 text-sm"></span>
+                    </div>
+                    
+                    <!-- Preview -->
+                    <div class="mt-4 p-3 bg-white/5 rounded-lg">
+                        <p class="text-white/60 text-xs mb-2">Preview (based on €1.00/token):</p>
+                        <div id="bonus-preview" class="text-white/80 text-sm space-y-1">
+                            <p class="text-white/40">Configure tiers above</p>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Claim Configuration -->
                 <div class="glass-card rounded-xl p-6">
                     <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
@@ -1029,6 +1064,180 @@
         let currentAdminRole = 'admin';
         let currentAdminEmail = '';
         let adminToRemove = null;
+
+        // ==========================================
+        // BONUS TIERS MANAGEMENT
+        // ==========================================
+        let bonusTiers = [];
+
+        async function loadBonusTiers() {
+            try {
+                const response = await fetch('/api/admin/presale/bonus-tiers', { credentials: 'include' });
+                const data = await response.json();
+                bonusTiers = data.tiers || [];
+                renderBonusTiers();
+            } catch (error) {
+                console.error('❌ Failed to load bonus tiers:', error);
+                document.getElementById('bonus-tiers-container').innerHTML = 
+                    '<p class="text-red-400 text-sm">Failed to load bonus tiers</p>';
+            }
+        }
+
+        async function manualMint(purchaseId) {
+            if (!confirm('Are you sure you want to mint tokens for this purchase?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/presale/mint/${purchaseId}`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`✅ Minted successfully!\nTX: ${data.txHash}`);
+                    loadPresalePurchases();
+                    loadPresaleStats();
+                } else {
+                    alert(`❌ Mint failed: ${data.error || 'Unknown error'}`);
+                }
+            } catch (error) {
+                console.error('Manual mint error:', error);
+                alert(`❌ Error: ${error.message}`);
+            }
+        }
+
+        function renderBonusTiers() {
+            const container = document.getElementById('bonus-tiers-container');
+            if (!container) return;
+            
+            if (bonusTiers.length === 0) {
+                container.innerHTML = '<p class="text-white/40 text-sm">No bonus tiers configured. Click "Add Tier" to create one.</p>';
+                updateBonusPreview();
+                return;
+            }
+            
+            // Sort by min_eur
+            bonusTiers.sort((a, b) => parseFloat(a.min_eur) - parseFloat(b.min_eur));
+            
+            container.innerHTML = bonusTiers.map((tier, index) => `
+                <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg" data-tier-index="${index}">
+                    <div class="flex-1">
+                        <label class="text-white/60 text-xs">Min EUR</label>
+                        <input type="number" class="input-field w-full mt-1 text-sm" 
+                            value="${tier.min_eur}" 
+                            min="1" step="1"
+                            onchange="updateTier(${index}, 'min_eur', this.value)">
+                    </div>
+                    <div class="flex-1">
+                        <label class="text-white/60 text-xs">Bonus %</label>
+                        <input type="number" class="input-field w-full mt-1 text-sm" 
+                            value="${tier.bonus_percent}" 
+                            min="1" max="100" step="1"
+                            onchange="updateTier(${index}, 'bonus_percent', this.value)">
+                    </div>
+                    <button onclick="removeTier(${index})" class="mt-5 text-red-400 hover:text-red-300 p-1">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
+            
+            updateBonusPreview();
+        }
+
+        function addBonusTier() {
+            // Find next logical tier
+            const lastTier = bonusTiers[bonusTiers.length - 1];
+            const newMinEur = lastTier ? parseFloat(lastTier.min_eur) * 10 : 100;
+            const newBonus = lastTier ? Math.min(parseFloat(lastTier.bonus_percent) + 10, 100) : 5;
+            
+            bonusTiers.push({ min_eur: newMinEur, bonus_percent: newBonus });
+            renderBonusTiers();
+        }
+
+        function removeTier(index) {
+            bonusTiers.splice(index, 1);
+            renderBonusTiers();
+        }
+
+        function updateTier(index, field, value) {
+            bonusTiers[index][field] = parseFloat(value) || 0;
+            // Sort by min_eur
+            bonusTiers.sort((a, b) => parseFloat(a.min_eur) - parseFloat(b.min_eur));
+            updateBonusPreview();
+        }
+
+        function updateBonusPreview() {
+            const preview = document.getElementById('bonus-preview');
+            if (!preview) return;
+            
+            if (bonusTiers.length === 0) {
+                preview.innerHTML = '<p class="text-white/40">No bonuses configured</p>';
+                return;
+            }
+            
+            // Generate preview for common amounts
+            const examples = [50, 100, 500, 1000, 5000, 10000];
+            
+            preview.innerHTML = examples.map(amount => {
+                // Find highest matching tier
+                const matchingTier = [...bonusTiers]
+                    .filter(t => parseFloat(t.min_eur) <= amount)
+                    .sort((a, b) => parseFloat(b.min_eur) - parseFloat(a.min_eur))[0];
+                
+                if (!matchingTier) {
+                    return `<div class="flex justify-between text-white/40">
+                        <span>€${amount.toLocaleString()}</span>
+                        <span>${amount} VIP (no bonus)</span>
+                    </div>`;
+                }
+                
+                const baseTokens = amount;
+                const bonusTokens = Math.floor(amount * parseFloat(matchingTier.bonus_percent) / 100);
+                const totalTokens = baseTokens + bonusTokens;
+                
+                return `<div class="flex justify-between">
+                    <span class="text-white/60">€${amount.toLocaleString()}</span>
+                    <span class="gold-text font-medium">${totalTokens.toLocaleString()} VIP <span class="text-green-400 text-xs">(+${matchingTier.bonus_percent}%)</span></span>
+                </div>`;
+            }).join('');
+        }
+
+        async function saveBonusTiers() {
+            const statusEl = document.getElementById('bonus-tiers-status');
+            if (statusEl) statusEl.innerHTML = '<span class="text-white/60">Saving...</span>';
+            
+            try {
+                // Validate tiers
+                const validTiers = bonusTiers.filter(t => 
+                    parseFloat(t.min_eur) > 0 && parseFloat(t.bonus_percent) > 0
+                );
+                
+                const response = await fetch('/api/admin/presale/bonus-tiers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ tiers: validTiers })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (statusEl) statusEl.innerHTML = '<span class="text-green-400">✓ Saved!</span>';
+                    setTimeout(() => { if (statusEl) statusEl.innerHTML = ''; }, 3000);
+                    loadBonusTiers(); // Reload to get cleaned data
+                } else {
+                    if (statusEl) statusEl.innerHTML = `<span class="text-red-400">${data.error || 'Failed'}</span>`;
+                }
+            } catch (error) {
+                console.error('❌ Save error:', error);
+                if (statusEl) statusEl.innerHTML = '<span class="text-red-400">Network error</span>';
+            }
+        }
         
         // ==========================================
         // TAB SWITCHING - MUST BE IN GLOBAL SCOPE
@@ -1213,9 +1422,13 @@
                     codes = data.rows;
                 }
                 
+                // ✅ FIX: Store codes in global variable for filtering/export
+                referralCodesData = codes;
+                
                 renderReferralCodes(codes);
             } catch (error) {
                 console.error('Error loading referral codes:', error);
+                referralCodesData = [];
                 renderReferralCodes([]);
             }
         }
@@ -1231,9 +1444,9 @@
             
             let filtered = referralCodesData;
             if (filter === 'active') {
-                filtered = referralCodesData.filter(c => c.enabled);
+                filtered = referralCodesData.filter(c => c.is_active || c.enabled);
             } else if (filter === 'disabled') {
-                filtered = referralCodesData.filter(c => !c.enabled);
+                filtered = referralCodesData.filter(c => !c.is_active && !c.enabled);
             }
             
             renderReferralCodes(filtered);
@@ -1299,14 +1512,17 @@
                     referrals = data.rows;
                 }
                 
+                // ✅ FIX: Store referrals in global variable for export
+                referralsData = referrals;
+                
                 renderReferralsActivity(referrals);
             } catch (error) {
                 console.error('Error loading referrals activity:', error);
+                referralsData = [];
                 renderReferralsActivity([]);
             }
         }
 
-        
         function renderReferralsActivity(referrals) {
             const tbody = document.getElementById('referrals-activity-table');
             
@@ -1762,55 +1978,20 @@
                 const data = await response.json();
                 console.log('📋 Presale purchases received:', data);
                 
-                const tbody = document.getElementById('presale-table');
-                if (!tbody) return;
-                
-                tbody.innerHTML = '';
-                
+                // ✅ FIX: Store purchases in global variable for filtering/export
                 const purchases = data.purchases || data;
+                presaleData = purchases;
                 
-                if (!purchases || purchases.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-white/40 py-8">No purchases yet</td></tr>';
-                    return;
-                }
-                
-                purchases.forEach(p => {
-                    // Handle both camelCase and snake_case field names
-                    const email = p.email ?? p.user_email ?? '-';
-                    const walletAddress = p.walletAddress ?? p.wallet_address ?? '';
-                    const tokenAmount = p.tokenAmount ?? p.token_amount ?? 0;
-                    const eurAmount = p.eurAmount ?? p.eur_amount ?? 0;
-                    const usdAmount = p.usdAmount ?? p.usd_amount ?? 0;
-                    const paymentMethod = p.paymentMethod ?? p.payment_method ?? 'card';
-                    const status = p.status ?? 'unknown';
-                    const referrerWallet = p.referrerWallet ?? p.referrer_wallet ?? '';
-                    const createdAt = p.createdAt ?? p.created_at;
-                    const mintTxHash = p.mintTxHash ?? p.mint_tx_hash;
-                    const purchaseId = p.id ?? p.purchaseId ?? '';
-                    
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${email}</td>
-                        <td title="${walletAddress}">${walletAddress ? walletAddress.slice(0,6) + '...' + walletAddress.slice(-4) : '-'}</td>
-                        <td><strong>${parseFloat(tokenAmount).toLocaleString()} VIP</strong></td>
-                        <td>€${parseFloat(eurAmount).toFixed(2)} <span class="text-white/40">($${parseFloat(usdAmount).toFixed(2)})</span></td>
-                        <td>${paymentMethod}</td>
-                        <td><span class="badge ${getStatusBadge(status)}">${status}</span></td>
-                        <td title="${referrerWallet}">${referrerWallet ? referrerWallet.slice(0,6) + '...' + referrerWallet.slice(-4) : '-'}</td>
-                        <td>${new Date(createdAt).toLocaleDateString()}</td>
-                        <td>
-                            ${mintTxHash 
-                                ? `<a href="https://polygonscan.com/tx/${mintTxHash}" target="_blank" class="text-emerald-400 hover:text-emerald-300">View TX</a>` 
-                                : status === 'paid' || status === 'pending_mint'
-                                    ? `<button onclick="manualMint('${purchaseId}')" class="text-yellow-400 hover:text-yellow-300">Mint</button>`
-                                    : '-'}
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
+                // Use the existing render function which handles filtering
+                renderPresalePurchases(purchases);
                 
             } catch (error) {
                 console.error('❌ Error loading presale purchases:', error);
+                presaleData = [];
+                const tbody = document.getElementById('presale-table');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-red-400 py-8">Error loading data</td></tr>';
+                }
             }
         }
 
@@ -1824,7 +2005,8 @@
                 case 'failed': return 'bg-red-500/20 text-red-400';
                 default: return 'bg-gray-500/20 text-gray-400';
             }
-        }       
+        }
+
         function renderPresalePurchases(purchases) {
             const tbody = document.getElementById('presale-table');
             
@@ -1833,7 +2015,7 @@
                 filtered = purchases.filter(p => {
                     const status = (p.status || '').toLowerCase();
                     if (currentFilter === 'pending') return status === 'pending' || status === 'created';
-                    if (currentFilter === 'paid') return status === 'paid' || status === 'paid_pending_mint';
+                    if (currentFilter === 'paid') return status === 'paid' || status === 'pending_mint';
                     if (currentFilter === 'minted') return status === 'minted' || status === 'completed';
                     return true;
                 });
@@ -1845,19 +2027,32 @@
             }
             
             tbody.innerHTML = filtered.map(p => {
-                const email = p.email || p.metadata?.email || '--';
+                // Handle both camelCase and snake_case field names
+                const email = p.email || p.user_email || p.metadata?.email || '--';
                 const wallet = p.wallet_address || p.walletAddress || '--';
-                const tokens = p.token_amount || p.tokenAmount || 0;
-                const amount = p.amount_usd || p.amountUsd || p.amount || 0;
+                const baseTokens = parseFloat(p.token_amount || p.tokenAmount || 0);
+                const bonusTokens = parseFloat(p.purchase_bonus_tokens || p.purchaseBonusTokens || 0);
+                const bonusPercent = parseFloat(p.purchase_bonus_percent || p.purchaseBonusPercent || 0);
+                const totalTokens = baseTokens + bonusTokens;
+                const eurAmount = parseFloat(p.eur_amount || p.eurAmount || p.amount_usd || p.amountUsd || 0);
+                const usdAmount = parseFloat(p.usd_amount || p.usdAmount || 0);
                 const payment = p.payment_method || p.paymentMethod || 'card';
                 const status = p.status || 'pending';
-                const referrer = p.referrer_wallet || p.referrerWallet || '';
+                const referrer = p.referrer_bonus || p.referrer_wallet || p.referrerWallet || '';
                 const date = p.created_at || p.createdAt;
+                const mintTxHash = p.mint_tx_hash || p.mintTxHash || '';
+                const purchaseId = p.id || '';
                 
                 let statusClass = 'badge-warning';
-                if (status === 'paid' || status === 'paid_pending_mint') statusClass = 'badge-pending';
+                if (status === 'paid' || status === 'pending_mint') statusClass = 'badge-pending';
                 if (status === 'minted' || status === 'completed') statusClass = 'badge-success';
                 if (status === 'failed' || status === 'cancelled') statusClass = 'badge-error';
+                
+                // Token display with bonus info
+                let tokenDisplay = `<span class="font-semibold">${totalTokens.toLocaleString()}</span>`;
+                if (bonusTokens > 0) {
+                    tokenDisplay += `<br><span class="text-green-400 text-xs">+${bonusTokens} (${bonusPercent}% bonus)</span>`;
+                }
                 
                 return `
                     <tr>
@@ -1873,8 +2068,8 @@
                                 ${wallet.substring(0, 6)}...${wallet.substring(wallet.length - 4)}
                             </a>
                         </td>
-                        <td class="font-semibold">${tokens.toLocaleString()}</td>
-                        <td class="text-green-400">€${parseFloat(amount).toFixed(2)}</td>
+                        <td>${tokenDisplay}</td>
+                        <td class="text-green-400">€${eurAmount.toFixed(2)}${usdAmount > 0 ? ` <span class="text-white/40">($${usdAmount.toFixed(2)})</span>` : ''}</td>
                         <td class="capitalize text-white/60">${payment}</td>
                         <td><span class="badge ${statusClass}">${status}</span></td>
                         <td>
@@ -1886,12 +2081,17 @@
                         </td>
                         <td class="text-white/60 text-sm">${date ? new Date(date).toLocaleDateString() : '--'}</td>
                         <td>
-                            <button onclick="viewPurchase('${p.id}')" class="text-white/40 hover:text-white text-sm">View</button>
+                            ${mintTxHash ? `
+                                <a href="${EXPLORER_URL}/tx/${mintTxHash}" target="_blank" class="text-emerald-400 hover:text-emerald-300 text-sm">View TX</a>
+                            ` : (status === 'paid' || status === 'pending_mint') ? `
+                                <button onclick="manualMint('${purchaseId}')" class="text-yellow-400 hover:text-yellow-300 text-sm">Mint</button>
+                            ` : '<span class="text-white/40">--</span>'}
                         </td>
                     </tr>
                 `;
             }).join('');
         }
+
         
         function filterPresale(filter) {
             currentFilter = filter;
@@ -1954,6 +2154,9 @@
                 } catch (e) {
                     console.log('Could not load claim settings');
                 }
+                
+                // Load bonus tiers
+                loadBonusTiers();
                 
                 // Check Stripe status
                 const stripeStatusEl = document.getElementById('stripe-status');
