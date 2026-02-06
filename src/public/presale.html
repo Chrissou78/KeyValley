@@ -1,4 +1,4 @@
-Ôªø<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -98,11 +98,11 @@
                     <div id="progress-bar" class="progress-bar h-full rounded-full" style="width: 0%"></div>
                 </div>
                 <div class="flex justify-between mt-4 text-sm">
-                    <span id="progress-raised" class="text-white font-semibold">‚Ç¨0.00</span>
-                    <span id="progress-target" class="text-gray-500">‚Ç¨500,000</span>
+                    <span id="progress-raised" class="text-white font-semibold">Ä0.00</span>
+                    <span id="progress-target" class="text-gray-500">Ä500,000</span>
                 </div>
                 <div class="text-center mt-3 text-xs text-gray-500">
-                    <span id="tokens-sold">0</span> VIP tokens minted - Token Price: <span class="gold-text">‚Ç¨1.00</span>
+                    <span id="tokens-sold">0</span> VIP tokens minted - Token Price: <span class="gold-text">Ä1.00</span>
                 </div>
             </div>
 
@@ -113,18 +113,18 @@
                         <div id="bonus-badge" class="hidden"></div>
                     </div>
                     <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 font-semibold pointer-events-none">‚Ç¨</span>
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 font-semibold pointer-events-none">Ä</span>
                         <input type="number" id="eur-amount" min="10" step="1" value="100" class="input-field w-full pl-10 pr-20 py-4 rounded-xl text-lg" oninput="updateTotals()">
                         <span class="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-semibold pointer-events-none">EUR</span>
                     </div>
                     <div class="flex justify-between mt-2">
-                        <p class="text-gray-500 text-sm">Min: ‚Ç¨<span id="min-purchase-display">10</span></p>
+                        <p class="text-gray-500 text-sm">Min: Ä<span id="min-purchase-display">10</span></p>
                         <p class="gold-text text-sm font-medium">= <span id="token-amount-display">100</span> VIP</p>
                     </div>
                 </div>
 
                 <div id="bonus-tiers-info" class="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl hidden">
-                    <h4 class="text-green-400 font-semibold text-sm mb-2">üéÅ Volume Bonuses</h4>
+                    <h4 class="text-green-400 font-semibold text-sm mb-2">?? Volume Bonuses</h4>
                     <div id="bonus-tiers-list" class="text-sm text-white/70 space-y-1"></div>
                 </div>
 
@@ -132,19 +132,19 @@
                     <label class="block text-gray-300 text-sm font-medium mb-3">Payment Method</label>
                     <div class="grid grid-cols-3 gap-4">
                         <div class="payment-option rounded-xl p-4 text-center selected" data-method="POL" onclick="selectPayment('POL')">
-                            <div class="text-2xl mb-2">üíú</div>
+                            <div class="text-2xl mb-2">??</div>
                             <div class="font-semibold text-white">POL</div>
                             <div class="text-gray-500 text-xs mt-1">Polygon Native</div>
                             <div class="fee-badge mt-2">1.5% fee</div>
                         </div>
                         <div class="payment-option rounded-xl p-4 text-center" data-method="USDC" onclick="selectPayment('USDC')">
-                            <div class="text-2xl mb-2">üíµ</div>
+                            <div class="text-2xl mb-2">??</div>
                             <div class="font-semibold text-white">USDC</div>
                             <div class="text-gray-500 text-xs mt-1">Stablecoin</div>
                             <div class="fee-badge mt-2">1.5% fee</div>
                         </div>
                         <div class="payment-option rounded-xl p-4 text-center" data-method="Card" onclick="selectPayment('Card')">
-                            <div class="text-2xl mb-2">üí≥</div>
+                            <div class="text-2xl mb-2">??</div>
                             <div class="font-semibold text-white">Card</div>
                             <div class="text-gray-500 text-xs mt-1">Credit/Debit</div>
                             <div class="fee-badge mt-2">4% fee</div>
@@ -162,12 +162,12 @@
                 <div class="border-t border-white/10 pt-6 mb-8">
                     <div class="space-y-3">
                         <div class="flex justify-between text-gray-400"><span>Tokens</span><span id="totalTokensDisplay" class="text-white">100 VIP</span></div>
-                        <div class="flex justify-between text-gray-400"><span>Token Price</span><span class="text-white">‚Ç¨1.00 / VIP</span></div>
-                        <div class="flex justify-between text-gray-400"><span>Subtotal</span><span id="subtotalEUR" class="text-white">‚Ç¨100.00</span></div>
-                        <div class="flex justify-between text-gray-400"><span>Payment Fee (<span id="feePercent">1.5</span>%)</span><span id="feeAmountEUR" class="text-white">‚Ç¨1.50</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Token Price</span><span class="text-white">Ä1.00 / VIP</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Subtotal</span><span id="subtotalEUR" class="text-white">Ä100.00</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Payment Fee (<span id="feePercent">1.5</span>%)</span><span id="feeAmountEUR" class="text-white">Ä1.50</span></div>
                         <div class="flex justify-between text-lg font-semibold border-t border-white/10 pt-3">
                             <span class="gold-text">Total</span>
-                            <span class="gold-text"><span id="totalEUR">‚Ç¨101.50</span><span id="totalUSD" class="text-sm text-gray-400 ml-2">(\$120.79)</span></span>
+                            <span class="gold-text"><span id="totalEUR">Ä101.50</span><span id="totalUSD" class="text-sm text-gray-400 ml-2">(\$120.79)</span></span>
                         </div>
                         <div class="flex justify-between text-sm text-gray-500"><span>You Pay (approx)</span><span id="cryptoEquivalent">~846.5 POL</span></div>
                     </div>
@@ -207,7 +207,7 @@
                     <img src="/logo.png" alt="Kea Valley" class="h-8 w-auto">
                     <span class="font-serif text-lg gold-text">Kea Valley</span>
                 </div>
-                <div class="text-gray-500 text-sm">¬© 2025 Kea Valley. All rights reserved.</div>
+                <div class="text-gray-500 text-sm">© 2025 Kea Valley. All rights reserved.</div>
             </div>
         </div>
     </footer>
@@ -265,15 +265,15 @@
                 <h4 class="text-sm text-gray-400 mb-3">Order Summary</h4>
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between"><span class="text-gray-400">VIP Tokens</span><span id="stripe-tokens" class="text-white">100 VIP</span></div>
-                    <div class="flex justify-between"><span class="text-gray-400">Subtotal</span><span id="stripe-subtotal" class="text-white">‚Ç¨100.00</span></div>
-                    <div class="flex justify-between"><span class="text-gray-400">Payment Fee (4%)</span><span id="stripe-fee" class="text-white">‚Ç¨4.00</span></div>
-                    <div class="flex justify-between font-semibold border-t border-white/10 pt-2 mt-2"><span class="gold-text">Total</span><span id="stripe-total" class="gold-text">‚Ç¨104.00</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Subtotal</span><span id="stripe-subtotal" class="text-white">Ä100.00</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Payment Fee (4%)</span><span id="stripe-fee" class="text-white">Ä4.00</span></div>
+                    <div class="flex justify-between font-semibold border-t border-white/10 pt-2 mt-2"><span class="gold-text">Total</span><span id="stripe-total" class="gold-text">Ä104.00</span></div>
                 </div>
             </div>
             <form id="stripe-form">
                 <div id="card-element" class="input-field p-4 rounded-xl mb-4"></div>
                 <div id="card-errors" class="text-red-500 text-sm mb-4 hidden"></div>
-                <button type="submit" id="stripe-submit" class="btn-primary w-full py-3 rounded-xl font-semibold">Pay ‚Ç¨<span id="stripe-amount">104.00</span></button>
+                <button type="submit" id="stripe-submit" class="btn-primary w-full py-3 rounded-xl font-semibold">Pay Ä<span id="stripe-amount">104.00</span></button>
             </form>
         </div>
     </div>
@@ -366,8 +366,8 @@
         
         safeStyle('progress-bar', 'width', Math.min(progressPct, 100) + '%');
         safeText('progress-pct', progressPct.toFixed(2) + '%');
-        safeText('progress-raised', '‚Ç¨' + eurRaised.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
-        safeText('progress-target', '‚Ç¨' + targetEUR.toLocaleString());
+        safeText('progress-raised', 'Ä' + eurRaised.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+        safeText('progress-target', 'Ä' + targetEUR.toLocaleString());
         safeText('tokens-sold', (CONFIG.tokensSold || 0).toLocaleString());
     }
 
@@ -376,7 +376,7 @@
             safeClass('bonus-tiers-info', 'remove', 'hidden');
             const html = CONFIG.bonusTiers
                 .sort((a, b) => parseFloat(a.min_eur) - parseFloat(b.min_eur))
-                .map(t => '<div>‚Ç¨' + parseFloat(t.min_eur).toLocaleString() + '+ ‚Üí <span class="text-green-400">+' + t.bonus_percent + '% bonus</span></div>')
+                .map(t => '<div>Ä' + parseFloat(t.min_eur).toLocaleString() + '+ ? <span class="text-green-400">+' + t.bonus_percent + '% bonus</span></div>')
                 .join('');
             safeHtml('bonus-tiers-list', html);
         } else {
@@ -444,7 +444,7 @@
                     if (error) {
                         const err = safeEl('card-errors');
                         if (err) { err.textContent = error.message; err.classList.remove('hidden'); }
-                        if (btn) { btn.disabled = false; btn.textContent = 'Pay ‚Ç¨' + (safeEl('stripe-amount')?.textContent || '0'); }
+                        if (btn) { btn.disabled = false; btn.textContent = 'Pay Ä' + (safeEl('stripe-amount')?.textContent || '0'); }
                         return;
                     }
                     
@@ -628,15 +628,15 @@
         const polAmount = totalUSD / CONFIG.polPrice;
         
         safeText('totalTokensDisplay', totalTokens.toLocaleString() + ' VIP');
-        safeText('subtotalEUR', '‚Ç¨' + eurAmount.toFixed(2));
+        safeText('subtotalEUR', 'Ä' + eurAmount.toFixed(2));
         safeText('feePercent', feePercent.toString());
-        safeText('feeAmountEUR', '‚Ç¨' + feeEUR.toFixed(2));
-        safeText('totalEUR', '‚Ç¨' + totalEUR.toFixed(2));
+        safeText('feeAmountEUR', 'Ä' + feeEUR.toFixed(2));
+        safeText('totalEUR', 'Ä' + totalEUR.toFixed(2));
         safeText('totalUSD', '(\$' + totalUSD.toFixed(2) + ')');
         
         if (selectedPayment === 'POL') safeText('cryptoEquivalent', '~' + polAmount.toFixed(2) + ' POL');
         else if (selectedPayment === 'USDC') safeText('cryptoEquivalent', '~' + totalUSD.toFixed(2) + ' USDC');
-        else safeText('cryptoEquivalent', '‚Ç¨' + totalEUR.toFixed(2));
+        else safeText('cryptoEquivalent', 'Ä' + totalEUR.toFixed(2));
         
         window.currentPurchase = { eurAmount, baseTokens, bonusTokens, totalTokens, bonusPercent, feeEUR, totalEUR, totalUSD, polAmount };
         updateBuyButton();
@@ -652,12 +652,12 @@
 
         if (!currentWallet) { btn.textContent = 'Connect Wallet to Purchase'; btn.disabled = true; return; }
         if (!CONFIG.presaleEnabled) { btn.textContent = 'Presale Not Active'; btn.disabled = true; return; }
-        if (eurAmount < CONFIG.minPurchase) { btn.textContent = 'Minimum ‚Ç¨' + CONFIG.minPurchase; btn.disabled = true; return; }
+        if (eurAmount < CONFIG.minPurchase) { btn.textContent = 'Minimum Ä' + CONFIG.minPurchase; btn.disabled = true; return; }
 
         const totalEUR = purchase.totalEUR || 0;
         const totalUSD = purchase.totalUSD || 0;
 
-        if (selectedPayment === 'Card') { btn.textContent = 'Pay ‚Ç¨' + totalEUR.toFixed(2); btn.disabled = false; }
+        if (selectedPayment === 'Card') { btn.textContent = 'Pay Ä' + totalEUR.toFixed(2); btn.disabled = false; }
         else if (selectedPayment === 'POL') {
             const req = purchase.polAmount || 0;
             if (balances.POL >= req) { btn.textContent = 'Pay ~' + req.toFixed(2) + ' POL'; btn.disabled = false; }
@@ -678,7 +678,7 @@
         const baseTokens = purchase.baseTokens || 0;
         const totalTokens = purchase.totalTokens || 0;
 
-        if (eurAmount < CONFIG.minPurchase) { showResult('error', 'Invalid Amount', 'Minimum purchase is ‚Ç¨' + CONFIG.minPurchase); return; }
+        if (eurAmount < CONFIG.minPurchase) { showResult('error', 'Invalid Amount', 'Minimum purchase is Ä' + CONFIG.minPurchase); return; }
 
         const pending = { walletAddress: currentWallet, tokenAmount: baseTokens, expectedTotal: totalTokens, bonusPercent: purchase.bonusPercent, baseEUR: eurAmount, feeEUR: purchase.feeEUR, totalEUR: purchase.totalEUR, totalUSD: purchase.totalUSD, paymentMethod: selectedPayment, timestamp: Date.now() };
         localStorage.setItem('pendingPurchase', JSON.stringify(pending));
@@ -723,9 +723,9 @@
         
         if (bonusTokens > 0) safeHtml('stripe-tokens', totalTokens + ' VIP <span class="text-green-400 text-xs">(+' + bonusTokens + ' bonus)</span>');
         else safeText('stripe-tokens', totalTokens + ' VIP');
-        safeText('stripe-subtotal', '‚Ç¨' + baseEUR.toFixed(2));
-        safeText('stripe-fee', '‚Ç¨' + feeEUR.toFixed(2));
-        safeText('stripe-total', '‚Ç¨' + totalEUR.toFixed(2));
+        safeText('stripe-subtotal', 'Ä' + baseEUR.toFixed(2));
+        safeText('stripe-fee', 'Ä' + feeEUR.toFixed(2));
+        safeText('stripe-total', 'Ä' + totalEUR.toFixed(2));
         safeText('stripe-amount', totalEUR.toFixed(2));
 
         const btn = safeEl('stripe-submit');
