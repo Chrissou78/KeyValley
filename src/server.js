@@ -1007,6 +1007,14 @@ app.get('/dashboard', requireAdminAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
+app.get('/terms', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'terms', 'index.html'));
+});
+
+app.get('/privacy', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'privacy', 'index.html'));
+});
+
 // ===========================================
 // WalletTwo Token Exchange Proxy
 // ===========================================
