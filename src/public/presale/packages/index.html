@@ -56,6 +56,7 @@
         .tooltip-content { visibility: hidden; opacity: 0; transition: all 0.2s ease; }
         .tooltip:hover .tooltip-content { visibility: visible; opacity: 1; }
         #card-element { background-color: #1a1a1a !important; }
+        .crossed-out { text-decoration: line-through; opacity: 0.5; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -94,7 +95,7 @@
                     Back to Presale
                 </a>
                 <h1 class="font-serif text-4xl md:text-5xl font-bold gold-gradient mb-4">Promotion Packages</h1>
-                <p class="text-gray-400 text-lg max-w-2xl mx-auto">Premium packages with 50% discount on VIP tokens and exclusive benefits.</p>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto">Premium packages with bonus VIP tokens and exclusive benefits.</p>
             </div>
 
             <!-- Progress Bar -->
@@ -143,15 +144,20 @@
                         </div>
                     </div>
                     <div class="bg-surface-light rounded-xl p-4 mb-4">
-                        <div class="flex justify-between items-center mb-2">
+                        <div class="flex justify-between items-center mb-3">
                             <span class="text-gray-400">Price</span>
                             <span class="text-2xl font-bold gold-text">EUR 5,000</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-gray-400">You get</span>
-                            <span class="text-white font-semibold">10,000 VIP</span>
+                            <div class="text-right">
+                                <span class="text-gray-500 text-sm crossed-out mr-2">5,000 VIP</span>
+                                <span class="text-2xl font-bold text-green-400">10,000 VIP</span>
+                            </div>
                         </div>
-                        <div class="text-center mt-2 text-green-400 text-sm">50% off (EUR 0.50/token)</div>
+                        <div class="text-center mt-3">
+                            <span class="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-sm font-semibold">+5,000 BONUS TOKENS</span>
+                        </div>
                     </div>
                     <ul class="text-gray-300 text-sm space-y-2">
                         <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>EUR 10,000 value in services</li>
@@ -191,15 +197,20 @@
                         </div>
                     </div>
                     <div class="bg-surface-light rounded-xl p-4 mb-4">
-                        <div class="flex justify-between items-center mb-2">
+                        <div class="flex justify-between items-center mb-3">
                             <span class="text-gray-400">Price</span>
                             <span class="text-2xl font-bold gold-text">EUR 25,000</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-gray-400">You get</span>
-                            <span class="text-white font-semibold">50,000 VIP</span>
+                            <div class="text-right">
+                                <span class="text-gray-500 text-sm crossed-out mr-2">25,000 VIP</span>
+                                <span class="text-2xl font-bold text-green-400">50,000 VIP</span>
+                            </div>
                         </div>
-                        <div class="text-center mt-2 text-green-400 text-sm">50% off (EUR 0.50/token)</div>
+                        <div class="text-center mt-3">
+                            <span class="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-sm font-semibold">+25,000 BONUS TOKENS</span>
+                        </div>
                     </div>
                     <ul class="text-gray-300 text-sm space-y-2">
                         <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>EUR 50,000 value in services</li>
@@ -276,8 +287,9 @@
                 <div class="border-t border-white/10 pt-6 mb-8">
                     <div class="space-y-3">
                         <div class="flex justify-between text-gray-400"><span>Package</span><span id="summary-package" class="text-white">2026 Holiday Pack</span></div>
-                        <div class="flex justify-between text-gray-400"><span>Tokens</span><span id="summary-tokens" class="text-white">10,000 VIP</span></div>
-                        <div class="flex justify-between text-gray-400"><span>Token Price</span><span id="summary-token-price" class="text-green-400">EUR 0.50 / VIP</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Base Tokens</span><span id="summary-base-tokens" class="text-white">5,000 VIP</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Bonus Tokens</span><span id="summary-bonus-tokens" class="text-green-400">+5,000 VIP</span></div>
+                        <div class="flex justify-between text-gray-400 font-semibold"><span>Total Tokens</span><span id="summary-tokens" class="text-white">10,000 VIP</span></div>
                         <div class="flex justify-between text-gray-400"><span>Subtotal</span><span id="summary-subtotal" class="text-white">EUR 5,000.00</span></div>
                         <div class="flex justify-between text-gray-400"><span>Payment Fee (<span id="feePercent">4</span>%)</span><span id="summary-fee" class="text-white">EUR 200.00</span></div>
                         <div class="flex justify-between text-lg font-semibold border-t border-white/10 pt-3">
@@ -399,8 +411,8 @@
     };
 
     const PACKAGES = {
-        holiday: { name: '2026 Holiday Pack', price: 5000, tokens: 10000, tokenPrice: 0.50, remaining: 30, totalAvailable: 30 },
-        membership: { name: 'Private Members Club', price: 25000, tokens: 50000, tokenPrice: 0.50 }
+        holiday: { name: '2026 Holiday Pack', price: 5000, baseTokens: 5000, bonusTokens: 5000, tokens: 10000, remaining: 30, totalAvailable: 30 },
+        membership: { name: 'Private Members Club', price: 25000, baseTokens: 25000, bonusTokens: 25000, tokens: 50000 }
     };
 
     let currentWallet = null;
@@ -525,8 +537,9 @@
         const polAmount = totalUSD / CONFIG.polPrice;
 
         safeText('summary-package', pkg.name);
+        safeText('summary-base-tokens', pkg.baseTokens.toLocaleString() + ' VIP');
+        safeText('summary-bonus-tokens', '+' + pkg.bonusTokens.toLocaleString() + ' VIP');
         safeText('summary-tokens', pkg.tokens.toLocaleString() + ' VIP');
-        safeText('summary-token-price', 'EUR ' + pkg.tokenPrice.toFixed(2) + ' / VIP');
         safeText('summary-subtotal', 'EUR ' + pkg.price.toLocaleString());
         safeText('feePercent', feePercent.toString());
         safeText('summary-fee', 'EUR ' + feeEUR.toFixed(2));
