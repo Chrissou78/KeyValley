@@ -134,9 +134,9 @@ async function initDb() {
         `);
 
         isInitialized = true;
-        console.log('âœ… PostgreSQL database initialized');
+        console.log('✅ PostgreSQL database initialized');
     } catch (error) {
-        console.error('âŒ Database initialization error:', error);
+        console.error('❌ Database initialization error:', error);
         throw error;
     } finally {
         client.release();

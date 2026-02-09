@@ -3978,23 +3978,23 @@ app.get('*', (req, res) => {
 async function startServer() {
   try {
     console.log('\n========================================');
-    console.log('[OK] KEA VALLEY PRESALE SERVER');
+    console.log('🚀 KEA VALLEY PRESALE SERVER');
     console.log('========================================\n');
 
     // Initialize database
-    console.log('[DB] Initializing database connection...');
+    console.log('⚙️ Initializing database connection...');
     await db.initDb();
 
     // Ensure tables exist - CALLED HERE
-    console.log('[DB] Ensuring database tables...');
+    console.log('⚙️ Ensuring database tables...');
     await ensureDatabaseTables();
 
     // Seed default data - CALLED HERE
-    console.log('[DB] Ensuring default data...');
+    console.log('⚙️ Ensuring default data...');
     await ensureDefaultData();
 
     // Load presale settings into memory
-    console.log('[CFG] Loading presale settings...');
+    console.log('📦 Loading presale settings...');
     await loadPresaleSettings();
 
     // Start HTTP server
@@ -4008,7 +4008,7 @@ async function startServer() {
     process.on('SIGINT', () => gracefulShutdown(server, 'SIGINT'));
 
   } catch (error) {
-    console.error('[ERR] Failed to start server:', error);
+    console.error('❌ Failed to start server:', error);
     process.exit(1);
   }
 }
@@ -4018,7 +4018,7 @@ async function gracefulShutdown(server, signal) {
   server.close(async () => {
     try {
       await db.pool.end();
-      console.log('[OK] Shutdown complete');
+      console.log('🚀 Shutdown complete');
     } catch (e) {
       console.error('Shutdown error:', e);
     }
