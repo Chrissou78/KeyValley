@@ -90,7 +90,7 @@
                     Back to Presale
                 </a>
                 <h1 class="font-serif text-4xl md:text-5xl font-bold gold-gradient mb-4">Token Sale</h1>
-                <p class="text-gray-400 text-lg max-w-2xl mx-auto">Purchase VIP tokens at ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬1.00 each. Each token equals ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬1 in services on Kea Island.</p>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto">Purchase VIP tokens at EUR 1.00 each. Each token equals EUR 1 in services on Kea Island.</p>
             </div>
 
             <!-- Progress Bar -->
@@ -103,11 +103,11 @@
                     <div id="progress-bar" class="progress-bar h-full rounded-full" style="width: 0%"></div>
                 </div>
                 <div class="flex justify-between mt-4 text-sm">
-                    <span id="progress-raised" class="text-white font-semibold">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬0.00</span>
-                    <span id="progress-target" class="text-gray-500">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬500,000</span>
+                    <span id="progress-raised" class="text-white font-semibold">EUR 0.00</span>
+                    <span id="progress-target" class="text-gray-500">EUR 500,000</span>
                 </div>
                 <div class="text-center mt-3 text-xs text-gray-500">
-                    <span id="tokens-sold">0</span> VIP tokens minted - Token Price: <span class="gold-text">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬1.00</span>
+                    <span id="tokens-sold">0</span> VIP tokens minted - Token Price: <span class="gold-text">EUR 1.00</span>
                 </div>
             </div>
 
@@ -128,12 +128,11 @@
                         </div>
                     </div>
                     <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 font-semibold pointer-events-none">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬</span>
-                        <input type="number" id="eur-amount" min="10" step="1" value="100" class="input-field w-full pl-10 pr-20 py-4 rounded-xl text-lg" oninput="updateTotals()">
-                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 font-semibold pointer-events-none">EUR</span>
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 font-semibold pointer-events-none">EUR</span>
+                        <input type="number" id="eur-amount" min="10" step="1" value="100" class="input-field w-full pl-14 pr-20 py-4 rounded-xl text-lg" oninput="updateTotals()">
                     </div>
                     <div class="flex justify-between mt-2">
-                        <p class="text-gray-500 text-sm">Min: ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬<span id="min-purchase-display">10</span></p>
+                        <p class="text-gray-500 text-sm">Min: EUR <span id="min-purchase-display">10</span></p>
                         <p class="gold-text text-sm font-medium">= <span id="token-amount-display">100</span> VIP</p>
                     </div>
                 </div>
@@ -145,25 +144,47 @@
 
                 <!-- Payment Method -->
                 <div class="mb-8">
-                    <label class="block text-gray-300 text-sm font-medium mb-3">Payment Method</label>
-                    <div class="grid grid-cols-3 gap-4">
-                        <div class="payment-option rounded-xl p-4 text-center selected" data-method="POL" onclick="selectPayment('POL')">
-                            <span class="material-symbols-outlined text-3xl text-purple-400">hexagon</span>
-                            <div class="font-semibold text-white mt-2">POL</div>
-                            <div class="text-gray-500 text-xs mt-1">Polygon Native</div>
-                            <div class="fee-badge mt-2">1.5% fee</div>
+                    <label class="block text-gray-300 text-sm font-medium mb-4">Payment Method</label>
+                    
+                    <!-- Card Payment -->
+                    <div class="payment-option rounded-xl p-5 mb-4 selected" data-method="Card" onclick="selectPayment('Card')">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-2xl text-blue-400">credit_card</span>
+                                </div>
+                                <div>
+                                    <div class="font-semibold text-white">Card Payment</div>
+                                    <div class="text-gray-500 text-xs">Credit or Debit Card</div>
+                                </div>
+                            </div>
+                            <div class="fee-badge">4% fee</div>
                         </div>
-                        <div class="payment-option rounded-xl p-4 text-center" data-method="USDC" onclick="selectPayment('USDC')">
-                            <span class="material-symbols-outlined text-3xl text-green-400">paid</span>
-                            <div class="font-semibold text-white mt-2">USDC</div>
-                            <div class="text-gray-500 text-xs mt-1">Stablecoin</div>
-                            <div class="fee-badge mt-2">1.5% fee</div>
+                    </div>
+                    
+                    <!-- Crypto Payment Section -->
+                    <div class="border border-white/10 rounded-xl p-4">
+                        <div class="flex items-center space-x-2 mb-4">
+                            <span class="material-symbols-outlined text-primary text-lg">toll</span>
+                            <span class="text-gray-400 text-sm font-medium">Crypto Payment</span>
+                            <span class="fee-badge ml-auto">1.5% fee</span>
                         </div>
-                        <div class="payment-option rounded-xl p-4 text-center" data-method="Card" onclick="selectPayment('Card')">
-                            <span class="material-symbols-outlined text-3xl text-blue-400">credit_card</span>
-                            <div class="font-semibold text-white mt-2">Card</div>
-                            <div class="text-gray-500 text-xs mt-1">Credit/Debit</div>
-                            <div class="fee-badge mt-2">4% fee</div>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="payment-option rounded-xl p-3 text-center" data-method="POL" onclick="selectPayment('POL')">
+                                <span class="material-symbols-outlined text-2xl text-purple-400">hexagon</span>
+                                <div class="font-semibold text-white text-sm mt-1">POL</div>
+                                <div class="text-gray-500 text-[10px]">Polygon</div>
+                            </div>
+                            <div class="payment-option rounded-xl p-3 text-center" data-method="USDC" onclick="selectPayment('USDC')">
+                                <span class="material-symbols-outlined text-2xl text-green-400">paid</span>
+                                <div class="font-semibold text-white text-sm mt-1">USDC</div>
+                                <div class="text-gray-500 text-[10px]">Stablecoin</div>
+                            </div>
+                            <div class="payment-option rounded-xl p-3 text-center" data-method="USDT" onclick="selectPayment('USDT')">
+                                <span class="material-symbols-outlined text-2xl text-teal-400">savings</span>
+                                <div class="font-semibold text-white text-sm mt-1">USDT</div>
+                                <div class="text-gray-500 text-[10px]">Tether</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -180,14 +201,14 @@
                 <div class="border-t border-white/10 pt-6 mb-8">
                     <div class="space-y-3">
                         <div class="flex justify-between text-gray-400"><span>Tokens</span><span id="totalTokensDisplay" class="text-white">100 VIP</span></div>
-                        <div class="flex justify-between text-gray-400"><span>Token Price</span><span class="text-white">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬1.00 / VIP</span></div>
-                        <div class="flex justify-between text-gray-400"><span>Subtotal</span><span id="subtotalEUR" class="text-white">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬100.00</span></div>
-                        <div class="flex justify-between text-gray-400"><span>Payment Fee (<span id="feePercent">1.5</span>%)</span><span id="feeAmountEUR" class="text-white">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬1.50</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Token Price</span><span class="text-white">EUR 1.00 / VIP</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Subtotal</span><span id="subtotalEUR" class="text-white">EUR 100.00</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Payment Fee (<span id="feePercent">4</span>%)</span><span id="feeAmountEUR" class="text-white">EUR 4.00</span></div>
                         <div class="flex justify-between text-lg font-semibold border-t border-white/10 pt-3">
                             <span class="gold-text">Total</span>
-                            <span class="gold-text"><span id="totalEUR">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬101.50</span><span id="totalUSD" class="text-sm text-gray-400 ml-2">($120.79)</span></span>
+                            <span class="gold-text"><span id="totalEUR">EUR 104.00</span><span id="totalUSD" class="text-sm text-gray-400 ml-2">($123.76)</span></span>
                         </div>
-                        <div class="flex justify-between text-sm text-gray-500"><span>You Pay (approx)</span><span id="cryptoEquivalent">~846.5 POL</span></div>
+                        <div class="flex justify-between text-sm text-gray-500"><span>You Pay (approx)</span><span id="cryptoEquivalent">EUR 104.00</span></div>
                     </div>
                 </div>
 
@@ -229,7 +250,7 @@
                     <img src="/logo.png" alt="Kea Valley" class="h-8 w-auto">
                     <span class="font-serif text-lg gold-text">Kea Valley</span>
                 </div>
-                <div class="text-gray-500 text-sm">Ãƒâ€šÃ‚Â© 2025 Kea Valley. All rights reserved.</div>
+                <div class="text-gray-500 text-sm">© 2025 Kea Valley. All rights reserved.</div>
             </div>
         </div>
     </footer>
@@ -277,15 +298,15 @@
             <div class="bg-surface-light rounded-xl p-4 mb-6">
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between"><span class="text-gray-400">VIP Tokens</span><span id="stripe-tokens" class="text-white">100 VIP</span></div>
-                    <div class="flex justify-between"><span class="text-gray-400">Subtotal</span><span id="stripe-subtotal" class="text-white">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬100.00</span></div>
-                    <div class="flex justify-between"><span class="text-gray-400">Fee (4%)</span><span id="stripe-fee" class="text-white">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬4.00</span></div>
-                    <div class="flex justify-between font-semibold border-t border-white/10 pt-2 mt-2"><span class="gold-text">Total</span><span id="stripe-total" class="gold-text">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬104.00</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Subtotal</span><span id="stripe-subtotal" class="text-white">EUR 100.00</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Fee (4%)</span><span id="stripe-fee" class="text-white">EUR 4.00</span></div>
+                    <div class="flex justify-between font-semibold border-t border-white/10 pt-2 mt-2"><span class="gold-text">Total</span><span id="stripe-total" class="gold-text">EUR 104.00</span></div>
                 </div>
             </div>
             <form id="stripe-form">
                 <div id="card-element" class="input-field p-4 rounded-xl mb-4"></div>
                 <div id="card-errors" class="text-red-500 text-sm mb-4 hidden"></div>
-                <button type="submit" id="stripe-submit" class="btn-primary w-full py-3 rounded-xl font-semibold">Pay ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬<span id="stripe-amount">104.00</span></button>
+                <button type="submit" id="stripe-submit" class="btn-primary w-full py-3 rounded-xl font-semibold">Pay EUR <span id="stripe-amount">104.00</span></button>
             </form>
         </div>
     </div>
@@ -314,7 +335,7 @@
     };
 
     let currentWallet = null;
-    let selectedPayment = 'POL';
+    let selectedPayment = 'Card';
     let balances = { POL: 0, USDC: 0, USDT: 0 };
     let stripe = null;
     let cardElement = null;
@@ -368,8 +389,8 @@
         const pct = CONFIG.saleTargetEUR > 0 ? (CONFIG.eurRaised / CONFIG.saleTargetEUR) * 100 : 0;
         safeStyle('progress-bar', 'width', Math.min(pct, 100) + '%');
         safeText('progress-pct', pct.toFixed(2) + '%');
-        safeText('progress-raised', 'ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬' + CONFIG.eurRaised.toLocaleString(undefined, {minimumFractionDigits: 2}));
-        safeText('progress-target', 'ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬' + CONFIG.saleTargetEUR.toLocaleString());
+        safeText('progress-raised', 'EUR ' + CONFIG.eurRaised.toLocaleString(undefined, {minimumFractionDigits: 2}));
+        safeText('progress-target', 'EUR ' + CONFIG.saleTargetEUR.toLocaleString());
         safeText('tokens-sold', CONFIG.tokensSold.toLocaleString());
     }
 
@@ -377,7 +398,7 @@
         if (CONFIG.bonusTiers?.length > 0) {
             safeClass('bonus-info-tooltip', 'remove', 'hidden');
             const html = CONFIG.bonusTiers.sort((a, b) => a.min_eur - b.min_eur)
-                .map(t => '<div>ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬' + parseFloat(t.min_eur).toLocaleString() + '+ ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ <span class="text-green-400">+' + t.bonus_percent + '%</span></div>').join('');
+                .map(t => '<div>EUR ' + parseFloat(t.min_eur).toLocaleString() + '+ = <span class="text-green-400">+' + t.bonus_percent + '%</span></div>').join('');
             safeHtml('bonus-tooltip-list', html);
         } else {
             safeClass('bonus-info-tooltip', 'add', 'hidden');
@@ -412,16 +433,16 @@
         const polAmount = totalUSD / CONFIG.polPrice;
         
         safeText('totalTokensDisplay', totalTokens.toLocaleString() + ' VIP');
-        safeText('subtotalEUR', 'ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬' + eurAmount.toFixed(2));
+        safeText('subtotalEUR', 'EUR ' + eurAmount.toFixed(2));
         safeText('feePercent', feePercent.toString());
-        safeText('feeAmountEUR', 'ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬' + feeEUR.toFixed(2));
-        safeText('totalEUR', 'ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬' + totalEUR.toFixed(2));
+        safeText('feeAmountEUR', 'EUR ' + feeEUR.toFixed(2));
+        safeText('totalEUR', 'EUR ' + totalEUR.toFixed(2));
         safeText('totalUSD', '($' + totalUSD.toFixed(2) + ')');
         
         if (selectedPayment === 'POL') safeText('cryptoEquivalent', '~' + polAmount.toFixed(2) + ' POL');
         else if (selectedPayment === 'USDC') safeText('cryptoEquivalent', '~' + totalUSD.toFixed(2) + ' USDC');
         else if (selectedPayment === 'USDT') safeText('cryptoEquivalent', '~' + totalUSD.toFixed(2) + ' USDT');
-        else safeText('cryptoEquivalent', 'ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬' + totalEUR.toFixed(2));
+        else safeText('cryptoEquivalent', 'EUR ' + totalEUR.toFixed(2));
         
         window.currentPurchase = { eurAmount, baseTokens, bonusTokens, totalTokens, feeEUR, totalEUR, totalUSD, polAmount };
         updateBuyButton();
@@ -448,16 +469,18 @@
         
         if (!currentWallet) { btn.textContent = 'Connect Wallet to Purchase'; btn.disabled = true; return; }
         if (!CONFIG.presaleEnabled) { btn.textContent = 'Presale Not Active'; btn.disabled = true; return; }
-        if (p.eurAmount < CONFIG.minPurchase) { btn.textContent = 'Minimum ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬' + CONFIG.minPurchase; btn.disabled = true; return; }
+        if (p.eurAmount < CONFIG.minPurchase) { btn.textContent = 'Minimum EUR ' + CONFIG.minPurchase; btn.disabled = true; return; }
         
-        if (selectedPayment === 'Card') { btn.textContent = 'Pay ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬' + p.totalEUR.toFixed(2); btn.disabled = false; }
+        if (selectedPayment === 'Card') { btn.textContent = 'Pay EUR ' + p.totalEUR.toFixed(2); btn.disabled = false; }
         else if (selectedPayment === 'POL') {
             if (balances.POL >= p.polAmount) { btn.textContent = 'Pay ~' + p.polAmount.toFixed(2) + ' POL'; btn.disabled = false; }
             else { btn.textContent = 'Insufficient POL'; btn.disabled = true; }
-        } else if (selectedPayment === 'USDC' || selectedPayment === 'USDT') {
-            const tokenAddr = selectedPayment === 'USDC' ? CONFIG.usdcAddress : CONFIG.usdtAddress;
+        } else if (selectedPayment === 'USDC') {
             if (balances.USDC >= p.totalUSD) { btn.textContent = 'Pay ~' + p.totalUSD.toFixed(2) + ' USDC'; btn.disabled = false; }
             else { btn.textContent = 'Insufficient USDC'; btn.disabled = true; }
+        } else if (selectedPayment === 'USDT') {
+            if (balances.USDT >= p.totalUSD) { btn.textContent = 'Pay ~' + p.totalUSD.toFixed(2) + ' USDT'; btn.disabled = false; }
+            else { btn.textContent = 'Insufficient USDT'; btn.disabled = true; }
         }
     }
 
@@ -527,6 +550,8 @@
                 balances.POL = parseFloat(ethers.formatEther(await provider.getBalance(currentWallet)));
                 const usdc = new ethers.Contract(CONFIG.usdcAddress, ['function balanceOf(address) view returns (uint256)'], provider);
                 balances.USDC = parseFloat(ethers.formatUnits(await usdc.balanceOf(currentWallet), 6));
+                const usdt = new ethers.Contract(CONFIG.usdtAddress, ['function balanceOf(address) view returns (uint256)'], provider);
+                balances.USDT = parseFloat(ethers.formatUnits(await usdt.balanceOf(currentWallet), 6));
                 updateBalanceDisplay();
                 updateBuyButton();
                 return;
@@ -537,7 +562,7 @@
     async function executePurchase() {
         if (!currentWallet) { connectWallet(); return; }
         const p = window.currentPurchase || {};
-        if (p.eurAmount < CONFIG.minPurchase) { showResult('error', 'Invalid Amount', 'Minimum ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬' + CONFIG.minPurchase); return; }
+        if (p.eurAmount < CONFIG.minPurchase) { showResult('error', 'Invalid Amount', 'Minimum EUR ' + CONFIG.minPurchase); return; }
         
         localStorage.setItem('pendingPurchase', JSON.stringify({ ...p, walletAddress: currentWallet, paymentMethod: selectedPayment, timestamp: Date.now() }));
         
@@ -598,7 +623,7 @@
             
             try {
                 const { error, paymentIntent } = await stripe.confirmCardPayment(paymentData.clientSecret, { payment_method: { card: cardElement } });
-                if (error) { safeEl('card-errors').textContent = error.message; safeEl('card-errors').classList.remove('hidden'); if (btn) { btn.disabled = false; btn.textContent = 'Pay ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬' + paymentData.totalEUR; } return; }
+                if (error) { safeEl('card-errors').textContent = error.message; safeEl('card-errors').classList.remove('hidden'); if (btn) { btn.disabled = false; btn.textContent = 'Pay EUR ' + paymentData.totalEUR; } return; }
                 if (paymentIntent.status === 'succeeded') { closeStripeModal(); showProcessing('Payment successful! Minting tokens...'); verifyStripePayment(paymentIntent.id, paymentData.tokenAmount); }
             } catch (err) { showResult('error', 'Error', err.message); closeStripeModal(); }
         });
@@ -606,9 +631,9 @@
 
     function openStripeCheckout(tokenAmount, baseEUR, feeEUR, totalEUR) {
         safeText('stripe-tokens', tokenAmount + ' VIP');
-        safeText('stripe-subtotal', 'ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬' + baseEUR.toFixed(2));
-        safeText('stripe-fee', 'ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬' + feeEUR.toFixed(2));
-        safeText('stripe-total', 'ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬' + totalEUR.toFixed(2));
+        safeText('stripe-subtotal', 'EUR ' + baseEUR.toFixed(2));
+        safeText('stripe-fee', 'EUR ' + feeEUR.toFixed(2));
+        safeText('stripe-total', 'EUR ' + totalEUR.toFixed(2));
         safeText('stripe-amount', totalEUR.toFixed(2));
         if (cardElement) cardElement.clear();
         safeClass('stripe-modal', 'remove', 'hidden');
