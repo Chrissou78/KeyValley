@@ -967,7 +967,7 @@ app.get('/claim', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'claim', 'index.html'));
 });
 
-app.get('/claim/', (req, res) => {
+app.get('/claim/?', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'claim', 'index.html'));
 });
 
@@ -1013,6 +1013,21 @@ app.get('/terms', (req, res) => {
 
 app.get('/privacy', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'privacy', 'index.html'));
+});
+
+// Debug route - add this temporarily
+app.get('/debug-claim', (req, res) => {
+    const filePath = path.join(__dirname, 'public', 'claim', 'index.html');
+    const fs = require('fs');
+    
+    res.json({
+        filePath: filePath,
+        exists: fs.existsSync(filePath),
+        dirname: __dirname,
+        files: fs.existsSync(path.join(__dirname, 'public', 'claim')) 
+            ? fs.readdirSync(path.join(__dirname, 'public', 'claim'))
+            : 'folder not found'
+    });
 });
 
 // ===========================================
