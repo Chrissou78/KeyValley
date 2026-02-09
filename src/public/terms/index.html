@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta name="description" content="Terms and Conditions - Kea Valley Estates">
+    <title>Terms & Conditions | Kea Valley Estates</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ee9d2b",
+                        "primary-light": "#fbdea6",
+                        "background-dark": "#0a0a0a",
+                        "surface": "#121212",
+                    },
+                    fontFamily: {
+                        "sans": ["Manrope", "sans-serif"],
+                        "serif": ["Playfair Display", "serif"],
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Manrope', sans-serif; }
+        h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
+        .gold-glow:hover {
+            box-shadow: 0 0 25px rgba(238, 157, 43, 0.3);
+            border-color: #ee9d2b;
+            transition: all 0.5s ease;
+        }
+        .glass-nav {
+            backdrop-filter: blur(12px);
+            background-color: rgba(26, 26, 26, 0.9);
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
+        .legal-content h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: #ee9d2b;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .legal-content h3 {
+            font-family: 'Manrope', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .legal-content p {
+            color: #94a3b8;
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+        .legal-content ul {
+            color: #94a3b8;
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+            list-style-type: disc;
+        }
+        .legal-content ul li {
+            margin-bottom: 0.5rem;
+            line-height: 1.7;
+        }
+        .legal-content a {
+            color: #ee9d2b;
+            text-decoration: underline;
+        }
+        .legal-content a:hover {
+            color: #fbdea6;
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased">
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
+            <a href="/" class="flex items-center gap-4 group cursor-pointer">
+                <img src="/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
+                <div>
+                    <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
+                    <p class="text-[0.6rem] text-primary uppercase tracking-[0.3em] font-sans">Estates</p>
+                </div>
+            </a>
+            <nav class="hidden lg:flex items-center gap-8 xl:gap-12">
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/#vision">The Vision</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/#residences">Residences</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/#lifestyle">Lifestyle</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/#tokenisation">VIP Tokens</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/profile">My Profile</a>
+            </nav>
+            <div class="flex items-center gap-4">
+                <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://key-valley-57s7.vercel.app//claim" class="hidden md:block bg-transparent border border-primary/30 text-primary px-6 lg:px-8 py-3 rounded-sm text-xs font-bold uppercase tracking-widest gold-glow transition-all hover:bg-primary hover:text-background-dark">
+                    Free Tokens
+                </a>
+                <button class="lg:hidden text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden lg:hidden bg-background-dark border-t border-white/5 px-6 py-4">
+            <nav class="flex flex-col gap-4">
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/#vision">The Vision</a>
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/#residences">Residences</a>
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/#lifestyle">Lifestyle</a>
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/#tokenisation">VIP Tokens</a>
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/profile">My Profile</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Page Header -->
+    <section class="pt-32 pb-16 px-6 bg-surface border-b border-white/5">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex items-center gap-2 text-sm text-slate-500 mb-6">
+                <a href="/" class="hover:text-primary transition-colors">Home</a>
+                <span>/</span>
+                <span class="text-slate-400">Terms & Conditions</span>
+            </div>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-serif font-medium text-white mb-4">Terms & Conditions</h1>
+            <p class="text-slate-400 font-light">Last updated: February 2026</p>
+        </div>
+    </section>
+
+    <!-- Content -->
+    <main class="py-16 px-6 bg-background-dark">
+        <div class="max-w-4xl mx-auto legal-content">
+            
+            <p>Welcome to Kea Valley Estates. These Terms and Conditions ("Terms") govern your access to and use of our website, services, and VIP Token ecosystem. By accessing or using our services, you agree to be bound by these Terms.</p>
+
+            <h2>1. Definitions</h2>
+            <p>In these Terms:</p>
+            <ul>
+                <li><strong>"Kea Valley," "we," "us," or "our"</strong> refers to Kea Valley Estates and its affiliated entities.</li>
+                <li><strong>"Services"</strong> refers to all products, services, content, features, and technologies offered by Kea Valley, including but not limited to the VIP Token system, property rentals, experiences, and membership programs.</li>
+                <li><strong>"VIP Tokens"</strong> refers to the digital tokens issued by Kea Valley that represent EUR 1 equivalent value redeemable for services on Kea Island.</li>
+                <li><strong>"User," "you," or "your"</strong> refers to any individual or entity accessing or using our Services.</li>
+            </ul>
+
+            <h2>2. Eligibility</h2>
+            <p>To use our Services, you must:</p>
+            <ul>
+                <li>Be at least 18 years of age or the age of majority in your jurisdiction.</li>
+                <li>Have the legal capacity to enter into a binding agreement.</li>
+                <li>Not be prohibited from using our Services under applicable laws.</li>
+                <li>Provide accurate and complete registration information.</li>
+            </ul>
+
+            <h2>3. VIP Token Terms</h2>
+            
+            <h3>3.1 Nature of VIP Tokens</h3>
+            <p>VIP Tokens are digital utility tokens that provide access to services and experiences offered by Kea Valley Estates on Kea Island. VIP Tokens are not securities, investments, or financial instruments. They do not represent ownership, equity, or any claim to profits or assets of Kea Valley Estates.</p>
+
+            <h3>3.2 Token Value and Redemption</h3>
+            <p>Each VIP Token represents EUR 1 equivalent value when redeemed for eligible services. Tokens may only be redeemed for services offered directly by Kea Valley Estates or its authorized partners. Token redemption is subject to availability and specific service terms.</p>
+
+            <h3>3.3 Token Purchases</h3>
+            <p>All token purchases are final and non-refundable unless otherwise required by applicable law. Bonus tokens received as part of promotional offers are subject to the same terms as purchased tokens. We reserve the right to modify token pricing, bonus structures, and availability at any time.</p>
+
+            <h3>3.4 Token Expiration</h3>
+            <p>VIP Tokens do not expire unless otherwise specified at the time of purchase or as required by applicable law. We reserve the right to implement expiration policies with reasonable notice to token holders.</p>
+
+            <h2>4. Account Registration</h2>
+            <p>To access certain Services, you must create an account through our authorized wallet provider (WalletTwo). You are responsible for:</p>
+            <ul>
+                <li>Maintaining the confidentiality of your account credentials.</li>
+                <li>All activities that occur under your account.</li>
+                <li>Notifying us immediately of any unauthorized use of your account.</li>
+                <li>Ensuring your account information remains accurate and up-to-date.</li>
+            </ul>
+
+            <h2>5. Packages and Memberships</h2>
+            
+            <h3>5.1 Holiday Pack</h3>
+            <p>The Holiday Pack includes specific services as described at the time of purchase. Services are subject to availability and must be booked in advance. Unused services may be subject to expiration as specified in the package terms.</p>
+
+            <h3>5.2 Private Members Club</h3>
+            <p>Private Members Club membership is an annual subscription that provides access to exclusive benefits and services. Membership benefits are personal and non-transferable unless otherwise specified. Renewal terms and pricing may change with reasonable notice.</p>
+
+            <h2>6. Booking and Cancellation</h2>
+            <p>All bookings for villa rentals, experiences, and services are subject to:</p>
+            <ul>
+                <li>Availability at the time of booking.</li>
+                <li>Specific cancellation policies communicated at the time of booking.</li>
+                <li>Minimum notice periods for cancellations and modifications.</li>
+                <li>Potential fees for late cancellations or no-shows.</li>
+            </ul>
+
+            <h2>7. Intellectual Property</h2>
+            <p>All content, trademarks, logos, and intellectual property displayed on our website and in connection with our Services are owned by or licensed to Kea Valley Estates. You may not use, reproduce, or distribute any content without our prior written consent.</p>
+
+            <h2>8. Limitation of Liability</h2>
+            <p>To the maximum extent permitted by law:</p>
+            <ul>
+                <li>Kea Valley Estates shall not be liable for any indirect, incidental, special, consequential, or punitive damages.</li>
+                <li>Our total liability for any claim arising from these Terms or your use of our Services shall not exceed the amount you paid for the specific Service giving rise to the claim.</li>
+                <li>We do not guarantee uninterrupted or error-free access to our Services.</li>
+            </ul>
+
+            <h2>9. Indemnification</h2>
+            <p>You agree to indemnify and hold harmless Kea Valley Estates, its officers, directors, employees, and agents from any claims, damages, losses, or expenses arising from your use of our Services or violation of these Terms.</p>
+
+            <h2>10. Governing Law</h2>
+            <p>These Terms shall be governed by and construed in accordance with the laws of Switzerland, without regard to its conflict of law provisions. Any disputes arising from these Terms shall be subject to the exclusive jurisdiction of the courts of Zurich, Switzerland.</p>
+
+            <h2>11. Changes to Terms</h2>
+            <p>We reserve the right to modify these Terms at any time. Changes will be effective upon posting to our website. Your continued use of our Services after any changes constitutes acceptance of the modified Terms.</p>
+
+            <h2>12. Severability</h2>
+            <p>If any provision of these Terms is found to be unenforceable, the remaining provisions shall continue in full force and effect.</p>
+
+            <h2>13. Contact Information</h2>
+            <p>For questions about these Terms, please contact us:</p>
+            <ul>
+                <li><strong>Phone:</strong> <a href="tel:+41799446770">+41 79 944 67 70</a></li>
+                <li><strong>Email:</strong> <a href="mailto:julie.meyer@vivapartners.net">julie.meyer@vivapartners.net</a></li>
+            </ul>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-12 md:py-16 border-t border-white/5" style="background-color: #1a1a1a;">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="flex flex-col gap-8">
+                <div class="flex flex-col lg:flex-row justify-between items-center gap-8">
+                    <a href="/" class="flex items-center gap-3">
+                        <img src="/logo.png" alt="Kea Valley" class="h-8 w-auto"/>
+                        <span class="text-sm font-serif font-bold tracking-widest uppercase text-white">Kea Valley <span class="text-primary font-sans font-normal text-xs ml-1">Estates</span></span>
+                    </a>
+                    <div class="flex flex-wrap justify-center gap-6 md:gap-8 text-slate-500 text-[0.65rem] tracking-[0.2em] font-bold uppercase font-sans">
+                        <a class="hover:text-primary transition-colors" href="/profile">My Profile</a>
+                        <a class="hover:text-primary transition-colors" href="/claim">Claim Tokens</a>
+                        <a class="hover:text-primary transition-colors" href="/#tokenisation">VIP Tokens</a>
+                        <a class="hover:text-primary transition-colors" href="/privacy">Privacy Policy</a>
+                        <a class="hover:text-primary transition-colors" href="/terms">Terms</a>
+                    </div>
+                    <div class="flex flex-col items-center lg:items-end gap-2">
+                        <a href="tel:+41799446770" class="flex items-center gap-2 text-slate-400 hover:text-primary transition-colors text-sm font-light">
+                            <span class="material-symbols-outlined text-primary text-lg">phone</span>
+                            <span>+41 79 944 67 70</span>
+                        </a>
+                        <a href="mailto:julie.meyer@vivapartners.net" class="flex items-center gap-2 text-slate-400 hover:text-primary transition-colors text-sm font-light">
+                            <span class="material-symbols-outlined text-primary text-lg">mail</span>
+                            <span>julie.meyer@vivapartners.net</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="pt-6 border-t border-white/5 text-center">
+                    <div class="text-slate-600 text-xs font-light">
+                        © 2026 Kea Valley. All rights reserved.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
