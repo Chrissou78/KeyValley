@@ -3582,36 +3582,41 @@ app.get('/api/presale/bonus-tiers', async (req, res) => {
 // Check registration status
 app.get('/api/questionnaire/status/:wallet', async (req, res) => {
     try {
-        const { wallet } = req.params;
-        
-        const userResult = await pool.query(
-            'SELECT registration_complete FROM registrants WHERE wallet_address = $1',
-            [wallet.toLowerCase()]
+        const wallet = req.params.wallet.toLowerCase();
+
+        // Check registrant
+        const userResult = await db.pool.query(
+            'SELECT registration_complete, minted FROM registrants WHERE wallet_address = $1',
+            [wallet]
         );
 
         if (userResult.rows.length === 0) {
-            return res.json({ 
-                success: true, 
+            return res.json({
+                success: true,
                 exists: false,
-                registration_complete: false 
+                registration_complete: false,
+                has_questionnaire: false,
+                already_minted: false
             });
         }
 
-        const questionnaireResult = await pool.query(
+        // Check questionnaire
+        const questionnaireResult = await db.pool.query(
             'SELECT id FROM questionnaire_responses WHERE wallet_address = $1',
-            [wallet.toLowerCase()]
+            [wallet]
         );
 
         res.json({
             success: true,
             exists: true,
             registration_complete: userResult.rows[0].registration_complete || false,
-            has_questionnaire: questionnaireResult.rows.length > 0
+            has_questionnaire: questionnaireResult.rows.length > 0,
+            already_minted: userResult.rows[0].minted || false
         });
 
     } catch (error) {
-        console.error('Error checking questionnaire status:', error);
-        res.status(500).json({ success: false, error: 'Failed to check status' });
+        console.error('Questionnaire status error:', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
@@ -3630,6 +3635,8 @@ app.post('/api/questionnaire/submit', async (req, res) => {
             interested_restaurant_review
         } = req.body;
 
+        console.log('Questionnaire submit for wallet:', wallet_address);
+
         if (!wallet_address) {
             return res.status(400).json({ success: false, error: 'Wallet address required' });
         }
@@ -3637,19 +3644,19 @@ app.post('/api/questionnaire/submit', async (req, res) => {
         const walletLower = wallet_address.toLowerCase();
 
         // Check if registrant exists
-        const registrantResult = await pool.query(
+        const userCheck = await db.pool.query(
             'SELECT id, minted FROM registrants WHERE wallet_address = $1',
             [walletLower]
         );
 
-        if (registrantResult.rows.length === 0) {
+        if (userCheck.rows.length === 0) {
             return res.status(404).json({ success: false, error: 'User not found. Please register first.' });
         }
 
-        const alreadyMinted = registrantResult.rows[0].minted || false;
+        const alreadyMinted = userCheck.rows[0].minted;
 
-        // Insert or update questionnaire
-        await pool.query(`
+        // Insert or update questionnaire responses
+        await db.pool.query(`
             INSERT INTO questionnaire_responses (
                 wallet_address,
                 is_property_owner,
@@ -3659,8 +3666,10 @@ app.post('/api/questionnaire/submit', async (req, res) => {
                 interested_members_club,
                 owns_boat,
                 interested_yacht_club,
-                interested_restaurant_review
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                interested_restaurant_review,
+                created_at,
+                updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
             ON CONFLICT (wallet_address) 
             DO UPDATE SET
                 is_property_owner = $2,
@@ -3671,11 +3680,11 @@ app.post('/api/questionnaire/submit', async (req, res) => {
                 owns_boat = $7,
                 interested_yacht_club = $8,
                 interested_restaurant_review = $9,
-                updated_at = CURRENT_TIMESTAMP
+                updated_at = NOW()
         `, [
             walletLower,
             is_property_owner || false,
-            property_location || null,
+            property_location || '',
             interested_property_index || false,
             interested_property_tour || false,
             interested_members_club || false,
@@ -3684,21 +3693,23 @@ app.post('/api/questionnaire/submit', async (req, res) => {
             interested_restaurant_review || false
         ]);
 
-        // Mark registration complete
-        await pool.query(
-            'UPDATE registrants SET registration_complete = TRUE, updated_at = CURRENT_TIMESTAMP WHERE wallet_address = $1',
+        // Mark registration as complete
+        await db.pool.query(
+            'UPDATE registrants SET registration_complete = TRUE, updated_at = NOW() WHERE wallet_address = $1',
             [walletLower]
         );
 
+        console.log('Questionnaire saved for wallet:', walletLower);
+
         res.json({ 
             success: true, 
-            message: 'Questionnaire submitted',
+            message: 'Questionnaire submitted successfully',
             already_minted: alreadyMinted
         });
 
     } catch (error) {
-        console.error('Error submitting questionnaire:', error);
-        res.status(500).json({ success: false, error: 'Failed to submit' });
+        console.error('Questionnaire submit error:', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
