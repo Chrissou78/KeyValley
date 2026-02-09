@@ -350,12 +350,17 @@
     </footer>
 
     <script>
-        // Get wallet address from URL or session
+        // Get ALL params from URL (including signature)
         const urlParams = new URLSearchParams(window.location.search);
-        const walletAddress = urlParams.get('wallet') || sessionStorage.getItem('walletAddress');
+        const walletAddress = urlParams.get('wallet') || urlParams.get('wlt');
+        const signature = urlParams.get('signature') || urlParams.get('sig');
+        const userId = urlParams.get('usr') || urlParams.get('user');
+        
+        console.log('Questionnaire init - wallet:', walletAddress);
+        console.log('Questionnaire init - signature:', signature);
+        console.log('Questionnaire init - userId:', userId);
         
         if (!walletAddress) {
-            // No wallet, redirect to main claim page
             window.location.href = '/claim';
         }
 
@@ -398,12 +403,10 @@
                 });
             });
 
-            // Update progress bar
             const percentage = (answered / 6) * 100;
             document.getElementById('progressFill').style.width = percentage + '%';
             document.getElementById('progressText').textContent = `${answered} of 6 completed`;
 
-            // Update question cards
             document.querySelectorAll('.question-card').forEach(card => {
                 const questionNum = card.dataset.question;
                 const questionName = questions[questionNum - 1];
@@ -415,7 +418,6 @@
                 }
             });
 
-            // Enable/disable submit button
             const submitBtn = document.getElementById('submitBtn');
             if (answered === 6) {
                 submitBtn.disabled = false;
@@ -438,7 +440,6 @@
             submitBtn.disabled = true;
             submitBtn.textContent = 'Submitting...';
 
-            // Gather form data
             const formData = {
                 wallet_address: walletAddress,
                 is_property_owner: document.querySelector('input[name="is_property_owner"]:checked')?.value === 'yes',
@@ -454,22 +455,31 @@
             try {
                 const response = await fetch('/api/questionnaire/submit', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
 
                 const result = await response.json();
 
                 if (result.success) {
-                    // Check if user already minted - if so, go to profile instead of claim
+                    // Build redirect URL with ALL original params
+                    let redirectUrl;
+                    
                     if (result.already_minted) {
-                        window.location.href = `/profile?wlt=${walletAddress}`;
+                        redirectUrl = `/profile?wlt=${encodeURIComponent(walletAddress)}`;
                     } else {
-                        // Redirect to claim page to mint tokens
-                        window.location.href = `/claim?wallet=${walletAddress}&registered=true`;
+                        // IMPORTANT: Include signature and userId for minting
+                        redirectUrl = `/claim?wallet=${encodeURIComponent(walletAddress)}&registered=true`;
+                        if (signature) {
+                            redirectUrl += `&signature=${encodeURIComponent(signature)}`;
+                        }
+                        if (userId) {
+                            redirectUrl += `&usr=${encodeURIComponent(userId)}`;
+                        }
                     }
+                    
+                    console.log('Questionnaire complete - redirecting to:', redirectUrl);
+                    window.location.href = redirectUrl;
                 } else {
                     alert('Error submitting questionnaire: ' + result.error);
                     submitBtn.disabled = false;
@@ -483,7 +493,6 @@
             }
         });
 
-        // Initialize progress
         updateProgress();
     </script>
 
