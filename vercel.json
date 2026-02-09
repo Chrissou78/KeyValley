@@ -6,13 +6,33 @@
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "src/index.js" },
-    { "src": "/claim", "dest": "src/index.js" },
-    { "src": "/profile", "dest": "src/index.js" },
+    
+    { "src": "/claim/questionnaire.html", "dest": "src/public/claim/questionnaire.html" },
+    { "src": "/claim/questionnaire", "dest": "src/public/claim/questionnaire.html" },
+    { "src": "/claim/index.html", "dest": "src/public/claim/index.html" },
+    { "src": "/claim/", "dest": "src/public/claim/index.html" },
+    { "src": "/claim", "dest": "src/public/claim/index.html" },
+    
+    { "src": "/profile/index.html", "dest": "src/public/profile/index.html" },
+    { "src": "/profile/", "dest": "src/public/profile/index.html" },
+    { "src": "/profile", "dest": "src/public/profile/index.html" },
+    
+    { "src": "/terms/index.html", "dest": "src/public/terms/index.html" },
+    { "src": "/terms/", "dest": "src/public/terms/index.html" },
+    { "src": "/terms", "dest": "src/public/terms/index.html" },
+    
+    { "src": "/privacy/index.html", "dest": "src/public/privacy/index.html" },
+    { "src": "/privacy/", "dest": "src/public/privacy/index.html" },
+    { "src": "/privacy", "dest": "src/public/privacy/index.html" },
+    
+    { "src": "/presale/(.*)", "dest": "src/public/presale/$1" },
+    
     { "src": "/dashboard", "dest": "src/index.js" },
     { "src": "/login", "dest": "src/index.js" },
     { "src": "/change-password", "dest": "src/index.js" },
+    
     { "src": "/", "dest": "src/public/index.html" },
-    { "src": "/(.*\\.(html|css|js|png|jpg|ico|svg))", "dest": "src/public/$1" },
+    { "src": "/(.*\\.(html|css|js|png|jpg|ico|svg|pdf|woff|woff2|ttf))", "dest": "src/public/$1" },
     { "src": "/(.*)", "dest": "src/index.js" }
   ]
 }
