@@ -964,8 +964,18 @@ app.get('/', (req, res) => {
 });
 
 app.get('/claim', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'claim.html'));
+    res.sendFile(path.join(__dirname, 'public', 'claim', 'index.html'));
 });
+
+app.get('/claim/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'claim', 'index.html'));
+});
+
+// Questionnaire page
+app.get('/claim/questionnaire', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'claim', 'questionnaire.html'));
+});
+
 
 app.get('/profile', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'profile', 'index.html'));
