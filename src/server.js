@@ -28,10 +28,10 @@ try {
         stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
         console.log(' Stripe initialized');
     } else {
-        console.log('Â  Stripe not configured (STRIPE_SECRET_KEY missing)');
+        console.log('Ã‚Â  Stripe not configured (STRIPE_SECRET_KEY missing)');
     }
 } catch (e) {
-    console.log('Â  Stripe not available:', e.message);
+    console.log('Ã‚Â  Stripe not available:', e.message);
 }
 
 // ===========================================
@@ -65,7 +65,7 @@ async function loadPresaleSettings() {
             console.log(' Loaded presale settings from DB');
         }
     } catch (e) {
-        console.log('â‚¬Å¡Ãƒâ€šÃ‚Â¸ No saved presale settings, using defaults');
+        console.log('Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ No saved presale settings, using defaults');
     }
 }
 
@@ -238,7 +238,7 @@ async function ensureDefaultData() {
           [tier.min_eur, tier.bonus_percent, tier.label]
         );
       }
-      console.log(' Default bonus tiers created: Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬Â , Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬Â , Æ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬Â ');
+      console.log(' Default bonus tiers created: Ã‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬Ã‚Â , Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬Ã‚Â , Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬Ã‚Â ');
     }
 
     // Ensure default referral settings exist
@@ -522,7 +522,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
     console.log('   Timestamp:', new Date().toISOString());
     
     if (event.type !== 'checkout.session.completed' && event.type !== 'payment_intent.succeeded') {
-        console.log('   â‚¬Å¡Ãƒâ€šÃ‚Â¸ Ignoring event type:', event.type);
+        console.log('   Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ Ignoring event type:', event.type);
         return res.json({ received: true, ignored: true });
     }
     
@@ -583,7 +583,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                     stripeFeePct = totalAmount > 0 ? (actualStripeFee / totalAmount) * 100 : 0;
                 }
             } catch (e) {
-                console.log('   Â  Could not fetch balance transaction:', e.message);
+                console.log('   Ã‚Â  Could not fetch balance transaction:', e.message);
             }
         }
         
@@ -601,7 +601,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                 eurUsdRate = rateData.rates?.USD || 1.19;
             }
         } catch (e) {
-            console.log('   Â  Using default EUR/USD rate:', eurUsdRate);
+            console.log('   Ã‚Â  Using default EUR/USD rate:', eurUsdRate);
         }
         
         const usdAmount = totalAmount * eurUsdRate;
@@ -619,7 +619,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
         if (existing.rows.length > 0) {
             const purchase = existing.rows[0];
             if (purchase.status === 'completed' && purchase.mint_tx_hash) {
-                console.log('\nÂ  ALREADY PROCESSED');
+                console.log('\nÃ‚Â  ALREADY PROCESSED');
                 return res.json({ 
                     received: true, 
                     status: 'already_processed', 
@@ -648,14 +648,14 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                 console.log('    From registration:', referrerWallet);
             }
         } catch (refLookupError) {
-            console.log('   Â  Lookup error:', refLookupError.message);
+            console.log('   Ã‚Â  Lookup error:', refLookupError.message);
         }
         
         if (!referrerWallet) {
             referrerWallet = DEFAULT_REFERRER_WALLET;
             referrerCode = 'DEFAULT';
             isDefaultReferrer = true;
-            console.log('   â‚¬Å¡Ãƒâ€šÃ‚Â¸ Using default referrer:', referrerWallet);
+            console.log('   Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ Using default referrer:', referrerWallet);
         }
         
         // Calculate purchase bonus
@@ -672,7 +672,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
             console.log('      Tier: ' + bonusInfo.bonusPercent + '% (min ' + bonusInfo.minEur + ')');
             console.log('      Bonus Tokens: +' + bonusTokens);
         } else {
-            console.log('   â‚¬Å¡Ãƒâ€šÃ‚Â¸ No bonus tier reached');
+            console.log('   Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ No bonus tier reached');
         }
         
         const totalTokensToMint = baseTokens + bonusTokens;
@@ -767,7 +767,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
             `, [mintTxHash, purchaseId]);
             
             // Update presale stats
-            console.log('\nÂ  UPDATING PRESALE STATS...');
+            console.log('\nÃ‚Â  UPDATING PRESALE STATS...');
             try {
                 await db.pool.query(`
                     UPDATE presale_config 
@@ -778,7 +778,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                 `, [totalTokensToMint, baseAmount]);
                 console.log('    +' + totalTokensToMint + ' tokens sold');
             } catch (configError) {
-                console.error('   Â  Config update error:', configError.message);
+                console.error('   Ã‚Â  Config update error:', configError.message);
             }
             
             // Process referral bonus
@@ -852,7 +852,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                                                             updated_at = NOW()
                                                     `, [referrerWallet, normalizedAddress, referrerCode, referralBonusAmount, referralBonusTxHash]);
                                                 } catch (refInsertError) {
-                                                    console.log('   Â  Could not record referral:', refInsertError.message);
+                                                    console.log('   Ã‚Â  Could not record referral:', refInsertError.message);
                                                 }
                                             }
                                         }
@@ -862,16 +862,16 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
                                 }
                             }
                         } else {
-                            console.log('   Ã¢â€šÂ¬Ã…Â¡ Below minimum purchase for referral bonus');
+                            console.log('   ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ Below minimum purchase for referral bonus');
                         }
                     } else {
-                        console.log('   Ã¢â€šÂ¬Ã…Â¡ Referral bonuses disabled');
+                        console.log('   ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ Referral bonuses disabled');
                     }
                 } catch (refError) {
-                    console.error('   Â  Referral bonus error:', refError.message);
+                    console.error('   Ã‚Â  Referral bonus error:', refError.message);
                 }
             } else {
-                console.log('   Ã¢â€šÂ¬Ã…Â¡ No eligible referrer');
+                console.log('   ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ No eligible referrer');
             }
             
             console.log('\n' + '='.repeat(70));
@@ -1330,7 +1330,7 @@ app.post('/api/claim/register', async (req, res) => {
         message: 'This wallet has already claimed tokens.',
         balance: balance,
         tx_hash: claim.tx_hash,
-        explorer_url: claim.tx_hash ? `${networkConfig?.explorer || 'https://polygonscan.com'}/tx/${claim.tx_hash}` : null
+        explorer_url: claim.tx_hash ? `${'https://polygonscan.com'}/tx/${claim.tx_hash}` : null
       });
     }
 
@@ -1346,7 +1346,7 @@ app.post('/api/claim/register', async (req, res) => {
         message: 'This wallet has already received tokens.',
         tx_hash: existingReg.rows[0].mint_tx_hash,
         explorer_url: existingReg.rows[0].mint_tx_hash 
-          ? `${networkConfig?.explorer || 'https://polygonscan.com'}/tx/${existingReg.rows[0].mint_tx_hash}` 
+          ? `${'https://polygonscan.com'}/tx/${existingReg.rows[0].mint_tx_hash}` 
           : null
       });
     }
@@ -1384,7 +1384,7 @@ app.post('/api/claim/register', async (req, res) => {
     }
 
     const txHash = mintResult.txHash || mintResult.receipt?.hash || mintResult.hash || mintResult.transactionHash;
-    const explorer = networkConfig?.explorer || 'https://polygonscan.com';
+    const explorer = 'https://polygonscan.com';
 
     // Record the claim
     await db.pool.query(
@@ -1978,7 +1978,7 @@ app.get('/api/presale/config', async (req, res) => {
                 dbConfig = configResult.rows[0];
             }
         } catch (dbErr) {
-            console.log('Â  Could not load presale_config from DB:', dbErr.message);
+            console.log('Ã‚Â  Could not load presale_config from DB:', dbErr.message);
         }
         
         PRESALE_CONFIG.saleTargetEUR = parseFloat(dbConfig.sale_target_eur) || PRESALE_CONFIG.saleTargetEUR || 500000;
@@ -2012,7 +2012,7 @@ app.get('/api/presale/config', async (req, res) => {
             const rateData = await rateRes.json();
             eurUsdRate = rateData.rates?.USD || 1.19;
         } catch (e) {
-            console.log('Â  Using fallback EUR/USD rate:', eurUsdRate);
+            console.log('Ã‚Â  Using fallback EUR/USD rate:', eurUsdRate);
         }
         
         let polPrice = 0.12;
@@ -2021,7 +2021,7 @@ app.get('/api/presale/config', async (req, res) => {
             const polData = await polRes.json();
             polPrice = polData['polygon-ecosystem-token']?.usd || 0.12;
         } catch (e) {
-            console.log('Â  Using fallback POL price:', polPrice);
+            console.log('Ã‚Â  Using fallback POL price:', polPrice);
         }
 
         const saleTargetEUR = PRESALE_CONFIG.saleTargetEUR || 500000;
@@ -2240,7 +2240,7 @@ app.post('/api/presale/admin/manual-mint', requireAdminAuth, async (req, res) =>
                 return res.status(500).json({ error: 'Fee transfer failed: ' + transferError.message });
             }
         } else {
-            console.log('Â  Stripe not configured for fee transfer, proceeding without');
+            console.log('Ã‚Â  Stripe not configured for fee transfer, proceeding without');
         }
         
         // Get EUR/USD rate
@@ -2250,7 +2250,7 @@ app.post('/api/presale/admin/manual-mint', requireAdminAuth, async (req, res) =>
             const rateData = await rateRes.json();
             eurUsdRate = rateData.rates?.USD || 1.19;
         } catch (e) {
-            console.log('Â  Using default EUR/USD rate: 1.19');
+            console.log('Ã‚Â  Using default EUR/USD rate: 1.19');
         }
         
         const usdAmount = eurAmount * eurUsdRate;
@@ -2304,9 +2304,9 @@ app.post('/api/presale/admin/manual-mint', requireAdminAuth, async (req, res) =>
                     updated_at = NOW() 
                 WHERE id = 1
             `, [parseFloat(calculatedTokens), eurAmount]);
-            console.log(`Â  PRESALE CONFIG UPDATED: +${calculatedTokens} tokens sold`);
+            console.log(`Ã‚Â  PRESALE CONFIG UPDATED: +${calculatedTokens} tokens sold`);
         } catch (configError) {
-            console.error('Â  Failed to update presale_config:', configError.message);
+            console.error('Ã‚Â  Failed to update presale_config:', configError.message);
         }
         
         // Process referral bonus
@@ -2374,7 +2374,7 @@ app.post('/api/presale/admin/manual-mint', requireAdminAuth, async (req, res) =>
                 }
             }
         } catch (refError) {
-            console.error('Â  Referral error (non-fatal):', refError.message);
+            console.error('Ã‚Â  Referral error (non-fatal):', refError.message);
         }
         
         console.log(` Manual mint complete!`);
@@ -2815,7 +2815,7 @@ app.post('/api/referral/set', async (req, res) => {
     try {
         const { walletAddress, referralCode } = req.body;
         
-        console.log('\nÃ‚Â¬Ãƒâ€šÃ‚Â SET REFERRER:', { walletAddress, referralCode });
+        console.log('\nÃƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â SET REFERRER:', { walletAddress, referralCode });
 
         if (!walletAddress || !ethers.isAddress(walletAddress)) {
             return res.status(400).json({ success: false, error: 'Invalid wallet address' });
@@ -3978,23 +3978,23 @@ app.get('*', (req, res) => {
 async function startServer() {
   try {
     console.log('\n========================================');
-    console.log('ðŸš€ KEA VALLEY PRESALE SERVER');
+    console.log('Ã°Å¸Å¡â‚¬ KEA VALLEY PRESALE SERVER');
     console.log('========================================\n');
 
     // Initialize database
-    console.log('âš™ï¸ Initializing database connection...');
+    console.log('Ã¢Å¡â„¢Ã¯Â¸Â Initializing database connection...');
     await db.initDb();
 
     // Ensure tables exist - CALLED HERE
-    console.log('âš™ï¸ Ensuring database tables...');
+    console.log('Ã¢Å¡â„¢Ã¯Â¸Â Ensuring database tables...');
     await ensureDatabaseTables();
 
     // Seed default data - CALLED HERE
-    console.log('âš™ï¸ Ensuring default data...');
+    console.log('Ã¢Å¡â„¢Ã¯Â¸Â Ensuring default data...');
     await ensureDefaultData();
 
     // Load presale settings into memory
-    console.log('ðŸ“¦ Loading presale settings...');
+    console.log('Ã°Å¸â€œÂ¦ Loading presale settings...');
     await loadPresaleSettings();
 
     // Start HTTP server
@@ -4008,17 +4008,17 @@ async function startServer() {
     process.on('SIGINT', () => gracefulShutdown(server, 'SIGINT'));
 
   } catch (error) {
-    console.error('âŒ Failed to start server:', error);
+    console.error('Ã¢ÂÅ’ Failed to start server:', error);
     process.exit(1);
   }
 }
 
 async function gracefulShutdown(server, signal) {
-  console.log(`\nÂ  ${signal} received. Shutting down...`);
+  console.log(`\nÃ‚Â  ${signal} received. Shutting down...`);
   server.close(async () => {
     try {
       await db.pool.end();
-      console.log('ðŸš€ Shutdown complete');
+      console.log('Ã°Å¸Å¡â‚¬ Shutdown complete');
     } catch (e) {
       console.error('Shutdown error:', e);
     }
