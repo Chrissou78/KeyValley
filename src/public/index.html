@@ -1164,20 +1164,37 @@
     <!-- Footer -->
     <footer class="py-12 md:py-16 border-t border-white/5" style="background-color: #1a1a1a;">
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-8">
-                <a href="/" class="flex items-center gap-3">
-                    <img src="/logo.png" alt="Kea Valley" class="h-8 w-auto"/>
-                    <span class="text-sm font-serif font-bold tracking-widest uppercase text-white">Kea Valley <span class="text-primary font-sans font-normal text-xs ml-1">Estates</span></span>
-                </a>
-                <div class="flex flex-wrap justify-center gap-6 md:gap-8 text-slate-500 text-[0.65rem] tracking-[0.2em] font-bold uppercase font-sans">
-                    <a class="hover:text-primary transition-colors" href="/profile">My Profile</a>
-                    <a class="hover:text-primary transition-colors" href="/claim">Claim Tokens</a>
-                    <a class="hover:text-primary transition-colors" href="#tokenisation">VIP Tokens</a>
-                    <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
-                    <a class="hover:text-primary transition-colors" href="#">Terms</a>
+            <div class="flex flex-col gap-8">
+                <!-- Top Row: Logo, Nav, Contact -->
+                <div class="flex flex-col lg:flex-row justify-between items-center gap-8">
+                    <a href="/" class="flex items-center gap-3">
+                        <img src="/logo.png" alt="Kea Valley" class="h-8 w-auto"/>
+                        <span class="text-sm font-serif font-bold tracking-widest uppercase text-white">Kea Valley <span class="text-primary font-sans font-normal text-xs ml-1">Estates</span></span>
+                    </a>
+                    <div class="flex flex-wrap justify-center gap-6 md:gap-8 text-slate-500 text-[0.65rem] tracking-[0.2em] font-bold uppercase font-sans">
+                        <a class="hover:text-primary transition-colors" href="/profile">My Profile</a>
+                        <a class="hover:text-primary transition-colors" href="/claim">Claim Tokens</a>
+                        <a class="hover:text-primary transition-colors" href="#tokenisation">VIP Tokens</a>
+                        <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+                        <a class="hover:text-primary transition-colors" href="#">Terms</a>
+                    </div>
+                    <!-- Contact Info -->
+                    <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                        <a href="tel:+41799446770" class="flex items-center gap-2 text-slate-400 hover:text-primary transition-colors text-sm font-light">
+                            <span class="material-symbols-outlined text-primary text-lg">phone</span>
+                            <span>+41 79 944 67 70</span>
+                        </a>
+                        <a href="mailto:julie.meyer@vivapartners.net" class="flex items-center gap-2 text-slate-400 hover:text-primary transition-colors text-sm font-light">
+                            <span class="material-symbols-outlined text-primary text-lg">mail</span>
+                            <span>julie.meyer@vivapartners.net</span>
+                        </a>
+                    </div>
                 </div>
-                <div class="text-slate-600 text-xs font-light">
-                    © 2026 Kea Valley. All rights reserved.
+                <!-- Bottom Row: Copyright -->
+                <div class="pt-6 border-t border-white/5 text-center">
+                    <div class="text-slate-600 text-xs font-light">
+                        © 2026 Kea Valley. All rights reserved.
+                    </div>
                 </div>
             </div>
         </div>
