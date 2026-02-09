@@ -53,7 +53,7 @@ async function initDb() {
         await client.query(`ALTER TABLE registrants ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`);
 
         // Create indexes
-        await client.query(`CREATE INDEX IF NOT EXISTS idx_registrants_address ON registrants(address)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_registrants_address ON registrants(wallet_address)`);
         await client.query(`CREATE INDEX IF NOT EXISTS idx_registrants_minted ON registrants(minted)`);
         await client.query(`CREATE INDEX IF NOT EXISTS idx_registrants_email ON registrants(email)`);
 
@@ -134,9 +134,9 @@ async function initDb() {
         `);
 
         isInitialized = true;
-        console.log('✅ PostgreSQL database initialized');
+        console.log('âœ… PostgreSQL database initialized');
     } catch (error) {
-        console.error('❌ Database initialization error:', error);
+        console.error('âŒ Database initialization error:', error);
         throw error;
     } finally {
         client.release();
