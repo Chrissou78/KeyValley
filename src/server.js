@@ -3176,6 +3176,46 @@ app.post('/api/admin/referral/create-code', requireAdminAuth, async (req, res) =
     }
 });
 
+app.get('/api/presale/packages', async (req, res) => {
+  try {
+    // Get package sales count from database
+    const holidayResult = await db.pool.query(
+      "SELECT COUNT(*) as count FROM presale_purchases WHERE purchase_type = 'package_holiday' AND status = 'completed'"
+    );
+    const membershipResult = await db.pool.query(
+      "SELECT COUNT(*) as count FROM presale_purchases WHERE purchase_type = 'package_membership' AND status = 'completed'"
+    );
+    
+    const holidaySold = parseInt(holidayResult.rows[0]?.count || 0);
+    const membershipSold = parseInt(membershipResult.rows[0]?.count || 0);
+    
+    res.json({
+      holiday: {
+        name: '2026 Holiday Pack',
+        price: 5000,
+        tokens: 10000,
+        totalAvailable: 30,
+        sold: holidaySold,
+        remaining: Math.max(0, 30 - holidaySold)
+      },
+      membership: {
+        name: 'Private Members Club',
+        price: 25000,
+        tokens: 50000,
+        totalAvailable: null, // unlimited
+        sold: membershipSold,
+        remaining: null
+      }
+    });
+  } catch (error) {
+    console.error('Package config error:', error);
+    res.json({
+      holiday: { totalAvailable: 30, sold: 0, remaining: 30 },
+      membership: { totalAvailable: null, sold: 0, remaining: null }
+    });
+  }
+});
+
 // ===========================================
 // Members API (WalletTwo Proxy)
 // ===========================================

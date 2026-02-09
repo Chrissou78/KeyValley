@@ -121,6 +121,11 @@ Copy<!DOCTYPE html>
                         <div>
                             <h2 class="font-serif text-xl font-bold text-white">2026 Holiday Pack</h2>
                             <p class="text-gray-400 text-sm">Experience Kea Island in style</p>
+                            <div id="holiday-availability" class="mt-2">
+                                <span class="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">
+                                    <span id="holiday-remaining">30</span>/30 available
+                                </span>
+                            </div>
                         </div>
                         <div class="tooltip relative">
                             <span class="material-symbols-outlined text-primary cursor-help">info</span>
@@ -394,8 +399,14 @@ Copy<!DOCTYPE html>
 
     async function loadConfig() {
         try {
-            const res = await fetch('/api/presale/config');
-            const config = await res.json();
+            const [configRes, packagesRes] = await Promise.all([
+                fetch('/api/presale/config'),
+                fetch('/api/presale/packages').catch(() => ({ json: () => ({}) }))
+            ]);
+            
+            const config = await configRes.json();
+            const packagesData = await packagesRes.json();
+            
             Object.assign(CONFIG, {
                 eurUsdRate: config.eurUsdRate || 1.19,
                 polPrice: config.polPrice || 0.12,
@@ -406,9 +417,43 @@ Copy<!DOCTYPE html>
                 saleTargetEUR: config.saleTargetEUR || 500000,
                 tokensSold: config.tokensSold || 0
             });
+            
+            // Update package availability
+            if (packagesData.holiday) {
+                PACKAGES.holiday.remaining = packagesData.holiday.remaining;
+                PACKAGES.holiday.sold = packagesData.holiday.sold;
+                PACKAGES.holiday.totalAvailable = packagesData.holiday.totalAvailable;
+                updateHolidayAvailability();
+            }
+            
             updateProgress();
             initStripe();
         } catch (e) { console.error('Config error:', e); }
+    }
+
+    function updateHolidayAvailability() {
+        const remaining = PACKAGES.holiday.remaining;
+        const total = PACKAGES.holiday.totalAvailable || 30;
+        const remainingEl = document.getElementById('holiday-remaining');
+        const availabilityEl = document.getElementById('holiday-availability');
+        
+        if (remainingEl) remainingEl.textContent = remaining;
+        
+        if (availabilityEl) {
+            const badge = availabilityEl.querySelector('span');
+            if (badge) {
+                if (remaining <= 0) {
+                    badge.className = 'text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-400';
+                    badge.innerHTML = '<span class="material-symbols-outlined text-xs align-middle mr-1">block</span>Sold Out';
+                } else if (remaining <= 5) {
+                    badge.className = 'text-xs px-2 py-1 rounded-full bg-orange-500/20 text-orange-400';
+                    badge.innerHTML = `<span id="holiday-remaining">${remaining}</span>/${total} available - Almost gone!`;
+                } else {
+                    badge.className = 'text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400';
+                    badge.innerHTML = `<span id="holiday-remaining">${remaining}</span>/${total} available`;
+                }
+            }
+        }
     }
 
     function updateProgress() {
@@ -427,11 +472,17 @@ Copy<!DOCTYPE html>
     }
 
     function selectPackage(pkg) {
+        // Check if holiday pack is sold out
+        if (pkg === 'holiday' && PACKAGES.holiday.remaining <= 0) {
+            alert('Sorry, the 2026 Holiday Pack is sold out!');
+            return;
+        }
+        
         selectedPackage = pkg;
-        safeEl('package-holiday')?.classList.toggle('selected', pkg === 'holiday');
-        safeEl('package-membership')?.classList.toggle('selected', pkg === 'membership');
-        safeClass('holiday-check', pkg === 'holiday' ? 'remove' : 'add', 'hidden');
-        safeClass('membership-check', pkg === 'membership' ? 'remove' : 'add', 'hidden');
+        document.getElementById('package-holiday')?.classList.toggle('selected', pkg === 'holiday');
+        document.getElementById('package-membership')?.classList.toggle('selected', pkg === 'membership');
+        document.getElementById('holiday-check')?.classList.toggle('hidden', pkg !== 'holiday');
+        document.getElementById('membership-check')?.classList.toggle('hidden', pkg !== 'membership');
         updateSummary();
     }
 
@@ -566,6 +617,19 @@ Copy<!DOCTYPE html>
 
     async function executePurchase() {
         if (!currentWallet) { connectWallet(); return; }
+        
+        // Check holiday pack availability
+        if (selectedPackage === 'holiday') {
+            try {
+                const res = await fetch('/api/presale/packages');
+                const data = await res.json();
+                if (data.holiday && data.holiday.remaining <= 0) {
+                    showResult('error', 'Sold Out', 'Sorry, the 2026 Holiday Pack is no longer available.');
+                    return;
+                }
+            } catch (e) {}
+        }
+        
         const p = window.currentPurchase || {};
         
         localStorage.setItem('pendingPurchase', JSON.stringify({ ...p, walletAddress: currentWallet, paymentMethod: selectedPayment, timestamp: Date.now() }));
