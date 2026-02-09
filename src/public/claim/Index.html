@@ -49,7 +49,7 @@
     <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
             <a href="/" class="flex items-center gap-4 group cursor-pointer">
-                <<img src="/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
+                <img src="/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
                 <div>
                     <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
                 </div>
@@ -133,7 +133,8 @@
             return {
                 wallet: params.get('wlt') || params.get('wallet') || params.get('address'),
                 signature: params.get('signature') || params.get('sig'),
-                userId: params.get('usr') || params.get('user')
+                userId: params.get('usr') || params.get('user'),
+                registered: params.get('registered') === 'true'
             };
         }
 
@@ -148,7 +149,15 @@
             const ref = params.get('ref') || params.get('referrer') || params.get('r');
             
             if (ref) {
+                // Store referral code for later use
+                sessionStorage.setItem('referralCode', ref);
                 validateReferralCode(ref);
+            } else {
+                // Check if we have a stored referral code
+                const storedRef = sessionStorage.getItem('referralCode');
+                if (storedRef) {
+                    validateReferralCode(storedRef);
+                }
             }
         }
 
@@ -169,18 +178,17 @@
         }
 
         function showReferralBadge(code) {
-            // Add a badge showing referral is active
+            // Check if badge already exists
+            if (document.getElementById('referralBadge')) return;
+            
             const badge = document.createElement('div');
+            badge.id = 'referralBadge';
             badge.className = 'fixed top-24 right-4 bg-primary/20 border border-primary/30 rounded-full px-4 py-2 text-xs text-primary font-bold z-40';
             badge.innerHTML = `🎁 Referral: ${code}`;
             document.body.appendChild(badge);
         }
 
-        // In your claim submission function, add:
-        async function submitClaim() {
-            // ... existing code ...
-            
-            // After successful claim, track referral
+        async function trackReferral(walletAddress) {
             if (referrerCode && walletAddress) {
                 try {
                     await fetch('/api/referral/track', {
@@ -194,14 +202,13 @@
                         })
                     });
                     console.log('Referral tracked');
+                    // Clear stored referral code after successful tracking
+                    sessionStorage.removeItem('referralCode');
                 } catch (e) {
                     console.error('Failed to track referral:', e);
                 }
             }
         }
-
-        // Call on page load
-        checkReferralCode();
 
         // ============================================
         // LocalStorage Functions
@@ -242,6 +249,51 @@
         }
 
         // ============================================
+        // Questionnaire Check (uses registrants table)
+        // ============================================
+        async function checkRegistrationStatus(wallet) {
+            try {
+                const response = await fetch(`/api/questionnaire/status/${wallet}`);
+                const result = await response.json();
+                
+                console.log('Registration status:', result);
+                
+                if (result.success) {
+                    return {
+                        exists: result.exists,
+                        registrationComplete: result.registration_complete,
+                        hasQuestionnaire: result.has_questionnaire,
+                        alreadyMinted: result.already_minted || false
+                    };
+                }
+            } catch (error) {
+                console.error('Error checking registration status:', error);
+            }
+            
+            // Default: new user, needs questionnaire
+            return {
+                exists: false,
+                registrationComplete: false,
+                hasQuestionnaire: false,
+                alreadyMinted: false
+            };
+        }
+
+        function redirectToQuestionnaire(wallet, signature, userId) {
+            // Build URL with all params
+            let url = `/claim/questionnaire.html?wallet=${encodeURIComponent(wallet)}`;
+            if (signature) url += `&signature=${encodeURIComponent(signature)}`;
+            if (userId) url += `&usr=${encodeURIComponent(userId)}`;
+            
+            // Preserve referral code
+            const storedRef = sessionStorage.getItem('referralCode');
+            if (storedRef) url += `&ref=${encodeURIComponent(storedRef)}`;
+            
+            console.log('Redirecting to questionnaire:', url);
+            window.location.href = url;
+        }
+
+        // ============================================
         // UI Functions
         // ============================================
         function showConnectWallet() {
@@ -263,6 +315,15 @@
             statusEl.innerHTML = `
                 <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
                 <p class="text-slate-400 text-sm">Processing your claim...</p>
+                <p class="text-slate-600 text-xs mt-2 font-mono">${wallet.slice(0, 10)}...${wallet.slice(-8)}</p>
+            `;
+        }
+
+        function showCheckingRegistration(wallet) {
+            cardTitle.textContent = 'Verifying';
+            statusEl.innerHTML = `
+                <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+                <p class="text-slate-400 text-sm">Checking registration status...</p>
                 <p class="text-slate-600 text-xs mt-2 font-mono">${wallet.slice(0, 10)}...${wallet.slice(-8)}</p>
             `;
         }
@@ -320,14 +381,39 @@
         // ============================================
         // Claim Processing
         // ============================================
-        async function processClaim(wallet, signature, userId) {
+        async function processClaim(wallet, signature, userId, skipQuestionnaireCheck = false) {
             // Store globally
             currentWallet = wallet;
             currentSignature = signature;
             currentUserId = userId;
             
-            showProcessing(wallet);
+            // Save to storage
             saveToStorage(wallet, userId, signature);
+
+            // Check registration status first (unless we're returning from questionnaire)
+            if (!skipQuestionnaireCheck) {
+                showCheckingRegistration(wallet);
+                
+                const status = await checkRegistrationStatus(wallet);
+                
+                console.log('Status check result:', status);
+
+                // If user hasn't completed questionnaire, redirect (even if already minted)
+                if (!status.registrationComplete) {
+                    console.log('Questionnaire not complete, redirecting...');
+                    redirectToQuestionnaire(wallet, signature, userId);
+                    return;
+                }
+                
+                // If already minted AND registration complete, show already claimed
+                if (status.alreadyMinted && status.registrationComplete) {
+                    showAlreadyClaimed({ message: 'This wallet has already claimed tokens.' });
+                    return;
+                }
+            }
+
+            // User has completed registration, proceed with claim
+            showProcessing(wallet);
 
             try {
                 const response = await fetch('/api/claim/register', {
@@ -343,6 +429,8 @@
                 const data = await response.json();
 
                 if (response.status === 201) {
+                    // Track referral on successful claim
+                    await trackReferral(wallet);
                     showSuccess(data);
                 } else if (response.status === 409) {
                     showAlreadyClaimed(data);
@@ -354,21 +442,28 @@
                 showError('Connection error. Please try again.');
             }
         }
-
+        
         // ============================================
         // Initialize
         // ============================================
         function init() {
-            const { wallet, signature, userId } = getWalletFromURL();
+            // Check for referral code first
+            checkReferralCode();
+            
+            const { wallet, signature, userId, registered } = getWalletFromURL();
+            
+            console.log('Init - URL params:', { wallet, signature, userId, registered });
             
             if (wallet) {
-                processClaim(wallet, signature, userId);
+                // If registered=true, user is coming back from questionnaire
+                processClaim(wallet, signature, userId, registered);
                 return;
             }
 
             const stored = getWalletFromStorage();
             if (stored && stored.wallet) {
-                processClaim(stored.wallet, stored.signature, stored.userId);
+                console.log('Init - Found stored wallet:', stored.wallet);
+                processClaim(stored.wallet, stored.signature, stored.userId, false);
                 return;
             }
 

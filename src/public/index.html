@@ -510,12 +510,15 @@
     </header>
 
     <!-- Hero Section -->
-    <section class="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center">
-        <div class="absolute inset-0 z-0">
-            <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-background-dark z-10"></div>
-            <div class="w-full h-full bg-cover bg-center bg-no-repeat transform scale-105" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDb_ylzwt1JEbIeGZFhXrhxNxNambzL5Ne9LWo9j7DaH9Ryy8Hsd16PSX_ld9bfYoziEsrx0FwTVYv5bxWjjRTQYVS5xx1oH1PxgZjQo3xxVv7Ej10A8PnxrGcCLMlgvD5n6Ellk8WLmevdZW_nHaAm1klzDKw6d2Zs0urW-AxGMKuAFj34twQx6sSo5aZrFHVhKEvu8B9Fw7Pi9h-80foA99A8QZuqgwa25bo2RgA-Cy-DWo-tRyfmoyMqmVwzCmg49-_5-3MMAeA');"></div>
-        </div>
-        <div class="relative z-20 text-center px-6 max-w-6xl mx-auto flex flex-col items-center">
+    <section class="relative min-h-screen w-full overflow-hidden flex flex-col">
+    <div class="absolute inset-0 z-0">
+        <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-background-dark z-10"></div>
+        <div class="w-full h-full bg-cover bg-center bg-no-repeat transform scale-105" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDb_ylzwt1JEbIeGZFhXrhxNxNambzL5Ne9LWo9j7DaH9Ryy8Hsd16PSX_ld9bfYoziEsrx0FwTVYv5bxWjjRTQYVS5xx1oH1PxgZjQo3xxVv7Ej10A8PnxrGcCLMlgvD5n6Ellk8WLmevdZW_nHaAm1klzDKw6d2Zs0urW-AxGMKuAFj34twQx6sSo5aZrFHVhKEvu8B9Fw7Pi9h-80foA99A8QZuqgwa25bo2RgA-Cy-DWo-tRyfmoyMqmVwzCmg49-_5-3MMAeA');"></div>
+    </div>
+    
+    <!-- Main Hero Content - Centered -->
+    <div class="relative z-20 flex-1 flex items-center justify-center text-center px-6">
+        <div class="max-w-6xl mx-auto flex flex-col items-center">
             <div class="mb-8 flex items-center justify-center gap-4 text-reveal" style="animation-delay: 0.1s;">
                 <div class="h-[1px] w-12 bg-primary"></div>
                 <span class="text-primary tracking-[0.4em] uppercase text-xs font-bold">Sanctuary of the Senses</span>
@@ -536,24 +539,25 @@
                 </a>
             </div>
         </div>
-        
-        <!-- Vision Quote - Bottom of Hero -->
-        <div class="relative z-20 mt-auto pb-8 pt-16 text-reveal" style="animation-delay: 0.9s;">
-            <div class="max-w-4xl mx-auto text-center px-6">
-                <div class="size-10 mx-auto text-primary opacity-50 mb-6">
-                    <svg class="w-full h-full" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21L14.017 18C14.017 16.8954 14.8954 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H15.017C14.4647 8 14.017 8.44772 14.017 9V11C14.017 11.5523 13.5693 12 13.017 12H12.017V5H22.017V15C22.017 18.3137 19.3307 21 16.017 21H14.017ZM5.0166 21L5.0166 18C5.0166 16.8954 5.89503 16 7.0166 16H10.0166C10.5689 16 11.0166 15.5523 11.0166 15V9C11.0166 8.44772 10.5689 8 10.0166 8H6.0166C5.46432 8 5.0166 8.44772 5.0166 9V11C5.0166 11.5523 4.56889 12 4.0166 12H3.0166V5H13.0166V15C13.0166 18.3137 10.3303 21 7.0166 21H5.0166Z"></path></svg>
-                </div>
-                <p class="text-xl md:text-2xl lg:text-3xl font-serif font-light leading-relaxed text-white/80 italic">
-                    "Kea Valley is more than a destination; it is a sanctuary designed for those who seek the extraordinary. Every detail is crafted to harmonize with the natural beauty of the landscape."
-                </p>
-                <div class="w-16 h-[1px] bg-primary mx-auto mt-8 mb-8"></div>
-                <a class="flex flex-col items-center gap-2 text-white/50 hover:text-primary transition-colors duration-300" href="#residences">
-                    <span class="text-[0.6rem] uppercase tracking-widest">Explore</span>
-                    <span class="material-symbols-outlined text-3xl animate-bounce font-light">keyboard_arrow_down</span>
-                </a>
+    </div>
+    
+    <!-- Vision Quote - Bottom of Hero -->
+    <div class="relative z-20 pb-12 pt-8 text-reveal" style="animation-delay: 0.9s;">
+        <div class="max-w-4xl mx-auto text-center px-6">
+            <div class="w-10 h-10 mx-auto text-primary opacity-50 mb-6">
+                <svg class="w-full h-full" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21L14.017 18C14.017 16.8954 14.8954 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H15.017C14.4647 8 14.017 8.44772 14.017 9V11C14.017 11.5523 13.5693 12 13.017 12H12.017V5H22.017V15C22.017 18.3137 19.3307 21 16.017 21H14.017ZM5.0166 21L5.0166 18C5.0166 16.8954 5.89503 16 7.0166 16H10.0166C10.5689 16 11.0166 15.5523 11.0166 15V9C11.0166 8.44772 10.5689 8 10.0166 8H6.0166C5.46432 8 5.0166 8.44772 5.0166 9V11C5.0166 11.5523 4.56889 12 4.0166 12H3.0166V5H13.0166V15C13.0166 18.3137 10.3303 21 7.0166 21H5.0166Z"></path></svg>
             </div>
+            <p class="text-lg md:text-xl lg:text-2xl font-serif font-light leading-relaxed text-white/80 italic mb-8">
+                "Kea Valley is more than a destination; it is a sanctuary designed for those who seek the extraordinary. Every detail is crafted to harmonize with the natural beauty of the landscape."
+            </p>
+            <div class="w-16 h-[1px] bg-primary mx-auto mb-8"></div>
+            <a class="inline-flex flex-col items-center gap-2 text-white/50 hover:text-primary transition-colors duration-300" href="#residences">
+                <span class="text-[0.6rem] uppercase tracking-widest">Explore</span>
+                <span class="material-symbols-outlined text-3xl animate-bounce font-light">keyboard_arrow_down</span>
+            </a>
         </div>
-    </section>
+    </div>
+</section>
 
     <!-- Main Content -->
     <main class="relative z-10">

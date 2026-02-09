@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta name="description" content="Complete your registration - Kea Valley Estates">
+    <title>Complete Registration | Kea Valley Estates</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ee9d2b",
+                        "primary-light": "#fbdea6",
+                        "background-dark": "#0a0a0a",
+                        "surface": "#121212",
+                    },
+                    fontFamily: {
+                        "sans": ["Manrope", "sans-serif"],
+                        "serif": ["Playfair Display", "serif"],
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Manrope', sans-serif; }
+        h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
+        .gold-glow:hover {
+            box-shadow: 0 0 25px rgba(238, 157, 43, 0.3);
+            border-color: #ee9d2b;
+            transition: all 0.5s ease;
+        }
+        .glass-nav {
+            backdrop-filter: blur(12px);
+            background-color: rgba(26, 26, 26, 0.9);
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
+        
+        /* Custom radio/checkbox styles */
+        .custom-radio,
+        .custom-checkbox {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #444;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .custom-radio {
+            border-radius: 50%;
+        }
+        .custom-checkbox {
+            border-radius: 4px;
+        }
+        .custom-radio:checked,
+        .custom-checkbox:checked {
+            border-color: #ee9d2b;
+            background: #ee9d2b;
+        }
+        .custom-radio:checked::after {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            background: #0a0a0a;
+            border-radius: 50%;
+            margin: 4px auto;
+        }
+        .custom-checkbox:checked::after {
+            content: '✓';
+            display: block;
+            color: #0a0a0a;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 16px;
+        }
+        .custom-radio:hover,
+        .custom-checkbox:hover {
+            border-color: #ee9d2b;
+        }
+        
+        /* Question card */
+        .question-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+        .question-card:hover {
+            border-color: rgba(238, 157, 43, 0.3);
+        }
+        .question-card.answered {
+            border-color: rgba(238, 157, 43, 0.5);
+            background: rgba(238, 157, 43, 0.05);
+        }
+        
+        /* Text input */
+        .text-input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #fff;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+        .text-input:focus {
+            outline: none;
+            border-color: #ee9d2b;
+            box-shadow: 0 0 0 2px rgba(238, 157, 43, 0.2);
+        }
+        .text-input::placeholder {
+            color: #666;
+        }
+        
+        /* Progress bar */
+        .progress-bar {
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ee9d2b, #fbdea6);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen">
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
+            <a href="/" class="flex items-center gap-4 group cursor-pointer">
+                <img src="/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
+                <div>
+                    <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
+                    <p class="text-[0.6rem] text-primary uppercase tracking-[0.3em] font-sans">Estates</p>
+                </div>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pt-32 pb-16 px-6">
+        <div class="max-w-3xl mx-auto">
+            
+            <!-- Header -->
+            <div class="text-center mb-12">
+                <div class="w-16 h-16 mx-auto rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-primary text-3xl">assignment</span>
+                </div>
+                <h1 class="text-3xl md:text-4xl font-serif font-medium text-white mb-4">Complete Your Registration</h1>
+                <p class="text-slate-400 font-light max-w-lg mx-auto">
+                    Please answer these quick questions to help us personalize your Kea Valley experience. Your free tokens will be minted once complete.
+                </p>
+            </div>
+
+            <!-- Progress -->
+            <div class="mb-10">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm text-slate-500">Progress</span>
+                    <span class="text-sm text-primary font-medium" id="progressText">0 of 6 completed</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Questionnaire Form -->
+            <form id="questionnaireForm" class="space-y-6">
+                
+                <!-- Question 1: Property Owner -->
+                <div class="question-card" data-question="1">
+                    <div class="flex items-start gap-4 mb-4">
+                        <span class="text-primary font-serif text-xl">01</span>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-medium text-white mb-2">Are you a current home owner / property owner in Kea?</h3>
+                            <div class="flex gap-6 mb-4">
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="radio" name="is_property_owner" value="yes" class="custom-radio" onchange="togglePropertyLocation(true); updateProgress()">
+                                    <span class="text-slate-300">Yes</span>
+                                </label>
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="radio" name="is_property_owner" value="no" class="custom-radio" onchange="togglePropertyLocation(false); updateProgress()">
+                                    <span class="text-slate-300">No</span>
+                                </label>
+                            </div>
+                            <div id="propertyLocationField" class="hidden">
+                                <label class="block text-sm text-slate-400 mb-2">What is the Google Maps location of your property(ies)?</label>
+                                <input type="text" name="property_location" placeholder="Paste Google Maps link or address" class="text-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question 2: Property Index -->
+                <div class="question-card" data-question="2">
+                    <div class="flex items-start gap-4">
+                        <span class="text-primary font-serif text-xl">02</span>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-medium text-white mb-2">Are you interested in receiving the monthly Kea Property Index?</h3>
+                            <p class="text-sm text-slate-500 mb-4">This is a monthly review of the Property Sales which have happened on the island.</p>
+                            <div class="flex gap-6">
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="radio" name="interested_property_index" value="yes" class="custom-radio" onchange="updateProgress()">
+                                    <span class="text-slate-300">Yes, I'm interested</span>
+                                </label>
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="radio" name="interested_property_index" value="no" class="custom-radio" onchange="updateProgress()">
+                                    <span class="text-slate-300">No, thanks</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question 3: Property Tour -->
+                <div class="question-card" data-question="3">
+                    <div class="flex items-start gap-4">
+                        <span class="text-primary font-serif text-xl">03</span>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-medium text-white mb-2">Are you interested in the next Kea Property Tour?</h3>
+                            <p class="text-sm text-slate-500 mb-4">Join us on <span class="text-primary">April 2026</span> for an exclusive property tour on the island.</p>
+                            <div class="flex gap-6">
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="radio" name="interested_property_tour" value="yes" class="custom-radio" onchange="updateProgress()">
+                                    <span class="text-slate-300">Yes, register me</span>
+                                </label>
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="radio" name="interested_property_tour" value="no" class="custom-radio" onchange="updateProgress()">
+                                    <span class="text-slate-300">Not this time</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question 4: Members Club -->
+                <div class="question-card" data-question="4">
+                    <div class="flex items-start gap-4">
+                        <span class="text-primary font-serif text-xl">04</span>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-medium text-white mb-2">Are you interested to know more about the Kea Valley Private Members Club?</h3>
+                            <p class="text-sm text-slate-500 mb-4">Exclusive access to summits, property options, and premium experiences.</p>
+                            <div class="flex gap-6">
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="radio" name="interested_members_club" value="yes" class="custom-radio" onchange="updateProgress()">
+                                    <span class="text-slate-300">Yes, tell me more</span>
+                                </label>
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="radio" name="interested_members_club" value="no" class="custom-radio" onchange="updateProgress()">
+                                    <span class="text-slate-300">Not interested</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question 5: Boat/Yacht -->
+                <div class="question-card" data-question="5">
+                    <div class="flex items-start gap-4">
+                        <span class="text-primary font-serif text-xl">05</span>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-medium text-white mb-2">Do you own a boat or yacht?</h3>
+                            <div class="flex gap-6 mb-4">
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="radio" name="owns_boat" value="yes" class="custom-radio" onchange="toggleYachtClub(true); updateProgress()">
+                                    <span class="text-slate-300">Yes</span>
+                                </label>
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="radio" name="owns_boat" value="no" class="custom-radio" onchange="toggleYachtClub(false); updateProgress()">
+                                    <span class="text-slate-300">No</span>
+                                </label>
+                            </div>
+                            <div id="yachtClubField" class="hidden border-t border-white/10 pt-4 mt-4">
+                                <h4 class="text-base font-medium text-white mb-3">Are you interested in mooring at the Kea Valley Yacht Club during Summer?</h4>
+                                <div class="flex gap-6">
+                                    <label class="flex items-center gap-3 cursor-pointer">
+                                        <input type="radio" name="interested_yacht_club" value="yes" class="custom-radio">
+                                        <span class="text-slate-300">Yes, I'm interested</span>
+                                    </label>
+                                    <label class="flex items-center gap-3 cursor-pointer">
+                                        <input type="radio" name="interested_yacht_club" value="no" class="custom-radio">
+                                        <span class="text-slate-300">No, thanks</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question 6: Restaurant Review -->
+                <div class="question-card" data-question="6">
+                    <div class="flex items-start gap-4">
+                        <span class="text-primary font-serif text-xl">06</span>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-medium text-white mb-2">Are you interested in receiving the monthly Kea Restaurant Review?</h3>
+                            <p class="text-sm text-slate-500 mb-4">This is a monthly review of one of the top restaurants on the island.</p>
+                            <div class="flex gap-6">
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="radio" name="interested_restaurant_review" value="yes" class="custom-radio" onchange="updateProgress()">
+                                    <span class="text-slate-300">Yes, I'm interested</span>
+                                </label>
+                                <label class="flex items-center gap-3 cursor-pointer">
+                                    <input type="radio" name="interested_restaurant_review" value="no" class="custom-radio" onchange="updateProgress()">
+                                    <span class="text-slate-300">No, thanks</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-6">
+                    <button type="submit" id="submitBtn" disabled class="w-full py-4 bg-primary/30 text-white/50 font-bold rounded-sm tracking-widest uppercase text-xs cursor-not-allowed transition-all">
+                        Complete All Questions to Continue
+                    </button>
+                    <p class="text-center text-slate-500 text-sm mt-4">
+                        Your answers help us tailor your Kea Valley experience
+                    </p>
+                </div>
+
+            </form>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-8 border-t border-white/5" style="background-color: #1a1a1a;">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <div class="text-slate-600 text-xs font-light">
+                © 2026 Kea Valley. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Get wallet address from URL or session
+        const urlParams = new URLSearchParams(window.location.search);
+        const walletAddress = urlParams.get('wallet') || sessionStorage.getItem('walletAddress');
+        
+        if (!walletAddress) {
+            // No wallet, redirect to main claim page
+            window.location.href = '/claim';
+        }
+
+        // Toggle property location field
+        function togglePropertyLocation(show) {
+            const field = document.getElementById('propertyLocationField');
+            if (show) {
+                field.classList.remove('hidden');
+            } else {
+                field.classList.add('hidden');
+            }
+        }
+
+        // Toggle yacht club field
+        function toggleYachtClub(show) {
+            const field = document.getElementById('yachtClubField');
+            if (show) {
+                field.classList.remove('hidden');
+            } else {
+                field.classList.add('hidden');
+            }
+        }
+
+        // Update progress bar
+        function updateProgress() {
+            const questions = [
+                'is_property_owner',
+                'interested_property_index',
+                'interested_property_tour',
+                'interested_members_club',
+                'owns_boat',
+                'interested_restaurant_review'
+            ];
+            
+            let answered = 0;
+            questions.forEach(name => {
+                const radios = document.querySelectorAll(`input[name="${name}"]`);
+                radios.forEach(radio => {
+                    if (radio.checked) answered++;
+                });
+            });
+
+            // Update progress bar
+            const percentage = (answered / 6) * 100;
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = `${answered} of 6 completed`;
+
+            // Update question cards
+            document.querySelectorAll('.question-card').forEach(card => {
+                const questionNum = card.dataset.question;
+                const questionName = questions[questionNum - 1];
+                const isAnswered = document.querySelector(`input[name="${questionName}"]:checked`);
+                if (isAnswered) {
+                    card.classList.add('answered');
+                } else {
+                    card.classList.remove('answered');
+                }
+            });
+
+            // Enable/disable submit button
+            const submitBtn = document.getElementById('submitBtn');
+            if (answered === 6) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('bg-primary/30', 'text-white/50', 'cursor-not-allowed');
+                submitBtn.classList.add('bg-primary', 'text-background-dark', 'gold-glow', 'hover:translate-y-[-2px]', 'cursor-pointer');
+                submitBtn.textContent = 'Complete Registration & Claim Tokens';
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('bg-primary/30', 'text-white/50', 'cursor-not-allowed');
+                submitBtn.classList.remove('bg-primary', 'text-background-dark', 'gold-glow', 'hover:translate-y-[-2px]', 'cursor-pointer');
+                submitBtn.textContent = 'Complete All Questions to Continue';
+            }
+        }
+
+        // Form submission
+        document.getElementById('questionnaireForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            // Gather form data
+            const formData = {
+                wallet_address: walletAddress,
+                is_property_owner: document.querySelector('input[name="is_property_owner"]:checked')?.value === 'yes',
+                property_location: document.querySelector('input[name="property_location"]')?.value || null,
+                interested_property_index: document.querySelector('input[name="interested_property_index"]:checked')?.value === 'yes',
+                interested_property_tour: document.querySelector('input[name="interested_property_tour"]:checked')?.value === 'yes',
+                interested_members_club: document.querySelector('input[name="interested_members_club"]:checked')?.value === 'yes',
+                owns_boat: document.querySelector('input[name="owns_boat"]:checked')?.value === 'yes',
+                interested_yacht_club: document.querySelector('input[name="interested_yacht_club"]:checked')?.value === 'yes',
+                interested_restaurant_review: document.querySelector('input[name="interested_restaurant_review"]:checked')?.value === 'yes'
+            };
+
+            try {
+                const response = await fetch('/api/questionnaire/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Check if user already minted - if so, go to profile instead of claim
+                    if (result.already_minted) {
+                        window.location.href = `/profile?wlt=${walletAddress}`;
+                    } else {
+                        // Redirect to claim page to mint tokens
+                        window.location.href = `/claim?wallet=${walletAddress}&registered=true`;
+                    }
+                } else {
+                    alert('Error submitting questionnaire: ' + result.error);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Complete Registration & Claim Tokens';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error submitting questionnaire. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Complete Registration & Claim Tokens';
+            }
+        });
+
+        // Initialize progress
+        updateProgress();
+    </script>
+
+</body>
+</html>

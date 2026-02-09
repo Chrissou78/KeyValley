@@ -3542,6 +3542,184 @@ app.get('/api/presale/bonus-tiers', async (req, res) => {
     }
 });
 
+// ============================================
+// QUESTIONNAIRE ENDPOINTS
+// ============================================
+
+// Check registration status
+app.get('/api/questionnaire/status/:wallet', async (req, res) => {
+    try {
+        const { wallet } = req.params;
+        
+        const userResult = await pool.query(
+            'SELECT registration_complete FROM registrants WHERE wallet_address = $1',
+            [wallet.toLowerCase()]
+        );
+
+        if (userResult.rows.length === 0) {
+            return res.json({ 
+                success: true, 
+                exists: false,
+                registration_complete: false 
+            });
+        }
+
+        const questionnaireResult = await pool.query(
+            'SELECT id FROM questionnaire_responses WHERE wallet_address = $1',
+            [wallet.toLowerCase()]
+        );
+
+        res.json({
+            success: true,
+            exists: true,
+            registration_complete: userResult.rows[0].registration_complete || false,
+            has_questionnaire: questionnaireResult.rows.length > 0
+        });
+
+    } catch (error) {
+        console.error('Error checking questionnaire status:', error);
+        res.status(500).json({ success: false, error: 'Failed to check status' });
+    }
+});
+
+// Submit questionnaire
+app.post('/api/questionnaire/submit', async (req, res) => {
+    try {
+        const {
+            wallet_address,
+            is_property_owner,
+            property_location,
+            interested_property_index,
+            interested_property_tour,
+            interested_members_club,
+            owns_boat,
+            interested_yacht_club,
+            interested_restaurant_review
+        } = req.body;
+
+        if (!wallet_address) {
+            return res.status(400).json({ success: false, error: 'Wallet address required' });
+        }
+
+        const walletLower = wallet_address.toLowerCase();
+
+        // Check if registrant exists
+        const registrantResult = await pool.query(
+            'SELECT id, minted FROM registrants WHERE wallet_address = $1',
+            [walletLower]
+        );
+
+        if (registrantResult.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'User not found. Please register first.' });
+        }
+
+        const alreadyMinted = registrantResult.rows[0].minted || false;
+
+        // Insert or update questionnaire
+        await pool.query(`
+            INSERT INTO questionnaire_responses (
+                wallet_address,
+                is_property_owner,
+                property_location,
+                interested_property_index,
+                interested_property_tour,
+                interested_members_club,
+                owns_boat,
+                interested_yacht_club,
+                interested_restaurant_review
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ON CONFLICT (wallet_address) 
+            DO UPDATE SET
+                is_property_owner = $2,
+                property_location = $3,
+                interested_property_index = $4,
+                interested_property_tour = $5,
+                interested_members_club = $6,
+                owns_boat = $7,
+                interested_yacht_club = $8,
+                interested_restaurant_review = $9,
+                updated_at = CURRENT_TIMESTAMP
+        `, [
+            walletLower,
+            is_property_owner || false,
+            property_location || null,
+            interested_property_index || false,
+            interested_property_tour || false,
+            interested_members_club || false,
+            owns_boat || false,
+            interested_yacht_club || false,
+            interested_restaurant_review || false
+        ]);
+
+        // Mark registration complete
+        await pool.query(
+            'UPDATE registrants SET registration_complete = TRUE, updated_at = CURRENT_TIMESTAMP WHERE wallet_address = $1',
+            [walletLower]
+        );
+
+        res.json({ 
+            success: true, 
+            message: 'Questionnaire submitted',
+            already_minted: alreadyMinted
+        });
+
+    } catch (error) {
+        console.error('Error submitting questionnaire:', error);
+        res.status(500).json({ success: false, error: 'Failed to submit' });
+    }
+});
+
+// Get questionnaire data
+app.get('/api/questionnaire/:wallet', async (req, res) => {
+    try {
+        const { wallet } = req.params;
+        
+        const result = await pool.query(
+            'SELECT * FROM questionnaire_responses WHERE wallet_address = $1',
+            [wallet.toLowerCase()]
+        );
+
+        if (result.rows.length === 0) {
+            return res.json({ success: true, exists: false });
+        }
+
+        res.json({ success: true, exists: true, data: result.rows[0] });
+
+    } catch (error) {
+        console.error('Error fetching questionnaire:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch' });
+    }
+});
+
+// Create user endpoint (uses registrants)
+app.post('/api/users/create', async (req, res) => {
+    try {
+        const { wallet_address } = req.body;
+        
+        if (!wallet_address) {
+            return res.status(400).json({ success: false, error: 'Wallet address required' });
+        }
+
+        // Check if already exists in registrants
+        const exists = await pool.query(
+            'SELECT id FROM registrants WHERE wallet_address = $1',
+            [wallet_address.toLowerCase()]
+        );
+
+        if (exists.rows.length > 0) {
+            return res.json({ success: true, message: 'User already exists' });
+        }
+
+        // User will be created by the normal claim flow
+        // This endpoint just checks existence
+        res.json({ success: true, message: 'Ready for registration' });
+
+    } catch (error) {
+        console.error('Error checking user:', error);
+        res.status(500).json({ success: false, error: 'Failed to check user' });
+    }
+});
+
 // ===========================================
 // Presale Payment Verification & Auto-Mint
 // ===========================================
