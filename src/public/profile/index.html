@@ -535,7 +535,12 @@
             presaleBanner?.classList.add('hidden');
         }
 
-        function showProfile(user) {
+        async function showProfile(user) {
+            const canProceed = await checkQuestionnaireRequired(user.wallet);
+            if (!canProceed) return;
+            
+            currentUser = user;
+            acceptMessages = false;
             currentUser = user;
             acceptMessages = false;
             
@@ -918,21 +923,65 @@
         });
 
         // ============================================
+        // Questionnaire Check
+        // ============================================
+        async function checkQuestionnaireRequired(wallet) {
+            try {
+                const response = await fetch(`/api/questionnaire/status/${wallet}`);
+                const result = await response.json();
+                
+                console.log('Profile - Questionnaire status:', result);
+                
+                if (result.success && result.exists && !result.registration_complete) {
+                    // User exists but hasn't completed questionnaire
+                    const params = new URLSearchParams(window.location.search);
+                    const signature = params.get('signature') || params.get('sig');
+                    const userId = params.get('usr') || params.get('user');
+                    
+                    let questionnaireUrl = `/claim/questionnaire.html?wallet=${encodeURIComponent(wallet)}`;
+                    if (signature) questionnaireUrl += `&signature=${encodeURIComponent(signature)}`;
+                    if (userId) questionnaireUrl += `&usr=${encodeURIComponent(userId)}`;
+                    questionnaireUrl += `&returnTo=profile`;
+                    
+                    console.log('Questionnaire required, redirecting to:', questionnaireUrl);
+                    window.location.href = questionnaireUrl;
+                    return false; // Questionnaire required
+                }
+                return true; // No questionnaire needed
+            } catch (error) {
+                console.error('Error checking questionnaire status:', error);
+                return true; // Don't block on error
+            }
+        }
+
+        // ============================================
         // Initialize
         // ============================================
-        function init() {
+        async function init() {
             const params = new URLSearchParams(window.location.search);
             const wallet = params.get('wlt') || params.get('wallet');
             const code = params.get('code');
 
             if (code && wallet) {
                 window.history.replaceState({}, '', '/profile');
+                showLoading();
+                
+                // Check questionnaire first
+                const canProceed = await checkQuestionnaireRequired(wallet);
+                if (!canProceed) return;
+                
                 exchangeCode(code, wallet, params.get('usr'));
                 return;
             }
 
             if (wallet) {
                 window.history.replaceState({}, '', '/profile');
+                showLoading();
+                
+                // Check questionnaire first
+                const canProceed = await checkQuestionnaireRequired(wallet);
+                if (!canProceed) return;
+                
                 const stored = getStoredSession();
                 if (stored?.wallet === wallet && (stored.email || stored.name)) {
                     showProfile(stored);
@@ -946,6 +995,12 @@
 
             const stored = getStoredSession();
             if (stored?.wallet) {
+                showLoading();
+                
+                // Check questionnaire first
+                const canProceed = await checkQuestionnaireRequired(stored.wallet);
+                if (!canProceed) return;
+                
                 acceptMessages = false;
                 showProfile(stored);
                 return;

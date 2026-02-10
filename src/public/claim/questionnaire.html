@@ -462,13 +462,16 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    // Build redirect URL with ALL original params
+                    // Check if we should return to profile
+                    const returnTo = urlParams.get('returnTo');
+                    
                     let redirectUrl;
                     
-                    if (result.already_minted) {
+                    if (result.already_minted || returnTo === 'profile') {
+                        // Go to profile
                         redirectUrl = `/profile?wlt=${encodeURIComponent(walletAddress)}`;
                     } else {
-                        // IMPORTANT: Include signature and userId for minting
+                        // Go to claim page to mint tokens
                         redirectUrl = `/claim?wallet=${encodeURIComponent(walletAddress)}&registered=true`;
                         if (signature) {
                             redirectUrl += `&signature=${encodeURIComponent(signature)}`;
