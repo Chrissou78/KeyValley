@@ -6,6 +6,12 @@ const path = require('path');
 
 const app = express();
 
+// DEBUG: Log ALL incoming requests
+app.use((req, res, next) => {
+    console.log(`📥 [${req.method}] ${req.path}`);
+    next();
+})
+
 // ========================================
 // STATIC FILES FIRST - NO AUTH REQUIRED
 // ========================================
