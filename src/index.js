@@ -86,8 +86,12 @@ if (process.env.VERCEL) {
         }
         return app(req, res);
     };
-} else if (require.main === module) {
-    startServer();
+} else {
+    // Local development
+    if (require.main === module) {
+        startServer();
+    }
+    
+    // Export for local testing/imports
+    module.exports = { app, startServer };
 }
-
-module.exports = { app, startServer };
