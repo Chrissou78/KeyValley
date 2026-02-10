@@ -1,6 +1,4 @@
 // src/server.js
-// Simplified Express server setup
-
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -25,16 +23,22 @@ app.use('/api/stripe', stripeRoutes);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Mount all routes BEFORE static files
+// ========================================
+// STATIC FILES FIRST (no auth required)
+// ========================================
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
+app.use('/admin/js', express.static(path.join(__dirname, 'public/admin/js')));
+app.use('/admin/css', express.static(path.join(__dirname, 'public/admin/css')));
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ========================================
+// ROUTES AFTER STATIC FILES
+// ========================================
 const routes = require('./routes');
 app.use('/', routes);
 
-// Static files AFTER routes (so routes take priority)
-app.use(express.static(path.join(__dirname, 'public')));
-
 // Catch-all redirect (but not for static assets)
 app.get('*', (req, res, next) => {
-    // Don't redirect API calls or static assets
     if (req.path.startsWith('/api/') || req.path.includes('.')) {
         return next();
     }
