@@ -118,24 +118,31 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+            flex: 1;
+            max-width: 60%;
         }
+
         .architect-name {
             font-family: 'Playfair Display', serif;
             font-size: 1.75rem;
             font-weight: 500;
             color: #ee9d2b;
             letter-spacing: 0.05em;
-            margin: 0 0 0.25rem 0;
+            margin: 0;
+            display: block;
+            width: 100%;
         }
 
         .architect-subtitle {
             font-family: 'Manrope', sans-serif;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             font-weight: 400;
             color: #ffffff;
             letter-spacing: 0.02em;
-            margin: 0 0 0.75rem 0;
+            margin: 5px 0 0 0;
             opacity: 0.85;
+            display: block;
+            width: 100%;
         }
         .pdf-link {
             display: flex;
@@ -621,8 +628,10 @@
                 <!-- SLIDE 2: Residences by Johan -->
                 <div class="residence-slide" data-slide="1">
                     <div class="slide-title-bar">
-                        <h3 class="architect-name">Residences by Johan Nikolao</h3>
-                        <h4 class="architect-subtitle">Founder and Property Developer of Melisaki, the most beautiful sunset region of the island of Kea, (Tzai) Greece</h4>
+                        <div class="slide-title-content">
+                            <h3 class="architect-name">Residences by Johan Nikolao</h3>
+                            <h4 class="architect-subtitle">Founder and Property Developer of Melisaki, the most beautiful sunset region of the island of Kea, (Tzai) Greece</h4>
+                        </div>
                         <a href="/pdfs/residences-by-johan.pdf" class="pdf-link" target="_blank">
                             <span>Want to know more?</span>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
