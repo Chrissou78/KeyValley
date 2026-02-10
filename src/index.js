@@ -1,68 +1,93 @@
+// src/index.js
+// Application entry point
+
 require('dotenv').config();
 
+const app = require('./server');
 const db = require('./db-postgres');
-const { startServer, app } = require('./server');
-const auth = require('./auth');
+const { PRESALE_CONFIG } = require('./config/constants');
 
-const NETWORK = process.env.NETWORK || 'polygon';
-const MINT_AMOUNT = process.env.MINT_AMOUNT || 2;
-
-async function main() {
-    console.log('');
-    console.log('╔════════════════════════════════════════╗');
-    console.log('║       KEA VALLEY® AUTO-MINTER          ║');
-    console.log('╚════════════════════════════════════════╝');
-    console.log('');
-    console.log(`  Network:       ${NETWORK.toUpperCase()}`);
-    console.log(`  Mint Amount:   ${MINT_AMOUNT} tokens`);
-    console.log(`  Database:      PostgreSQL`);
-    console.log('');
-
-    // Initialize PostgreSQL database
-    await db.initDb();
-    console.log('✅ PostgreSQL database initialized');
-
-    // Initialize admin user if not exists
-    await auth.initializeAdmin();
-
-    // Start API server
-    await startServer();
-}
-
-// For Vercel serverless - initialize DB on cold start
-let initialized = false;
-
-async function initForVercel() {
-    if (initialized) return;
-    
-    console.log('🔄 Initializing for Vercel...');
-    
+// Load presale settings from DB
+async function loadPresaleSettings() {
     try {
-        // Initialize PostgreSQL database
-        await db.initDb();
-        console.log('✅ PostgreSQL database initialized');
-        
-        // Initialize admin user
-        await auth.initializeAdmin();
-        console.log('✅ Admin user initialized');
-        
-        initialized = true;
-        console.log('✅ Vercel initialization complete');
+        const result = await db.pool.query('SELECT * FROM presale_config WHERE id = 1');
+        if (result.rows.length > 0) {
+            const config = result.rows[0];
+            PRESALE_CONFIG.saleTargetEUR = parseFloat(config.sale_target_eur) || PRESALE_CONFIG.saleTargetEUR;
+            PRESALE_CONFIG.tokenPrice = parseFloat(config.token_price) || PRESALE_CONFIG.tokenPrice;
+            PRESALE_CONFIG.minPurchase = parseFloat(config.min_purchase) || PRESALE_CONFIG.minPurchase;
+            PRESALE_CONFIG.presaleWallet = config.presale_wallet || PRESALE_CONFIG.presaleWallet;
+            PRESALE_CONFIG.presaleEnabled = config.presale_enabled !== false;
+            console.log('📦 Presale settings loaded from DB');
+        }
     } catch (error) {
-        console.error('❌ Vercel initialization error:', error);
-        // Don't set initialized to true so it retries on next request
+        console.log('  Using default presale settings');
     }
 }
 
-// Initialize immediately for Vercel
-if (process.env.VERCEL === '1') {
-    initForVercel();
+async function startServer() {
+    try {
+        console.log('\n========================================');
+        console.log('🚀 KEA VALLEY PRESALE SERVER');
+        console.log('========================================\n');
+
+        // Initialize database
+        console.log('⚙️ Initializing database connection...');
+        await db.initDb();
+
+        // Load presale settings
+        console.log('📦 Loading presale settings...');
+        await loadPresaleSettings();
+
+        // Start HTTP server
+        const PORT = process.env.PORT || 3000;
+        const server = app.listen(PORT, () => {
+            console.log(`\n✅ Server running on port ${PORT}\n`);
+        });
+
+        // Graceful shutdown
+        const gracefulShutdown = async (signal) => {
+            console.log(`\n  ${signal} received. Shutting down...`);
+            server.close(async () => {
+                try {
+                    await db.pool.end();
+                    console.log('🚀 Shutdown complete');
+                } catch (e) {
+                    console.error('Shutdown error:', e);
+                }
+                process.exit(0);
+            });
+            setTimeout(() => process.exit(1), 10000);
+        };
+
+        process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+        process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+    } catch (error) {
+        console.error('❌ Failed to start server:', error);
+        process.exit(1);
+    }
 }
 
-// For local development
-if (process.env.VERCEL !== '1' && require.main === module) {
-    main().catch(console.error);
+// Vercel serverless handler
+if (process.env.VERCEL) {
+    let initialized = false;
+    
+    module.exports = async (req, res) => {
+        if (!initialized) {
+            try {
+                await db.initDb();
+                await loadPresaleSettings();
+                initialized = true;
+                console.log('✅ Vercel initialization complete');
+            } catch (error) {
+                console.error('Vercel init error:', error);
+            }
+        }
+        return app(req, res);
+    };
+} else if (require.main === module) {
+    startServer();
 }
 
-// Export for Vercel serverless
-module.exports = app;
+module.exports = { app, startServer };

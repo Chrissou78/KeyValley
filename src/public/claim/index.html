@@ -49,7 +49,7 @@
     <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
             <a href="/" class="flex items-center gap-4 group cursor-pointer">
-                <img src="/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
+                <img src="/images/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
                 <div>
                     <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
                 </div>
@@ -98,7 +98,7 @@
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                 <a href="/" class="flex items-center gap-2">
-                    <img src="/logo.png" alt="Kea Valley" class="h-6 w-auto"/>
+                    <img src="/images/logo.png" alt="Kea Valley" class="h-6 w-auto"/>
                     <span class="text-xs font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
                 </a>
                 <div class="text-slate-600 text-xs font-light">
@@ -329,18 +329,29 @@
         }
 
         function showSuccess(data) {
-            cardTitle.textContent = 'Success';
+            cardTitle.textContent = data.tx_status === 'pending' ? 'Processing' : 'Success';
+            
+            const isPending = data.tx_status === 'pending';
+            
             statusEl.innerHTML = `
-                <div class="size-16 mx-auto rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-6">
-                    <span class="material-symbols-outlined text-green-400 text-3xl">check_circle</span>
+                <div class="size-16 mx-auto rounded-full ${isPending ? 'bg-yellow-500/10 border-yellow-500/20' : 'bg-green-500/10 border-green-500/20'} border flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined ${isPending ? 'text-yellow-400' : 'text-green-400'} text-3xl">
+                        ${isPending ? 'schedule' : 'check_circle'}
+                    </span>
                 </div>
-                <h3 class="text-xl font-serif text-white mb-2">Tokens Claimed!</h3>
-                <p class="text-slate-400 text-sm mb-4">${data.message || 'Your VIP tokens have been minted successfully.'}</p>
-                ${data.tx_hash && data.explorer_url ? `
-                    <a href="${data.explorer_url}" target="_blank" class="inline-flex items-center gap-2 text-primary text-xs hover:underline mb-6">
-                        View Transaction <span class="material-symbols-outlined text-sm">open_in_new</span>
+                <h3 class="text-xl font-serif text-white mb-2">
+                    ${isPending ? 'Tokens Being Minted' : 'Tokens Claimed!'}
+                </h3>
+                <p class="text-slate-400 text-sm mb-4">
+                    ${data.message || (isPending 
+                        ? 'Your transaction is being processed. This may take a few minutes.' 
+                        : 'Your VIP tokens have been minted successfully.')}
+                </p>
+                ${data.tx_hash ? `
+                    <a href="${data.explorer_url || `https://polygonscan.com/tx/${data.tx_hash}`}" target="_blank" class="inline-flex items-center gap-2 text-primary text-xs hover:underline mb-6">
+                        ${isPending ? 'Track Transaction' : 'View Transaction'} <span class="material-symbols-outlined text-sm">open_in_new</span>
                     </a>
-                ` : '<div class="mb-6"></div>'}
+                ` : '<p class="text-slate-500 text-xs mb-6">Transaction hash will appear shortly...</p>'}
                 <div>
                     <a href="${getProfileURL()}" class="inline-block bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-transform">
                         View My Profile
@@ -379,6 +390,30 @@
         }
 
         // ============================================
+// Register Wallet (creates registrant in DB)
+// ============================================
+        async function registerWallet(wallet, email, name) {
+            try {
+                const response = await fetch('/api/wallet/connect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        walletAddress: wallet,
+                        email: email || null,
+                        name: name || null,
+                        source: 'claim-page'
+                    })
+                });
+                const data = await response.json();
+                console.log('[Wallet Connect] Response:', data);
+                return data.success;
+            } catch (error) {
+                console.error('[Wallet Connect] Error:', error);
+                return false;
+            }
+        }
+
+        // ============================================
         // Claim Processing
         // ============================================
         async function processClaim(wallet, signature, userId, skipQuestionnaireCheck = false) {
@@ -390,15 +425,17 @@
             // Save to storage
             saveToStorage(wallet, userId, signature);
 
-            // Check registration status first (unless we're returning from questionnaire)
+            // FIRST: Register the wallet (creates registrant if not exists)
+            showCheckingRegistration(wallet);
+            await registerWallet(wallet, null, null);
+
+            // Check registration status (questionnaire completion)
             if (!skipQuestionnaireCheck) {
-                showCheckingRegistration(wallet);
-                
                 const status = await checkRegistrationStatus(wallet);
                 
                 console.log('Status check result:', status);
 
-                // If user hasn't completed questionnaire, redirect (even if already minted)
+                // If user hasn't completed questionnaire, redirect
                 if (!status.registrationComplete) {
                     console.log('Questionnaire not complete, redirecting...');
                     redirectToQuestionnaire(wallet, signature, userId);
@@ -429,7 +466,6 @@
                 const data = await response.json();
 
                 if (response.status === 201) {
-                    // Track referral on successful claim
                     await trackReferral(wallet);
                     showSuccess(data);
                 } else if (response.status === 409) {
@@ -442,7 +478,6 @@
                 showError('Connection error. Please try again.');
             }
         }
-
         // ============================================
         // Initialize
         // ============================================

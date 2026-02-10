@@ -17,7 +17,6 @@ let isInitialized = false;
  */
 async function initDb() {
     if (isInitialized) {
-        // Ensure email column exists even if already initialized
         try {
             await pool.query(`ALTER TABLE registrants ADD COLUMN IF NOT EXISTS email VARCHAR(255)`);
             await pool.query(`ALTER TABLE registrants ADD COLUMN IF NOT EXISTS source VARCHAR(50) DEFAULT 'unknown'`);
@@ -30,35 +29,36 @@ async function initDb() {
 
     const client = await pool.connect();
     try {
-        // Create registrants table with email column
+        // Create registrants table
         await client.query(`
             CREATE TABLE IF NOT EXISTS registrants (
                 id SERIAL PRIMARY KEY,
-                address VARCHAR(42) UNIQUE NOT NULL,
+                wallet_address VARCHAR(42) UNIQUE NOT NULL,
                 email VARCHAR(255),
                 minted BOOLEAN DEFAULT FALSE,
                 tx_hash VARCHAR(66),
+                tx_status VARCHAR(50),
                 registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 minted_at TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 signature TEXT,
                 source VARCHAR(50) DEFAULT 'unknown',
-                metadata JSONB DEFAULT '{}'::jsonb
+                metadata JSONB DEFAULT '{}'::jsonb,
+                referrer_wallet VARCHAR(42),
+                referrer_set_at TIMESTAMP,
+                referrer_code VARCHAR(50),
+                claim_amount NUMERIC,
+                claimed BOOLEAN DEFAULT FALSE,
+                claimed_at TIMESTAMP,
+                registration_complete BOOLEAN DEFAULT FALSE
             )
         `);
 
-        // Add columns if they don't exist (for existing tables)
-        await client.query(`ALTER TABLE registrants ADD COLUMN IF NOT EXISTS email VARCHAR(255)`);
-        await client.query(`ALTER TABLE registrants ADD COLUMN IF NOT EXISTS source VARCHAR(50) DEFAULT 'unknown'`);
-        await client.query(`ALTER TABLE registrants ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()`);
-
         // Create indexes
-        await client.query(`CREATE INDEX IF NOT EXISTS idx_registrants_address ON registrants(wallet_address)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_registrants_wallet ON registrants(wallet_address)`);
         await client.query(`CREATE INDEX IF NOT EXISTS idx_registrants_minted ON registrants(minted)`);
         await client.query(`CREATE INDEX IF NOT EXISTS idx_registrants_email ON registrants(email)`);
 
-        // ... rest of your existing initDb code for admin_users, sessions, presale_purchases ...
-        
         // Create admin_users table
         await client.query(`
             CREATE TABLE IF NOT EXISTS admin_users (
@@ -110,7 +110,8 @@ async function initDb() {
         // Clean up expired sessions
         await client.query(`DELETE FROM sessions WHERE expires_at < CURRENT_TIMESTAMP`);
 
-        await pool.query(`
+        // Create admin_whitelist table
+        await client.query(`
             CREATE TABLE IF NOT EXISTS admin_whitelist (
                 id SERIAL PRIMARY KEY,
                 email VARCHAR(255) UNIQUE NOT NULL,
@@ -123,14 +124,30 @@ async function initDb() {
             )
         `);
 
-        await pool.query(`
+        await client.query(`
             INSERT INTO admin_whitelist (email, name, role)
             VALUES ('christopher.fourquier@onchainlabs.ch', 'Christopher Fourquier', 'super_admin')
             ON CONFLICT (email) DO NOTHING
         `);
 
-        await pool.query(`
-            CREATE INDEX IF NOT EXISTS idx_admin_whitelist_email ON admin_whitelist(LOWER(email))
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_admin_whitelist_email ON admin_whitelist(LOWER(email))`);
+
+        // Create questionnaire_responses table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS questionnaire_responses (
+                id SERIAL PRIMARY KEY,
+                wallet_address VARCHAR(42) UNIQUE NOT NULL,
+                is_property_owner BOOLEAN DEFAULT FALSE,
+                property_location TEXT,
+                interested_property_index BOOLEAN DEFAULT FALSE,
+                interested_property_tour BOOLEAN DEFAULT FALSE,
+                interested_members_club BOOLEAN DEFAULT FALSE,
+                owns_boat BOOLEAN DEFAULT FALSE,
+                interested_yacht_club BOOLEAN DEFAULT FALSE,
+                interested_restaurant_review BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            )
         `);
 
         isInitialized = true;
@@ -143,22 +160,6 @@ async function initDb() {
     }
 }
 
-async function updateRegistrantEmail(address, email) {
-    const normalizedAddress = address.toLowerCase();
-    try {
-        const result = await pool.query(
-            `UPDATE registrants 
-             SET email = $2, updated_at = NOW() 
-             WHERE address = $1
-             RETURNING *`,
-            [normalizedAddress, email]
-        );
-        return result.rows[0] ? formatRegistrant(result.rows[0]) : null;
-    } catch (error) {
-        console.error('Error updating registrant email:', error);
-        throw error;
-    }
-}
 /**
  * Registrant Operations
  */
@@ -171,9 +172,9 @@ async function addRegistrant(address, signature = null, metadata = {}) {
     
     try {
         const result = await pool.query(
-            `INSERT INTO registrants (address, email, signature, source, metadata, updated_at) 
-             VALUES ($1, $2, $3, $4, $5, NOW()) 
-             ON CONFLICT (address) DO UPDATE SET
+            `INSERT INTO registrants (wallet_address, email, signature, source, metadata, registered_at, updated_at) 
+             VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) 
+             ON CONFLICT (wallet_address) DO UPDATE SET
                 email = COALESCE(EXCLUDED.email, registrants.email),
                 source = COALESCE(EXCLUDED.source, registrants.source),
                 updated_at = NOW()
@@ -192,7 +193,7 @@ async function getRegistrant(address) {
     const normalizedAddress = address.toLowerCase();
     try {
         const result = await pool.query(
-            'SELECT * FROM registrants WHERE address = $1',
+            'SELECT * FROM registrants WHERE wallet_address = $1',
             [normalizedAddress]
         );
         if (result.rows[0]) {
@@ -237,8 +238,8 @@ async function markAsMinted(address, txHash = null) {
     try {
         const result = await pool.query(
             `UPDATE registrants 
-             SET minted = TRUE, tx_hash = $2, minted_at = CURRENT_TIMESTAMP 
-             WHERE address = $1
+             SET minted = TRUE, tx_hash = $2, minted_at = CURRENT_TIMESTAMP, updated_at = NOW()
+             WHERE wallet_address = $1
              RETURNING *`,
             [normalizedAddress, txHash]
         );
@@ -249,13 +250,14 @@ async function markAsMinted(address, txHash = null) {
     }
 }
 
+// Upsert registrant
 async function upsertRegistrant(address, email = null, source = 'unknown') {
     const normalizedAddress = address.toLowerCase();
     try {
         const result = await pool.query(
-            `INSERT INTO registrants (address, email, source, updated_at) 
-             VALUES ($1, $2, $3, NOW()) 
-             ON CONFLICT (address) DO UPDATE SET
+            `INSERT INTO registrants (wallet_address, email, source, registered_at, updated_at) 
+             VALUES ($1, $2, $3, NOW(), NOW()) 
+             ON CONFLICT (wallet_address) DO UPDATE SET
                 email = COALESCE(EXCLUDED.email, registrants.email),
                 source = CASE WHEN registrants.source = 'unknown' THEN EXCLUDED.source ELSE registrants.source END,
                 updated_at = NOW()
@@ -269,7 +271,7 @@ async function upsertRegistrant(address, email = null, source = 'unknown') {
     }
 }
 
-// Update registrant metadata
+// Update registrant
 async function updateRegistrant(address, updates) {
     const normalizedAddress = address.toLowerCase();
     try {
@@ -292,8 +294,10 @@ async function updateRegistrant(address, updates) {
 
         if (setClauses.length === 0) return await getRegistrant(normalizedAddress);
 
+        setClauses.push('updated_at = NOW()');
+
         const result = await pool.query(
-            `UPDATE registrants SET ${setClauses.join(', ')} WHERE address = $1 RETURNING *`,
+            `UPDATE registrants SET ${setClauses.join(', ')} WHERE wallet_address = $1 RETURNING *`,
             values
         );
         return result.rows[0] ? formatRegistrant(result.rows[0]) : null;
@@ -303,12 +307,30 @@ async function updateRegistrant(address, updates) {
     }
 }
 
+// Update registrant email
+async function updateRegistrantEmail(address, email) {
+    const normalizedAddress = address.toLowerCase();
+    try {
+        const result = await pool.query(
+            `UPDATE registrants 
+             SET email = $2, updated_at = NOW() 
+             WHERE wallet_address = $1
+             RETURNING *`,
+            [normalizedAddress, email]
+        );
+        return result.rows[0] ? formatRegistrant(result.rows[0]) : null;
+    } catch (error) {
+        console.error('Error updating registrant email:', error);
+        throw error;
+    }
+}
+
 // Check if address exists
 async function hasRegistrant(address) {
     const normalizedAddress = address.toLowerCase();
     try {
         const result = await pool.query(
-            'SELECT 1 FROM registrants WHERE address = $1',
+            'SELECT 1 FROM registrants WHERE wallet_address = $1',
             [normalizedAddress]
         );
         return result.rows.length > 0;
@@ -344,7 +366,6 @@ async function getStats() {
  * Admin User Operations
  */
 
-// Get admin user by username
 async function getAdminUser(username) {
     try {
         const result = await pool.query(
@@ -358,7 +379,6 @@ async function getAdminUser(username) {
     }
 }
 
-// Create admin user
 async function createAdminUser(username, passwordHash, mustChangePassword = true) {
     try {
         const result = await pool.query(
@@ -375,7 +395,6 @@ async function createAdminUser(username, passwordHash, mustChangePassword = true
     }
 }
 
-// Update admin password
 async function updateAdminPassword(username, passwordHash, mustChangePassword = false) {
     try {
         const result = await pool.query(
@@ -392,7 +411,6 @@ async function updateAdminPassword(username, passwordHash, mustChangePassword = 
     }
 }
 
-// Update last login
 async function updateLastLogin(username) {
     try {
         await pool.query(
@@ -408,7 +426,6 @@ async function updateLastLogin(username) {
  * Session Operations
  */
 
-// Create session
 async function createSession(sessionId, username, expiresInHours = 24) {
     try {
         const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
@@ -425,7 +442,6 @@ async function createSession(sessionId, username, expiresInHours = 24) {
     }
 }
 
-// Get session
 async function getSession(sessionId) {
     try {
         const result = await pool.query(
@@ -440,7 +456,6 @@ async function getSession(sessionId) {
     }
 }
 
-// Delete session
 async function deleteSession(sessionId) {
     try {
         await pool.query('DELETE FROM sessions WHERE session_id = $1', [sessionId]);
@@ -449,7 +464,6 @@ async function deleteSession(sessionId) {
     }
 }
 
-// Clean expired sessions
 async function cleanExpiredSessions() {
     try {
         const result = await pool.query(
@@ -466,7 +480,6 @@ async function cleanExpiredSessions() {
  * Presale Operations
  */
 
-// Add presale purchase
 async function addPresalePurchase(purchase) {
     try {
         const result = await pool.query(
@@ -491,7 +504,6 @@ async function addPresalePurchase(purchase) {
     }
 }
 
-// Get presale purchases for address
 async function getPresalePurchases(address) {
     try {
         const result = await pool.query(
@@ -507,7 +519,6 @@ async function getPresalePurchases(address) {
     }
 }
 
-// Get all presale purchases
 async function getAllPresalePurchases() {
     try {
         const result = await pool.query(
@@ -520,7 +531,6 @@ async function getAllPresalePurchases() {
     }
 }
 
-// Get presale purchase by ID
 async function getPresalePurchaseById(id) {
     try {
         const result = await pool.query(
@@ -534,7 +544,6 @@ async function getPresalePurchaseById(id) {
     }
 }
 
-// Get presale stats
 async function getPresaleStats() {
     try {
         const result = await pool.query(`
@@ -555,16 +564,10 @@ async function getPresaleStats() {
         };
     } catch (error) {
         console.error('Error getting presale stats:', error);
-        return {
-            tokensSold: 0,
-            totalUSD: 0,
-            uniqueBuyers: 0,
-            totalPurchases: 0
-        };
+        return { tokensSold: 0, totalUSD: 0, uniqueBuyers: 0, totalPurchases: 0 };
     }
 }
 
-// Update presale purchase
 async function updatePresalePurchase(id, updates) {
     try {
         const fields = [];
@@ -596,7 +599,6 @@ async function updatePresalePurchase(id, updates) {
     }
 }
 
-// Update presale purchase by Stripe session ID
 async function updatePresalePurchaseByStripeSession(sessionId, updates) {
     try {
         const fields = [];
@@ -628,11 +630,10 @@ async function updatePresalePurchaseByStripeSession(sessionId, updates) {
     }
 }
 
-// ============================================
-// Admin Whitelist Operations
-// ============================================
+/**
+ * Admin Whitelist Operations
+ */
 
-// Check if email is whitelisted admin
 async function isAdminWhitelisted(email) {
     if (!email) return false;
     try {
@@ -647,7 +648,6 @@ async function isAdminWhitelisted(email) {
     }
 }
 
-// Get admin by email
 async function getAdminByEmail(email) {
     if (!email) return null;
     try {
@@ -662,7 +662,6 @@ async function getAdminByEmail(email) {
     }
 }
 
-// Get admin by wallet address
 async function getAdminByWallet(walletAddress) {
     if (!walletAddress) return null;
     try {
@@ -677,7 +676,6 @@ async function getAdminByWallet(walletAddress) {
     }
 }
 
-// Get all admins
 async function getAllAdmins() {
     try {
         const result = await pool.query(
@@ -690,7 +688,6 @@ async function getAllAdmins() {
     }
 }
 
-// Add admin to whitelist
 async function addAdmin(email, name = null, role = 'admin', addedBy = null) {
     try {
         const result = await pool.query(
@@ -707,10 +704,8 @@ async function addAdmin(email, name = null, role = 'admin', addedBy = null) {
     }
 }
 
-// Remove admin from whitelist
 async function removeAdmin(email) {
     try {
-        // Prevent removing super_admin
         const admin = await getAdminByEmail(email);
         if (admin && admin.role === 'super_admin') {
             throw new Error('Cannot remove super admin');
@@ -727,7 +722,6 @@ async function removeAdmin(email) {
     }
 }
 
-// Update admin wallet address
 async function updateAdminWallet(email, walletAddress) {
     try {
         const result = await pool.query(
@@ -744,7 +738,6 @@ async function updateAdminWallet(email, walletAddress) {
     }
 }
 
-// Update admin last login
 async function updateAdminLastLogin(email) {
     try {
         await pool.query(
@@ -760,17 +753,17 @@ async function updateAdminLastLogin(email) {
  * Helper Functions
  */
 
-// Format registrant for API response
 function formatRegistrant(row) {
     if (!row) return null;
     return {
         id: row.id,
-        address: row.address,
-        wallet_address: row.address,
+        address: row.wallet_address,
+        wallet_address: row.wallet_address,
         email: row.email || null,
         minted: row.minted,
         txHash: row.tx_hash,
         tx_hash: row.tx_hash,
+        tx_status: row.tx_status,
         balance: row.balance || '0',
         source: row.source || 'unknown',
         registeredAt: row.registered_at,
@@ -784,7 +777,6 @@ function formatRegistrant(row) {
     };
 }
 
-// Test database connection
 async function testConnection() {
     try {
         const client = await pool.connect();
@@ -797,32 +789,39 @@ async function testConnection() {
     }
 }
 
-// Close pool (for graceful shutdown)
 async function closePool() {
     await pool.end();
 }
 
 module.exports = {
-    // Initialization
     initDb,
     testConnection,
     closePool,
-    
-    // Registrant operations
     addRegistrant,
     getRegistrant,
     getAllRegistrants,
     getPendingRegistrants,
     markAsMinted,
     updateRegistrant,
-    hasRegistrant,
-    getStats,
-
     updateRegistrantEmail,
     upsertRegistrant,
+    hasRegistrant,
+    getStats,
     getAdminUser,
-    
-    // Admin operations
+    createAdminUser,
+    updateAdminPassword,
+    updateLastLogin,
+    createSession,
+    getSession,
+    deleteSession,
+    cleanExpiredSessions,
+    addPresalePurchase,
+    getPresalePurchases,
+    getAllPresalePurchases,
+    getPresalePurchaseById,
+    getPresaleStats,
+    updatePresalePurchase,
+    updatePresalePurchaseByStripeSession,
     isAdminWhitelisted,
     getAdminByEmail,
     getAdminByWallet,
@@ -831,22 +830,5 @@ module.exports = {
     removeAdmin,
     updateAdminWallet,
     updateAdminLastLogin,
-    
-    // Session operations
-    createSession,
-    getSession,
-    deleteSession,
-    cleanExpiredSessions,
-    
-    // Presale operations
-    addPresalePurchase,
-    getPresalePurchases,
-    getAllPresalePurchases,
-    getPresalePurchaseById,
-    getPresaleStats,
-    updatePresalePurchase,
-    updatePresalePurchaseByStripeSession,
-    
-    // Direct pool access if needed
     pool
 };

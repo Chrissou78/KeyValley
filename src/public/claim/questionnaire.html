@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <meta name="description" content="Complete your registration - Kea Valley Estates">
-    <title>Complete Registration | Kea Valley Estates</title>
+    <meta name="description" content="Complete your registration - Kea Valley">
+    <title>Complete Registration | Kea Valley</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -146,10 +146,9 @@
     <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
             <a href="/" class="flex items-center gap-4 group cursor-pointer">
-                <img src="/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
+                <img src="/images/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
                 <div>
                     <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
-                    <p class="text-[0.6rem] text-primary uppercase tracking-[0.3em] font-sans">Estates</p>
                 </div>
             </a>
         </div>
@@ -356,7 +355,11 @@
         const signature = urlParams.get('signature') || urlParams.get('sig');
         const userId = urlParams.get('usr') || urlParams.get('user');
         
+        // Get email from localStorage (saved during WalletTwo connect) or URL
+        const userEmail = localStorage.getItem('userEmail') || urlParams.get('email') || null;
+        
         console.log('Questionnaire init - wallet:', walletAddress);
+        console.log('Questionnaire init - email:', userEmail);
         console.log('Questionnaire init - signature:', signature);
         console.log('Questionnaire init - userId:', userId);
         
@@ -442,6 +445,7 @@
 
             const formData = {
                 wallet_address: walletAddress,
+                email: userEmail,  // Include email from WalletTwo/localStorage
                 is_property_owner: document.querySelector('input[name="is_property_owner"]:checked')?.value === 'yes',
                 property_location: document.querySelector('input[name="property_location"]')?.value || null,
                 interested_property_index: document.querySelector('input[name="interested_property_index"]:checked')?.value === 'yes',
@@ -451,6 +455,8 @@
                 interested_yacht_club: document.querySelector('input[name="interested_yacht_club"]:checked')?.value === 'yes',
                 interested_restaurant_review: document.querySelector('input[name="interested_restaurant_review"]:checked')?.value === 'yes'
             };
+
+            console.log('Submitting questionnaire with email:', formData.email);
 
             try {
                 const response = await fetch('/api/questionnaire/submit', {

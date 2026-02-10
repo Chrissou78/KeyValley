@@ -117,6 +117,60 @@
             text-transform: uppercase;
             letter-spacing: 0.15em;
         }
+
+        /* Modal Styles */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal-content {
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        /* Custom radio for modal */
+        .modal-radio {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #444;
+            border-radius: 50%;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .modal-radio:checked {
+            border-color: #ee9d2b;
+            background: #ee9d2b;
+        }
+        .modal-radio:checked::after {
+            content: '';
+            display: block;
+            width: 6px;
+            height: 6px;
+            background: #0a0a0a;
+            border-radius: 50%;
+            margin: 4px auto;
+        }
+        .modal-radio:hover {
+            border-color: #ee9d2b;
+        }
+        
+        .modal-input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px 14px;
+            color: #fff;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+        .modal-input:focus {
+            outline: none;
+            border-color: #ee9d2b;
+        }
     </style>
 </head>
 <body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
@@ -125,7 +179,7 @@
     <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
             <a href="/" class="flex items-center gap-4 group cursor-pointer">
-                <img src="/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
+                <img src="/images/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
                 <div>
                     <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
                 </div>
@@ -236,6 +290,44 @@
                                     <a id="explorerLink" href="#" target="_blank" class="inline-flex items-center gap-1 text-slate-500 text-xs hover:text-primary transition-colors">
                                         View on Polygonscan <span class="material-symbols-outlined text-sm">open_in_new</span>
                                     </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ============================================ -->
+                        <!-- PREFERENCES SECTION -->
+                        <!-- ============================================ -->
+                        <div class="mb-6">
+                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">
+                                <span class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-sm text-primary">tune</span>
+                                    My Preferences
+                                </span>
+                            </label>
+                            <div class="bg-background-dark border border-white/5 rounded-sm p-4">
+                                <div id="preferencesLoading" class="text-center py-2">
+                                    <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                                </div>
+                                <div id="preferencesContent" class="hidden">
+                                    <div class="flex flex-wrap gap-2 mb-4" id="preferencesTags">
+                                        <!-- Tags will be populated here -->
+                                    </div>
+                                    <button 
+                                        id="updatePreferencesBtn"
+                                        class="w-full border border-primary/30 text-primary px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/10 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <span class="material-symbols-outlined text-lg">edit</span>
+                                        Update Preferences
+                                    </button>
+                                </div>
+                                <div id="preferencesEmpty" class="hidden text-center py-4">
+                                    <p class="text-slate-500 text-sm mb-3">You haven't set your preferences yet.</p>
+                                    <button 
+                                        id="setPreferencesBtn"
+                                        class="border border-primary/30 text-primary px-6 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/10 transition-colors"
+                                    >
+                                        Set Preferences
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -394,15 +486,167 @@
         </div>
     </main>
 
+    <!-- ============================================ -->
+    <!-- QUESTIONNAIRE UPDATE MODAL -->
+    <!-- ============================================ -->
+    <div id="questionnaireModal" class="fixed inset-0 z-[100] hidden">
+        <div class="modal-overlay absolute inset-0" onclick="closeQuestionnaireModal()"></div>
+        <div class="absolute inset-4 md:inset-8 lg:inset-16 flex items-center justify-center">
+            <div class="modal-content bg-surface border border-white/10 rounded-lg w-full max-w-2xl max-h-full overflow-y-auto">
+                <!-- Modal Header -->
+                <div class="sticky top-0 bg-surface border-b border-white/10 px-6 py-4 flex items-center justify-between z-10">
+                    <div>
+                        <h2 class="text-xl font-serif text-white">Update Preferences</h2>
+                        <p class="text-slate-500 text-xs">Customize your Kea Valley experience</p>
+                    </div>
+                    <button onclick="closeQuestionnaireModal()" class="text-slate-500 hover:text-white transition-colors">
+                        <span class="material-symbols-outlined text-2xl">close</span>
+                    </button>
+                </div>
+                
+                <!-- Modal Body -->
+                <div class="p-6">
+                    <form id="updateQuestionnaireForm" class="space-y-6">
+                        
+                        <!-- Question 1: Property Owner -->
+                        <div class="border-b border-white/5 pb-6">
+                            <h3 class="text-white font-medium mb-3">Are you a current property owner in Kea?</h3>
+                            <div class="flex gap-6 mb-3">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="modal_is_property_owner" value="yes" class="modal-radio" onchange="toggleModalPropertyLocation(true)">
+                                    <span class="text-slate-300 text-sm">Yes</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="modal_is_property_owner" value="no" class="modal-radio" onchange="toggleModalPropertyLocation(false)">
+                                    <span class="text-slate-300 text-sm">No</span>
+                                </label>
+                            </div>
+                            <div id="modalPropertyLocationField" class="hidden">
+                                <label class="block text-xs text-slate-500 mb-2">Property location (Google Maps link or address)</label>
+                                <input type="text" name="modal_property_location" placeholder="Paste location" class="modal-input text-sm">
+                            </div>
+                        </div>
+
+                        <!-- Question 2: Property Index -->
+                        <div class="border-b border-white/5 pb-6">
+                            <h3 class="text-white font-medium mb-2">Interested in monthly Kea Property Index?</h3>
+                            <p class="text-slate-500 text-xs mb-3">Monthly review of property sales on the island.</p>
+                            <div class="flex gap-6">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="modal_interested_property_index" value="yes" class="modal-radio">
+                                    <span class="text-slate-300 text-sm">Yes</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="modal_interested_property_index" value="no" class="modal-radio">
+                                    <span class="text-slate-300 text-sm">No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Question 3: Property Tour -->
+                        <div class="border-b border-white/5 pb-6">
+                            <h3 class="text-white font-medium mb-2">Interested in the next Kea Property Tour?</h3>
+                            <p class="text-slate-500 text-xs mb-3">April 2026 exclusive property tour.</p>
+                            <div class="flex gap-6">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="modal_interested_property_tour" value="yes" class="modal-radio">
+                                    <span class="text-slate-300 text-sm">Yes</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="modal_interested_property_tour" value="no" class="modal-radio">
+                                    <span class="text-slate-300 text-sm">No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Question 4: Members Club -->
+                        <div class="border-b border-white/5 pb-6">
+                            <h3 class="text-white font-medium mb-2">Interested in Kea Valley Private Members Club?</h3>
+                            <p class="text-slate-500 text-xs mb-3">Exclusive access to summits and premium experiences.</p>
+                            <div class="flex gap-6">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="modal_interested_members_club" value="yes" class="modal-radio">
+                                    <span class="text-slate-300 text-sm">Yes</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="modal_interested_members_club" value="no" class="modal-radio">
+                                    <span class="text-slate-300 text-sm">No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Question 5: Boat/Yacht -->
+                        <div class="border-b border-white/5 pb-6">
+                            <h3 class="text-white font-medium mb-3">Do you own a boat or yacht?</h3>
+                            <div class="flex gap-6 mb-3">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="modal_owns_boat" value="yes" class="modal-radio" onchange="toggleModalYachtClub(true)">
+                                    <span class="text-slate-300 text-sm">Yes</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="modal_owns_boat" value="no" class="modal-radio" onchange="toggleModalYachtClub(false)">
+                                    <span class="text-slate-300 text-sm">No</span>
+                                </label>
+                            </div>
+                            <div id="modalYachtClubField" class="hidden border-t border-white/5 pt-4 mt-3">
+                                <h4 class="text-slate-300 text-sm mb-3">Interested in mooring at Kea Valley Yacht Club?</h4>
+                                <div class="flex gap-6">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="modal_interested_yacht_club" value="yes" class="modal-radio">
+                                        <span class="text-slate-300 text-sm">Yes</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="modal_interested_yacht_club" value="no" class="modal-radio">
+                                        <span class="text-slate-300 text-sm">No</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Question 6: Restaurant Review -->
+                        <div class="pb-2">
+                            <h3 class="text-white font-medium mb-2">Interested in monthly Kea Restaurant Review?</h3>
+                            <p class="text-slate-500 text-xs mb-3">Monthly review of top restaurants on the island.</p>
+                            <div class="flex gap-6">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="modal_interested_restaurant_review" value="yes" class="modal-radio">
+                                    <span class="text-slate-300 text-sm">Yes</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="modal_interested_restaurant_review" value="no" class="modal-radio">
+                                    <span class="text-slate-300 text-sm">No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+                
+                <!-- Modal Footer -->
+                <div class="sticky bottom-0 bg-surface border-t border-white/10 px-6 py-4 flex items-center justify-between gap-4">
+                    <p id="modalStatus" class="text-sm hidden"></p>
+                    <div class="flex gap-3 ml-auto">
+                        <button type="button" onclick="closeQuestionnaireModal()" class="px-6 py-3 border border-white/10 text-slate-400 rounded-sm text-xs font-bold uppercase tracking-widest hover:border-white/30 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="button" id="savePreferencesBtn" onclick="saveQuestionnaireUpdates()" class="px-6 py-3 bg-primary text-background-dark rounded-sm text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity">
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-background-dark py-8 border-t border-white/5">
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                 <a href="/" class="flex items-center gap-2">
-                    <img src="/logo.png" alt="Kea Valley" class="h-6 w-auto"/>
+                    <img src="/images/logo.png" alt="Kea Valley" class="h-6 w-auto"/>
                     <span class="text-xs font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
                 </a>
-                <div class="text-slate-600 text-xs font-light">© 2025 Kea Valley</div>
+                <div class="text-slate-600 text-xs font-light">© 2026 Kea Valley</div>
             </div>
         </div>
     </footer>
@@ -433,6 +677,7 @@
         let isDisconnecting = false;
         let savedToDatabase = false;
         let referralStatus = null;
+        let questionnaireData = null;
 
         // ============================================
         // DOM Elements
@@ -536,59 +781,342 @@
         }
 
         async function showProfile(user) {
+            // Check questionnaire first
             const canProceed = await checkQuestionnaireRequired(user.wallet);
             if (!canProceed) return;
             
             currentUser = user;
             acceptMessages = false;
-            currentUser = user;
-            acceptMessages = false;
             
+            // Fetch email from database if not in session
+            if (!currentUser.email) {
+                try {
+                    const response = await fetch(`/api/user/${user.wallet}`);
+                    const data = await response.json();
+                    if (data.success && data.user?.email) {
+                        currentUser.email = data.user.email;
+                        localStorage.setItem('userEmail', data.user.email);
+                        console.log('📧 Email loaded from DB:', data.user.email);
+                    }
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                }
+            }
+            
+            // Hide login, show profile
             loginContainer.classList.add('hidden');
             loadingContainer.classList.add('hidden');
             profileContainer.classList.remove('hidden');
             disconnectingContainer.classList.add('hidden');
             cardTitle.textContent = 'Profile';
             presaleBanner?.classList.remove('hidden');
-
-            // Avatar initials
-            let initials = '??';
-            if (user.name) {
-                const parts = user.name.split(' ');
-                initials = parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : user.name.slice(0, 2).toUpperCase();
-            } else if (user.email) {
-                initials = user.email.slice(0, 2).toUpperCase();
-            } else if (user.wallet) {
-                initials = user.wallet.slice(2, 4).toUpperCase();
-            }
+            
+            // Set profile info
+            const initials = user.wallet.slice(2, 4).toUpperCase();
             document.getElementById('avatarInitials').textContent = initials;
-
-            // Display name
-            if (user.name) {
-                document.getElementById('displayName').textContent = user.name;
-            } else if (user.email) {
-                document.getElementById('displayName').textContent = user.email.split('@')[0];
-            } else {
-                document.getElementById('displayName').textContent = `User ${initials}`;
+            document.getElementById('displayName').textContent = `Wallet ${user.wallet.slice(0, 6)}...${user.wallet.slice(-4)}`;
+            
+            if (currentUser.email) {
+                document.getElementById('displayEmail').textContent = currentUser.email;
+                document.getElementById('displayEmail').classList.remove('hidden');
             }
-
-            // Email
-            const emailEl = document.getElementById('displayEmail');
-            if (user.email) {
-                emailEl.textContent = user.email;
-                emailEl.classList.remove('hidden');
-            } else {
-                emailEl.classList.add('hidden');
-            }
-
-            // Wallet
+            
             document.getElementById('walletAddress').textContent = user.wallet;
-            document.getElementById('explorerLink').href = `${CONFIG.POLYGON_EXPLORER}/token/${CONFIG.VIP_TOKEN_ADDRESS}?a=${user.wallet}`;
+            document.getElementById('explorerLink').href = `${CONFIG.POLYGON_EXPLORER}/address/${user.wallet}`;
+            
+            // Save to database
+            await saveToDatabase(user.wallet, currentUser.email, null);
+            
+            // Check for pending transactions
+            await checkClaimStatus(user.wallet);
+            
+            // Fetch balance
+            await fetchBalance(user.wallet);
+            
+            // Load preferences/questionnaire
+            await loadPreferences();
+            
+            // Load referral status
+            await loadReferralStatus();
+        }
 
-            // Fetch balance and referral
-            fetchBalance(user.wallet);
-            saveToDatabase(user.wallet, user.email, user.name);
-            loadReferralStatus();
+        // ============================================
+        // PREFERENCES / QUESTIONNAIRE
+        // ============================================
+        async function loadPreferences() {
+            if (!currentUser?.wallet) return;
+            
+            const loadingEl = document.getElementById('preferencesLoading');
+            const contentEl = document.getElementById('preferencesContent');
+            const emptyEl = document.getElementById('preferencesEmpty');
+            const tagsEl = document.getElementById('preferencesTags');
+            
+            loadingEl.classList.remove('hidden');
+            contentEl.classList.add('hidden');
+            emptyEl.classList.add('hidden');
+            
+            try {
+                const response = await fetch(`/api/questionnaire/${currentUser.wallet}`);
+                const result = await response.json();
+                
+                loadingEl.classList.add('hidden');
+                
+                if (result.success && result.exists && result.data) {
+                    questionnaireData = result.data;
+                    contentEl.classList.remove('hidden');
+                    
+                    // Build preference tags
+                    const tags = [];
+                    if (result.data.is_property_owner) tags.push({ icon: 'home', text: 'Property Owner' });
+                    if (result.data.interested_property_index) tags.push({ icon: 'analytics', text: 'Property Index' });
+                    if (result.data.interested_property_tour) tags.push({ icon: 'tour', text: 'Property Tour' });
+                    if (result.data.interested_members_club) tags.push({ icon: 'card_membership', text: 'Members Club' });
+                    if (result.data.owns_boat) tags.push({ icon: 'sailing', text: 'Boat Owner' });
+                    if (result.data.interested_yacht_club) tags.push({ icon: 'anchor', text: 'Yacht Club' });
+                    if (result.data.interested_restaurant_review) tags.push({ icon: 'restaurant', text: 'Restaurant Review' });
+                    
+                    if (tags.length > 0) {
+                        tagsEl.innerHTML = tags.map(t => `
+                            <span class="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full text-xs text-primary">
+                                <span class="material-symbols-outlined text-sm">${t.icon}</span>
+                                ${t.text}
+                            </span>
+                        `).join('');
+                    } else {
+                        tagsEl.innerHTML = '<span class="text-slate-500 text-sm">No interests selected</span>';
+                    }
+                } else {
+                    emptyEl.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading preferences:', error);
+                loadingEl.classList.add('hidden');
+                emptyEl.classList.remove('hidden');
+            }
+        }
+
+        function openQuestionnaireModal() {
+            const modal = document.getElementById('questionnaireModal');
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            
+            // Pre-fill with existing data
+            if (questionnaireData) {
+                const d = questionnaireData;
+                
+                // Property owner
+                const propOwnerYes = document.querySelector('input[name="modal_is_property_owner"][value="yes"]');
+                const propOwnerNo = document.querySelector('input[name="modal_is_property_owner"][value="no"]');
+                if (d.is_property_owner) {
+                    propOwnerYes.checked = true;
+                    toggleModalPropertyLocation(true);
+                } else {
+                    propOwnerNo.checked = true;
+                }
+                document.querySelector('input[name="modal_property_location"]').value = d.property_location || '';
+                
+                // Property index
+                document.querySelector(`input[name="modal_interested_property_index"][value="${d.interested_property_index ? 'yes' : 'no'}"]`).checked = true;
+                
+                // Property tour
+                document.querySelector(`input[name="modal_interested_property_tour"][value="${d.interested_property_tour ? 'yes' : 'no'}"]`).checked = true;
+                
+                // Members club
+                document.querySelector(`input[name="modal_interested_members_club"][value="${d.interested_members_club ? 'yes' : 'no'}"]`).checked = true;
+                
+                // Boat owner
+                const boatYes = document.querySelector('input[name="modal_owns_boat"][value="yes"]');
+                const boatNo = document.querySelector('input[name="modal_owns_boat"][value="no"]');
+                if (d.owns_boat) {
+                    boatYes.checked = true;
+                    toggleModalYachtClub(true);
+                    if (d.interested_yacht_club !== null) {
+                        document.querySelector(`input[name="modal_interested_yacht_club"][value="${d.interested_yacht_club ? 'yes' : 'no'}"]`).checked = true;
+                    }
+                } else {
+                    boatNo.checked = true;
+                }
+                
+                // Restaurant review
+                document.querySelector(`input[name="modal_interested_restaurant_review"][value="${d.interested_restaurant_review ? 'yes' : 'no'}"]`).checked = true;
+            }
+        }
+
+        function closeQuestionnaireModal() {
+            const modal = document.getElementById('questionnaireModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+            document.getElementById('modalStatus').classList.add('hidden');
+        }
+
+        function toggleModalPropertyLocation(show) {
+            const field = document.getElementById('modalPropertyLocationField');
+            if (show) {
+                field.classList.remove('hidden');
+            } else {
+                field.classList.add('hidden');
+            }
+        }
+
+        function toggleModalYachtClub(show) {
+            const field = document.getElementById('modalYachtClubField');
+            if (show) {
+                field.classList.remove('hidden');
+            } else {
+                field.classList.add('hidden');
+            }
+        }
+
+        async function saveQuestionnaireUpdates() {
+            if (!currentUser?.wallet) return;
+            
+            const btn = document.getElementById('savePreferencesBtn');
+            const statusEl = document.getElementById('modalStatus');
+            
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            statusEl.classList.add('hidden');
+            
+            // Get email from localStorage
+            const userEmail = localStorage.getItem('userEmail') || currentUser.email || null;
+            
+            const formData = {
+                wallet_address: currentUser.wallet,
+                email: userEmail,
+                is_property_owner: document.querySelector('input[name="modal_is_property_owner"]:checked')?.value === 'yes',
+                property_location: document.querySelector('input[name="modal_property_location"]')?.value || null,
+                interested_property_index: document.querySelector('input[name="modal_interested_property_index"]:checked')?.value === 'yes',
+                interested_property_tour: document.querySelector('input[name="modal_interested_property_tour"]:checked')?.value === 'yes',
+                interested_members_club: document.querySelector('input[name="modal_interested_members_club"]:checked')?.value === 'yes',
+                owns_boat: document.querySelector('input[name="modal_owns_boat"]:checked')?.value === 'yes',
+                interested_yacht_club: document.querySelector('input[name="modal_interested_yacht_club"]:checked')?.value === 'yes',
+                interested_restaurant_review: document.querySelector('input[name="modal_interested_restaurant_review"]:checked')?.value === 'yes'
+            };
+            
+            try {
+                const response = await fetch('/api/questionnaire/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    statusEl.textContent = 'Preferences saved!';
+                    statusEl.className = 'text-sm text-green-400';
+                    statusEl.classList.remove('hidden');
+                    
+                    // Reload preferences
+                    await loadPreferences();
+                    
+                    // Close modal after short delay
+                    setTimeout(() => {
+                        closeQuestionnaireModal();
+                    }, 1000);
+                } else {
+                    statusEl.textContent = result.error || 'Failed to save';
+                    statusEl.className = 'text-sm text-red-400';
+                    statusEl.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error saving preferences:', error);
+                statusEl.textContent = 'Network error. Please try again.';
+                statusEl.className = 'text-sm text-red-400';
+                statusEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Changes';
+            }
+        }
+
+        // Add this new function
+        async function checkClaimStatus(wallet) {
+            try {
+                const response = await fetch(`/api/claim/check-status/${wallet}`);
+                const data = await response.json();
+                
+                console.log('Claim status:', data);
+                
+                if (data.tx_status === 'pending') {
+                    // Show a notification that claim is processing
+                    showPendingClaimNotification(data);
+                }
+            } catch (error) {
+                console.error('Error checking claim status:', error);
+            }
+        }
+
+        function showPendingClaimNotification(data) {
+            // Create a notification banner
+            const existing = document.getElementById('pendingClaimBanner');
+            if (existing) existing.remove();
+            
+            const banner = document.createElement('div');
+            banner.id = 'pendingClaimBanner';
+            banner.className = 'fixed top-24 left-1/2 -translate-x-1/2 bg-yellow-500/20 border border-yellow-500/30 rounded-lg px-6 py-4 z-50 max-w-md mx-auto';
+            banner.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="w-6 h-6 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+                    <div>
+                        <p class="text-yellow-400 font-medium text-sm">Token Claim Processing</p>
+                        <p class="text-slate-400 text-xs">Your transaction is being confirmed...</p>
+                    </div>
+                    ${data.tx_hash ? `
+                        <a href="https://polygonscan.com/tx/${data.tx_hash}" target="_blank" class="text-primary text-xs hover:underline ml-2">
+                            View →
+                        </a>
+                    ` : ''}
+                </div>
+            `;
+            document.body.appendChild(banner);
+            
+            // Auto-refresh status every 15 seconds
+            const checkInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/claim/check-status/${currentUser.wallet}`);
+                    const newData = await response.json();
+                    
+                    if (newData.tx_status === 'confirmed') {
+                        clearInterval(checkInterval);
+                        banner.remove();
+                        // Refresh balance
+                        fetchBalance(currentUser.wallet);
+                        // Show success notification
+                        showSuccessNotification();
+                    } else if (newData.tx_status === 'failed' || newData.tx_status === 'timeout') {
+                        clearInterval(checkInterval);
+                        banner.innerHTML = `
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-red-400">error</span>
+                                <div>
+                                    <p class="text-red-400 font-medium text-sm">Claim Failed</p>
+                                    <p class="text-slate-400 text-xs">Please try claiming again.</p>
+                                </div>
+                                <a href="/claim" class="text-primary text-xs hover:underline ml-2">Retry →</a>
+                            </div>
+                        `;
+                    }
+                } catch (e) {
+                    console.error('Error refreshing status:', e);
+                }
+            }, 15000);
+            
+            // Stop checking after 10 minutes
+            setTimeout(() => clearInterval(checkInterval), 600000);
+        }
+
+        function showSuccessNotification() {
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-24 left-1/2 -translate-x-1/2 bg-green-500/20 border border-green-500/30 rounded-lg px-6 py-4 z-50';
+            notification.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-green-400">check_circle</span>
+                    <p class="text-green-400 font-medium text-sm">Tokens Claimed Successfully!</p>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 5000);
         }
 
         // ============================================
@@ -845,6 +1373,7 @@
             acceptMessages = false;
             savedToDatabase = false;
             referralStatus = null;
+            questionnaireData = null;
 
             showDisconnecting();
 
@@ -898,6 +1427,12 @@
                     accessToken: data.access_token,
                     timestamp: Date.now()
                 };
+                
+                // Save email to localStorage for questionnaire
+                if (userData.email) {
+                    localStorage.setItem('userEmail', userData.email);
+                }
+                
                 saveSession(userData);
                 showProfile(userData);
             } catch (error) {
@@ -916,6 +1451,8 @@
         document.getElementById('setReferrerBtn').addEventListener('click', setReferrer);
         document.getElementById('generateCodeBtn').addEventListener('click', generateReferralCode);
         document.getElementById('copyCodeBtn').addEventListener('click', copyReferralCode);
+        document.getElementById('updatePreferencesBtn').addEventListener('click', openQuestionnaireModal);
+        document.getElementById('setPreferencesBtn').addEventListener('click', openQuestionnaireModal);
         
         // Auto-uppercase referral input
         document.getElementById('referralCodeInput').addEventListener('input', (e) => {
@@ -952,6 +1489,20 @@
                 console.error('Error checking questionnaire status:', error);
                 return true; // Don't block on error
             }
+        }
+
+        // Fetch user data from database (including email)
+        async function fetchUserData(wallet) {
+            try {
+                const response = await fetch(`/api/user/${wallet}`);
+                const data = await response.json();
+                if (data.success && data.user) {
+                    return data.user;
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+            }
+            return null;
         }
 
         // ============================================

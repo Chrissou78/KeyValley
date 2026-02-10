@@ -62,7 +62,7 @@
     <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
             <a href="/" class="flex items-center gap-4 group cursor-pointer">
-                <img src="/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
+                <img src="/images/images/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
                 <div>
                     <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
                 </div>
@@ -155,7 +155,7 @@
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                 <a href="/" class="flex items-center gap-2">
-                    <img src="/logo.png" alt="Kea Valley" class="h-6 w-auto"/>
+                    <img src="/images/images/logo.png" alt="Kea Valley" class="h-6 w-auto"/>
                     <span class="text-xs font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
                 </a>
                 <div class="text-slate-600 text-xs font-light">
@@ -254,8 +254,11 @@
                     localStorage.setItem(CONFIG.ADMIN_STORAGE_KEY, JSON.stringify(data.admin));
                     showSuccess(data.admin.email);
                     setTimeout(() => {
-                        window.location.href = '/dashboard';
-                    }, 1000);
+                        console.log('About to redirect to dashboard, cookie should be set');
+console.log('Cookies:', document.cookie);
+alert('Login successful! Check console. Click OK to go to dashboard.');
+window.location.href = '/dashboard';
+                    }, 10000);
                     return true;
                 }
             } catch (error) {
@@ -286,8 +289,11 @@
                     localStorage.setItem(CONFIG.ADMIN_STORAGE_KEY, JSON.stringify(data.admin));
                     showSuccess(data.admin.email);
                     setTimeout(() => {
-                        window.location.href = '/dashboard';
-                    }, 1500);
+                        console.log('About to redirect to dashboard, cookie should be set');
+console.log('Cookies:', document.cookie);
+alert('Login successful! Check console. Click OK to go to dashboard.');
+window.location.href = '/dashboard';
+                    }, 15000);
                 } else {
                     showError(data.error || 'Your email is not on the admin whitelist.', email);
                 }

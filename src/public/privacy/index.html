@@ -108,7 +108,7 @@
     <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
             <a href="/" class="flex items-center gap-4 group cursor-pointer">
-                <img src="/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
+                <img src="/images/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
                 <div>
                     <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
                 </div>
@@ -121,7 +121,7 @@
                 <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/profile">My Profile</a>
             </nav>
             <div class="flex items-center gap-4">
-                <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://key-valley-57s7.vercel.app//claim" class="hidden md:block bg-transparent border border-primary/30 text-primary px-6 lg:px-8 py-3 rounded-sm text-xs font-bold uppercase tracking-widest gold-glow transition-all hover:bg-primary hover:text-background-dark">
+                <a href="#" id="freeTokensLink" class="hidden md:block bg-transparent border border-primary/30 text-primary px-6 lg:px-8 py-3 rounded-sm text-xs font-bold uppercase tracking-widest gold-glow transition-all hover:bg-primary hover:text-background-dark">
                     Free Tokens
                 </a>
                 <button class="lg:hidden text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
@@ -315,7 +315,7 @@
             <div class="flex flex-col gap-8">
                 <div class="flex flex-col lg:flex-row justify-between items-center gap-8">
                     <a href="/" class="flex items-center gap-3">
-                        <img src="/logo.png" alt="Kea Valley" class="h-8 w-auto"/>
+                        <img src="/images/logo.png" alt="Kea Valley" class="h-8 w-auto"/>
                         <span class="text-sm font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
                     </a>
                     <div class="flex flex-wrap justify-center gap-6 md:gap-8 text-slate-500 text-[0.65rem] tracking-[0.2em] font-bold uppercase font-sans">
@@ -344,6 +344,25 @@
             </div>
         </div>
     </footer>
+
+    <!-- Dynamic WalletTwo Links -->
+    <script>
+    (function() {
+        const WALLETTWO_COMPANY_ID = '6a27c2f8-894c-46c7-bf9f-f5af11d4e092';
+        
+        function buildWalletTwoUrl(redirectPath, message) {
+            message = message || 'FREE_BONUS_TOKENS_KEA_VALLEY';
+            return 'https://wallet.wallettwo.com/auth/login?companyId=' + WALLETTWO_COMPANY_ID + 
+                   '&action=signature&message=' + message + 
+                   '&redirect_uri=' + encodeURIComponent(window.location.origin + redirectPath);
+        }
+        
+        var freeTokensLink = document.getElementById('freeTokensLink');
+        if (freeTokensLink) {
+            freeTokensLink.href = buildWalletTwoUrl('/claim');
+        }
+    })();
+    </script>
 
 </body>
 </html>

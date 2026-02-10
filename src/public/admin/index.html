@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Kea Valley</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#ee9d2b',
+                        'primary-light': '#fbdea6',
+                        'background-dark': '#0a0a0a',
+                        'surface': '#121212'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Manrope', sans-serif; 
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%); 
+        }
+        .font-serif { 
+            font-family: 'Playfair Display', serif; 
+        }
+        .glass { 
+            background: rgba(255,255,255,0.05); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255,255,255,0.1); 
+        }
+        
+        /* Navigation tabs */
+        .nav-tab {
+            background: rgba(255, 255, 255, 0.05);
+            color: #9ca3af;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+        .nav-tab.active {
+            background: linear-gradient(135deg, #ee9d2b 0%, #d4880f 100%);
+            color: #000000;
+            border-color: #ee9d2b;
+            box-shadow: 0 0 20px rgba(238, 157, 43, 0.3);
+        }
+        .nav-tab .material-symbols-outlined {
+            font-size: 20px;
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-white">
+    <!-- Dashboard Section -->
+    <div id="dashboardSection" class="hidden">
+        <!-- Header -->
+        <header class="fixed top-0 left-0 right-0 z-50 border-b border-white/5" style="backdrop-filter: blur(12px); background-color: rgba(26, 26, 26, 0.95);">
+            <div class="w-full px-6 flex items-center justify-between h-16">
+                <!-- Left: Logo and Name -->
+                <a href="/" class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+                    <img src="/images/logo.png" alt="Kea Valley" class="h-10 w-auto"/>
+                    <div class="flex flex-col">
+                        <span class="text-lg font-bold tracking-widest uppercase text-white font-serif">Kea Valley</span>
+                        <span class="text-[10px] text-primary tracking-widest uppercase -mt-1">Admin Dashboard</span>
+                    </div>
+                </a>
+                
+                <!-- Right: Admin Info and Logout -->
+                <div class="flex items-center gap-4">
+                    <a href="/" target="_blank" class="hidden sm:flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+                        <span class="material-symbols-outlined text-lg">open_in_new</span>
+                        View Site
+                    </a>
+                    <div class="h-6 w-px bg-white/10 hidden sm:block"></div>
+                    <div class="text-right">
+                        <div id="adminName" class="text-sm font-medium text-white">Admin</div>
+                        <div id="adminRole" class="text-xs text-primary">super_admin</div>
+                    </div>
+                    <button id="logoutBtn" class="px-4 py-2 border border-primary/30 text-primary text-xs font-bold uppercase tracking-widest rounded hover:bg-primary hover:text-black transition-all">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="fixed top-16 left-0 right-0 z-40 border-b border-white/10" style="backdrop-filter: blur(12px); background-color: rgba(20, 20, 20, 0.95);">
+            <div class="w-full px-4 sm:px-6">
+                <div class="flex items-center justify-center gap-1 sm:gap-2 py-3 overflow-x-auto">
+                    <button data-tab="claims" class="nav-tab active flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
+                        <span class="material-symbols-outlined">how_to_reg</span>
+                        <span class="hidden sm:inline">Claims</span>
+                    </button>
+                    <button data-tab="questionnaire" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
+                        <span class="material-symbols-outlined">quiz</span>
+                        <span class="hidden sm:inline">Questionnaire</span>
+                    </button>
+                    <button data-tab="presale" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
+                        <span class="material-symbols-outlined">shopping_cart</span>
+                        <span class="hidden sm:inline">Presale</span>
+                    </button>
+                    <button data-tab="referrals" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
+                        <span class="material-symbols-outlined">share</span>
+                        <span class="hidden sm:inline">Referrals</span>
+                    </button>
+                    <button data-tab="manual-mint" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
+                        <span class="material-symbols-outlined">token</span>
+                        <span class="hidden sm:inline">Manual Mint</span>
+                    </button>
+                    <button data-tab="admins" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
+                        <span class="material-symbols-outlined">admin_panel_settings</span>
+                        <span class="hidden sm:inline">Admins</span>
+                    </button>
+                    <button data-tab="settings" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
+                        <span class="material-symbols-outlined">settings</span>
+                        <span class="hidden sm:inline">Settings</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="w-full px-6 py-8" style="padding-top: 140px;">
+            
+            <!-- Claims Panel -->
+            <div data-panel="claims">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold">Claims / Registrants</h2>
+                    <div class="flex gap-2">
+                        <button onclick="Claims.fullSync()" id="fullSyncBtn" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <span class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-lg">sync</span>
+                                Full Sync
+                            </span>
+                        </button>
+                        <button onclick="Claims.exportCSV()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <span class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-lg">download</span>
+                                Export CSV
+                            </span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold" id="totalRegistrants">-</div>
+                        <div class="text-sm text-gray-400 mt-1">Total Registrants</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-green-400" id="mintedCount">-</div>
+                        <div class="text-sm text-gray-400 mt-1">Minted</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-yellow-400" id="pendingCount">-</div>
+                        <div class="text-sm text-gray-400 mt-1">Pending</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-blue-400" id="withBalanceCount">-</div>
+                        <div class="text-sm text-gray-400 mt-1">With Balance</div>
+                    </div>
+                </div>
+                
+                <!-- Table -->
+                <div class="glass rounded-xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-800/50">
+                                <tr>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Email</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Wallet</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Status</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">TX Hash</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Registered</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="claimsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Questionnaire Panel -->
+            <div data-panel="questionnaire" class="hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold">Questionnaire Responses</h2>
+                    <div class="flex gap-2">
+                        <button onclick="Questionnaire.load()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <span class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-lg">refresh</span>
+                                Refresh
+                            </span>
+                        </button>
+                        <button onclick="Questionnaire.exportCSV()" class="bg-primary hover:bg-primary-light hover:text-black px-4 py-2 rounded-lg text-sm font-medium text-black transition-colors">
+                            <span class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-lg">download</span>
+                                Export CSV
+                            </span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-primary" id="qTotalResponses">-</div>
+                        <div class="text-sm text-gray-400 mt-1">Total Responses</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-green-400" id="qPropertyOwners">-</div>
+                        <div class="text-sm text-gray-400 mt-1">Property Owners</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-blue-400" id="qMembersClub">-</div>
+                        <div class="text-sm text-gray-400 mt-1">Interested in Members Club</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-yellow-400" id="qBoatOwners">-</div>
+                        <div class="text-sm text-gray-400 mt-1">Boat Owners</div>
+                    </div>
+                </div>
+                
+                <!-- Table -->
+                <div class="glass rounded-xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-800/50">
+                                <tr>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Wallet</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Email</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Property Owner</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Location</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Members Club</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Boat Owner</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="questionnaireTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Presale Panel -->
+            <div data-panel="presale" class="hidden">
+                <h2 class="text-2xl font-bold mb-6">Presale Management</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-primary" id="presaleEurRaised">-</div>
+                        <div class="text-sm text-gray-400 mt-1">EUR Raised</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold" id="presaleTokensSold">-</div>
+                        <div class="text-sm text-gray-400 mt-1">Tokens Sold</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold" id="presaleTotalPurchases">-</div>
+                        <div class="text-sm text-gray-400 mt-1">Purchases</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-yellow-400" id="presalePendingMint">-</div>
+                        <div class="text-sm text-gray-400 mt-1">Pending Mint</div>
+                    </div>
+                </div>
+                <div class="glass rounded-xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-800/50">
+                                <tr>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Wallet</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Tokens</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Amount</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Method</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Status</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Date</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="presaleTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referrals Panel -->
+            <div data-panel="referrals" class="hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold">Referral Management</h2>
+                    <div class="flex gap-2">
+                        <button onclick="Referrals.load()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <span class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-lg">refresh</span>
+                                Refresh
+                            </span>
+                        </button>
+                        <button onclick="Referrals.exportCodesCSV()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <span class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-lg">download</span>
+                                Export Codes
+                            </span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-primary" id="refTotalCodes">-</div>
+                        <div class="text-sm text-gray-400 mt-1">Total Codes</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-green-400" id="refActiveCodes">-</div>
+                        <div class="text-sm text-gray-400 mt-1">Active Codes</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold" id="refTotalReferrals">-</div>
+                        <div class="text-sm text-gray-400 mt-1">Total Referrals</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-blue-400" id="refTotalBonus">-</div>
+                        <div class="text-sm text-gray-400 mt-1">Total Bonus Paid</div>
+                    </div>
+                </div>
+                
+                <!-- Referral Settings -->
+                <div class="glass rounded-xl p-6 mb-6">
+                    <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">settings</span>
+                        Referral Program Settings
+                    </h3>
+                    
+                    <div class="space-y-6">
+                        <!-- Enable Toggle -->
+                        <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg">
+                            <div>
+                                <p class="font-medium">Referral Program Enabled</p>
+                                <p class="text-gray-500 text-sm">Allow users to generate and share referral codes</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="refEnabled" class="sr-only peer" onchange="Referrals.settingsChanged()">
+                                <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                        
+                        <!-- Signup Bonus -->
+                        <div class="p-4 bg-gray-800/50 rounded-lg">
+                            <p class="font-medium mb-4">Signup/Claim Bonus (when referee claims free tokens)</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-gray-400 text-sm block mb-2">Bonus Type</label>
+                                    <select id="refBonusType" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" onchange="Referrals.updateExplanations()">
+                                        <option value="percentage">Percentage (%)</option>
+                                        <option value="fixed">Fixed (VIP tokens)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-gray-400 text-sm block mb-2">Bonus Amount</label>
+                                    <input type="number" id="refBonusAmount" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="5" step="0.01" min="0" oninput="Referrals.updateExplanations()">
+                                </div>
+                            </div>
+                            <p id="refBonusExplanation" class="text-gray-500 text-sm mt-2">Referrer receives 5% of referee's claim amount</p>
+                        </div>
+                        
+                        <!-- Presale Bonus -->
+                        <div class="p-4 bg-gray-800/50 rounded-lg">
+                            <p class="font-medium mb-4">Presale Purchase Bonus (when referee buys tokens)</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-gray-400 text-sm block mb-2">Bonus Type</label>
+                                    <select id="refPresaleBonusType" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" onchange="Referrals.updateExplanations()">
+                                        <option value="percentage">Percentage (%)</option>
+                                        <option value="fixed">Fixed (VIP tokens)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-gray-400 text-sm block mb-2">Bonus Amount</label>
+                                    <input type="number" id="refPresaleBonusAmount" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="5" step="0.01" min="0" oninput="Referrals.updateExplanations()">
+                                </div>
+                            </div>
+                            <p id="refPresaleBonusExplanation" class="text-gray-500 text-sm mt-2">Referrer receives 5% of referee's purchase in VIP tokens</p>
+                        </div>
+                        
+                        <!-- Minimum Purchase -->
+                        <div>
+                            <label class="text-gray-400 text-sm block mb-2">Minimum Purchase for Presale Bonus (EUR)</label>
+                            <input type="number" id="refMinPurchase" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="10" step="1" min="0">
+                            <p class="text-gray-500 text-xs mt-1">Referee must spend at least this amount for referrer to earn presale bonus</p>
+                        </div>
+                        
+                        <!-- Save Button -->
+                        <div class="pt-4 border-t border-gray-700">
+                            <button onclick="Referrals.saveSettings()" class="w-full bg-primary hover:bg-primary-light hover:text-black rounded-lg px-4 py-3 font-medium text-black transition-colors">
+                                Save Referral Settings
+                            </button>
+                            <div id="refSettingsStatus" class="text-sm text-center mt-2"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Referral Codes Table -->
+                <div class="glass rounded-xl overflow-hidden mb-6">
+                    <div class="p-4 border-b border-gray-700 flex items-center justify-between">
+                        <h3 class="font-semibold">Referral Codes</h3>
+                        <div class="flex gap-2">
+                            <button onclick="Referrals.filterCodes('all')" data-code-filter="all" class="px-3 py-1 rounded text-sm bg-blue-600">All</button>
+                            <button onclick="Referrals.filterCodes('active')" data-code-filter="active" class="px-3 py-1 rounded text-sm bg-gray-700 hover:bg-gray-600">Active</button>
+                            <button onclick="Referrals.filterCodes('disabled')" data-code-filter="disabled" class="px-3 py-1 rounded text-sm bg-gray-700 hover:bg-gray-600">Disabled</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-800/50">
+                                <tr>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Code</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Owner Wallet</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Referrals</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Bonus Earned</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Status</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Created</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="referralCodesBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Referral Activity Table -->
+                <div class="glass rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-gray-700">
+                        <h3 class="font-semibold">Referral Activity</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-800/50">
+                                <tr>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Referrer</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Code</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Referee</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Bonus</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Paid</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="referralActivityBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Mint Panel -->
+            <div data-panel="manual-mint" class="hidden">
+                <h2 class="text-2xl font-bold mb-6">Manual Mint</h2>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Claim Mint -->
+                    <div class="glass rounded-xl p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">verified</span>
+                            Mint Claim Tokens
+                        </h3>
+                        <p class="text-gray-500 text-sm mb-4">Mint the standard claim amount (from settings) to a wallet</p>
+                        <input type="text" id="manualMintAddress" placeholder="0x..." 
+                               class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 mb-4 outline-none transition-colors">
+                        <button onclick="ManualMint.mintClaim()" id="manualMintBtn"
+                                class="w-full bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-3 font-medium transition-colors">
+                            <span class="flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined">token</span>
+                                Mint Claim Tokens
+                            </span>
+                        </button>
+                        <div id="manualMintResult" class="mt-4"></div>
+                    </div>
+                    
+                    <!-- Presale Mint -->
+                    <div class="glass rounded-xl p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">payments</span>
+                            Presale Manual Mint
+                        </h3>
+                        <p class="text-gray-500 text-sm mb-4">Record a manual presale purchase and mint tokens</p>
+                        <form id="manual-mint-form" onsubmit="ManualMint.submit(event)">
+                            <input type="text" id="mint-wallet" placeholder="0x..." 
+                                   class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 mb-4 outline-none transition-colors" required>
+                            <input type="number" id="mint-eur" placeholder="EUR Amount" 
+                                   oninput="ManualMint.updateSummary()"
+                                   class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 mb-4 outline-none transition-colors" min="1" step="0.01" required>
+                            
+                            <!-- Summary -->
+                            <div class="p-3 bg-gray-800/50 rounded-lg mb-4 text-sm">
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-gray-400">Amount:</span>
+                                    <span id="summary-eur" class="text-white">€0.00</span>
+                                </div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-gray-400">Fee (1%):</span>
+                                    <span id="summary-fee" class="text-gray-400">€0.00</span>
+                                </div>
+                                <div class="flex justify-between font-semibold">
+                                    <span class="text-gray-400">Tokens:</span>
+                                    <span id="summary-tokens" class="text-primary">0.00 VIP</span>
+                                </div>
+                            </div>
+                            
+                            <div id="mint-error" class="hidden text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg"></div>
+                            <div id="mint-success" class="hidden text-green-400 text-sm mb-4 p-3 bg-green-500/10 rounded-lg"></div>
+                            
+                            <button type="submit" id="mint-submit-btn"
+                                    class="w-full bg-green-600 hover:bg-green-700 rounded-lg px-4 py-3 font-medium transition-colors">
+                                <span class="flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined">shopping_cart</span>
+                                    Mint Presale Tokens
+                                </span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Recent Manual Mints -->
+                <div class="glass rounded-xl p-6 mt-6">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">history</span>
+                        Recent Manual Mints
+                    </h3>
+                    <div id="manual-mints-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <p class="text-gray-500 text-sm col-span-full">Loading...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admins Panel -->
+            <div data-panel="admins" class="hidden" id="adminsPanel">
+                <h2 class="text-2xl font-bold mb-6">Admin Management</h2>
+                <div class="glass rounded-xl p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">person_add</span>
+                        Add New Admin
+                    </h3>
+                    <div class="grid md:grid-cols-4 gap-4">
+                        <input type="email" id="newAdminEmail" placeholder="Email" class="bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors">
+                        <input type="text" id="newAdminName" placeholder="Name" class="bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors">
+                        <select id="newAdminRole" class="bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors">
+                            <option value="admin">Admin</option>
+                            <option value="super_admin">Super Admin</option>
+                        </select>
+                        <button onclick="Admins.add()" class="bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-3 font-medium transition-colors">
+                            <span class="flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined">add</span>
+                                Add Admin
+                            </span>
+                        </button>
+                    </div>
+                </div>
+                <div class="glass rounded-xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-800/50">
+                                <tr>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Admin</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Role</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Last Login</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Created</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Panel -->
+            <div data-panel="settings" class="hidden">
+                <h2 class="text-2xl font-bold mb-6">Settings</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <!-- Presale Configuration -->
+                    <div class="glass rounded-xl p-6">
+                        <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">payments</span>
+                            Presale Configuration
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <label class="text-gray-300">Presale Enabled</label>
+                                <button id="presale-enabled-toggle" onclick="Settings.togglePresale()" 
+                                        class="w-12 h-6 rounded-full bg-gray-700 relative transition-colors">
+                                    <span class="absolute left-1 top-1 w-4 h-4 rounded-full bg-white transition-transform"></span>
+                                </button>
+                            </div>
+                            
+                            <div>
+                                <label class="text-gray-400 text-sm block mb-2">Sale Target (EUR)</label>
+                                <input type="number" id="setting-sale-target" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="500000" min="1000">
+                            </div>
+                            
+                            <div>
+                                <label class="text-gray-400 text-sm block mb-2">Token Price (EUR)</label>
+                                <input type="number" id="setting-token-price" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="1.00" step="0.01" min="0.01">
+                            </div>
+                            
+                            <div>
+                                <label class="text-gray-400 text-sm block mb-2">Minimum Purchase (EUR)</label>
+                                <input type="number" id="setting-min-purchase" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="10" min="1">
+                            </div>
+                            
+                            <div>
+                                <label class="text-gray-400 text-sm block mb-2">Presale Wallet</label>
+                                <input type="text" id="setting-presale-wallet" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 font-mono text-sm outline-none transition-colors" placeholder="0x...">
+                            </div>
+                            
+                            <button onclick="Settings.savePresale()" class="w-full bg-primary hover:bg-primary-light hover:text-black rounded-lg px-4 py-3 font-medium text-black transition-colors">
+                                Save Presale Settings
+                            </button>
+                            <div id="presale-settings-status" class="text-sm text-center"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Claim Configuration -->
+                    <div class="glass rounded-xl p-6">
+                        <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">verified</span>
+                            Claim Configuration
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-gray-400 text-sm block mb-2">Mint Amount per Claim</label>
+                                <input type="number" id="setting-mint-amount" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="2" min="1" max="100">
+                                <p class="text-gray-500 text-xs mt-1">VIP tokens minted per free claim</p>
+                            </div>
+                            
+                            <button onclick="Settings.saveClaim()" class="w-full bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-3 font-medium transition-colors">
+                                Save Claim Settings
+                            </button>
+                            <div id="claim-settings-status" class="text-sm text-center"></div>
+                            
+                            <div class="pt-4 border-t border-gray-700">
+                                <label class="text-gray-400 text-sm block mb-2">VIP Token Contract</label>
+                                <input type="text" id="setting-contract" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 font-mono text-sm text-gray-400" 
+                                    value="0x6860c34db140DB7B589DaDA38859a1d3736bbE3F" readonly>
+                                <a href="https://polygonscan.com/token/0x6860c34db140DB7B589DaDA38859a1d3736bbE3F" target="_blank" 
+                                   class="text-xs text-primary hover:text-primary-light mt-2 inline-flex items-center gap-1 transition-colors">
+                                    View on Polygonscan
+                                    <span class="material-symbols-outlined text-sm">open_in_new</span>
+                                </a>
+                            </div>
+                            
+                            <div>
+                                <label class="text-gray-400 text-sm block mb-2">Network</label>
+                                <input type="text" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-gray-400" value="Polygon Mainnet (Chain ID: 137)" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Database Status -->
+                    <div class="glass rounded-xl p-6">
+                        <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">database</span>
+                            Database Status
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                                <span class="text-gray-300">PostgreSQL</span>
+                                <span id="db-status" class="px-3 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400">Checking...</span>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="p-4 bg-gray-800/50 rounded-lg text-center">
+                                    <div class="text-3xl font-bold" id="db-registrants">--</div>
+                                    <div class="text-gray-500 text-sm mt-1">Registrants</div>
+                                </div>
+                                <div class="p-4 bg-gray-800/50 rounded-lg text-center">
+                                    <div class="text-3xl font-bold" id="db-purchases">--</div>
+                                    <div class="text-gray-500 text-sm mt-1">Transactions</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- System Health -->
+                    <div class="glass rounded-xl p-6">
+                        <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">monitor_heart</span>
+                            System Health
+                        </h3>
+                        <div id="healthStatus" class="space-y-3">
+                            <p class="text-gray-500">Loading...</p>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingSection" class="min-h-screen flex items-center justify-center">
+        <div class="text-center">
+            <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-gray-400">Loading dashboard...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/admin/js/api.js"></script>
+    <script src="/admin/js/utils.js"></script>
+    <script src="/admin/js/auth.js"></script>
+    <script src="/admin/js/claims.js"></script>
+    <script src="/admin/js/presale.js"></script>
+    <script src="/admin/js/referrals.js"></script>
+    <script src="/admin/js/admins.js"></script>
+    <script src="/admin/js/settings.js"></script>
+    <script src="/admin/js/manual-mint.js"></script>
+    <script src="/admin/js/questionnaire.js"></script>
+    <script src="/admin/js/main.js"></script>
+</body>
+</html>

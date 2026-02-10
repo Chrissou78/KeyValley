@@ -343,6 +343,14 @@
                     Manual Mint
                 </span>
             </button>
+            <button class="main-tab" data-tab="transactions" onclick="switchMainTab('transactions')">
+                <span class="flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                    </svg>
+                    Transactions
+                </span>
+            </button>
             <button class="main-tab" data-tab="presale" onclick="switchMainTab('presale')">
                 <span class="flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1007,7 +1015,116 @@
                 </div>
             </div>
         </div>
-
+        <!-- Transactions Tab Panel -->
+        <div id="transactions-panel" class="tab-panel">
+            <!-- Transaction Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+                <div class="stat-card">
+                    <div class="stat-label">Total Claims</div>
+                    <div class="stat-value" id="tx-total">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Confirmed</div>
+                    <div class="stat-value text-green-400" id="tx-confirmed">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value text-yellow-400" id="tx-pending">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Failed</div>
+                    <div class="stat-value text-red-400" id="tx-failed">--</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Timeout</div>
+                    <div class="stat-value text-orange-400" id="tx-timeout">--</div>
+                </div>
+            </div>
+            
+            <!-- Transaction Actions -->
+            <div class="glass-card rounded-xl p-6 mb-8">
+                <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 gold-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Transaction Management
+                </h3>
+                <p class="text-white/60 text-sm mb-6">
+                    Check blockchain status of pending transactions and retry failed mints.
+                </p>
+                
+                <div class="flex flex-wrap gap-4">
+                    <button onclick="checkAllTransactions()" id="check-tx-btn" class="btn-gold">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Check All Pending
+                        </span>
+                    </button>
+                    
+                    <button onclick="retryFailedMints()" id="retry-tx-btn" class="btn-outline">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Retry Failed/Timeout
+                        </span>
+                    </button>
+                    
+                    <button onclick="loadTransactionData()" class="btn-outline">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Refresh
+                        </span>
+                    </button>
+                </div>
+                
+                <!-- Action Results -->
+                <div id="tx-action-result" class="mt-4 hidden">
+                    <div class="p-4 rounded-lg" id="tx-action-content"></div>
+                </div>
+            </div>
+            
+            <!-- Transaction Filters -->
+            <div class="flex gap-4 mb-6">
+                <button onclick="filterTransactions('all')" class="sub-tab active" data-tx-filter="all">All</button>
+                <button onclick="filterTransactions('pending')" class="sub-tab" data-tx-filter="pending">Pending</button>
+                <button onclick="filterTransactions('confirmed')" class="sub-tab" data-tx-filter="confirmed">Confirmed</button>
+                <button onclick="filterTransactions('failed')" class="sub-tab" data-tx-filter="failed">Failed</button>
+                <button onclick="filterTransactions('timeout')" class="sub-tab" data-tx-filter="timeout">Timeout</button>
+            </div>
+            
+            <!-- Transactions Table -->
+            <div class="glass-card rounded-xl overflow-hidden">
+                <div class="p-4 border-b border-white/10 flex items-center justify-between">
+                    <h3 class="font-semibold">Claim Transactions</h3>
+                    <span id="tx-count" class="text-white/40 text-sm">-- transactions</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Wallet</th>
+                                <th>Email</th>
+                                <th>TX Hash</th>
+                                <th>Status</th>
+                                <th>Minted At</th>
+                                <th>Age</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-table">
+                            <tr>
+                                <td colspan="7" class="text-center text-white/40 py-8">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </main>
     
     <!-- Full Sync Modal -->
@@ -1248,6 +1365,8 @@
                 tab.classList.remove('active');
                 if (tab.dataset.tab === tabName) {
                     tab.classList.add('active');
+                } else if (tabName === 'transactions') {
+                    loadTransactionData();
                 }
             });
             
@@ -2550,6 +2669,276 @@
                 
             } catch (error) {
                 container.innerHTML = `<p class="text-red-400 text-sm text-center py-4">Error: ${error.message}</p>`;
+            }
+        }
+
+        // ==========================================
+        // TRANSACTION MANAGEMENT
+        // ==========================================
+        let transactionsData = [];
+        let currentTxFilter = 'all';
+
+        async function loadTransactionData() {
+            try {
+                const response = await fetch('/api/admin/transactions', { credentials: 'include' });
+                const data = await response.json();
+                
+                transactionsData = data.transactions || [];
+                
+                // Update stats
+                const stats = data.stats || {};
+                document.getElementById('tx-total').textContent = stats.total || transactionsData.length || 0;
+                document.getElementById('tx-confirmed').textContent = stats.confirmed || 0;
+                document.getElementById('tx-pending').textContent = stats.pending || 0;
+                document.getElementById('tx-failed').textContent = stats.failed || 0;
+                document.getElementById('tx-timeout').textContent = stats.timeout || 0;
+                
+                renderTransactions(transactionsData);
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                document.getElementById('transactions-table').innerHTML = `
+                    <tr><td colspan="7" class="text-center text-red-400 py-8">Error loading transactions</td></tr>
+                `;
+            }
+        }
+
+        function filterTransactions(filter) {
+            currentTxFilter = filter;
+            document.querySelectorAll('[data-tx-filter]').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.txFilter === filter) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            let filtered = transactionsData;
+            if (filter !== 'all') {
+                filtered = transactionsData.filter(t => t.tx_status === filter);
+            }
+            
+            renderTransactions(filtered);
+        }
+
+        function renderTransactions(transactions) {
+            const tbody = document.getElementById('transactions-table');
+            const countEl = document.getElementById('tx-count');
+            
+            countEl.textContent = `${transactions.length} transactions`;
+            
+            if (!transactions || transactions.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-white/40 py-8">No transactions found</td></tr>`;
+                return;
+            }
+            
+            tbody.innerHTML = transactions.map(t => {
+                const wallet = t.wallet_address || '--';
+                const email = t.email || '--';
+                const txHash = t.tx_hash || '';
+                const status = t.tx_status || 'none';
+                const mintedAt = t.minted_at;
+                
+                // Calculate age
+                let age = '--';
+                if (mintedAt) {
+                    const mins = Math.floor((Date.now() - new Date(mintedAt).getTime()) / 1000 / 60);
+                    if (mins < 60) {
+                        age = `${mins}m`;
+                    } else if (mins < 1440) {
+                        age = `${Math.floor(mins / 60)}h`;
+                    } else {
+                        age = `${Math.floor(mins / 1440)}d`;
+                    }
+                }
+                
+                // Status badge
+                let statusClass = 'badge-warning';
+                let statusIcon = '⏳';
+                if (status === 'confirmed') {
+                    statusClass = 'badge-success';
+                    statusIcon = '✅';
+                } else if (status === 'failed') {
+                    statusClass = 'badge-error';
+                    statusIcon = '❌';
+                } else if (status === 'timeout') {
+                    statusClass = 'badge-purple';
+                    statusIcon = '⏰';
+                } else if (status === 'none') {
+                    statusClass = 'badge-pending';
+                    statusIcon = '🔵';
+                }
+                
+                return `
+                    <tr>
+                        <td>
+                            <a href="${EXPLORER_URL}/address/${wallet}" target="_blank" class="text-blue-400 hover:underline font-mono text-sm">
+                                ${wallet.substring(0, 6)}...${wallet.substring(wallet.length - 4)}
+                            </a>
+                        </td>
+                        <td class="text-white/60 text-sm">
+                            ${email !== '--' ? (email.length > 20 ? email.substring(0, 20) + '...' : email) : '--'}
+                        </td>
+                        <td>
+                            ${txHash ? `
+                                <a href="${EXPLORER_URL}/tx/${txHash}" target="_blank" class="text-blue-400 hover:underline font-mono text-sm">
+                                    ${txHash.substring(0, 10)}...
+                                </a>
+                            ` : '<span class="text-white/40">--</span>'}
+                        </td>
+                        <td>
+                            <span class="badge ${statusClass}">${statusIcon} ${status}</span>
+                        </td>
+                        <td class="text-white/60 text-sm">
+                            ${mintedAt ? new Date(mintedAt).toLocaleString() : '--'}
+                        </td>
+                        <td class="text-white/60 text-sm">${age}</td>
+                        <td>
+                            ${status === 'pending' && txHash ? `
+                                <button onclick="checkSingleTransaction('${wallet}')" class="text-blue-400 hover:text-blue-300 text-sm mr-2">Check</button>
+                            ` : ''}
+                            ${(status === 'failed' || status === 'timeout') ? `
+                                <button onclick="retrySingleMint('${wallet}')" class="text-yellow-400 hover:text-yellow-300 text-sm">Retry</button>
+                            ` : ''}
+                            ${status === 'confirmed' ? `
+                                <a href="${EXPLORER_URL}/tx/${txHash}" target="_blank" class="text-green-400 hover:text-green-300 text-sm">View</a>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function checkAllTransactions() {
+            const btn = document.getElementById('check-tx-btn');
+            const resultDiv = document.getElementById('tx-action-result');
+            const contentDiv = document.getElementById('tx-action-content');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="flex items-center gap-2"><div class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div> Checking...</span>';
+            
+            resultDiv.classList.remove('hidden');
+            contentDiv.className = 'p-4 rounded-lg bg-blue-500/20 border border-blue-500/30';
+            contentDiv.innerHTML = '<p class="text-blue-400">Checking all pending transactions on blockchain...</p>';
+            
+            try {
+                const response = await fetch('/api/admin/check-all-transactions', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const r = data.results || {};
+                    contentDiv.className = 'p-4 rounded-lg bg-green-500/20 border border-green-500/30';
+                    contentDiv.innerHTML = `
+                        <p class="text-green-400 font-semibold mb-2">✅ Transaction check completed!</p>
+                        <div class="grid grid-cols-4 gap-4 text-sm">
+                            <div><span class="text-white/60">Confirmed:</span> <span class="text-green-400 font-bold">${r.confirmed || 0}</span></div>
+                            <div><span class="text-white/60">Failed:</span> <span class="text-red-400 font-bold">${r.failed || 0}</span></div>
+                            <div><span class="text-white/60">Timeout:</span> <span class="text-orange-400 font-bold">${r.timeout || 0}</span></div>
+                            <div><span class="text-white/60">Still Pending:</span> <span class="text-yellow-400 font-bold">${r.stillPending || 0}</span></div>
+                        </div>
+                    `;
+                    
+                    // Refresh data
+                    loadTransactionData();
+                } else {
+                    throw new Error(data.error || 'Check failed');
+                }
+            } catch (error) {
+                console.error('Check transactions error:', error);
+                contentDiv.className = 'p-4 rounded-lg bg-red-500/20 border border-red-500/30';
+                contentDiv.innerHTML = `<p class="text-red-400">❌ Error: ${error.message}</p>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Check All Pending</span>';
+            }
+        }
+
+        async function retryFailedMints() {
+            const btn = document.getElementById('retry-tx-btn');
+            const resultDiv = document.getElementById('tx-action-result');
+            const contentDiv = document.getElementById('tx-action-content');
+            
+            if (!confirm('This will retry minting for all failed/timeout transactions. Continue?')) {
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="flex items-center gap-2"><div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Retrying...</span>';
+            
+            resultDiv.classList.remove('hidden');
+            contentDiv.className = 'p-4 rounded-lg bg-yellow-500/20 border border-yellow-500/30';
+            contentDiv.innerHTML = '<p class="text-yellow-400">Retrying failed mints... This may take a while.</p>';
+            
+            try {
+                const response = await fetch('/api/admin/retry-failed-mints', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    contentDiv.className = 'p-4 rounded-lg bg-green-500/20 border border-green-500/30';
+                    contentDiv.innerHTML = `
+                        <p class="text-green-400 font-semibold mb-2">✅ Retry completed!</p>
+                        <p class="text-white/80">Retried ${data.retried || 0} mints</p>
+                        ${data.errors && data.errors.length > 0 ? `
+                            <p class="text-red-400 mt-2">Errors: ${data.errors.length}</p>
+                        ` : ''}
+                    `;
+                    
+                    // Refresh data
+                    loadTransactionData();
+                } else {
+                    throw new Error(data.error || 'Retry failed');
+                }
+            } catch (error) {
+                console.error('Retry mints error:', error);
+                contentDiv.className = 'p-4 rounded-lg bg-red-500/20 border border-red-500/30';
+                contentDiv.innerHTML = `<p class="text-red-400">❌ Error: ${error.message}</p>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Retry Failed/Timeout</span>';
+            }
+        }
+
+        async function checkSingleTransaction(wallet) {
+            try {
+                const response = await fetch(`/api/claim/check-status/${wallet}`, { credentials: 'include' });
+                const data = await response.json();
+                
+                alert(`Status: ${data.tx_status || 'unknown'}\nTX: ${data.tx_hash || 'none'}`);
+                loadTransactionData();
+            } catch (error) {
+                alert('Error checking transaction: ' + error.message);
+            }
+        }
+
+        async function retrySingleMint(wallet) {
+            if (!confirm(`Retry mint for ${wallet.substring(0, 10)}...?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/retry-single-mint', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ wallet_address: wallet })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`✅ Mint retried!\nTX: ${data.tx_hash || 'pending'}`);
+                    loadTransactionData();
+                } else {
+                    alert('❌ Error: ' + (data.error || 'Failed'));
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
             }
         }
         // ==========================================

@@ -2040,24 +2040,24 @@ function Lr({
   message: e = "",
   onSignature: t
 }) {
-  const { defaultHandler: n } = Y(), { user: r, setToken: s, setUser: i } = D(), o = new URL("https://wallet.wallettwo.com/auth/login");
-  o.searchParams.append("action", "signature"), o.searchParams.append("message", e), o.searchParams.append("iframe", "true");
-  const a = async (d) => {
-    await n(d);
-    const l = document.getElementById("wallettwo-signature-iframe");
-    if (!l || d.source !== l.contentWindow || d.data.type !== "message_signed") return;
-    const { signature: u } = d.data;
-    t && await t(u), window.removeEventListener("message", a);
+  const { defaultHandler: n } = Y(), { user: r } = D(), s = new URL("https://wallet.wallettwo.com/auth/login");
+  s.searchParams.append("action", "signature"), s.searchParams.append("message", e), s.searchParams.append("iframe", "true");
+  const i = async (o) => {
+    await n(o);
+    const a = document.getElementById("wallettwo-signature-iframe");
+    if (!a || o.source !== a.contentWindow || o.data.type !== "message_signed") return;
+    const { signature: d } = o.data;
+    t && await t(d), window.removeEventListener("message", i);
   };
   return M(() => {
     if (!(!r || !e || e == ""))
-      return window.addEventListener("message", a), () => {
-        window.removeEventListener("message", a);
+      return window.addEventListener("message", i), () => {
+        window.removeEventListener("message", i);
       };
   }, [r]), !r || !e || e == "" ? null : /* @__PURE__ */ B(
     "iframe",
     {
-      src: o.toString(),
+      src: s.toString(),
       id: "wallettwo-signature-iframe",
       className: "w-full min-h-[650px] border-0",
       title: "WalletTwo Signature"

@@ -9,9 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"/>
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"/>
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png"/>
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png"/>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -56,16 +56,10 @@
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
 
-        /* ============================================
-           RESIDENCES CAROUSEL STYLES
-           ============================================ */
-        
         .residences-carousel-wrapper {
             position: relative;
             overflow: hidden;
         }
-
-        /* Carousel Header */
         .carousel-header {
             max-width: 1280px;
             margin: 0 auto 40px;
@@ -74,12 +68,10 @@
             justify-content: space-between;
             align-items: center;
         }
-
         .carousel-nav-arrows {
             display: flex;
             gap: 12px;
         }
-
         .carousel-arrow {
             width: 48px;
             height: 48px;
@@ -93,33 +85,25 @@
             color: #ee9d2b;
             transition: all 0.3s ease;
         }
-
         .carousel-arrow:hover {
             background: #ee9d2b;
             color: #0a0a0a;
         }
-
-        /* Carousel Container */
         .residences-carousel {
             position: relative;
             max-width: 1400px;
             margin: 0 auto;
             overflow: hidden;
         }
-
-        /* Individual Slides */
         .residence-slide {
             display: none;
             opacity: 0;
             transition: opacity 0.5s ease-in-out;
         }
-
         .residence-slide.active {
             display: block;
             opacity: 1;
         }
-
-        /* Slide Title Bar */
         .slide-title-bar {
             max-width: 1280px;
             margin: 0 auto 30px;
@@ -130,7 +114,6 @@
             padding-bottom: 20px;
             border-bottom: 1px solid rgba(238, 157, 43, 0.3);
         }
-
         .architect-name {
             font-family: 'Playfair Display', serif;
             font-size: 1.75rem;
@@ -138,7 +121,6 @@
             color: #ee9d2b;
             letter-spacing: 0.05em;
         }
-
         .pdf-link {
             display: flex;
             align-items: center;
@@ -156,17 +138,13 @@
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(238, 157, 43, 0.3);
         }
-
         .pdf-link:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(238, 157, 43, 0.4);
         }
-
         .pdf-link svg {
             flex-shrink: 0;
         }
-
-        /* Carousel Dots */
         .carousel-dots {
             display: flex;
             justify-content: center;
@@ -174,7 +152,6 @@
             margin-top: 50px;
             padding: 20px 0;
         }
-
         .carousel-dot {
             display: flex;
             flex-direction: column;
@@ -186,7 +163,6 @@
             padding: 10px 20px;
             transition: all 0.3s ease;
         }
-
         .carousel-dot::before {
             content: '';
             width: 12px;
@@ -195,13 +171,11 @@
             background: #333;
             transition: all 0.3s ease;
         }
-
         .carousel-dot.active::before,
         .carousel-dot:hover::before {
             background: #ee9d2b;
             transform: scale(1.2);
         }
-
         .dot-label {
             font-family: 'Manrope', sans-serif;
             font-size: 0.7rem;
@@ -211,13 +185,10 @@
             text-transform: uppercase;
             transition: color 0.3s ease;
         }
-
         .carousel-dot.active .dot-label,
         .carousel-dot:hover .dot-label {
             color: #ee9d2b;
         }
-
-        /* Slide Animation */
         @keyframes slideIn {
             from {
                 opacity: 0;
@@ -228,53 +199,38 @@
                 transform: translateX(0);
             }
         }
-
         .residence-slide.active {
             animation: slideIn 0.5s ease-out;
         }
-
-        /* Responsive adjustments for carousel */
         @media (max-width: 768px) {
             .carousel-header {
                 flex-direction: column;
                 gap: 20px;
                 text-align: center;
             }
-            
             .slide-title-bar {
                 flex-direction: column;
                 gap: 15px;
                 text-align: center;
             }
-            
             .pdf-link {
                 width: 100%;
                 justify-content: center;
             }
-            
             .carousel-dots {
                 gap: 10px;
             }
-            
             .carousel-dot {
                 padding: 8px 12px;
             }
-            
             .architect-name {
                 font-size: 1.4rem;
             }
         }
-
-        /* ============================================
-           TOKENISATION SECTION STYLES
-           ============================================ */
-
         .tokenisation-section {
             position: relative;
             overflow: hidden;
         }
-
-        /* Background decoration */
         .tokenisation-section::before {
             content: '';
             position: absolute;
@@ -287,8 +243,6 @@
                 radial-gradient(ellipse at 80% 80%, rgba(238, 157, 43, 0.05) 0%, transparent 50%);
             pointer-events: none;
         }
-
-        /* Token Card Visual */
         .token-card-inner {
             background: linear-gradient(145deg, rgba(238, 157, 43, 0.15) 0%, rgba(238, 157, 43, 0.05) 100%);
             border: 1px solid rgba(238, 157, 43, 0.3);
@@ -299,12 +253,10 @@
             overflow: hidden;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-
         .token-card-inner:hover {
             transform: translateY(-5px);
             box-shadow: 0 20px 60px rgba(238, 157, 43, 0.2);
         }
-
         .token-card-inner::before {
             content: '';
             position: absolute;
@@ -315,12 +267,9 @@
             background: conic-gradient(from 0deg, transparent, rgba(238, 157, 43, 0.1), transparent 30%);
             animation: rotate 10s linear infinite;
         }
-
         @keyframes rotate {
             100% { transform: rotate(360deg); }
         }
-
-        /* Package Cards */
         .package-card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -332,18 +281,15 @@
             flex-direction: column;
             height: 100%;
         }
-
         .package-card:hover {
             transform: translateY(-5px);
             border-color: rgba(238, 157, 43, 0.3);
             box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
         }
-
         .package-card.featured {
             background: linear-gradient(145deg, rgba(238, 157, 43, 0.1) 0%, rgba(238, 157, 43, 0.02) 100%);
             border-color: rgba(238, 157, 43, 0.4);
         }
-
         .package-badge {
             position: absolute;
             top: -12px;
@@ -358,18 +304,15 @@
             padding: 8px 16px;
             border-radius: 20px;
         }
-
         .package-badge.urgent {
             background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
             color: #fff;
             animation: pulse 2s infinite;
         }
-
         @keyframes pulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
             50% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
         }
-
         .package-cta {
             display: flex;
             align-items: center;
@@ -390,23 +333,18 @@
             transition: all 0.3s ease;
             margin-top: auto;
         }
-
         .package-cta:hover {
             background: #ee9d2b;
             color: #0a0a0a;
         }
-
         .package-card.featured .package-cta {
             background: #ee9d2b;
             color: #0a0a0a;
         }
-
         .package-card.featured .package-cta:hover {
             background: #fbdea6;
             box-shadow: 0 10px 30px rgba(238, 157, 43, 0.3);
         }
-
-        /* Bonus Tiers */
         .bonus-tier {
             display: flex;
             flex-direction: column;
@@ -416,8 +354,6 @@
             border-radius: 10px;
             border: 1px solid rgba(238, 157, 43, 0.2);
         }
-
-        /* CTA Buttons in Token Section */
         .token-cta-btn {
             display: flex;
             align-items: center;
@@ -432,30 +368,24 @@
             border-radius: 4px;
             transition: all 0.3s ease;
         }
-
         .token-cta-btn.primary {
             background: linear-gradient(135deg, #ee9d2b 0%, #d4890f 100%);
             color: #0a0a0a;
             border: none;
         }
-
         .token-cta-btn.primary:hover {
             background: linear-gradient(135deg, #fbdea6 0%, #ee9d2b 100%);
             transform: translateY(-2px);
             box-shadow: 0 10px 30px rgba(238, 157, 43, 0.3);
         }
-
         .token-cta-btn.secondary {
             background: transparent;
             color: #ee9d2b;
             border: 2px solid #ee9d2b;
         }
-
         .token-cta-btn.secondary:hover {
             background: rgba(238, 157, 43, 0.1);
         }
-
-        /* Step Connector for mobile */
         @media (max-width: 768px) {
             .step-connector-vertical {
                 width: 2px;
@@ -472,7 +402,7 @@
     <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
             <a href="/" class="flex items-center gap-4 group cursor-pointer">
-                <img src="/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
+                <img src="/images/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
                 <div>
                     <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
                 </div>
@@ -484,10 +414,9 @@
                 <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/profile">My Profile</a>
             </nav>
             <div class="flex items-center gap-4">
-                <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://key-valley-57s7.vercel.app//claim" class="hidden md:block bg-transparent border border-primary/30 text-primary px-6 lg:px-8 py-3 rounded-sm text-xs font-bold uppercase tracking-widest gold-glow transition-all hover:bg-primary hover:text-background-dark">
+                <a href="#" id="headerFreeTokens" class="hidden md:block bg-transparent border border-primary/30 text-primary px-6 lg:px-8 py-3 rounded-sm text-xs font-bold uppercase tracking-widest gold-glow transition-all hover:bg-primary hover:text-background-dark">
                     Free Tokens
                 </a>
-                <!-- Mobile menu button -->
                 <button class="lg:hidden text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
                     <span class="material-symbols-outlined">menu</span>
                 </button>
@@ -500,7 +429,7 @@
                 <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="#lifestyle">Lifestyle</a>
                 <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="#tokenisation">VIP Tokens</a>
                 <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/profile">My Profile</a>
-                <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://key-valley-57s7.vercel.app//claim" class="bg-primary text-background-dark px-6 py-3 rounded-sm text-xs font-bold uppercase tracking-widest text-center mt-2">
+                <a href="#" id="mobileFreeTokens" class="bg-primary text-background-dark px-6 py-3 rounded-sm text-xs font-bold uppercase tracking-widest text-center mt-2">
                     Free Tokens
                 </a>
             </nav>
@@ -514,7 +443,6 @@
         <div class="w-full h-full bg-cover bg-center bg-no-repeat transform scale-105" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDb_ylzwt1JEbIeGZFhXrhxNxNambzL5Ne9LWo9j7DaH9Ryy8Hsd16PSX_ld9bfYoziEsrx0FwTVYv5bxWjjRTQYVS5xx1oH1PxgZjQo3xxVv7Ej10A8PnxrGcCLMlgvD5n6Ellk8WLmevdZW_nHaAm1klzDKw6d2Zs0urW-AxGMKuAFj34twQx6sSo5aZrFHVhKEvu8B9Fw7Pi9h-80foA99A8QZuqgwa25bo2RgA-Cy-DWo-tRyfmoyMqmVwzCmg49-_5-3MMAeA');"></div>
     </div>
     
-    <!-- Main Hero Content - Centered -->
     <div class="relative z-20 flex-1 flex items-center justify-center text-center px-6">
         <div class="max-w-6xl mx-auto flex flex-col items-center">
             <div class="mb-8 flex items-center justify-center gap-4 text-reveal" style="animation-delay: 0.1s;">
@@ -529,7 +457,7 @@
                 "Live a Life That You Don't Want to Take a Holiday From" (TM) <br/>Dr. Julie Meyer MBE
             </p>
             <div class="mt-12 flex flex-col sm:flex-row gap-4 text-reveal" style="animation-delay: 0.7s;">
-                <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://key-valley-57s7.vercel.app//claim" class="px-10 py-4 bg-primary text-background-dark font-bold font-sans rounded-sm tracking-widest uppercase text-xs gold-glow hover:translate-y-[-2px] transition-transform">
+                <a href="#" id="heroClaimTokens" class="px-10 py-4 bg-primary text-background-dark font-bold font-sans rounded-sm tracking-widest uppercase text-xs gold-glow hover:translate-y-[-2px] transition-transform">
                     Claim Free Tokens
                 </a>
                 <a href="/profile" class="px-10 py-4 border border-white/30 text-white font-bold font-sans rounded-sm tracking-widest uppercase text-xs hover:bg-white/10 transition-all">
@@ -539,7 +467,6 @@
         </div>
     </div>
     
-    <!-- Vision Quote - Bottom of Hero -->
     <div class="relative z-20 pb-12 pt-8 text-reveal" style="animation-delay: 0.9s;">
         <div class="max-w-4xl mx-auto text-center px-6">
             <div class="w-10 h-10 mx-auto text-primary opacity-50 mb-6">
@@ -559,13 +486,10 @@
 
     <!-- Main Content -->
     <main class="relative z-10">
-        <!-- ============================================
-             RESIDENCES CAROUSEL SECTION
-             ============================================ -->
+        <!-- RESIDENCES CAROUSEL SECTION -->
         <section class="py-24 bg-surface relative overflow-hidden residences-carousel-wrapper" id="residences">
             <div class="absolute top-0 right-0 w-1/3 h-full bg-primary/5 blur-3xl pointer-events-none"></div>
             
-            <!-- Carousel Header -->
             <div class="carousel-header">
                 <div class="space-y-4">
                     <span class="text-primary tracking-[0.2em] uppercase text-xs font-bold flex items-center gap-3">
@@ -588,13 +512,10 @@
                 </div>
             </div>
 
-            <!-- Carousel Slides Container -->
             <div class="residences-carousel">
                 
-                <!-- ========== SLIDE 1: Residences by Kea ========== -->
+                <!-- SLIDE 1: Residences by Kea -->
                 <div class="residence-slide active" data-slide="0">
-                    
-                    <!-- Slide Title Bar -->
                     <div class="slide-title-bar">
                         <h3 class="architect-name">Residences by Kea</h3>
                         <a href="/pdfs/residences-by-kea.pdf" class="pdf-link" target="_blank">
@@ -607,13 +528,11 @@
                             </svg>
                         </a>
                     </div>
-
-                    <!-- Residences Content -->
                     <div class="max-w-7xl mx-auto px-6 lg:px-12">
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start mb-24">
                             <div class="md:col-span-8 group">
                                 <div class="h-[400px] md:h-[600px] w-full overflow-hidden relative rounded-sm">
-                                    <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style="background-image: url('/residences.png');"></div>
+                                    <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style="background-image: url('/images/residences.png');"></div>
                                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80"></div>
                                     <div class="absolute bottom-8 left-8 p-6 bg-black/40 backdrop-blur-md border border-white/10 max-w-sm">
                                         <h3 class="text-2xl font-serif italic mb-2">The Master Suite</h3>
@@ -648,8 +567,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- A Place to Unwind -->
                         <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center mb-24">
                             <div class="order-2 lg:order-1 space-y-8">
                                 <div>
@@ -663,15 +580,13 @@
                             <div class="order-1 lg:order-2 relative">
                                 <div class="absolute -inset-4 border border-primary/20 rounded-full opacity-50 hidden lg:block"></div>
                                 <div class="h-[400px] lg:h-[500px] w-full overflow-hidden rounded-t-full rounded-b-full shadow-2xl relative">
-                                    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('/wellness.png');"></div>
+                                    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('/images/wellness.png');"></div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Outdoor Living -->
                         <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
                             <div class="h-[400px] lg:h-[500px] w-full overflow-hidden rounded-sm shadow-2xl relative group">
-                                <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style="background-image: url('/terrace.jpg');"></div>
+                                <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style="background-image: url('/images/terrace.jpg');"></div>
                                 <div class="absolute inset-4 border border-white/20 pointer-events-none"></div>
                             </div>
                             <div class="space-y-8">
@@ -687,10 +602,8 @@
                     </div>
                 </div>
 
-                <!-- ========== SLIDE 2: Residences by Johan ========== -->
+                <!-- SLIDE 2: Residences by Johan -->
                 <div class="residence-slide" data-slide="1">
-                    
-                    <!-- Slide Title Bar -->
                     <div class="slide-title-bar">
                         <h3 class="architect-name">Residences by Johan</h3>
                         <a href="/pdfs/residences-by-johan.pdf" class="pdf-link" target="_blank">
@@ -703,13 +616,11 @@
                             </svg>
                         </a>
                     </div>
-
-                    <!-- Residences Content -->
                     <div class="max-w-7xl mx-auto px-6 lg:px-12">
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start mb-24">
                             <div class="md:col-span-8 group">
                                 <div class="h-[400px] md:h-[600px] w-full overflow-hidden relative rounded-sm">
-                                    <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style="background-image: url('/residences.png');"></div>
+                                    <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style="background-image: url('/images/residences.png');"></div>
                                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80"></div>
                                     <div class="absolute bottom-8 left-8 p-6 bg-black/40 backdrop-blur-md border border-white/10 max-w-sm">
                                         <h3 class="text-2xl font-serif italic mb-2">The Master Suite</h3>
@@ -744,8 +655,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- A Place to Unwind -->
                         <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center mb-24">
                             <div class="order-2 lg:order-1 space-y-8">
                                 <div>
@@ -759,15 +668,13 @@
                             <div class="order-1 lg:order-2 relative">
                                 <div class="absolute -inset-4 border border-primary/20 rounded-full opacity-50 hidden lg:block"></div>
                                 <div class="h-[400px] lg:h-[500px] w-full overflow-hidden rounded-t-full rounded-b-full shadow-2xl relative">
-                                    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('/wellness.png');"></div>
+                                    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('/images/wellness.png');"></div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Outdoor Living -->
                         <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
                             <div class="h-[400px] lg:h-[500px] w-full overflow-hidden rounded-sm shadow-2xl relative group">
-                                <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style="background-image: url('/terrace.jpg');"></div>
+                                <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style="background-image: url('/images/terrace.jpg');"></div>
                                 <div class="absolute inset-4 border border-white/20 pointer-events-none"></div>
                             </div>
                             <div class="space-y-8">
@@ -783,10 +690,8 @@
                     </div>
                 </div>
 
-                <!-- ========== SLIDE 3: Residences by ... ========== -->
+                <!-- SLIDE 3: Residences by ... -->
                 <div class="residence-slide" data-slide="2">
-                    
-                    <!-- Slide Title Bar -->
                     <div class="slide-title-bar">
                         <h3 class="architect-name">Residences by ...</h3>
                         <a href="/pdfs/residences-by-other.pdf" class="pdf-link" target="_blank">
@@ -799,13 +704,11 @@
                             </svg>
                         </a>
                     </div>
-
-                    <!-- Residences Content -->
                     <div class="max-w-7xl mx-auto px-6 lg:px-12">
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start mb-24">
                             <div class="md:col-span-8 group">
                                 <div class="h-[400px] md:h-[600px] w-full overflow-hidden relative rounded-sm">
-                                    <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style="background-image: url('/residences.png');"></div>
+                                    <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style="background-image: url('/images/residences.png');"></div>
                                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80"></div>
                                     <div class="absolute bottom-8 left-8 p-6 bg-black/40 backdrop-blur-md border border-white/10 max-w-sm">
                                         <h3 class="text-2xl font-serif italic mb-2">The Master Suite</h3>
@@ -840,8 +743,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- A Place to Unwind -->
                         <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center mb-24">
                             <div class="order-2 lg:order-1 space-y-8">
                                 <div>
@@ -855,15 +756,13 @@
                             <div class="order-1 lg:order-2 relative">
                                 <div class="absolute -inset-4 border border-primary/20 rounded-full opacity-50 hidden lg:block"></div>
                                 <div class="h-[400px] lg:h-[500px] w-full overflow-hidden rounded-t-full rounded-b-full shadow-2xl relative">
-                                    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('/wellness.png');"></div>
+                                    <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('/images/wellness.png');"></div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Outdoor Living -->
                         <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
                             <div class="h-[400px] lg:h-[500px] w-full overflow-hidden rounded-sm shadow-2xl relative group">
-                                <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style="background-image: url('/terrace.jpg');"></div>
+                                <div class="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105" style="background-image: url('/images/terrace.jpg');"></div>
                                 <div class="absolute inset-4 border border-white/20 pointer-events-none"></div>
                             </div>
                             <div class="space-y-8">
@@ -881,7 +780,6 @@
 
             </div>
 
-            <!-- Carousel Dots Navigation -->
             <div class="carousel-dots">
                 <button class="carousel-dot active" onclick="goToResidenceSlide(0)" aria-label="Residences by Kea">
                     <span class="dot-label">Kea</span>
@@ -896,10 +794,8 @@
 
         </section>
 
-        <!-- Lifestyle Section (Services Only - Wellness/Outdoor moved to carousel) -->
+        <!-- Lifestyle Section -->
         <div class="bg-background-dark py-24 space-y-32" id="lifestyle">
-            
-            <!-- Services -->
             <section class="max-w-7xl mx-auto px-6 lg:px-12">
                 <div class="text-center mb-16 space-y-4">
                     <h2 class="text-3xl md:text-4xl lg:text-5xl font-serif font-medium">World-Class Services</h2>
@@ -929,22 +825,16 @@
                     </div>
                 </div>
             </section>
-
         </div>
 
-        <!-- ============================================
-             TOKENISATION SECTION
-             ============================================ -->
+        <!-- TOKENISATION SECTION -->
         <section class="py-24 md:py-32 bg-surface tokenisation-section" id="tokenisation">
-            
-            <!-- Section Header -->
             <div class="text-center max-w-3xl mx-auto mb-16 px-6">
                 <span class="inline-block text-xs font-bold tracking-[0.2em] text-primary uppercase mb-6 px-5 py-2 border border-primary/30 rounded-full">Digital Luxury</span>
                 <h2 class="text-4xl md:text-5xl lg:text-6xl font-serif font-medium text-white mb-6">The VIP Token Experience</h2>
                 <p class="text-slate-400 text-lg font-light">Your gateway to exclusive services and rewards on Kea Island</p>
             </div>
 
-            <!-- What Are Tokens -->
             <div class="max-w-7xl mx-auto px-6 lg:px-12 mb-16">
                 <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
                     <div class="space-y-6">
@@ -955,7 +845,7 @@
                             spent on premium experiences, from villa rentals to fine dining, wellness treatments to 
                             exclusive island excursions.
                         </p>
-                        <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://key-valley-57s7.vercel.app//claim" class="inline-flex items-center gap-2 px-8 py-4 bg-primary text-background-dark font-bold rounded-sm tracking-widest uppercase text-xs gold-glow hover:translate-y-[-2px] transition-transform">
+                        <a href="#" id="tokenClaimLink" class="inline-flex items-center gap-2 px-8 py-4 bg-primary text-background-dark font-bold rounded-sm tracking-widest uppercase text-xs gold-glow hover:translate-y-[-2px] transition-transform">
                             Claim Free Tokens
                         </a>
                     </div>
@@ -974,9 +864,8 @@
                 </div>
             </div>
 
-            <!-- KEA Experiences Link -->
             <div class="max-w-4xl mx-auto px-6 lg:px-12 mb-20">
-                <a href="/kea-experiences.jpg" target="_blank" class="block bg-white/5 border border-white/10 hover:border-primary/50 rounded-lg p-6 md:p-8 transition-all hover:bg-white/[0.07] group">
+                <a href="/images/kea-experiences.jpg" target="_blank" class="block bg-white/5 border border-white/10 hover:border-primary/50 rounded-lg p-6 md:p-8 transition-all hover:bg-white/[0.07] group">
                     <div class="flex flex-col md:flex-row items-center justify-between gap-6">
                         <div class="flex items-center gap-5">
                             <div class="size-14 md:size-16 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -999,7 +888,6 @@
                 </a>
             </div>
 
-            <!-- Packages Section -->
             <div class="max-w-6xl mx-auto px-6 lg:px-12">
                 <h3 class="text-2xl md:text-3xl font-serif text-white text-center mb-4 font-medium">Exclusive Packages</h3>
                 <p class="text-slate-400 text-center mb-12 font-light">Choose a package that matches your lifestyle</p>
@@ -1036,7 +924,7 @@
                                 </li>
                             </ul>
                         </div>
-                        <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://key-valley-57s7.vercel.app//claim" class="package-cta">
+                        <a href="#" class="package-cta wallettwo-link" data-redirect="/claim">
                             <span>Get Started</span>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -1080,7 +968,7 @@
                                 </li>
                             </ul>
                         </div>
-                        <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://key-valley-57s7.vercel.app//claim" class="package-cta">
+                        <a href="#" class="package-cta wallettwo-link" data-redirect="/claim">
                             <span>Get Started</span>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -1107,7 +995,7 @@
                 Claim your free VIP tokens and become part of the most exclusive community in the Mediterranean.
             </p>
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 pt-6">
-                <a href="https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=https://key-valley-57s7.vercel.app//claim" class="w-full sm:w-auto px-10 md:px-12 py-4 md:py-5 bg-primary text-background-dark font-bold font-sans rounded-sm tracking-widest uppercase text-xs gold-glow hover:translate-y-[-2px] transition-transform">
+                <a href="#" id="ctaClaimTokens" class="w-full sm:w-auto px-10 md:px-12 py-4 md:py-5 bg-primary text-background-dark font-bold font-sans rounded-sm tracking-widest uppercase text-xs gold-glow hover:translate-y-[-2px] transition-transform">
                     Claim Free Tokens
                 </a>
                 <a href="/profile" class="w-full sm:w-auto px-10 md:px-12 py-4 md:py-5 border border-primary/30 text-primary font-bold font-sans rounded-sm tracking-widest uppercase hover:bg-primary hover:text-background-dark transition-all text-xs">
@@ -1121,10 +1009,9 @@
     <footer class="py-12 md:py-16 border-t border-white/5" style="background-color: #1a1a1a;">
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
             <div class="flex flex-col gap-8">
-                <!-- Top Row: Logo, Nav, Contact -->
                 <div class="flex flex-col lg:flex-row justify-between items-center gap-8">
                     <a href="/" class="flex items-center gap-3">
-                        <img src="/logo.png" alt="Kea Valley" class="h-8 w-auto"/>
+                        <img src="/images/logo.png" alt="Kea Valley" class="h-8 w-auto"/>
                         <span class="text-sm font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
                     </a>
                     <div class="flex flex-wrap justify-center gap-6 md:gap-8 text-slate-500 text-[0.65rem] tracking-[0.2em] font-bold uppercase font-sans">
@@ -1134,7 +1021,6 @@
                         <a class="hover:text-primary transition-colors" href="/privacy">Privacy Policy</a>
                         <a class="hover:text-primary transition-colors" href="/terms">Terms</a>
                     </div>
-                    <!-- Contact Info - Stacked Vertically -->
                     <div class="flex flex-col items-center lg:items-end gap-2">
                         <a href="tel:+41799446770" class="flex items-center gap-2 text-slate-400 hover:text-primary transition-colors text-sm font-light">
                             <span class="material-symbols-outlined text-primary text-lg">phone</span>
@@ -1146,7 +1032,6 @@
                         </a>
                     </div>
                 </div>
-                <!-- Bottom Row: Copyright -->
                 <div class="pt-6 border-t border-white/5 text-center">
                     <div class="text-slate-600 text-xs font-light">
                         © 2026 Kea Valley. All rights reserved.
@@ -1156,9 +1041,7 @@
         </div>
     </footer>
 
-    <!-- ============================================
-         RESIDENCES CAROUSEL JAVASCRIPT
-         ============================================ -->
+    <!-- RESIDENCES CAROUSEL JAVASCRIPT -->
     <script>
         let currentResidenceSlide = 0;
         const totalResidenceSlides = 3;
@@ -1167,7 +1050,6 @@
             const slides = document.querySelectorAll('.residence-slide');
             const dots = document.querySelectorAll('.carousel-dot');
             
-            // Handle wrap-around
             if (index >= totalResidenceSlides) {
                 currentResidenceSlide = 0;
             } else if (index < 0) {
@@ -1176,7 +1058,6 @@
                 currentResidenceSlide = index;
             }
             
-            // Update slides
             slides.forEach((slide, i) => {
                 slide.classList.remove('active');
                 if (i === currentResidenceSlide) {
@@ -1184,7 +1065,6 @@
                 }
             });
             
-            // Update dots
             dots.forEach((dot, i) => {
                 dot.classList.remove('active');
                 if (i === currentResidenceSlide) {
@@ -1201,9 +1081,7 @@
             showResidenceSlide(index);
         }
 
-        // Keyboard navigation
         document.addEventListener('keydown', (e) => {
-            // Only trigger if residences section is in view
             const residencesSection = document.getElementById('residences');
             const rect = residencesSection.getBoundingClientRect();
             const isInView = rect.top < window.innerHeight && rect.bottom > 0;
@@ -1217,7 +1095,6 @@
             }
         });
 
-        // Touch/Swipe support for mobile
         let touchStartX = 0;
         let touchEndX = 0;
 
@@ -1239,40 +1116,48 @@
             
             if (Math.abs(diff) > swipeThreshold) {
                 if (diff > 0) {
-                    // Swipe left - next slide
                     changeResidenceSlide(1);
                 } else {
-                    // Swipe right - previous slide
                     changeResidenceSlide(-1);
                 }
             }
         }
+    </script>
 
-        // Optional: Auto-advance carousel every 12 seconds
-        // Uncomment the lines below to enable auto-play
-        /*
-        let autoPlayInterval;
-
-        function startAutoPlay() {
-            autoPlayInterval = setInterval(() => {
-                changeResidenceSlide(1);
-            }, 12000);
+    <!-- Dynamic WalletTwo Links -->
+    <script>
+    (function() {
+        const WALLETTWO_COMPANY_ID = '6a27c2f8-894c-46c7-bf9f-f5af11d4e092';
+        
+        function buildWalletTwoUrl(redirectPath, message) {
+            message = message || 'FREE_BONUS_TOKENS_KEA_VALLEY';
+            return 'https://wallet.wallettwo.com/auth/login?companyId=' + WALLETTWO_COMPANY_ID + 
+                   '&action=signature&message=' + message + 
+                   '&redirect_uri=' + encodeURIComponent(window.location.origin + redirectPath);
         }
-
-        function stopAutoPlay() {
-            clearInterval(autoPlayInterval);
-        }
-
-        // Start auto-play when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            startAutoPlay();
-            
-            // Pause on hover
-            const carousel = document.querySelector('.residences-carousel-wrapper');
-            carousel.addEventListener('mouseenter', stopAutoPlay);
-            carousel.addEventListener('mouseleave', startAutoPlay);
+        
+        // Set all WalletTwo links dynamically
+        var linkIds = [
+            'headerFreeTokens',
+            'mobileFreeTokens', 
+            'heroClaimTokens',
+            'tokenClaimLink',
+            'ctaClaimTokens'
+        ];
+        
+        linkIds.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.href = buildWalletTwoUrl('/claim');
+            }
         });
-        */
+        
+        // Handle package CTAs with data-redirect attribute
+        document.querySelectorAll('.wallettwo-link').forEach(function(el) {
+            var redirect = el.getAttribute('data-redirect') || '/claim';
+            el.href = buildWalletTwoUrl(redirect);
+        });
+    })();
     </script>
 
 </body>
