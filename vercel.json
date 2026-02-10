@@ -2,10 +2,6 @@
   "version": 2,
   "builds": [
     {
-      "src": "src/public/**",
-      "use": "@vercel/static"
-    },
-    {
       "src": "src/index.js",
       "use": "@vercel/node"
     }
@@ -13,35 +9,8 @@
   "routes": [
     {
       "src": "/images/(.*)",
-      "dest": "/src/public/images/$1"
-    },
-    {
-      "src": "/favicon.ico",
-      "dest": "/src/public/favicon.ico"
-    },
-    {
-      "src": "/admin/js/(.*)",
-      "dest": "/src/public/admin/js/$1"
-    },
-    {
-      "src": "/admin/css/(.*)",
-      "dest": "/src/public/admin/css/$1"
-    },
-    {
-      "src": "/claim/(.*\\.(js|css|png|jpg|svg))",
-      "dest": "/src/public/claim/$1"
-    },
-    {
-      "src": "/profile/(.*\\.(js|css|png|jpg|svg))",
-      "dest": "/src/public/profile/$1"
-    },
-    {
-      "src": "/presale/(.*\\.(js|css|png|jpg|svg))",
-      "dest": "/src/public/presale/$1"
-    },
-    {
-      "src": "/(.*\\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot))",
-      "dest": "/src/public/$1"
+      "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
+      "dest": "/src/index.js"
     },
     {
       "src": "/(.*)",
