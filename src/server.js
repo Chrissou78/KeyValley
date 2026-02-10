@@ -6,6 +6,31 @@ const path = require('path');
 
 const app = express();
 
+// ========================================
+// STATIC FILES FIRST - NO AUTH REQUIRED
+// ========================================
+const publicPath = path.join(__dirname, 'public');
+
+// These routes serve static files directly, before any other middleware
+app.use('/images', express.static(path.join(publicPath, 'images')));
+app.use('/fonts', express.static(path.join(publicPath, 'fonts')));
+app.use('/css', express.static(path.join(publicPath, 'css')));
+app.use('/js', express.static(path.join(publicPath, 'js')));
+app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(publicPath, 'favicon.ico'), err => {
+        if (err) res.status(404).end();
+    });
+});
+app.get('/robots.txt', (req, res) => {
+    res.sendFile(path.join(publicPath, 'robots.txt'), err => {
+        if (err) res.status(404).end();
+    });
+});
+
+// ========================================
+// STANDARD MIDDLEWARE
+// ========================================
+
 // CORS configuration
 app.use(cors({
     origin: true,
@@ -24,20 +49,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ========================================
-// STATIC FILES FIRST (no auth required)
-// ========================================
-app.use('/images', express.static(path.join(__dirname, 'public/images')));
-app.use('/admin/js', express.static(path.join(__dirname, 'public/admin/js')));
-app.use('/admin/css', express.static(path.join(__dirname, 'public/admin/css')));
-app.use(express.static(path.join(__dirname, 'public')));
-
-// ========================================
-// ROUTES AFTER STATIC FILES
+// ROUTES
 // ========================================
 const routes = require('./routes');
 app.use('/', routes);
 
-// Catch-all redirect (but not for static assets)
+// General static files (for anything not caught above)
+app.use(express.static(publicPath));
+
+// Catch-all redirect (but not for static assets or API)
 app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api/') || req.path.includes('.')) {
         return next();
