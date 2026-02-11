@@ -237,7 +237,7 @@
                         <div class="wallet-iframe-container">
                             <iframe 
                                 id="walletIframe"
-                                src="https://wallet.wallettwo.com/auth/login?action=auth&iframe=true"
+                                src="https://wallet.wallettwo.com/auth/login?action=auth&iframe=true&companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092"
                                 class="wallet-iframe"
                                 allow="clipboard-write"
                             ></iframe>
@@ -1409,34 +1409,88 @@
             }
         });
 
+        // ============================================
+        // Token Exchange - SERVER SIDE (with API key)
+        // ============================================
         async function exchangeCode(code, wallet, userId) {
             showLoading();
+            console.log('🔄 Exchanging code via server...', { code: code.substring(0, 10) + '...', wallet });
+            
             try {
-                const response = await fetch('/api/wallettwo/exchange', {
+                // Step 1: Exchange code for token via YOUR backend (which has the API key)
+                const tokenResponse = await fetch('/api/wallettwo/exchange', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code })
                 });
-                const data = await response.json();
                 
+                const tokenData = await tokenResponse.json();
+                console.log('🔑 Token exchange response:', tokenData);
+                
+                if (!tokenData.success && !tokenData.access_token) {
+                    console.warn('⚠️ Token exchange failed:', tokenData.error || 'No access token');
+                    // Fallback: continue without email
+                    const userData = { wallet, userId, timestamp: Date.now() };
+                    saveSession(userData);
+                    showProfile(userData);
+                    return;
+                }
+
+                const accessToken = tokenData.access_token;
+                let userEmail = tokenData.email || tokenData.user?.email;
+                let userName = tokenData.name || tokenData.user?.name || tokenData.user?.given_name;
+
+                // Step 2: If we have a token but no email, fetch user info
+                if (accessToken && !userEmail) {
+                    console.log('📧 Fetching user info...');
+                    try {
+                        const userInfoResponse = await fetch('/api/wallettwo/userinfo', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ token: accessToken })
+                        });
+                        
+                        const userInfoData = await userInfoResponse.json();
+                        console.log('👤 User info response:', userInfoData);
+                        
+                        if (userInfoData.success || userInfoData.email) {
+                            userEmail = userInfoData.email || userInfoData.user?.email;
+                            userName = userName || userInfoData.name || userInfoData.user?.name;
+                        }
+                    } catch (userInfoError) {
+                        console.error('Failed to fetch user info:', userInfoError);
+                    }
+                }
+
+                // Build user data
                 const userData = {
                     wallet,
-                    userId: userId || data.user?.sub || data.user?.id,
-                    email: data.user?.email,
-                    name: data.user?.name || data.user?.given_name,
-                    accessToken: data.access_token,
+                    userId: userId || tokenData.user?.sub || tokenData.user?.id,
+                    email: userEmail,
+                    name: userName,
+                    accessToken: accessToken,
                     timestamp: Date.now()
                 };
+                
+                console.log('✅ Final user data:', { 
+                    wallet: userData.wallet, 
+                    email: userData.email, 
+                    name: userData.name,
+                    hasToken: !!userData.accessToken 
+                });
                 
                 // Save email to localStorage for questionnaire
                 if (userData.email) {
                     localStorage.setItem('userEmail', userData.email);
+                    console.log('💾 Email saved to localStorage:', userData.email);
                 }
                 
                 saveSession(userData);
                 showProfile(userData);
+                
             } catch (error) {
-                console.error('Exchange failed:', error);
+                console.error('❌ Exchange failed:', error);
+                // Fallback: continue without email
                 const userData = { wallet, userId, timestamp: Date.now() };
                 saveSession(userData);
                 showProfile(userData);

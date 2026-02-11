@@ -4,6 +4,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 
+
 const app = express();
 
 // DEBUG: Log ALL incoming requests
@@ -53,6 +54,9 @@ app.use('/api/stripe', stripeRoutes);
 // JSON and URL-encoded parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+const walletTwoAuthRoutes = require('./routes/wallettwo-auth');
+app.use('/api/wallettwo', walletTwoAuthRoutes);
 
 // ========================================
 // ROUTES
