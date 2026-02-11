@@ -4,14 +4,32 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 
-
 const app = express();
 
 // DEBUG: Log ALL incoming requests
 app.use((req, res, next) => {
     console.log(`📥 [${req.method}] ${req.path}`);
     next();
-})
+});
+
+// TEMPORARY DEBUG - check file paths
+const fs = require('fs');
+app.get('/debug-paths', (req, res) => {
+    const publicPath = path.join(__dirname, 'public');
+    const adminPath = path.join(publicPath, 'admin');
+    const loginPath = path.join(adminPath, 'login.html');
+    
+    res.json({
+        __dirname: __dirname,
+        publicPath: publicPath,
+        adminPath: adminPath,
+        loginPath: loginPath,
+        publicExists: fs.existsSync(publicPath),
+        adminExists: fs.existsSync(adminPath),
+        loginExists: fs.existsSync(loginPath),
+        adminContents: fs.existsSync(adminPath) ? fs.readdirSync(adminPath) : 'N/A'
+    });
+});
 
 // ========================================
 // STATIC FILES FIRST - NO AUTH REQUIRED
@@ -23,6 +41,19 @@ app.use('/images', express.static(path.join(publicPath, 'images')));
 app.use('/fonts', express.static(path.join(publicPath, 'fonts')));
 app.use('/css', express.static(path.join(publicPath, 'css')));
 app.use('/js', express.static(path.join(publicPath, 'js')));
+
+// Admin static files
+app.use('/admin', express.static(path.join(publicPath, 'admin')));
+
+// Profile static files
+app.use('/profile', express.static(path.join(publicPath, 'profile')));
+
+// Claim static files
+app.use('/claim', express.static(path.join(publicPath, 'claim')));
+
+// Presale static files
+app.use('/presale', express.static(path.join(publicPath, 'presale')));
+
 app.get('/favicon.ico', (req, res) => {
     res.sendFile(path.join(publicPath, 'favicon.ico'), err => {
         if (err) res.status(404).end();
@@ -57,6 +88,9 @@ app.use(express.urlencoded({ extended: true }));
 
 const walletTwoAuthRoutes = require('./routes/wallettwo-auth');
 app.use('/api/wallettwo', walletTwoAuthRoutes);
+
+const configRoutes = require('./routes/config');
+app.use('/api/config', configRoutes);
 
 // ========================================
 // ROUTES

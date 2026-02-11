@@ -235,9 +235,10 @@
                     <div id="loginContainer">
                         <p class="text-slate-400 text-sm text-center mb-6">Connect your wallet to view your profile</p>
                         <div class="wallet-iframe-container">
+                            <!-- iframe src will be set dynamically after loading config -->
                             <iframe 
                                 id="walletIframe"
-                                src="https://wallet.wallettwo.com/auth/login?action=auth&iframe=true&companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092"
+                                src=""
                                 class="wallet-iframe"
                                 allow="clipboard-write"
                             ></iframe>
@@ -655,13 +656,14 @@
 
     <script>
         // ============================================
-        // Configuration
+        // Configuration (loaded from server)
         // ============================================
-        const CONFIG = {
+        let CONFIG = {
             VIP_TOKEN_ADDRESS: '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F',
             POLYGON_RPC: 'https://polygon-mainnet.g.alchemy.com/v2/IoufBRdGO6MKWC6pxqbZW',
             POLYGON_EXPLORER: 'https://polygonscan.com',
             WALLETTWO_ORIGIN: 'https://wallet.wallettwo.com',
+            WALLETTWO_COMPANY_ID: null, // Loaded from server
             STORAGE_KEY: 'keavalley_profile',
             MIN_BALANCE_TO_HIDE_CLAIM: 2,
             SESSION_DURATION: 24 * 60 * 60 * 1000
@@ -689,6 +691,40 @@
         const presaleBanner = document.getElementById('presaleBanner');
         const cardTitle = document.getElementById('cardTitle');
         const logoutIframe = document.getElementById('logoutIframe');
+        const walletIframe = document.getElementById('walletIframe');
+
+        // ============================================
+        // Load Config from Server
+        // ============================================
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config/public');
+                const config = await response.json();
+                
+                if (config.walletTwoCompanyId) {
+                    CONFIG.WALLETTWO_COMPANY_ID = config.walletTwoCompanyId;
+                    console.log('✅ Config loaded, companyId:', CONFIG.WALLETTWO_COMPANY_ID);
+                    return true;
+                } else {
+                    console.error('❌ No companyId in config response');
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ Failed to load config:', error);
+                return false;
+            }
+        }
+
+        // ============================================
+        // Initialize WalletTwo Iframe
+        // ============================================
+        function initWalletIframe() {
+            if (!CONFIG.WALLETTWO_COMPANY_ID) {
+                console.error('Cannot init iframe: missing companyId');
+                return;
+            }
+            walletIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=auth&iframe=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
+        }
 
         // ============================================
         // Session Management
@@ -791,12 +827,12 @@
             // Fetch email from database if not in session
             if (!currentUser.email) {
                 try {
-                    const response = await fetch(`/api/user/${user.wallet}`);
+                    const response = await fetch(`/api/wallet/info/${user.wallet}`);
                     const data = await response.json();
-                    if (data.success && data.user?.email) {
-                        currentUser.email = data.user.email;
-                        localStorage.setItem('userEmail', data.user.email);
-                        console.log('📧 Email loaded from DB:', data.user.email);
+                    if (data.success && data.email) {
+                        currentUser.email = data.email;
+                        localStorage.setItem('userEmail', data.email);
+                        console.log('📧 Email loaded from DB:', data.email);
                     }
                 } catch (error) {
                     console.error('Error fetching user data:', error);
@@ -1030,7 +1066,7 @@
             }
         }
 
-        // Add this new function
+        // Check claim status
         async function checkClaimStatus(wallet) {
             try {
                 const response = await fetch(`/api/claim/check-status/${wallet}`);
@@ -1039,7 +1075,6 @@
                 console.log('Claim status:', data);
                 
                 if (data.tx_status === 'pending') {
-                    // Show a notification that claim is processing
                     showPendingClaimNotification(data);
                 }
             } catch (error) {
@@ -1048,7 +1083,6 @@
         }
 
         function showPendingClaimNotification(data) {
-            // Create a notification banner
             const existing = document.getElementById('pendingClaimBanner');
             if (existing) existing.remove();
             
@@ -1071,7 +1105,6 @@
             `;
             document.body.appendChild(banner);
             
-            // Auto-refresh status every 15 seconds
             const checkInterval = setInterval(async () => {
                 try {
                     const response = await fetch(`/api/claim/check-status/${currentUser.wallet}`);
@@ -1080,9 +1113,7 @@
                     if (newData.tx_status === 'confirmed') {
                         clearInterval(checkInterval);
                         banner.remove();
-                        // Refresh balance
                         fetchBalance(currentUser.wallet);
-                        // Show success notification
                         showSuccessNotification();
                     } else if (newData.tx_status === 'failed' || newData.tx_status === 'timeout') {
                         clearInterval(checkInterval);
@@ -1102,7 +1133,6 @@
                 }
             }, 15000);
             
-            // Stop checking after 10 minutes
             setTimeout(() => clearInterval(checkInterval), 600000);
         }
 
@@ -1193,7 +1223,6 @@
 
                 referralContent.classList.remove('hidden');
 
-                // Part 1: Set Referrer Section
                 const setReferrerSection = document.getElementById('setReferrerSection');
                 const referrerSetSection = document.getElementById('referrerSetSection');
 
@@ -1210,7 +1239,6 @@
                     referrerSetSection.classList.add('hidden');
                 }
 
-                // Part 2: My Code Section
                 const generateCodeSection = document.getElementById('generateCodeSection');
                 const myCodeSection = document.getElementById('myCodeSection');
 
@@ -1222,7 +1250,6 @@
                     document.getElementById('referralCount').textContent = referralStatus.stats?.totalReferrals || 0;
                     document.getElementById('referralEarned').textContent = (referralStatus.stats?.totalBonusEarned || 0).toFixed(2);
 
-                    // Bonus info
                     const info = referralStatus.bonusInfo || {};
                     let bonusText = '';
                     if (info.signupAmount > 0) {
@@ -1249,7 +1276,6 @@
             }
         }
 
-        // Set referrer (apply code)
         async function setReferrer() {
             const input = document.getElementById('referralCodeInput');
             const errorEl = document.getElementById('setReferrerError');
@@ -1285,8 +1311,6 @@
                 if (data.success) {
                     successEl.textContent = 'Referrer linked successfully!';
                     successEl.classList.remove('hidden');
-                    
-                    // Reload to update UI
                     setTimeout(() => loadReferralStatus(), 1000);
                 } else {
                     errorEl.textContent = data.error || 'Failed to set referrer';
@@ -1302,7 +1326,6 @@
             }
         }
 
-        // Generate own code
         async function generateReferralCode() {
             if (!currentUser?.wallet) return;
 
@@ -1334,7 +1357,6 @@
             }
         }
 
-        // Copy code
         function copyReferralCode() {
             const code = document.getElementById('myReferralCode').textContent;
             navigator.clipboard.writeText(code).then(() => {
@@ -1377,7 +1399,7 @@
 
             showDisconnecting();
 
-            logoutIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true`;
+            logoutIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
 
             setTimeout(() => {
                 window.location.href = '/';
@@ -1417,7 +1439,6 @@
             console.log('🔄 Exchanging code via server...', { code: code.substring(0, 10) + '...', wallet });
             
             try {
-                // Step 1: Exchange code for token via YOUR backend (which has the API key)
                 const tokenResponse = await fetch('/api/wallettwo/exchange', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1429,7 +1450,6 @@
                 
                 if (!tokenData.success && !tokenData.access_token) {
                     console.warn('⚠️ Token exchange failed:', tokenData.error || 'No access token');
-                    // Fallback: continue without email
                     const userData = { wallet, userId, timestamp: Date.now() };
                     saveSession(userData);
                     showProfile(userData);
@@ -1440,7 +1460,6 @@
                 let userEmail = tokenData.email || tokenData.user?.email;
                 let userName = tokenData.name || tokenData.user?.name || tokenData.user?.given_name;
 
-                // Step 2: If we have a token but no email, fetch user info
                 if (accessToken && !userEmail) {
                     console.log('📧 Fetching user info...');
                     try {
@@ -1462,7 +1481,6 @@
                     }
                 }
 
-                // Build user data
                 const userData = {
                     wallet,
                     userId: userId || tokenData.user?.sub || tokenData.user?.id,
@@ -1479,7 +1497,6 @@
                     hasToken: !!userData.accessToken 
                 });
                 
-                // Save email to localStorage for questionnaire
                 if (userData.email) {
                     localStorage.setItem('userEmail', userData.email);
                     console.log('💾 Email saved to localStorage:', userData.email);
@@ -1490,7 +1507,6 @@
                 
             } catch (error) {
                 console.error('❌ Exchange failed:', error);
-                // Fallback: continue without email
                 const userData = { wallet, userId, timestamp: Date.now() };
                 saveSession(userData);
                 showProfile(userData);
@@ -1508,7 +1524,6 @@
         document.getElementById('updatePreferencesBtn').addEventListener('click', openQuestionnaireModal);
         document.getElementById('setPreferencesBtn').addEventListener('click', openQuestionnaireModal);
         
-        // Auto-uppercase referral input
         document.getElementById('referralCodeInput').addEventListener('input', (e) => {
             e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
         });
@@ -1524,7 +1539,6 @@
                 console.log('Profile - Questionnaire status:', result);
                 
                 if (result.success && result.exists && !result.registration_complete) {
-                    // User exists but hasn't completed questionnaire
                     const params = new URLSearchParams(window.location.search);
                     const signature = params.get('signature') || params.get('sig');
                     const userId = params.get('usr') || params.get('user');
@@ -1536,33 +1550,29 @@
                     
                     console.log('Questionnaire required, redirecting to:', questionnaireUrl);
                     window.location.href = questionnaireUrl;
-                    return false; // Questionnaire required
+                    return false;
                 }
-                return true; // No questionnaire needed
+                return true;
             } catch (error) {
                 console.error('Error checking questionnaire status:', error);
-                return true; // Don't block on error
+                return true;
             }
-        }
-
-        // Fetch user data from database (including email)
-        async function fetchUserData(wallet) {
-            try {
-                const response = await fetch(`/api/user/${wallet}`);
-                const data = await response.json();
-                if (data.success && data.user) {
-                    return data.user;
-                }
-            } catch (error) {
-                console.error('Error fetching user data:', error);
-            }
-            return null;
         }
 
         // ============================================
         // Initialize
         // ============================================
         async function init() {
+            // Load config first
+            const configLoaded = await loadConfig();
+            if (!configLoaded) {
+                console.error('Failed to load config - cannot initialize');
+                return;
+            }
+            
+            // Initialize the WalletTwo iframe with companyId
+            initWalletIframe();
+            
             const params = new URLSearchParams(window.location.search);
             const wallet = params.get('wlt') || params.get('wallet');
             const code = params.get('code');
@@ -1571,7 +1581,6 @@
                 window.history.replaceState({}, '', '/profile');
                 showLoading();
                 
-                // Check questionnaire first
                 const canProceed = await checkQuestionnaireRequired(wallet);
                 if (!canProceed) return;
                 
@@ -1583,7 +1592,6 @@
                 window.history.replaceState({}, '', '/profile');
                 showLoading();
                 
-                // Check questionnaire first
                 const canProceed = await checkQuestionnaireRequired(wallet);
                 if (!canProceed) return;
                 
@@ -1602,7 +1610,6 @@
             if (stored?.wallet) {
                 showLoading();
                 
-                // Check questionnaire first
                 const canProceed = await checkQuestionnaireRequired(stored.wallet);
                 if (!canProceed) return;
                 

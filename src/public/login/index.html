@@ -62,7 +62,7 @@
     <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
             <a href="/" class="flex items-center gap-4 group cursor-pointer">
-                <img src="/images/images/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
+                <img src="/images/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
                 <div>
                     <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
                 </div>
@@ -93,13 +93,18 @@
                 </div>
                 <div class="p-6">
                     
+                    <!-- Loading Config Container -->
+                    <div id="configLoadingContainer" class="text-center py-12">
+                        <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+                        <p class="text-slate-400 text-sm">Loading...</p>
+                    </div>
+
                     <!-- Login Container -->
-                    <div id="loginContainer">
+                    <div id="loginContainer" class="hidden">
                         <p class="text-slate-400 text-sm text-center mb-6">Connect with your whitelisted email to access the admin dashboard.</p>
                         <div class="wallet-iframe-container">
                             <iframe 
                                 id="walletIframe"
-                                src="https://wallet.wallettwo.com/auth/login?action=auth&iframe=true"
                                 class="wallet-iframe"
                                 allow="clipboard-write"
                             ></iframe>
@@ -155,11 +160,11 @@
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                 <a href="/" class="flex items-center gap-2">
-                    <img src="/images/images/logo.png" alt="Kea Valley" class="h-6 w-auto"/>
+                    <img src="/images/logo.png" alt="Kea Valley" class="h-6 w-auto"/>
                     <span class="text-xs font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
                 </a>
                 <div class="text-slate-600 text-xs font-light">
-                    © 2025 Kea Valley
+                    © 2026 Kea Valley
                 </div>
             </div>
         </div>
@@ -170,16 +175,18 @@
 
     <script>
         // ============================================
-        // Configuration
+        // Configuration - loaded from server
         // ============================================
         const CONFIG = {
             WALLETTWO_ORIGIN: 'https://wallet.wallettwo.com',
+            WALLETTWO_COMPANY_ID: null, // Will be loaded from server
             ADMIN_STORAGE_KEY: 'keavalley_admin'
         };
 
         // ============================================
         // DOM Elements
         // ============================================
+        const configLoadingContainer = document.getElementById('configLoadingContainer');
         const loginContainer = document.getElementById('loginContainer');
         const loadingContainer = document.getElementById('loadingContainer');
         const errorContainer = document.getElementById('errorContainer');
@@ -196,44 +203,73 @@
         // ============================================
         // State
         // ============================================
-        let acceptMessages = true;
+        let acceptMessages = false; // Start false until ready
+        let isLoggingOut = false;
+
+        // ============================================
+        // Config Loading
+        // ============================================
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config/public');
+                if (!response.ok) throw new Error('Config fetch failed');
+                const data = await response.json();
+                CONFIG.WALLETTWO_COMPANY_ID = data.walletTwoCompanyId;
+                console.log('Config loaded, companyId:', CONFIG.WALLETTWO_COMPANY_ID);
+                return true;
+            } catch (error) {
+                console.error('Failed to load config:', error);
+                // Fallback to hardcoded value if config endpoint fails
+                CONFIG.WALLETTWO_COMPANY_ID = '6a27c2f8-894c-46c7-bf9f-f5af11d4e092';
+                console.log('Using fallback companyId');
+                return true;
+            }
+        }
+
+        function initWalletIframe() {
+            const iframeSrc = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=auth&iframe=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
+            walletIframe.src = iframeSrc;
+            console.log('Iframe initialized:', iframeSrc);
+        }
 
         // ============================================
         // UI Functions
         // ============================================
-        function showLogin() {
-            loginContainer.classList.remove('hidden');
+        function hideAllContainers() {
+            configLoadingContainer.classList.add('hidden');
+            loginContainer.classList.add('hidden');
             loadingContainer.classList.add('hidden');
             errorContainer.classList.add('hidden');
             successContainer.classList.add('hidden');
+        }
+
+        function showLogin() {
+            hideAllContainers();
+            loginContainer.classList.remove('hidden');
             cardTitle.textContent = 'Sign In';
             acceptMessages = true;
+            isLoggingOut = false;
         }
 
         function showLoading(text = 'Verifying admin access...') {
-            loginContainer.classList.add('hidden');
+            hideAllContainers();
             loadingContainer.classList.remove('hidden');
-            errorContainer.classList.add('hidden');
-            successContainer.classList.add('hidden');
             loadingText.textContent = text;
             cardTitle.textContent = 'Verifying';
         }
 
         function showError(message, email) {
-            loginContainer.classList.add('hidden');
-            loadingContainer.classList.add('hidden');
+            hideAllContainers();
             errorContainer.classList.remove('hidden');
-            successContainer.classList.add('hidden');
             errorMessage.textContent = message;
             errorEmail.textContent = email || '';
             errorEmail.classList.toggle('hidden', !email);
             cardTitle.textContent = 'Access Denied';
+            acceptMessages = false;
         }
 
         function showSuccess(email) {
-            loginContainer.classList.add('hidden');
-            loadingContainer.classList.add('hidden');
-            errorContainer.classList.add('hidden');
+            hideAllContainers();
             successContainer.classList.remove('hidden');
             welcomeEmail.textContent = email;
             cardTitle.textContent = 'Welcome';
@@ -243,6 +279,35 @@
         // Auth Functions
         // ============================================
         async function checkExistingSession() {
+            // Check URL for logout flag
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('logout') === 'true') {
+                console.log('Logout requested via URL');
+                localStorage.removeItem(CONFIG.ADMIN_STORAGE_KEY);
+                window.history.replaceState({}, '', '/admin/login.html');
+                
+                // Perform WalletTwo logout
+                isLoggingOut = true;
+                acceptMessages = false;
+                
+                // Clear server session
+                try {
+                    await fetch('/api/admin/logout', { 
+                        method: 'POST',
+                        credentials: 'include' 
+                    });
+                } catch (e) {}
+                
+                // Trigger WalletTwo logout
+                logoutIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
+                
+                // Wait briefly for logout to process
+                await new Promise(resolve => setTimeout(resolve, 500));
+                isLoggingOut = false;
+                
+                return false;
+            }
+            
             try {
                 const response = await fetch('/api/admin/session', { 
                     credentials: 'include' 
@@ -252,13 +317,7 @@
                 if (data.authenticated && data.admin) {
                     console.log('Existing session found:', data.admin.email);
                     localStorage.setItem(CONFIG.ADMIN_STORAGE_KEY, JSON.stringify(data.admin));
-                    showSuccess(data.admin.email);
-                    setTimeout(() => {
-                        console.log('About to redirect to dashboard, cookie should be set');
-console.log('Cookies:', document.cookie);
-alert('Login successful! Check console. Click OK to go to dashboard.');
-window.location.href = '/dashboard';
-                    }, 10000);
+                    window.location.href = '/admin/';
                     return true;
                 }
             } catch (error) {
@@ -275,11 +334,7 @@ window.location.href = '/dashboard';
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({
-                        email: email,
-                        walletAddress: walletAddress,
-                        name: name
-                    })
+                    body: JSON.stringify({ email, walletAddress, name })
                 });
 
                 const data = await response.json();
@@ -287,13 +342,8 @@ window.location.href = '/dashboard';
 
                 if (data.success && data.admin) {
                     localStorage.setItem(CONFIG.ADMIN_STORAGE_KEY, JSON.stringify(data.admin));
-                    showSuccess(data.admin.email);
-                    setTimeout(() => {
-                        console.log('About to redirect to dashboard, cookie should be set');
-console.log('Cookies:', document.cookie);
-alert('Login successful! Check console. Click OK to go to dashboard.');
-window.location.href = '/dashboard';
-                    }, 15000);
+                    // Redirect immediately
+                    window.location.href = '/admin/';
                 } else {
                     showError(data.error || 'Your email is not on the admin whitelist.', email);
                 }
@@ -307,7 +357,6 @@ window.location.href = '/dashboard';
             showLoading('Exchanging credentials...');
             
             try {
-                // Exchange code for user info
                 const response = await fetch('/api/wallettwo/exchange', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -317,17 +366,17 @@ window.location.href = '/dashboard';
                 const data = await response.json();
                 console.log('Exchange response:', data);
 
-                const email = data.user?.email;
-                const name = data.user?.name || data.user?.given_name || 
+                const email = data.email || data.user?.email;
+                const name = data.name || data.user?.name || 
                              (data.user?.given_name && data.user?.family_name ? 
-                              `${data.user.given_name} ${data.user.family_name}` : null);
+                              `${data.user.given_name} ${data.user.family_name}` : 
+                              data.user?.given_name);
 
                 if (!email) {
                     showError('No email found in your WalletTwo account. Admin login requires an email.', null);
                     return;
                 }
 
-                // Now authenticate with our backend
                 await authenticateAdmin(email, wallet, name);
 
             } catch (error) {
@@ -337,21 +386,27 @@ window.location.href = '/dashboard';
         }
 
         function logoutAndRetry() {
-            showLoading('Logging out...');
+            if (isLoggingOut) return;
+            isLoggingOut = true;
             acceptMessages = false;
             
-            // Clear local storage
+            showLoading('Signing out...');
+            
             localStorage.removeItem(CONFIG.ADMIN_STORAGE_KEY);
             
-            // Trigger WalletTwo logout
-            logoutIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true`;
+            fetch('/api/admin/logout', { 
+                method: 'POST',
+                credentials: 'include' 
+            }).catch(() => {});
             
-            // Reload iframe after short delay
+            logoutIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
+            
+            // Reload iframe with cache buster after logout
             setTimeout(() => {
-                walletIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=auth&iframe=true`;
+                walletIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=auth&iframe=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}&t=${Date.now()}`;
                 setTimeout(() => {
                     showLogin();
-                }, 500);
+                }, 800);
             }, 1500);
         }
 
@@ -359,15 +414,14 @@ window.location.href = '/dashboard';
         // WalletTwo Message Handler
         // ============================================
         function handleWalletTwoMessage(event) {
-            if (!event.origin.includes('wallettwo.com')) {
-                return;
-            }
+            if (!event.origin.includes('wallettwo.com')) return;
 
             const data = event.data;
-            console.log('Message from WalletTwo:', data);
+            console.log('WalletTwo message:', data);
 
-            if (!acceptMessages) {
-                console.log('Ignoring message - not accepting');
+            // Ignore during logout or when not accepting
+            if (isLoggingOut || !acceptMessages) {
+                console.log('Ignoring message - logout:', isLoggingOut, 'accept:', acceptMessages);
                 return;
             }
 
@@ -376,11 +430,10 @@ window.location.href = '/dashboard';
                 const code = data.code;
                 
                 if (wallet && code) {
-                    console.log('Wallet login received:', wallet);
+                    console.log('Processing login for wallet:', wallet);
                     acceptMessages = false;
                     exchangeCodeAndAuth(code, wallet);
                 } else if (wallet) {
-                    // No code - can't get email without exchange
                     showError('Could not retrieve account details. Please try again.', null);
                 }
             }
@@ -396,19 +449,20 @@ window.location.href = '/dashboard';
         // Initialize
         // ============================================
         async function init() {
-            console.log('Admin login page initialized');
+            console.log('Admin login initializing...');
 
-            // Check if already logged in
+            // Load config first
+            await loadConfig();
+            
+            // Check for existing session
             const hasSession = await checkExistingSession();
-            if (hasSession) {
-                return; // Will redirect to dashboard
-            }
+            if (hasSession) return;
 
-            // Show login
+            // Initialize iframe and show login
+            initWalletIframe();
             showLogin();
         }
 
-        // Start
         init();
     </script>
 </body>

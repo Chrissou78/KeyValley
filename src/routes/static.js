@@ -52,7 +52,7 @@ router.get('/login', (req, res) => {
 });
 
 // Dashboard (admin) - WITH SESSION CHECK
-router.get('/dashboard', (req, res) => {
+router.get('/admin', (req, res) => {
   console.log('🔍 Dashboard - All cookies:', req.cookies);
   console.log('🔍 admin_session raw:', req.cookies?.admin_session);
   

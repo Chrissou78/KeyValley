@@ -993,7 +993,7 @@ app.get('/login', async (req, res) => {
             if (session) {
                 const admin = await db.getAdminByEmail(session.username);
                 if (admin) {
-                    return res.redirect('/dashboard');
+                    return res.redirect('/admin');
                 }
             }
         } catch (err) {
