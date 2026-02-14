@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Residences by Kea Heights | Kea Valley</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ee9d2b',
+                        'primary-light': '#fbdea6',
+                        'background-dark': '#0a0a0a',
+                        'surface': '#121212',
+                        'surface-light': '#1a1a1a'
+                    },
+                    fontFamily: {
+                        sans: ['Manrope', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Manrope', sans-serif; }
+        h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
+        
+        .hero-gradient {
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%);
+        }
+        
+        .gallery-item {
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .gallery-item:hover {
+            transform: scale(1.02);
+            box-shadow: 0 20px 40px rgba(238, 157, 43, 0.2);
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, rgba(18,18,18,0.9) 0%, rgba(26,26,26,0.9) 100%);
+            border: 1px solid rgba(238, 157, 43, 0.1);
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            border-color: rgba(238, 157, 43, 0.3);
+            transform: translateY(-4px);
+        }
+        
+        /* Gallery Viewer Modal */
+        .gallery-viewer {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.97);
+            z-index: 1000;
+        }
+        .gallery-viewer.active {
+            display: flex;
+            flex-direction: column;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Viewer Header */
+        .viewer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        .viewer-counter {
+            color: white;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+        .viewer-close {
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        .viewer-close:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        
+        /* Viewer Main Area */
+        .viewer-main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 0 60px;
+        }
+        .viewer-image-container {
+            max-width: 100%;
+            max-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .viewer-image {
+            max-width: 100%;
+            max-height: 75vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: scaleIn 0.3s ease;
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        /* Navigation Arrows */
+        .viewer-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(238, 157, 43, 0.2);
+            border: 1px solid rgba(238, 157, 43, 0.3);
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        .viewer-nav:hover {
+            background: rgba(238, 157, 43, 0.4);
+            border-color: rgba(238, 157, 43, 0.6);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .viewer-nav.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .viewer-nav.disabled:hover {
+            background: rgba(238, 157, 43, 0.2);
+            transform: translateY(-50%) scale(1);
+        }
+        .viewer-prev {
+            left: 20px;
+        }
+        .viewer-next {
+            right: 20px;
+        }
+        
+        /* Thumbnails Strip */
+        .viewer-thumbnails {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px 24px;
+            background: rgba(0, 0, 0, 0.5);
+            overflow-x: auto;
+        }
+        .viewer-thumb {
+            width: 60px;
+            height: 45px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            flex-shrink: 0;
+        }
+        .viewer-thumb:hover {
+            opacity: 0.8;
+        }
+        .viewer-thumb.active {
+            opacity: 1;
+            border-color: #ee9d2b;
+        }
+        
+        /* Mobile adjustments */
+        @media (max-width: 768px) {
+            .viewer-main {
+                padding: 0 50px;
+            }
+            .viewer-nav {
+                width: 40px;
+                height: 40px;
+            }
+            .viewer-prev {
+                left: 8px;
+            }
+            .viewer-next {
+                right: 8px;
+            }
+            .viewer-thumb {
+                width: 50px;
+                height: 38px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-white min-h-screen">
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-background-dark/90 backdrop-blur-md border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-3">
+                <img src="/images/logo.png" alt="Kea Valley" class="h-10">
+            </a>
+            <nav class="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-8">
+                <a href="/" class="text-sm text-white/70 hover:text-primary transition-colors">Home</a>
+                <a href="/#residences" class="text-sm text-primary font-medium">Residences</a>
+                <a href="/presale" class="text-sm text-white/70 hover:text-primary transition-colors">Presale</a>
+                <a href="/claim" class="text-sm text-white/70 hover:text-primary transition-colors">Free Token</a>
+                <a href="/profile" class="text-sm text-white/70 hover:text-primary transition-colors">Profile</a>
+            </nav>
+            <div class="w-10"></div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative h-[70vh] min-h-[500px] flex items-end">
+        <div class="absolute inset-0">
+            <img src="/images/residences/heights-hero.png" alt="Residences by Kea Heights" class="w-full h-full object-cover">
+            <div class="hero-gradient absolute inset-0"></div>
+        </div>
+        
+        <div class="relative z-10 max-w-7xl mx-auto px-6 pb-16 w-full">
+            <a href="/#residences" class="inline-flex items-center gap-2 text-primary mb-4 hover:underline">
+                <span class="material-symbols-outlined text-lg">arrow_back</span>
+                Back to Residences
+            </a>
+            <h1 class="font-serif text-5xl md:text-6xl lg:text-7xl text-white mb-4">Residences by Kea Heights</h1>
+            <p class="text-xl text-white/80 max-w-2xl">
+                Elevated living at its finest. Panoramic views meet unparalleled luxury in our hilltop collection.
+            </p>
+        </div>
+    </section>
+
+    <!-- Overview Section -->
+    <section class="py-20 bg-surface">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <span class="text-primary text-sm font-bold uppercase tracking-widest">The Heights</span>
+                    <h2 class="font-serif text-4xl md:text-5xl mt-4 mb-6">Above It All</h2>
+                    <p class="text-white/70 text-lg leading-relaxed mb-6">
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                    </p>
+                    <p class="text-white/70 text-lg leading-relaxed mb-8">
+                        Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+                    </p>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="feature-card rounded-lg p-4">
+                            <span class="material-symbols-outlined text-primary text-2xl mb-2">terrain</span>
+                            <h4 class="font-medium mb-1">Hilltop Location</h4>
+                            <p class="text-sm text-white/60">Elevated position</p>
+                        </div>
+                        <div class="feature-card rounded-lg p-4">
+                            <span class="material-symbols-outlined text-primary text-2xl mb-2">visibility</span>
+                            <h4 class="font-medium mb-1">360° Views</h4>
+                            <p class="text-sm text-white/60">Unobstructed panoramas</p>
+                        </div>
+                        <div class="feature-card rounded-lg p-4">
+                            <span class="material-symbols-outlined text-primary text-2xl mb-2">security</span>
+                            <h4 class="font-medium mb-1">Private Estate</h4>
+                            <p class="text-sm text-white/60">Gated community</p>
+                        </div>
+                        <div class="feature-card rounded-lg p-4">
+                            <span class="material-symbols-outlined text-primary text-2xl mb-2">wb_sunny</span>
+                            <h4 class="font-medium mb-1">Sunset Views</h4>
+                            <p class="text-sm text-white/60">Western exposure</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="relative">
+                    <img src="/images/residences/heights-feature.jpg" alt="Kea Heights View" class="rounded-2xl shadow-2xl">
+                    <div class="absolute -bottom-6 -left-6 bg-primary text-black p-6 rounded-xl">
+                        <span class="text-4xl font-serif font-bold">350m²</span>
+                        <p class="text-sm font-medium">Starting from</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section class="py-20 bg-background-dark">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-12">
+                <span class="text-primary text-sm font-bold uppercase tracking-widest">Gallery</span>
+                <h2 class="font-serif text-4xl md:text-5xl mt-4">Life at the Heights</h2>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="gallery-item col-span-2 row-span-2" data-index="0">
+                    <img src="/images/residences/heights-gallery-1.jpg" alt="Gallery 1" class="w-full h-full object-cover rounded-xl">
+                </div>
+                <div class="gallery-item" data-index="1">
+                    <img src="/images/residences/heights-gallery-2.jpg" alt="Gallery 2" class="w-full h-64 object-cover rounded-xl">
+                </div>
+                <div class="gallery-item" data-index="2">
+                    <img src="/images/residences/heights-gallery-3.jpg" alt="Gallery 3" class="w-full h-64 object-cover rounded-xl">
+                </div>
+                <div class="gallery-item" data-index="3">
+                    <img src="/images/residences/heights-gallery-4.jpg" alt="Gallery 4" class="w-full h-64 object-cover rounded-xl">
+                </div>
+                <div class="gallery-item" data-index="4">
+                    <img src="/images/residences/heights-gallery-5.jpg" alt="Gallery 5" class="w-full h-64 object-cover rounded-xl">
+                </div>
+                <div class="gallery-item" data-index="5">
+                    <img src="/images/residences/heights-gallery-6.jpg" alt="Gallery 6" class="w-full h-64 object-cover rounded-xl">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Specifications Section -->
+    <section class="py-20 bg-surface">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-12">
+                <span class="text-primary text-sm font-bold uppercase tracking-widest">Specifications</span>
+                <h2 class="font-serif text-4xl md:text-5xl mt-4">Technical Details</h2>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-surface-light rounded-2xl p-8 border border-white/5">
+                    <h3 class="font-serif text-2xl mb-6 text-primary">Living Space</h3>
+                    <ul class="space-y-4 text-white/70">
+                        <li class="flex justify-between">
+                            <span>Total Area</span>
+                            <span class="text-white font-medium">350-600 m²</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span>Bedrooms</span>
+                            <span class="text-white font-medium">4-7</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span>Bathrooms</span>
+                            <span class="text-white font-medium">5-6</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span>Plot Size</span>
+                            <span class="text-white font-medium">1000-2000 m²</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="bg-surface-light rounded-2xl p-8 border border-white/5">
+                    <h3 class="font-serif text-2xl mb-6 text-primary">Amenities</h3>
+                    <ul class="space-y-4 text-white/70">
+                        <li class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary">check_circle</span>
+                            Helipad access
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary">check_circle</span>
+                            Private vineyard
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary">check_circle</span>
+                            Tennis court
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary">check_circle</span>
+                            Cinema room
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="bg-surface-light rounded-2xl p-8 border border-white/5">
+                    <h3 class="font-serif text-2xl mb-6 text-primary">Services</h3>
+                    <ul class="space-y-4 text-white/70">
+                        <li class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary">check_circle</span>
+                            Private security
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary">check_circle</span>
+                            Personal chef service
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary">check_circle</span>
+                            Estate management
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary">check_circle</span>
+                            Yacht access
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 bg-background-dark">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <h2 class="font-serif text-4xl md:text-5xl mb-6">Rise to the Heights</h2>
+            <p class="text-white/70 text-lg mb-8 max-w-2xl mx-auto">
+                Experience the pinnacle of Mediterranean luxury. Only 12 exclusive estates available.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="/presale" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-black font-bold rounded-lg hover:bg-primary-light transition-colors">
+                    <span class="material-symbols-outlined">shopping_cart</span>
+                    Join Presale
+                </a>
+                <a href="/pdfs/residences-by-other.pdf" target="_blank" class="inline-flex items-center justify-center gap-2 px-8 py-4 border border-primary/30 text-primary font-bold rounded-lg hover:bg-primary/10 transition-colors">
+                    <span class="material-symbols-outlined">download</span>
+                    Download Brochure
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 bg-surface border-t border-white/10">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <a href="/">
+                    <img src="/images/logo.png" alt="Kea Valley" class="h-8">
+                </a>
+                <p class="text-white/50 text-sm">© 2026 Kea Valley. All rights reserved.</p>
+                <div class="flex gap-6">
+                    <a href="/residences/kea/" class="text-white/70 hover:text-primary text-sm transition-colors">Residences by Kea</a>
+                    <a href="/residences/johan-nikolao/" class="text-white/70 hover:text-primary text-sm transition-colors">Johan Nikolao</a>
+                    <a href="/residences/kea-heights/" class="text-primary text-sm">Kea Heights</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Gallery Viewer Modal -->
+    <div id="galleryViewer" class="gallery-viewer">
+        <div class="viewer-header">
+            <span class="viewer-counter"><span id="currentIndex">1</span> / <span id="totalCount">6</span></span>
+            <span class="viewer-close material-symbols-outlined" onclick="closeViewer()">close</span>
+        </div>
+        
+        <div class="viewer-main" onclick="closeViewer()">
+            <button class="viewer-nav viewer-prev" onclick="event.stopPropagation(); navigate(-1)">
+                <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            
+            <div class="viewer-image-container" onclick="event.stopPropagation()">
+                <img id="viewerImage" class="viewer-image" src="" alt="Gallery Image">
+            </div>
+            
+            <button class="viewer-nav viewer-next" onclick="event.stopPropagation(); navigate(1)">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+        </div>
+        
+        <div class="viewer-thumbnails" id="viewerThumbnails"></div>
+    </div>
+
+    <script>
+        // Gallery Viewer
+        const galleryViewer = document.getElementById('galleryViewer');
+        const viewerImage = document.getElementById('viewerImage');
+        const currentIndexEl = document.getElementById('currentIndex');
+        const totalCountEl = document.getElementById('totalCount');
+        const thumbnailsContainer = document.getElementById('viewerThumbnails');
+        const prevBtn = document.querySelector('.viewer-prev');
+        const nextBtn = document.querySelector('.viewer-next');
+        
+        let galleryImages = [];
+        let currentIndex = 0;
+        
+        // Collect all gallery images
+        document.querySelectorAll('.gallery-item').forEach((item, index) => {
+            const img = item.querySelector('img');
+            galleryImages.push({
+                src: img.src,
+                alt: img.alt
+            });
+            
+            item.addEventListener('click', () => openViewer(index));
+        });
+        
+        // Update total count
+        totalCountEl.textContent = galleryImages.length;
+        
+        // Build thumbnails
+        galleryImages.forEach((img, index) => {
+            const thumb = document.createElement('img');
+            thumb.src = img.src;
+            thumb.alt = img.alt;
+            thumb.className = 'viewer-thumb';
+            thumb.onclick = (e) => {
+                e.stopPropagation();
+                goToImage(index);
+            };
+            thumbnailsContainer.appendChild(thumb);
+        });
+        
+        function openViewer(index) {
+            currentIndex = index;
+            updateViewer();
+            galleryViewer.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeViewer() {
+            galleryViewer.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        function navigate(direction) {
+            const newIndex = currentIndex + direction;
+            if (newIndex >= 0 && newIndex < galleryImages.length) {
+                currentIndex = newIndex;
+                updateViewer();
+            }
+        }
+        
+        function goToImage(index) {
+            currentIndex = index;
+            updateViewer();
+        }
+        
+        function updateViewer() {
+            viewerImage.src = galleryImages[currentIndex].src;
+            viewerImage.alt = galleryImages[currentIndex].alt;
+            currentIndexEl.textContent = currentIndex + 1;
+            prevBtn.classList.toggle('disabled', currentIndex === 0);
+            nextBtn.classList.toggle('disabled', currentIndex === galleryImages.length - 1);
+            document.querySelectorAll('.viewer-thumb').forEach((thumb, index) => {
+                thumb.classList.toggle('active', index === currentIndex);
+            });
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (!galleryViewer.classList.contains('active')) return;
+            
+            switch(e.key) {
+                case 'Escape':
+                    closeViewer();
+                    break;
+                case 'ArrowLeft':
+                    navigate(-1);
+                    break;
+                case 'ArrowRight':
+                    navigate(1);
+                    break;
+            }
+        });
+        
+        // Touch swipe support
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        galleryViewer.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        
+        galleryViewer.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+        
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    navigate(1);
+                } else {
+                    navigate(-1);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

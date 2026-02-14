@@ -98,15 +98,24 @@
     <iframe id="logoutIframe" style="display:none;"></iframe>
 
     <script>
+        // ============================================
+        // Configuration
+        // ============================================
         const CONFIG = {
             WALLETTWO_ORIGIN: 'https://wallet.wallettwo.com',
             WALLETTWO_COMPANY_ID: null,
             ADMIN_STORAGE_KEY: 'keavalley_admin'
         };
 
+        // ============================================
+        // State
+        // ============================================
         let acceptMessages = false;
         let isLoggingOut = false;
 
+        // ============================================
+        // DOM Elements
+        // ============================================
         const loadingContainer = document.getElementById('loadingContainer');
         const loginContainer = document.getElementById('loginContainer');
         const errorContainer = document.getElementById('errorContainer');
@@ -118,6 +127,9 @@
         const logoutIframe = document.getElementById('logoutIframe');
         const tryAgainBtn = document.getElementById('tryAgainBtn');
 
+        // ============================================
+        // UI Functions
+        // ============================================
         function hideAll() {
             loadingContainer.classList.add('hidden');
             loginContainer.classList.add('hidden');
@@ -135,6 +147,7 @@
             loginContainer.classList.remove('hidden');
             cardTitle.textContent = 'Sign In';
             acceptMessages = true;
+            console.log('✅ Login shown, acceptMessages =', acceptMessages);
         }
 
         function showError(msg, email) {
@@ -142,6 +155,7 @@
             errorContainer.classList.remove('hidden');
             errorMessage.textContent = msg;
             cardTitle.textContent = 'Access Denied';
+            acceptMessages = false;
             if (email) {
                 errorEmail.textContent = email;
                 errorEmail.classList.remove('hidden');
@@ -150,75 +164,122 @@
             }
         }
 
+        // ============================================
+        // Config Loading
+        // ============================================
         async function loadConfig() {
+            console.log('📥 Loading config...');
             try {
                 const res = await fetch('/api/config/public');
                 if (res.ok) {
                     const data = await res.json();
                     CONFIG.WALLETTWO_COMPANY_ID = data.walletTwoCompanyId;
+                    console.log('✅ Config loaded, companyId:', CONFIG.WALLETTWO_COMPANY_ID);
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.error('❌ Config load failed:', e);
+            }
             if (!CONFIG.WALLETTWO_COMPANY_ID) {
                 CONFIG.WALLETTWO_COMPANY_ID = '6a27c2f8-894c-46c7-bf9f-f5af11d4e092';
+                console.log('⚠️ Using fallback companyId');
             }
         }
 
+        // ============================================
+        // Iframe Initialization
+        // ============================================
         function initIframe() {
-            walletIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=auth&iframe=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}&t=${Date.now()}`;
+            const iframeSrc = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=auth&iframe=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
+            console.log('🖼️ Initializing iframe:', iframeSrc);
+            walletIframe.src = iframeSrc;
         }
 
-        async function performLogout() {
+        // ============================================
+        // Logout
+        // ============================================
+        function performLogout() {
+            if (isLoggingOut) return;
             isLoggingOut = true;
             acceptMessages = false;
+            
+            console.log('🚪 Performing logout...');
             localStorage.removeItem(CONFIG.ADMIN_STORAGE_KEY);
             
-            try {
-                await fetch('/api/admin/logout', { method: 'POST', credentials: 'include' });
-            } catch (e) {}
+            fetch('/api/admin/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
             
-            // Redirect to home page instead of reloading iframe
-            window.location.href = '/';
+            // Trigger WalletTwo logout
+            logoutIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
+            
+            // Redirect to home after delay
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
         }
 
+        // ============================================
+        // Session Check
+        // ============================================
         async function checkSession() {
             const params = new URLSearchParams(window.location.search);
+            
             if (params.get('logout') === 'true') {
-                await performLogout();
+                console.log('🚪 Logout flag detected');
+                window.history.replaceState({}, '', '/admin/login.html');
+                performLogout();
                 return;
             }
             
+            console.log('🔍 Checking existing session...');
             try {
                 const res = await fetch('/api/admin/session', { credentials: 'include' });
                 const data = await res.json();
+                console.log('📋 Session check result:', data);
+                
                 if (data.authenticated && data.admin) {
+                    console.log('✅ Already authenticated, redirecting to dashboard...');
                     window.location.href = '/admin/';
                     return;
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.error('❌ Session check failed:', e);
+            }
             
+            console.log('🔓 No session, showing login...');
             initIframe();
             showLogin();
         }
 
+        // ============================================
+        // Authentication Flow
+        // ============================================
         async function exchangeAndAuth(code, wallet) {
+            console.log('🔄 Starting exchange for wallet:', wallet);
             showLoading('Verifying credentials...');
+            
             try {
+                console.log('📤 Calling /api/wallettwo/exchange...');
                 const res = await fetch('/api/wallettwo/exchange', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code })
                 });
                 const data = await res.json();
+                console.log('📥 Exchange response:', data);
                 
                 const email = data.email || data.user?.email;
                 const name = data.name || data.user?.name || data.user?.given_name;
                 
+                console.log('👤 Extracted - email:', email, 'name:', name);
+                
                 if (!email) {
+                    console.error('❌ No email in response');
                     showError('No email found in your WalletTwo account.', null);
                     return;
                 }
                 
                 showLoading('Checking admin access...');
+                console.log('📤 Calling /api/admin/auth...');
+                
                 const authRes = await fetch('/api/admin/auth', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -226,36 +287,73 @@
                     body: JSON.stringify({ email, walletAddress: wallet, name })
                 });
                 const authData = await authRes.json();
+                console.log('📥 Auth response:', authData);
                 
                 if (authData.success && authData.admin) {
+                    console.log('✅ Admin authenticated!');
                     localStorage.setItem(CONFIG.ADMIN_STORAGE_KEY, JSON.stringify(authData.admin));
                     window.location.href = '/admin/';
                 } else {
+                    console.error('❌ Auth denied:', authData.error);
                     showError(authData.error || 'Access denied.', email);
                 }
             } catch (e) {
-                showError('Authentication failed.', null);
+                console.error('❌ Exchange/Auth error:', e);
+                showError('Authentication failed. Please try again.', null);
             }
         }
 
+        // ============================================
+        // WalletTwo Message Handler
+        // ============================================
         window.addEventListener('message', (event) => {
-            if (!event.origin.includes('wallettwo.com')) return;
-            if (isLoggingOut || !acceptMessages) return;
+            // Log ALL messages for debugging
+            console.log('📨 Message received from:', event.origin, 'Data:', event.data);
+            
+            if (!event.origin.includes('wallettwo.com')) {
+                console.log('⏭️ Ignoring message - not from wallettwo.com');
+                return;
+            }
+            
+            if (isLoggingOut) {
+                console.log('⏭️ Ignoring message - logging out');
+                return;
+            }
+            
+            if (!acceptMessages) {
+                console.log('⏭️ Ignoring message - acceptMessages is false');
+                return;
+            }
             
             const data = event.data;
+            console.log('🔔 WalletTwo message:', data);
+            
             if (data && (data.type === 'wallet_login' || data.event === 'wallet_login')) {
                 const wallet = data.wallet || data.wlt || data.address;
                 const code = data.code;
+                
+                console.log('🔐 Login event - wallet:', wallet, 'code:', code ? 'present' : 'missing');
+                
                 if (wallet && code) {
+                    console.log('✅ Valid login, processing...');
                     acceptMessages = false;
                     exchangeAndAuth(code, wallet);
+                } else {
+                    console.warn('⚠️ Missing wallet or code');
                 }
             }
         });
 
+        // ============================================
+        // Event Listeners
+        // ============================================
         tryAgainBtn?.addEventListener('click', performLogout);
 
+        // ============================================
+        // Initialize
+        // ============================================
         async function init() {
+            console.log('🚀 Admin login page initializing...');
             showLoading('Loading...');
             await loadConfig();
             await checkSession();
