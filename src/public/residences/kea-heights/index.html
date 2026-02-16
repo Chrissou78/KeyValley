@@ -77,7 +77,6 @@
             to { opacity: 1; }
         }
         
-        /* Viewer Header */
         .viewer-header {
             display: flex;
             justify-content: space-between;
@@ -102,7 +101,6 @@
             transform: scale(1.1);
         }
         
-        /* Viewer Main Area */
         .viewer-main {
             flex: 1;
             display: flex;
@@ -131,7 +129,6 @@
             to { transform: scale(1); opacity: 1; }
         }
         
-        /* Navigation Arrows */
         .viewer-nav {
             position: absolute;
             top: 50%;
@@ -162,14 +159,9 @@
             background: rgba(238, 157, 43, 0.2);
             transform: translateY(-50%) scale(1);
         }
-        .viewer-prev {
-            left: 20px;
-        }
-        .viewer-next {
-            right: 20px;
-        }
+        .viewer-prev { left: 20px; }
+        .viewer-next { right: 20px; }
         
-        /* Thumbnails Strip */
         .viewer-thumbnails {
             display: flex;
             justify-content: center;
@@ -189,33 +181,25 @@
             border: 2px solid transparent;
             flex-shrink: 0;
         }
-        .viewer-thumb:hover {
-            opacity: 0.8;
-        }
+        .viewer-thumb:hover { opacity: 0.8; }
         .viewer-thumb.active {
             opacity: 1;
             border-color: #ee9d2b;
         }
         
-        /* Mobile adjustments */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        
         @media (max-width: 768px) {
-            .viewer-main {
-                padding: 0 50px;
-            }
-            .viewer-nav {
-                width: 40px;
-                height: 40px;
-            }
-            .viewer-prev {
-                left: 8px;
-            }
-            .viewer-next {
-                right: 8px;
-            }
-            .viewer-thumb {
-                width: 50px;
-                height: 38px;
-            }
+            .viewer-main { padding: 0 50px; }
+            .viewer-nav { width: 40px; height: 40px; }
+            .viewer-prev { left: 8px; }
+            .viewer-next { right: 8px; }
+            .viewer-thumb { width: 50px; height: 38px; }
         }
     </style>
 </head>
@@ -240,7 +224,7 @@
     <!-- Hero Section -->
     <section class="relative h-[70vh] min-h-[500px] flex items-end">
         <div class="absolute inset-0">
-            <img src="/images/residences/heights-hero.png" alt="Residences by Kea Heights" class="w-full h-full object-cover">
+            <img src="/images/residences/kea-heights-hero.png" alt="Residences by Kea Heights" class="w-full h-full object-cover">
             <div class="hero-gradient absolute inset-0"></div>
         </div>
         
@@ -259,18 +243,37 @@
     <!-- Overview Section -->
     <section class="py-20 bg-surface">
         <div class="max-w-7xl mx-auto px-6">
-            <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div class="grid md:grid-cols-2 gap-12 items-start">
+                <!-- Left Column: Text Content -->
                 <div>
                     <span class="text-primary text-sm font-bold uppercase tracking-widest">The Heights</span>
                     <h2 class="font-serif text-4xl md:text-5xl mt-4 mb-6">Above It All</h2>
-                    <p class="text-white/70 text-lg leading-relaxed mb-6">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                    </p>
-                    <p class="text-white/70 text-lg leading-relaxed mb-8">
-                        Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-                    </p>
+                    <div class="space-y-6 text-white/70 text-lg leading-relaxed">
+                        <p>
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                        </p>
+                        <p>
+                            Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+                        </p>
+                        <p>
+                            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Right Column: Photo + Feature Cards -->
+                <div class="space-y-8">
+                    <!-- Featured Image -->
+                    <div class="relative">
+                        <img src="/images/residences/kea-heights-feature.png" alt="Kea Heights View" class="rounded-2xl shadow-2xl w-full">
+                        <div class="absolute -bottom-6 -right-6 bg-primary text-black p-6 rounded-xl">
+                            <span class="text-4xl font-serif font-bold">350m²</span>
+                            <p class="text-sm font-medium">Starting from</p>
+                        </div>
+                    </div>
                     
-                    <div class="grid grid-cols-2 gap-4">
+                    <!-- Feature Cards Grid - Below Photo -->
+                    <div class="grid grid-cols-2 gap-4 pt-8">
                         <div class="feature-card rounded-lg p-4">
                             <span class="material-symbols-outlined text-primary text-2xl mb-2">terrain</span>
                             <h4 class="font-medium mb-1">Hilltop Location</h4>
@@ -293,14 +296,6 @@
                         </div>
                     </div>
                 </div>
-                
-                <div class="relative">
-                    <img src="/images/residences/heights-feature.jpg" alt="Kea Heights View" class="rounded-2xl shadow-2xl">
-                    <div class="absolute -bottom-6 -left-6 bg-primary text-black p-6 rounded-xl">
-                        <span class="text-4xl font-serif font-bold">350m²</span>
-                        <p class="text-sm font-medium">Starting from</p>
-                    </div>
-                </div>
             </div>
         </div>
     </section>
@@ -313,25 +308,19 @@
                 <h2 class="font-serif text-4xl md:text-5xl mt-4">Life at the Heights</h2>
             </div>
             
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div class="gallery-item col-span-2 row-span-2" data-index="0">
-                    <img src="/images/residences/heights-gallery-1.jpg" alt="Gallery 1" class="w-full h-full object-cover rounded-xl">
-                </div>
-                <div class="gallery-item" data-index="1">
-                    <img src="/images/residences/heights-gallery-2.jpg" alt="Gallery 2" class="w-full h-64 object-cover rounded-xl">
-                </div>
-                <div class="gallery-item" data-index="2">
-                    <img src="/images/residences/heights-gallery-3.jpg" alt="Gallery 3" class="w-full h-64 object-cover rounded-xl">
-                </div>
-                <div class="gallery-item" data-index="3">
-                    <img src="/images/residences/heights-gallery-4.jpg" alt="Gallery 4" class="w-full h-64 object-cover rounded-xl">
-                </div>
-                <div class="gallery-item" data-index="4">
-                    <img src="/images/residences/heights-gallery-5.jpg" alt="Gallery 5" class="w-full h-64 object-cover rounded-xl">
-                </div>
-                <div class="gallery-item" data-index="5">
-                    <img src="/images/residences/heights-gallery-6.jpg" alt="Gallery 6" class="w-full h-64 object-cover rounded-xl">
-                </div>
+            <!-- Loading state -->
+            <div id="galleryLoading" class="text-center py-12">
+                <span class="material-symbols-outlined text-primary text-4xl animate-spin">progress_activity</span>
+                <p class="text-white/60 mt-4">Loading gallery...</p>
+            </div>
+            
+            <!-- Gallery Grid - populated dynamically -->
+            <div id="galleryGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 hidden"></div>
+            
+            <!-- Empty state -->
+            <div id="galleryEmpty" class="text-center py-12 hidden">
+                <span class="material-symbols-outlined text-white/30 text-6xl">photo_library</span>
+                <p class="text-white/60 mt-4">No images available</p>
             </div>
         </div>
     </section>
@@ -426,7 +415,7 @@
                     <span class="material-symbols-outlined">shopping_cart</span>
                     Join Presale
                 </a>
-                <a href="/pdfs/residences-by-other.pdf" target="_blank" class="inline-flex items-center justify-center gap-2 px-8 py-4 border border-primary/30 text-primary font-bold rounded-lg hover:bg-primary/10 transition-colors">
+                <a href="/pdfs/residences-by-kea-heights.pdf" target="_blank" class="inline-flex items-center justify-center gap-2 px-8 py-4 border border-primary/30 text-primary font-bold rounded-lg hover:bg-primary/10 transition-colors">
                     <span class="material-symbols-outlined">download</span>
                     Download Brochure
                 </a>
@@ -454,7 +443,7 @@
     <!-- Gallery Viewer Modal -->
     <div id="galleryViewer" class="gallery-viewer">
         <div class="viewer-header">
-            <span class="viewer-counter"><span id="currentIndex">1</span> / <span id="totalCount">6</span></span>
+            <span class="viewer-counter"><span id="currentIndex">1</span> / <span id="totalCount">0</span></span>
             <span class="viewer-close material-symbols-outlined" onclick="closeViewer()">close</span>
         </div>
         
@@ -476,7 +465,17 @@
     </div>
 
     <script>
-        // Gallery Viewer
+        // Gallery configuration - CHANGE THIS FOR EACH RESIDENCE PAGE
+        const RESIDENCE_ID = 'kea-heights';
+        
+        // Gallery state
+        let galleryImages = [];
+        let currentIndex = 0;
+        
+        // DOM elements
+        const galleryGrid = document.getElementById('galleryGrid');
+        const galleryLoading = document.getElementById('galleryLoading');
+        const galleryEmpty = document.getElementById('galleryEmpty');
         const galleryViewer = document.getElementById('galleryViewer');
         const viewerImage = document.getElementById('viewerImage');
         const currentIndexEl = document.getElementById('currentIndex');
@@ -485,35 +484,78 @@
         const prevBtn = document.querySelector('.viewer-prev');
         const nextBtn = document.querySelector('.viewer-next');
         
-        let galleryImages = [];
-        let currentIndex = 0;
+        // Load gallery images from API
+        async function loadGallery() {
+            try {
+                const response = await fetch(`/api/gallery/${RESIDENCE_ID}`);
+                const data = await response.json();
+                
+                galleryLoading.classList.add('hidden');
+                
+                if (data.images && data.images.length > 0) {
+                    galleryImages = data.images.map((src, index) => ({
+                        src: src,
+                        alt: `Gallery ${index + 1}`
+                    }));
+                    
+                    renderGallery();
+                    buildThumbnails();
+                    totalCountEl.textContent = galleryImages.length;
+                    
+                    galleryGrid.classList.remove('hidden');
+                } else {
+                    galleryEmpty.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Failed to load gallery:', error);
+                galleryLoading.classList.add('hidden');
+                galleryEmpty.classList.remove('hidden');
+            }
+        }
         
-        // Collect all gallery images
-        document.querySelectorAll('.gallery-item').forEach((item, index) => {
-            const img = item.querySelector('img');
-            galleryImages.push({
-                src: img.src,
-                alt: img.alt
-            });
+        // Render gallery grid
+        function renderGallery() {
+            galleryGrid.innerHTML = '';
             
-            item.addEventListener('click', () => openViewer(index));
-        });
+            galleryImages.forEach((image, index) => {
+                const item = document.createElement('div');
+                
+                // Make first image and every 8th image larger for visual interest
+                const isLarge = index === 0 || (index + 1) % 8 === 0;
+                
+                item.className = `gallery-item${isLarge ? ' col-span-2 row-span-2' : ''}`;
+                item.dataset.index = index;
+                
+                const img = document.createElement('img');
+                img.src = image.src;
+                img.alt = image.alt;
+                img.className = `w-full ${isLarge ? 'h-full' : 'h-48'} object-cover rounded-xl`;
+                img.loading = 'lazy';
+                
+                item.appendChild(img);
+                item.addEventListener('click', () => openViewer(index));
+                
+                galleryGrid.appendChild(item);
+            });
+        }
         
-        // Update total count
-        totalCountEl.textContent = galleryImages.length;
-        
-        // Build thumbnails
-        galleryImages.forEach((img, index) => {
-            const thumb = document.createElement('img');
-            thumb.src = img.src;
-            thumb.alt = img.alt;
-            thumb.className = 'viewer-thumb';
-            thumb.onclick = (e) => {
-                e.stopPropagation();
-                goToImage(index);
-            };
-            thumbnailsContainer.appendChild(thumb);
-        });
+        // Build thumbnails for viewer
+        function buildThumbnails() {
+            thumbnailsContainer.innerHTML = '';
+            
+            galleryImages.forEach((img, index) => {
+                const thumb = document.createElement('img');
+                thumb.src = img.src;
+                thumb.alt = img.alt;
+                thumb.className = 'viewer-thumb';
+                thumb.loading = 'lazy';
+                thumb.onclick = (e) => {
+                    e.stopPropagation();
+                    goToImage(index);
+                };
+                thumbnailsContainer.appendChild(thumb);
+            });
+        }
         
         function openViewer(index) {
             currentIndex = index;
@@ -546,9 +588,16 @@
             currentIndexEl.textContent = currentIndex + 1;
             prevBtn.classList.toggle('disabled', currentIndex === 0);
             nextBtn.classList.toggle('disabled', currentIndex === galleryImages.length - 1);
+            
             document.querySelectorAll('.viewer-thumb').forEach((thumb, index) => {
                 thumb.classList.toggle('active', index === currentIndex);
             });
+            
+            // Scroll active thumbnail into view
+            const activeThumbnail = thumbnailsContainer.children[currentIndex];
+            if (activeThumbnail) {
+                activeThumbnail.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
         }
         
         // Keyboard navigation
@@ -593,6 +642,9 @@
                 }
             }
         }
+        
+        // Initialize gallery on page load
+        document.addEventListener('DOMContentLoaded', loadGallery);
     </script>
 </body>
 </html>
