@@ -197,6 +197,14 @@
             border-color: #ee9d2b;
         }
         
+        /* Loading spinner */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        
         /* Mobile adjustments */
         @media (max-width: 768px) {
             .viewer-main {
@@ -233,7 +241,7 @@
                 <a href="/claim" class="text-sm text-white/70 hover:text-primary transition-colors">Free Token</a>
                 <a href="/profile" class="text-sm text-white/70 hover:text-primary transition-colors">Profile</a>
             </nav>
-            <div class="w-10"></div> <!-- Spacer to balance the logo -->
+            <div class="w-10"></div>
         </div>
     </header>
 
@@ -327,25 +335,19 @@
                 <h2 class="font-serif text-4xl md:text-5xl mt-4">Explore the Details</h2>
             </div>
             
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div class="gallery-item col-span-2 row-span-2" data-index="0">
-                    <img src="/images/residences/kea-gallery-1.jpg" alt="Gallery 1" class="w-full h-full object-cover rounded-xl">
-                </div>
-                <div class="gallery-item" data-index="1">
-                    <img src="/images/residences/kea-gallery-2.jpg" alt="Gallery 2" class="w-full h-64 object-cover rounded-xl">
-                </div>
-                <div class="gallery-item" data-index="2">
-                    <img src="/images/residences/kea-gallery-3.jpg" alt="Gallery 3" class="w-full h-64 object-cover rounded-xl">
-                </div>
-                <div class="gallery-item" data-index="3">
-                    <img src="/images/residences/kea-gallery-4.jpg" alt="Gallery 4" class="w-full h-64 object-cover rounded-xl">
-                </div>
-                <div class="gallery-item" data-index="4">
-                    <img src="/images/residences/kea-gallery-5.jpg" alt="Gallery 5" class="w-full h-64 object-cover rounded-xl">
-                </div>
-                <div class="gallery-item" data-index="5">
-                    <img src="/images/residences/kea-gallery-6.jpg" alt="Gallery 6" class="w-full h-64 object-cover rounded-xl">
-                </div>
+            <!-- Loading state -->
+            <div id="galleryLoading" class="text-center py-12">
+                <span class="material-symbols-outlined text-primary text-4xl animate-spin">progress_activity</span>
+                <p class="text-white/60 mt-4">Loading gallery...</p>
+            </div>
+            
+            <!-- Gallery Grid - populated dynamically -->
+            <div id="galleryGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 hidden"></div>
+            
+            <!-- Empty state -->
+            <div id="galleryEmpty" class="text-center py-12 hidden">
+                <span class="material-symbols-outlined text-white/30 text-6xl">photo_library</span>
+                <p class="text-white/60 mt-4">No images available</p>
             </div>
         </div>
     </section>
@@ -467,13 +469,11 @@
 
     <!-- Gallery Viewer Modal -->
     <div id="galleryViewer" class="gallery-viewer">
-        <!-- Header -->
         <div class="viewer-header">
-            <span class="viewer-counter"><span id="currentIndex">1</span> / <span id="totalCount">6</span></span>
+            <span class="viewer-counter"><span id="currentIndex">1</span> / <span id="totalCount">0</span></span>
             <span class="viewer-close material-symbols-outlined" onclick="closeViewer()">close</span>
         </div>
         
-        <!-- Main Image Area -->
         <div class="viewer-main" onclick="closeViewer()">
             <button class="viewer-nav viewer-prev" onclick="event.stopPropagation(); navigate(-1)">
                 <span class="material-symbols-outlined">chevron_left</span>
@@ -488,12 +488,21 @@
             </button>
         </div>
         
-        <!-- Thumbnails -->
         <div class="viewer-thumbnails" id="viewerThumbnails"></div>
     </div>
 
     <script>
-        // Gallery Viewer
+        // Gallery configuration - CHANGE THIS FOR EACH RESIDENCE PAGE
+        const RESIDENCE_ID = 'kea';
+        
+        // Gallery state
+        let galleryImages = [];
+        let currentIndex = 0;
+        
+        // DOM elements
+        const galleryGrid = document.getElementById('galleryGrid');
+        const galleryLoading = document.getElementById('galleryLoading');
+        const galleryEmpty = document.getElementById('galleryEmpty');
         const galleryViewer = document.getElementById('galleryViewer');
         const viewerImage = document.getElementById('viewerImage');
         const currentIndexEl = document.getElementById('currentIndex');
@@ -502,35 +511,78 @@
         const prevBtn = document.querySelector('.viewer-prev');
         const nextBtn = document.querySelector('.viewer-next');
         
-        let galleryImages = [];
-        let currentIndex = 0;
+        // Load gallery images from API
+        async function loadGallery() {
+            try {
+                const response = await fetch(`/api/gallery/${RESIDENCE_ID}`);
+                const data = await response.json();
+                
+                galleryLoading.classList.add('hidden');
+                
+                if (data.images && data.images.length > 0) {
+                    galleryImages = data.images.map((src, index) => ({
+                        src: src,
+                        alt: `Gallery ${index + 1}`
+                    }));
+                    
+                    renderGallery();
+                    buildThumbnails();
+                    totalCountEl.textContent = galleryImages.length;
+                    
+                    galleryGrid.classList.remove('hidden');
+                } else {
+                    galleryEmpty.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Failed to load gallery:', error);
+                galleryLoading.classList.add('hidden');
+                galleryEmpty.classList.remove('hidden');
+            }
+        }
         
-        // Collect all gallery images
-        document.querySelectorAll('.gallery-item').forEach((item, index) => {
-            const img = item.querySelector('img');
-            galleryImages.push({
-                src: img.src,
-                alt: img.alt
-            });
+        // Render gallery grid
+        function renderGallery() {
+            galleryGrid.innerHTML = '';
             
-            item.addEventListener('click', () => openViewer(index));
-        });
+            galleryImages.forEach((image, index) => {
+                const item = document.createElement('div');
+                
+                // Make first image and every 8th image larger for visual interest
+                const isLarge = index === 0 || (index + 1) % 8 === 0;
+                
+                item.className = `gallery-item${isLarge ? ' col-span-2 row-span-2' : ''}`;
+                item.dataset.index = index;
+                
+                const img = document.createElement('img');
+                img.src = image.src;
+                img.alt = image.alt;
+                img.className = `w-full ${isLarge ? 'h-full' : 'h-48'} object-cover rounded-xl`;
+                img.loading = 'lazy';
+                
+                item.appendChild(img);
+                item.addEventListener('click', () => openViewer(index));
+                
+                galleryGrid.appendChild(item);
+            });
+        }
         
-        // Update total count
-        totalCountEl.textContent = galleryImages.length;
-        
-        // Build thumbnails
-        galleryImages.forEach((img, index) => {
-            const thumb = document.createElement('img');
-            thumb.src = img.src;
-            thumb.alt = img.alt;
-            thumb.className = 'viewer-thumb';
-            thumb.onclick = (e) => {
-                e.stopPropagation();
-                goToImage(index);
-            };
-            thumbnailsContainer.appendChild(thumb);
-        });
+        // Build thumbnails for viewer
+        function buildThumbnails() {
+            thumbnailsContainer.innerHTML = '';
+            
+            galleryImages.forEach((img, index) => {
+                const thumb = document.createElement('img');
+                thumb.src = img.src;
+                thumb.alt = img.alt;
+                thumb.className = 'viewer-thumb';
+                thumb.loading = 'lazy';
+                thumb.onclick = (e) => {
+                    e.stopPropagation();
+                    goToImage(index);
+                };
+                thumbnailsContainer.appendChild(thumb);
+            });
+        }
         
         function openViewer(index) {
             currentIndex = index;
@@ -558,21 +610,21 @@
         }
         
         function updateViewer() {
-            // Update main image
             viewerImage.src = galleryImages[currentIndex].src;
             viewerImage.alt = galleryImages[currentIndex].alt;
-            
-            // Update counter
             currentIndexEl.textContent = currentIndex + 1;
-            
-            // Update navigation buttons
             prevBtn.classList.toggle('disabled', currentIndex === 0);
             nextBtn.classList.toggle('disabled', currentIndex === galleryImages.length - 1);
             
-            // Update thumbnails
             document.querySelectorAll('.viewer-thumb').forEach((thumb, index) => {
                 thumb.classList.toggle('active', index === currentIndex);
             });
+            
+            // Scroll active thumbnail into view
+            const activeThumbnail = thumbnailsContainer.children[currentIndex];
+            if (activeThumbnail) {
+                activeThumbnail.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
         }
         
         // Keyboard navigation
@@ -611,12 +663,15 @@
             
             if (Math.abs(diff) > swipeThreshold) {
                 if (diff > 0) {
-                    navigate(1); // Swipe left = next
+                    navigate(1);
                 } else {
-                    navigate(-1); // Swipe right = prev
+                    navigate(-1);
                 }
             }
         }
+        
+        // Initialize gallery on page load
+        document.addEventListener('DOMContentLoaded', loadGallery);
     </script>
 </body>
 </html>

@@ -92,6 +92,9 @@ app.use('/api/wallettwo', walletTwoAuthRoutes);
 const configRoutes = require('./routes/config');
 app.use('/api/config', configRoutes);
 
+const galleryRoutes = require('./routes/gallery');
+app.use('/api/gallery', galleryRoutes);
+
 // ========================================
 // ROUTES
 // ========================================
