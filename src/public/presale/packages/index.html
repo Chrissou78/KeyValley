@@ -122,7 +122,7 @@
                 <div id="package-holiday" class="glass-card package-card rounded-2xl p-6 selected" onclick="selectPackage('holiday')">
                     <div class="flex items-start justify-between mb-4">
                         <div>
-                            <h2 class="font-serif text-xl font-bold text-white">2026 Holiday Pack</h2>
+                            <h2 class="font-serif text-xl font-bold text-white">Summer Season 2026 Package</h2>
                             <p class="text-gray-400 text-sm">Experience Kea Island in style</p>
                             <div id="holiday-availability" class="mt-2">
                                 <span class="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">
@@ -171,9 +171,6 @@
 
                 <!-- Private Members Club -->
                 <div id="package-membership" class="glass-card package-card rounded-2xl p-6 relative" onclick="selectPackage('membership')">
-                    <div class="absolute -top-3 -right-3">
-                        <span class="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">Ends Feb 28</span>
-                    </div>
                     <div class="flex items-start justify-between mb-4">
                         <div>
                             <h2 class="font-serif text-xl font-bold text-white">Private Members Club</h2>
@@ -182,12 +179,8 @@
                         <div class="tooltip relative">
                             <span class="material-symbols-outlined text-primary cursor-help">info</span>
                             <div class="tooltip-content absolute z-50 bg-surface border border-primary/30 rounded-xl p-4 w-80 right-0 top-8">
-                                <div class="flex items-center mb-2">
-                                    <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full mr-2">Limited</span>
-                                    <span class="text-gray-400 text-xs">Until end of February</span>
-                                </div>
                                 <ul class="text-gray-300 text-xs space-y-2">
-                                    <li><strong class="text-white">Summer Holiday Pack</strong> - 10-day villa + EUR 10,000 services</li>
+                                    <li><strong class="text-white">Summer Season 2026 Package</strong> - 10-day villa + EUR 10,000 services</li>
                                     <li><strong class="text-white">3 Premium Summits</strong> - <a href="https://ftewinter.com" target="_blank" class="gold-text hover:underline" onclick="event.stopPropagation()">Zurich</a> or <a href="https://keanaissance.com" target="_blank" class="gold-text hover:underline" onclick="event.stopPropagation()">Kea</a></li>
                                     <li><strong class="text-white">Property Options</strong> - Monthly exclusive opportunities</li>
                                     <li><strong class="text-white">Investment Access</strong> - Bi-monthly summit opportunities</li>
@@ -286,7 +279,7 @@
                 <!-- Summary -->
                 <div class="border-t border-white/10 pt-6 mb-8">
                     <div class="space-y-3">
-                        <div class="flex justify-between text-gray-400"><span>Package</span><span id="summary-package" class="text-white">2026 Holiday Pack</span></div>
+                        <div class="flex justify-between text-gray-400"><span>Package</span><span id="summary-package" class="text-white">Summer Season 2026 Package</span></div>
                         <div class="flex justify-between text-gray-400"><span>Base Tokens</span><span id="summary-base-tokens" class="text-white">5,000 VIP</span></div>
                         <div class="flex justify-between text-gray-400"><span>Bonus Tokens</span><span id="summary-bonus-tokens" class="text-green-400">+5,000 VIP</span></div>
                         <div class="flex justify-between text-gray-400 font-semibold"><span>Total Tokens</span><span id="summary-tokens" class="text-white">10,000 VIP</span></div>
@@ -377,7 +370,7 @@
             </div>
             <div class="bg-surface-light rounded-xl p-4 mb-6">
                 <div class="space-y-2 text-sm">
-                    <div class="flex justify-between"><span class="text-gray-400">Package</span><span id="stripe-package" class="text-white">Holiday Pack</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Package</span><span id="stripe-package" class="text-white"> Summer Season 2026 Package</span></div>
                     <div class="flex justify-between"><span class="text-gray-400">VIP Tokens</span><span id="stripe-tokens" class="text-white">10,000 VIP</span></div>
                     <div class="flex justify-between"><span class="text-gray-400">Subtotal</span><span id="stripe-subtotal" class="text-white">EUR 5,000.00</span></div>
                     <div class="flex justify-between"><span class="text-gray-400">Fee (4%)</span><span id="stripe-fee" class="text-white">EUR 200.00</span></div>
@@ -411,7 +404,7 @@
     };
 
     const PACKAGES = {
-        holiday: { name: '2026 Holiday Pack', price: 5000, baseTokens: 5000, bonusTokens: 5000, tokens: 10000, remaining: 30, totalAvailable: 30 },
+        holiday: { name: 'Summer Season 2026 Package', price: 5000, baseTokens: 5000, bonusTokens: 5000, tokens: 10000, remaining: 30, totalAvailable: 30 },
         membership: { name: 'Private Members Club', price: 25000, baseTokens: 25000, bonusTokens: 25000, tokens: 50000 }
     };
 
@@ -509,7 +502,7 @@
 
     function selectPackage(pkg) {
         if (pkg === 'holiday' && PACKAGES.holiday.remaining <= 0) {
-            alert('Sorry, the 2026 Holiday Pack is sold out!');
+            alert('Sorry, the Summer Season 2026 Package is sold out!');
             return;
         }
         
@@ -666,7 +659,7 @@
                 const res = await fetch('/api/presale/packages');
                 const data = await res.json();
                 if (data.holiday && data.holiday.remaining <= 0) {
-                    showResult('error', 'Sold Out', 'Sorry, the 2026 Holiday Pack is no longer available.');
+                    showResult('error', 'Sold Out', 'Sorry, the Summer Season 2026 Package is no longer available.');
                     return;
                 }
             } catch (e) {}
