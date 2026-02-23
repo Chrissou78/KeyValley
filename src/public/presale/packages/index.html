@@ -53,10 +53,48 @@
         .package-card { transition: all 0.3s ease; cursor: pointer; }
         .package-card:hover { border-color: rgba(212, 175, 55, 0.5); }
         .package-card.selected { border-color: #D4AF37; background: rgba(212, 175, 55, 0.05); box-shadow: 0 0 30px rgba(212, 175, 55, 0.2); }
+        .package-card.greyed { opacity: 0.5; }
+        .package-card.greyed:hover { border-color: rgba(212, 175, 55, 0.3); }
         .tooltip-content { visibility: hidden; opacity: 0; transition: all 0.2s ease; }
         .tooltip:hover .tooltip-content { visibility: visible; opacity: 1; }
         #card-element { background-color: #1a1a1a !important; }
         .crossed-out { text-decoration: line-through; opacity: 0.5; }
+        
+        /* Modal scrollbar styling */
+        .modal-content::-webkit-scrollbar { width: 6px; }
+        .modal-content::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 3px; }
+        .modal-content::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.3); border-radius: 3px; }
+        .modal-content::-webkit-scrollbar-thumb:hover { background: rgba(212, 175, 55, 0.5); }
+        
+        /* Service item styling */
+        .service-item { 
+            background: rgba(26, 26, 26, 0.6); 
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.2s ease;
+        }
+        .service-item:hover {
+            border-color: rgba(212, 175, 55, 0.2);
+            background: rgba(26, 26, 26, 0.8);
+        }
+        
+        /* Membership type toggle */
+        .membership-type-btn {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .membership-type-btn:hover {
+            border-color: rgba(212, 175, 55, 0.5);
+        }
+        .membership-type-btn.active {
+            border-color: #D4AF37;
+            background: rgba(212, 175, 55, 0.15);
+        }
+        .membership-type-btn.greyed {
+            opacity: 0.4;
+        }
+        .membership-type-btn.greyed:hover {
+            border-color: rgba(212, 175, 55, 0.3);
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -69,7 +107,7 @@
                 </a>
                 <nav class="hidden md:flex items-center space-x-8">
                     <a href="/" class="text-gray-300 hover:text-primary transition-colors">Home</a>
-                    <a href="/presale/" class="text-gray-300 hover:text-primary transition-colors">Presale</a>
+                    <a href="/presale/" class="text-gray-300 hover:text-primary transition-colors">Sale</a>
                     <a href="/presale/token-sale/" class="text-gray-300 hover:text-primary transition-colors">Token Sale</a>
                     <a href="/presale/packages/" class="gold-text font-semibold">Packages</a>
                     <a href="/profile" class="text-gray-300 hover:text-primary transition-colors">Profile</a>
@@ -92,7 +130,7 @@
             <div class="text-center mb-8">
                 <a href="/presale/" class="inline-flex items-center text-gray-400 hover:text-primary mb-4 transition-colors">
                     <span class="material-symbols-outlined mr-1">arrow_back</span>
-                    Back to Presale
+                    Back to Sale
                 </a>
                 <h1 class="font-serif text-4xl md:text-5xl font-bold gold-gradient mb-4">Promotion Packages</h1>
                 <p class="text-gray-400 text-lg max-w-2xl mx-auto">Premium packages with bonus VIP tokens and exclusive benefits.</p>
@@ -170,43 +208,49 @@
                 </div>
 
                 <!-- Private Members Club -->
-                <div id="package-membership" class="glass-card package-card rounded-2xl p-6 relative" onclick="selectPackage('membership')">
+                <div id="package-membership" class="glass-card package-card rounded-2xl p-6 relative greyed" onclick="selectPackage('membership')">
                     <div class="flex items-start justify-between mb-4">
                         <div>
                             <h2 class="font-serif text-xl font-bold text-white">Private Members Club</h2>
-                            <p class="text-gray-400 text-sm">Annual Membership</p>
+                            <p class="text-gray-400 text-sm">Annual Membership 2026</p>
                         </div>
-                        <div class="tooltip relative">
-                            <span class="material-symbols-outlined text-primary cursor-help">info</span>
-                            <div class="tooltip-content absolute z-50 bg-surface border border-primary/30 rounded-xl p-4 w-80 right-0 top-8">
-                                <ul class="text-gray-300 text-xs space-y-2">
-                                    <li><strong class="text-white">Summer Season 2026 Package</strong> - 10-day villa + EUR 10,000 services</li>
-                                    <li><strong class="text-white">3 Premium Summits</strong> - <a href="https://ftewinter.com" target="_blank" class="gold-text hover:underline" onclick="event.stopPropagation()">Zurich</a> or <a href="https://keanaissance.com" target="_blank" class="gold-text hover:underline" onclick="event.stopPropagation()">Kea</a></li>
-                                    <li><strong class="text-white">Property Options</strong> - Monthly exclusive opportunities</li>
-                                    <li><strong class="text-white">Investment Access</strong> - Bi-monthly summit opportunities</li>
-                                    <li><strong class="text-white">Corporate Events</strong> - Host on Kea at discounted rates</li>
-                                </ul>
-                            </div>
-                        </div>
+                        <button onclick="event.stopPropagation(); openMembershipModal()" class="text-primary hover:text-primary-light transition-colors">
+                            <span class="material-symbols-outlined cursor-pointer">info</span>
+                        </button>
                     </div>
+                    
+                    <!-- Membership Type Toggle -->
+                    <div class="grid grid-cols-2 gap-2 mb-4" onclick="event.stopPropagation()">
+                        <button id="membership-individual-btn" class="membership-type-btn rounded-lg p-2 border border-white/10 text-center greyed" onclick="selectMembershipType('individual', true)">
+                            <span class="material-symbols-outlined text-primary text-lg">person</span>
+                            <div class="text-xs text-white font-medium">Individual</div>
+                            <div class="text-xs text-gray-500">€25,000</div>
+                        </button>
+                        <button id="membership-couple-btn" class="membership-type-btn rounded-lg p-2 border border-white/10 text-center greyed" onclick="selectMembershipType('couple', true)">
+                            <span class="material-symbols-outlined text-primary text-lg">group</span>
+                            <div class="text-xs text-white font-medium">Couple</div>
+                            <div class="text-xs text-gray-500">€35,000</div>
+                        </button>
+                    </div>
+                    
                     <div class="bg-surface-light rounded-xl p-4 mb-4">
                         <div class="flex justify-between items-center mb-3">
                             <span class="text-gray-400">Price</span>
-                            <span class="text-2xl font-bold gold-text">EUR 25,000</span>
+                            <span id="membership-price-display" class="text-2xl font-bold gold-text">EUR 25,000</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-gray-400">You get</span>
                             <div class="text-right">
-                                <span class="text-gray-500 text-sm crossed-out mr-2">25,000 VIP</span>
-                                <span class="text-2xl font-bold text-green-400">50,000 VIP</span>
+                                <span id="membership-base-tokens-display" class="text-gray-500 text-sm crossed-out mr-2">25,000 VIP</span>
+                                <span id="membership-total-tokens-display" class="text-2xl font-bold text-green-400">50,000 VIP</span>
                             </div>
                         </div>
                         <div class="text-center mt-3">
-                            <span class="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-sm font-semibold">+25,000 BONUS TOKENS</span>
+                            <span id="membership-bonus-display" class="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-sm font-semibold">+25,000 BONUS TOKENS</span>
                         </div>
                     </div>
                     <ul class="text-gray-300 text-sm space-y-2">
-                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>EUR 50,000 value in services</li>
+                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span><span id="membership-value-display">EUR 50,000 value in services</span></li>
                         <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>3 Summits (Zurich or Kea)</li>
                         <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>Monthly property options</li>
                         <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>Corporate event discounts</li>
@@ -327,6 +371,218 @@
         </div>
     </footer>
 
+    <!-- Private Members Club Modal -->
+    <div id="membership-modal" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-white/10 flex items-center justify-between flex-shrink-0">
+                <div>
+                    <h2 class="font-serif text-2xl font-bold gold-gradient">The Kea Valley Private Members Club</h2>
+                    <p class="text-gray-400 text-sm mt-1">Invitation-Only Membership</p>
+                </div>
+                <button onclick="closeMembershipModal()" class="text-gray-400 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined text-2xl">close</span>
+                </button>
+            </div>
+            
+            <!-- Modal Content -->
+            <div class="modal-content p-6 overflow-y-auto flex-1">
+                <!-- Overview -->
+                <div class="mb-8">
+                    <p class="text-gray-300 leading-relaxed">
+                        The Kea Valley Membership Club ('KV Club') is an invitation-only membership club situated on the island of Kea, Greece, which operates solely for the benefit of its members—leading business people and other lovers of Kea and Greece.
+                    </p>
+                    <div class="mt-4 inline-flex items-center bg-primary/10 border border-primary/30 rounded-lg px-4 py-2">
+                        <span class="material-symbols-outlined text-primary mr-2">group</span>
+                        <span class="text-white font-semibold">2,500 registered members</span>
+                        <span class="text-gray-400 ml-2">as of Dec 2025</span>
+                    </div>
+                </div>
+                
+                <!-- Vision -->
+                <div class="mb-8">
+                    <h3 class="font-serif text-xl font-bold text-white mb-4 flex items-center">
+                        <span class="material-symbols-outlined text-primary mr-2">visibility</span>
+                        Membership Vision
+                    </h3>
+                    <p class="text-gray-300 leading-relaxed">
+                        The vision of the Club is to provide an environment where its members can enjoy their lives, their families, their sport, the beauty of Kea, and their hobbies while developing Kea. Kea Valley offers world-class levels of private security.
+                    </p>
+                    <p class="text-gray-300 leading-relaxed mt-4">
+                        This is a community whose members have their own yachts and private jets, and want to own a private villa on Kea with their own private hangar close by and a private marina.
+                    </p>
+                </div>
+                
+                <!-- Onboarding Benefits -->
+                <div class="mb-8">
+                    <h3 class="font-serif text-xl font-bold text-white mb-4 flex items-center">
+                        <span class="material-symbols-outlined text-primary mr-2">card_membership</span>
+                        Member Onboarding Benefits
+                    </h3>
+                    <p class="text-gray-400 text-sm mb-4">When onboarding as a Private Member, the Kea Valley Private Member Relationship Manager designs the right basket of Benefits for the KV PM which will include:</p>
+                    <div class="grid gap-3">
+                        <div class="service-item rounded-xl p-4 flex items-start">
+                            <span class="material-symbols-outlined text-primary mr-3 mt-0.5">villa</span>
+                            <div>
+                                <div class="font-semibold text-white">Holidays on Kea</div>
+                                <div class="text-gray-400 text-sm">Full Service including Transportation, Accommodation, and Experiences</div>
+                            </div>
+                        </div>
+                        <div class="service-item rounded-xl p-4 flex items-start">
+                            <span class="material-symbols-outlined text-primary mr-3 mt-0.5">groups</span>
+                            <div>
+                                <div class="font-semibold text-white">Access to the Summits</div>
+                                <div class="text-gray-400 text-sm">Exclusive networking and investment events</div>
+                            </div>
+                        </div>
+                        <div class="service-item rounded-xl p-4 flex items-start">
+                            <span class="material-symbols-outlined text-primary mr-3 mt-0.5">real_estate_agent</span>
+                            <div>
+                                <div class="font-semibold text-white">Kea Valley Private Homes</div>
+                                <div class="text-gray-400 text-sm">Founding Shareholder Opportunity</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Private Services -->
+                <div class="mb-8">
+                    <h3 class="font-serif text-xl font-bold text-white mb-4 flex items-center">
+                        <span class="material-symbols-outlined text-primary mr-2">diamond</span>
+                        KV Private Services
+                    </h3>
+                    <div class="grid gap-3">
+                        <div class="service-item rounded-xl p-4 flex items-start">
+                            <span class="material-symbols-outlined text-blue-400 mr-3 mt-0.5">flight</span>
+                            <div>
+                                <div class="font-semibold text-white">Seaplane Access</div>
+                                <div class="text-gray-400 text-sm">From the port of Lavrio to Kea, 18 hours a day on reservation <span class="text-primary">(starting October 2026)</span></div>
+                            </div>
+                        </div>
+                        <div class="service-item rounded-xl p-4 flex items-start">
+                            <span class="material-symbols-outlined text-green-400 mr-3 mt-0.5">account_balance</span>
+                            <div>
+                                <div class="font-semibold text-white">Greek Golden Visa Advisory</div>
+                                <div class="text-gray-400 text-sm">Tax, Legal and Banking Advice to secure a Greek Golden Visa with a path to an all EU Global Tax Certificate for <span class="gold-text font-semibold">€150,000</span> with global anonymity of financial affairs</div>
+                            </div>
+                        </div>
+                        <div class="service-item rounded-xl p-4 flex items-start">
+                            <span class="material-symbols-outlined text-purple-400 mr-3 mt-0.5">architecture</span>
+                            <div>
+                                <div class="font-semibold text-white">Custom Villa Design</div>
+                                <div class="text-gray-400 text-sm">Design your own villa with a full sunset view, close to a beach in Kea Valley</div>
+                            </div>
+                        </div>
+                        <div class="service-item rounded-xl p-4 flex items-start">
+                            <span class="material-symbols-outlined text-red-400 mr-3 mt-0.5">emergency</span>
+                            <div>
+                                <div class="font-semibold text-white">Private Healthcare</div>
+                                <div class="text-gray-400 text-sm">Emergency services including Private Air Transport Service <span class="text-white font-semibold">24/7/365</span></div>
+                            </div>
+                        </div>
+                        <div class="service-item rounded-xl p-4 flex items-start">
+                            <span class="material-symbols-outlined text-primary mr-3 mt-0.5">house</span>
+                            <div>
+                                <div class="font-semibold text-white">KV Clubhouse Access</div>
+                                <div class="text-gray-400 text-sm">Exclusive access to the KV Clubhouse facilities</div>
+                            </div>
+                        </div>
+                        <div class="service-item rounded-xl p-4 flex items-start">
+                            <span class="material-symbols-outlined text-orange-400 mr-3 mt-0.5">flight_takeoff</span>
+                            <div>
+                                <div class="font-semibold text-white">Private Airport</div>
+                                <div class="text-gray-400 text-sm">5,000 foot runway for private aircraft <span class="text-primary">(as of 2028)</span></div>
+                            </div>
+                        </div>
+                        <div class="service-item rounded-xl p-4 flex items-start">
+                            <span class="material-symbols-outlined text-cyan-400 mr-3 mt-0.5">sailing</span>
+                            <div>
+                                <div class="font-semibold text-white">Private Marina</div>
+                                <div class="text-gray-400 text-sm">50 slip marina with full amenities, Private Members Only <span class="text-primary">(as of 2027)</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Summits -->
+                <div class="mb-8">
+                    <h3 class="font-serif text-xl font-bold text-white mb-4 flex items-center">
+                        <span class="material-symbols-outlined text-primary mr-2">event</span>
+                        Annual Summits
+                    </h3>
+                    <p class="text-gray-400 text-sm mb-4">KV Club hosts several Summits every year for its Private Members:</p>
+                    <div class="grid gap-3">
+                        <a href="https://ftewinter.com" target="_blank" class="service-item rounded-xl p-4 flex items-start hover:border-primary/40">
+                            <span class="material-symbols-outlined text-blue-400 mr-3 mt-0.5">trending_up</span>
+                            <div class="flex-1">
+                                <div class="font-semibold text-white flex items-center">
+                                    FTE® Capital Markets Summit
+                                    <span class="material-symbols-outlined text-sm text-gray-500 ml-2">open_in_new</span>
+                                </div>
+                                <div class="text-gray-400 text-sm">Zurich – 3 times a year (May, November, January)</div>
+                            </div>
+                        </a>
+                        <a href="https://keanaissance.com" target="_blank" class="service-item rounded-xl p-4 flex items-start hover:border-primary/40">
+                            <span class="material-symbols-outlined text-green-400 mr-3 mt-0.5">health_and_safety</span>
+                            <div class="flex-1">
+                                <div class="font-semibold text-white flex items-center">
+                                    KEANAISSANCE
+                                    <span class="material-symbols-outlined text-sm text-gray-500 ml-2">open_in_new</span>
+                                </div>
+                                <div class="text-gray-400 text-sm">Mediterranean Health Innovation Summit – May 2026</div>
+                            </div>
+                        </a>
+                        <div class="service-item rounded-xl p-4 flex items-start">
+                            <span class="material-symbols-outlined text-primary mr-3 mt-0.5">anchor</span>
+                            <div>
+                                <div class="font-semibold text-white">FTE Athens</div>
+                                <div class="text-gray-400 text-sm">Piraeus Yacht Club – First weekend of June</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Founding Shareholder -->
+                <div class="mb-8 p-5 bg-primary/10 border border-primary/30 rounded-xl">
+                    <h3 class="font-serif text-lg font-bold text-white mb-2 flex items-center">
+                        <span class="material-symbols-outlined text-primary mr-2">star</span>
+                        Privileged Access
+                    </h3>
+                    <p class="text-gray-300 text-sm">
+                        Members receive privileged access to the <strong class="text-white">Kea Valley Private Homes Founding Shareholder Offer</strong>. See page 8 in the Kea Valley Private Homes Slide Deck Pricing for 2026.
+                    </p>
+                </div>
+                
+                <!-- Pricing -->
+                <div class="bg-surface-light rounded-xl p-6 border border-white/10">
+                    <h3 class="font-serif text-xl font-bold text-white mb-4 text-center">2026 Membership Pricing</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <button id="modal-individual-btn" onclick="selectMembershipType('individual', true); updateModalPricingButtons();" class="membership-type-btn bg-surface rounded-xl p-5 text-center border border-white/5">
+                            <span class="material-symbols-outlined text-primary text-3xl mb-2">person</span>
+                            <div class="text-3xl font-bold gold-text mb-1">€25,000</div>
+                            <div class="text-gray-400">Individual Membership</div>
+                            <div class="text-xs text-white mt-2">50,000 VIP Tokens</div>
+                        </button>
+                        <button id="modal-couple-btn" onclick="selectMembershipType('couple', true); updateModalPricingButtons();" class="membership-type-btn bg-surface rounded-xl p-5 text-center border border-white/5">
+                            <span class="material-symbols-outlined text-primary text-3xl mb-2">group</span>
+                            <div class="text-3xl font-bold gold-text mb-1">€35,000</div>
+                            <div class="text-gray-400">Couple Membership</div>
+                            <div class="text-xs text-green-400 mt-1">70,000 VIP Tokens</div>
+                            <div class="text-xs text-green-400">Best Value</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="p-6 border-t border-white/10 flex-shrink-0">
+                <button onclick="closeMembershipModal();" class="btn-primary w-full py-3 rounded-xl font-semibold">
+                    Select <span id="modal-selected-type">Individual</span> Membership - €<span id="modal-selected-price">25,000</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Overlays -->
     <div id="connect-overlay" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center">
         <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4 text-center">
@@ -405,12 +661,14 @@
 
     const PACKAGES = {
         holiday: { name: 'Summer Season 2026 Package', price: 5000, baseTokens: 5000, bonusTokens: 5000, tokens: 10000, remaining: 30, totalAvailable: 30 },
-        membership: { name: 'Private Members Club', price: 25000, baseTokens: 25000, bonusTokens: 25000, tokens: 50000 }
+        membership: { name: 'Private Members Club (Individual)', price: 25000, baseTokens: 25000, bonusTokens: 25000, tokens: 50000 },
+        membership_couple: { name: 'Private Members Club (Couple)', price: 35000, baseTokens: 35000, bonusTokens: 35000, tokens: 70000 }
     };
 
     let currentWallet = null;
     let selectedPayment = 'Card';
     let selectedPackage = 'holiday';
+    let selectedMembershipType = 'individual'; // 'individual' or 'couple'
     let balances = { POL: 0, USDC: 0, USDT: 0 };
     let stripe = null;
     let cardElement = null;
@@ -420,10 +678,124 @@
     function safeText(id, text) { const e = safeEl(id); if (e) e.textContent = text; }
     function safeClass(id, action, cls) { const e = safeEl(id); if (e) e.classList[action](cls); }
 
+    // Update visual state of all package cards and buttons
+    function updatePackageVisualState() {
+        const holidayCard = document.getElementById('package-holiday');
+        const membershipCard = document.getElementById('package-membership');
+        const individualBtn = document.getElementById('membership-individual-btn');
+        const coupleBtn = document.getElementById('membership-couple-btn');
+        const holidayCheck = document.getElementById('holiday-check');
+        const membershipCheck = document.getElementById('membership-check');
+        
+        if (selectedPackage === 'holiday') {
+            // Holiday selected
+            holidayCard?.classList.add('selected');
+            holidayCard?.classList.remove('greyed');
+            membershipCard?.classList.remove('selected');
+            membershipCard?.classList.add('greyed');
+            holidayCheck?.classList.remove('hidden');
+            membershipCheck?.classList.add('hidden');
+            
+            // Grey out membership type buttons
+            individualBtn?.classList.remove('active');
+            individualBtn?.classList.add('greyed');
+            coupleBtn?.classList.remove('active');
+            coupleBtn?.classList.add('greyed');
+        } else {
+            // Membership selected
+            holidayCard?.classList.remove('selected');
+            holidayCard?.classList.add('greyed');
+            membershipCard?.classList.add('selected');
+            membershipCard?.classList.remove('greyed');
+            holidayCheck?.classList.add('hidden');
+            membershipCheck?.classList.remove('hidden');
+            
+            // Activate appropriate membership type button
+            individualBtn?.classList.remove('greyed');
+            coupleBtn?.classList.remove('greyed');
+            individualBtn?.classList.toggle('active', selectedMembershipType === 'individual');
+            coupleBtn?.classList.toggle('active', selectedMembershipType === 'couple');
+        }
+        
+        // Update membership card display
+        updateMembershipCardDisplay();
+    }
+    
+    // Update the membership card display based on selected type
+    function updateMembershipCardDisplay() {
+        const pkg = selectedMembershipType === 'couple' ? PACKAGES.membership_couple : PACKAGES.membership;
+        
+        safeText('membership-price-display', 'EUR ' + pkg.price.toLocaleString());
+        safeText('membership-base-tokens-display', pkg.baseTokens.toLocaleString() + ' VIP');
+        safeText('membership-total-tokens-display', pkg.tokens.toLocaleString() + ' VIP');
+        safeText('membership-bonus-display', '+' + pkg.bonusTokens.toLocaleString() + ' BONUS TOKENS');
+        safeText('membership-value-display', 'EUR ' + pkg.tokens.toLocaleString() + ' value in services');
+    }
+
+    // Membership Type Selection
+    function selectMembershipType(type, autoSelectPackage = false) {
+        selectedMembershipType = type;
+        
+        // Auto-select membership package when clicking on individual/couple buttons
+        if (autoSelectPackage && selectedPackage !== 'membership') {
+            selectedPackage = 'membership';
+        }
+        
+        updatePackageVisualState();
+        updateModalPricingButtons();
+        updateSummary();
+    }
+    
+    function updateModalPricingButtons() {
+        const modalIndividualBtn = document.getElementById('modal-individual-btn');
+        const modalCoupleBtn = document.getElementById('modal-couple-btn');
+        
+        if (modalIndividualBtn) modalIndividualBtn.classList.toggle('active', selectedMembershipType === 'individual');
+        if (modalCoupleBtn) modalCoupleBtn.classList.toggle('active', selectedMembershipType === 'couple');
+        
+        // Update modal footer
+        safeText('modal-selected-type', selectedMembershipType === 'couple' ? 'Couple' : 'Individual');
+        safeText('modal-selected-price', selectedMembershipType === 'couple' ? '35,000' : '25,000');
+    }
+
+    // Membership Modal Functions
+    function openMembershipModal() {
+        safeClass('membership-modal', 'remove', 'hidden');
+        document.body.style.overflow = 'hidden';
+        updateModalPricingButtons();
+    }
+    
+    function closeMembershipModal() {
+        safeClass('membership-modal', 'add', 'hidden');
+        document.body.style.overflow = '';
+        
+        // Auto-select membership package when closing modal
+        if (selectedPackage !== 'membership') {
+            selectedPackage = 'membership';
+            updatePackageVisualState();
+            updateSummary();
+        }
+    }
+    
+    // Close modal on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeMembershipModal();
+        }
+    });
+    
+    // Close modal on backdrop click
+    document.getElementById('membership-modal')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+            closeMembershipModal();
+        }
+    });
+
     document.addEventListener('DOMContentLoaded', async () => {
         await loadConfig();
         checkWalletConnection();
         checkUrlParams();
+        updatePackageVisualState();
         updateSummary();
     });
 
@@ -507,10 +879,7 @@
         }
         
         selectedPackage = pkg;
-        document.getElementById('package-holiday')?.classList.toggle('selected', pkg === 'holiday');
-        document.getElementById('package-membership')?.classList.toggle('selected', pkg === 'membership');
-        document.getElementById('holiday-check')?.classList.toggle('hidden', pkg !== 'holiday');
-        document.getElementById('membership-check')?.classList.toggle('hidden', pkg !== 'membership');
+        updatePackageVisualState();
         updateSummary();
     }
 
@@ -521,8 +890,15 @@
         updateSummary();
     }
 
+    function getSelectedPackage() {
+        if (selectedPackage === 'membership') {
+            return selectedMembershipType === 'couple' ? PACKAGES.membership_couple : PACKAGES.membership;
+        }
+        return PACKAGES[selectedPackage];
+    }
+
     function updateSummary() {
-        const pkg = PACKAGES[selectedPackage];
+        const pkg = getSelectedPackage();
         const feePercent = selectedPayment === 'Card' ? CONFIG.cardFeePercent : CONFIG.cryptoFeePercent;
         const feeEUR = pkg.price * (feePercent / 100);
         const totalEUR = pkg.price + feeEUR;
@@ -544,7 +920,13 @@
         else if (selectedPayment === 'USDT') safeText('summary-crypto', '~' + totalUSD.toLocaleString() + ' USDT');
         else safeText('summary-crypto', 'EUR ' + totalEUR.toLocaleString());
 
-        window.currentPurchase = { package: selectedPackage, ...pkg, feeEUR, totalEUR, totalUSD, polAmount };
+        // Determine the actual package key for backend
+        let packageKey = selectedPackage;
+        if (selectedPackage === 'membership' && selectedMembershipType === 'couple') {
+            packageKey = 'membership_couple';
+        }
+
+        window.currentPurchase = { package: packageKey, ...pkg, feeEUR, totalEUR, totalUSD, polAmount };
         updateBuyButton();
     }
 
@@ -561,7 +943,7 @@
         const p = window.currentPurchase || {};
         
         if (!currentWallet) { btn.textContent = 'Connect Wallet to Purchase'; btn.disabled = true; return; }
-        if (!CONFIG.presaleEnabled) { btn.textContent = 'Presale Not Active'; btn.disabled = true; return; }
+        if (!CONFIG.presaleEnabled) { btn.textContent = 'Sale Not Active'; btn.disabled = true; return; }
         
         if (selectedPayment === 'Card') { btn.textContent = 'Pay EUR ' + p.totalEUR?.toLocaleString(); btn.disabled = false; }
         else if (selectedPayment === 'POL') {
@@ -764,7 +1146,7 @@
                 const data = await res.json();
                 if (data.status === 'completed') { 
                     hideProcessing(); 
-                    const p = PACKAGES[selectedPackage];
+                    const p = getSelectedPackage();
                     showResult('success', 'Purchase Complete!', p.name + ' purchased successfully!', { package: p.name, tokens: p.tokens, tx: data.mintTxHash }); 
                     localStorage.removeItem('pendingPurchase'); 
                     return; 

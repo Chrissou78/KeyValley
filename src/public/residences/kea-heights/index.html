@@ -56,6 +56,14 @@
             transform: translateY(-4px);
         }
         
+        .trend-card {
+            transition: all 0.3s ease;
+        }
+        .trend-card:hover {
+            border-color: rgba(238, 157, 43, 0.3);
+            transform: translateY(-2px);
+        }
+        
         /* Gallery Viewer Modal */
         .gallery-viewer {
             display: none;
@@ -213,7 +221,7 @@
             <nav class="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-8">
                 <a href="/" class="text-sm text-white/70 hover:text-primary transition-colors">Home</a>
                 <a href="/#residences" class="text-sm text-primary font-medium">Residences</a>
-                <a href="/presale" class="text-sm text-white/70 hover:text-primary transition-colors">Presale</a>
+                <a href="/presale" class="text-sm text-white/70 hover:text-primary transition-colors">Sale</a>
                 <a href="/claim" class="text-sm text-white/70 hover:text-primary transition-colors">Free Token</a>
                 <a href="/profile" class="text-sm text-white/70 hover:text-primary transition-colors">Profile</a>
             </nav>
@@ -224,7 +232,7 @@
     <!-- Hero Section -->
     <section class="relative h-[70vh] min-h-[500px] flex items-end">
         <div class="absolute inset-0">
-            <img src="/images/residences/kea-heights-hero.png" alt="Residences by Kea Heights" class="w-full h-full object-cover">
+            <img src="/images/residences/kea-heights-hero.webp" alt="Residences by Kea Heights" class="w-full h-full object-cover">
             <div class="hero-gradient absolute inset-0"></div>
         </div>
         
@@ -250,13 +258,13 @@
                     <h2 class="font-serif text-4xl md:text-5xl mt-4 mb-6">Above It All</h2>
                     <div class="space-y-6 text-white/70 text-lg leading-relaxed">
                         <p>
-                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                            Kea Heights represents the pinnacle of island living, offering starter homes designed for those seeking EU residency through the Greek Golden Visa program while investing in a growing Mediterranean community.
                         </p>
                         <p>
-                            Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+                            Positioned in the Kea Heights Subdivision, these properties offer the perfect balance of accessibility to Korissia port, stunning hilltop views, and modern pre-fabricated construction that ensures quality and efficiency.
                         </p>
                         <p>
-                            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                            Whether you're a business professional seeking Schengen travel ease, a young family looking for a Mediterranean home base, or an investor interested in the growing Cyclades market, Kea Heights delivers on all fronts.
                         </p>
                     </div>
                 </div>
@@ -265,10 +273,10 @@
                 <div class="space-y-8">
                     <!-- Featured Image -->
                     <div class="relative">
-                        <img src="/images/residences/kea-heights-feature.png" alt="Kea Heights View" class="rounded-2xl shadow-2xl w-full">
+                        <img src="/images/residences/kea-heights-feature.webp" alt="Kea Heights View" class="rounded-2xl shadow-2xl w-full">
                         <div class="absolute -bottom-6 -right-6 bg-primary text-black p-6 rounded-xl">
-                            <span class="text-4xl font-serif font-bold">350m²</span>
-                            <p class="text-sm font-medium">Starting from</p>
+                            <span class="text-4xl font-serif font-bold">€500K</span>
+                            <p class="text-sm font-medium">Golden Visa Package</p>
                         </div>
                     </div>
                     
@@ -285,14 +293,14 @@
                             <p class="text-sm text-white/60">Unobstructed panoramas</p>
                         </div>
                         <div class="feature-card rounded-lg p-4">
-                            <span class="material-symbols-outlined text-primary text-2xl mb-2">security</span>
-                            <h4 class="font-medium mb-1">Private Estate</h4>
-                            <p class="text-sm text-white/60">Gated community</p>
+                            <span class="material-symbols-outlined text-primary text-2xl mb-2">verified</span>
+                            <h4 class="font-medium mb-1">Golden Visa</h4>
+                            <p class="text-sm text-white/60">EU residency eligible</p>
                         </div>
                         <div class="feature-card rounded-lg p-4">
-                            <span class="material-symbols-outlined text-primary text-2xl mb-2">wb_sunny</span>
-                            <h4 class="font-medium mb-1">Sunset Views</h4>
-                            <p class="text-sm text-white/60">Western exposure</p>
+                            <span class="material-symbols-outlined text-primary text-2xl mb-2">schedule</span>
+                            <h4 class="font-medium mb-1">8 Week Process</h4>
+                            <p class="text-sm text-white/60">Fast-track approval</p>
                         </div>
                     </div>
                 </div>
@@ -300,8 +308,173 @@
         </div>
     </section>
 
-    <!-- Gallery Section -->
+    <!-- Golden Visa & Investment Section -->
     <section class="py-20 bg-background-dark">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <span class="text-primary text-sm font-bold uppercase tracking-widest">The Opportunity</span>
+                <h2 class="font-serif text-4xl md:text-5xl mt-4">One Solution, Four Trends</h2>
+                <p class="text-white/70 text-lg mt-6 max-w-3xl mx-auto">
+                    Kea Heights brings together one great solution which addresses four converging market trends.
+                </p>
+            </div>
+            
+            <!-- Four Trends Grid -->
+            <div class="grid md:grid-cols-2 gap-8 mb-16">
+                <!-- Trend 1: Schengen Travel -->
+                <div class="trend-card bg-surface rounded-2xl p-8 border border-white/5">
+                    <div class="flex items-start gap-4">
+                        <div class="bg-primary/20 p-3 rounded-xl flex-shrink-0">
+                            <span class="material-symbols-outlined text-primary text-3xl">flight_takeoff</span>
+                        </div>
+                        <div>
+                            <h3 class="font-serif text-2xl mb-3">Schengen Travel Access</h3>
+                            <p class="text-white/70 leading-relaxed">
+                                Many business people from non-EU regions of the world want the benefit of Schengen travel. Securing a visa for many of them can take more than 6 weeks and is not necessarily successful. The Greek Golden Visa provides a permanent solution.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Trend 2: Rental Shortage -->
+                <div class="trend-card bg-surface rounded-2xl p-8 border border-white/5">
+                    <div class="flex items-start gap-4">
+                        <div class="bg-primary/20 p-3 rounded-xl flex-shrink-0">
+                            <span class="material-symbols-outlined text-primary text-3xl">home_work</span>
+                        </div>
+                        <div>
+                            <h3 class="font-serif text-2xl mb-3">Housing Shortage in Kea</h3>
+                            <p class="text-white/70 leading-relaxed">
+                                There are no rental properties available in Kea today. If you're a young family in Athens looking to move to Kea, or a young professional wanting to live on the island while commuting to Athens or the airport when needed, there is simply no place for you to create a home.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Trend 3: Korissia Redevelopment -->
+                <div class="trend-card bg-surface rounded-2xl p-8 border border-white/5">
+                    <div class="flex items-start gap-4">
+                        <div class="bg-primary/20 p-3 rounded-xl flex-shrink-0">
+                            <span class="material-symbols-outlined text-primary text-3xl">construction</span>
+                        </div>
+                        <div>
+                            <h3 class="font-serif text-2xl mb-3">Korissia Redevelopment</h3>
+                            <p class="text-white/70 leading-relaxed">
+                                Parts of Korissia, the port incorporated region, are an eyesore and need to be redeveloped. The typical owner of much of this property doesn't have the desire, means, or vision to develop it—in some cases, they were given the land for free through a lottery 90 years ago.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Trend 4: Pre-fab Construction -->
+                <div class="trend-card bg-surface rounded-2xl p-8 border border-white/5">
+                    <div class="flex items-start gap-4">
+                        <div class="bg-primary/20 p-3 rounded-xl flex-shrink-0">
+                            <span class="material-symbols-outlined text-primary text-3xl">precision_manufacturing</span>
+                        </div>
+                        <div>
+                            <h3 class="font-serif text-2xl mb-3">Modern Pre-fab Construction</h3>
+                            <p class="text-white/70 leading-relaxed">
+                                Pre-fab construction companies can now roll out new homes using standardized materials and a manufacturing approach. This enables faster delivery, consistent quality, and more affordable pricing for premium starter homes.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- The Solution -->
+            <div class="bg-gradient-to-r from-primary/10 to-primary/5 rounded-3xl p-8 md:p-10 border border-primary/20">
+                <div class="text-center mb-10">
+                    <h3 class="font-serif text-3xl md:text-4xl text-white">The Kea Heights Starter Home Subdivision</h3>
+                    <p class="text-white/70 text-lg mt-4">Kea Valley brings all of these elements together in one compelling investment opportunity.</p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-10">
+                    <!-- Investment Details -->
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-primary text-black w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="font-serif text-2xl font-bold">€</span>
+                            </div>
+                            <div>
+                                <span class="text-primary font-bold text-3xl">€500,000</span>
+                                <p class="text-white/70">Total Investment</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-surface/50 rounded-xl p-6">
+                            <h4 class="font-medium text-lg mb-4 text-white">Investment Breakdown</h4>
+                            <ul class="space-y-3 text-white/70">
+                                <li class="flex items-start gap-3">
+                                    <span class="material-symbols-outlined text-primary text-lg mt-0.5 flex-shrink-0">check_circle</span>
+                                    <span><strong class="text-white">€100,000 advance</strong> to secure your plot in the first 40 Greek Golden Visa plots available</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="material-symbols-outlined text-primary text-lg mt-0.5 flex-shrink-0">check_circle</span>
+                                    <span>Full property title in the Kea Heights Subdivision</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="material-symbols-outlined text-primary text-lg mt-0.5 flex-shrink-0">check_circle</span>
+                                    <span>EU Residency with <strong class="text-white">no requirement to live in Greece</strong></span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="material-symbols-outlined text-primary text-lg mt-0.5 flex-shrink-0">check_circle</span>
+                                    <span>Ease of Schengen travel across 27 European countries</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Process Details -->
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-primary text-black w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span class="material-symbols-outlined text-2xl">schedule</span>
+                            </div>
+                            <div>
+                                <span class="text-primary font-bold text-3xl">8 Weeks</span>
+                                <p class="text-white/70">Complete Process Timeline</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-surface/50 rounded-xl p-6">
+                            <h4 class="font-medium text-lg mb-4 text-white">Streamlined Process</h4>
+                            <ul class="space-y-3 text-white/70">
+                                <li class="flex items-start gap-3">
+                                    <span class="material-symbols-outlined text-primary text-lg mt-0.5 flex-shrink-0">gavel</span>
+                                    <span>Process can be completed within 8 weeks, provided all documents are ready</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="material-symbols-outlined text-primary text-lg mt-0.5 flex-shrink-0">workspace_premium</span>
+                                    <span>Partnered with one of the <strong class="text-white">best law firms</strong> in the Skoufa Law Region of Athens</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="material-symbols-outlined text-primary text-lg mt-0.5 flex-shrink-0">verified</span>
+                                    <span>Full property title transferred to the Golden Visa recipient</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="material-symbols-outlined text-primary text-lg mt-0.5 flex-shrink-0">public</span>
+                                    <span>Available to foreign nationals from non-EU countries</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Limited Availability Banner -->
+                <div class="mt-10 bg-primary/20 rounded-xl p-6 text-center border border-primary/30">
+                    <div class="flex items-center justify-center gap-3 mb-2">
+                        <span class="material-symbols-outlined text-primary text-2xl">priority_high</span>
+                        <span class="text-primary font-bold text-lg uppercase tracking-wider">Limited Availability</span>
+                    </div>
+                    <p class="text-white/80">Only <strong class="text-white">40 plots</strong> available in the first phase for Golden Visa qualification</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section class="py-20 bg-surface">
         <div class="max-w-7xl mx-auto px-6">
             <div class="text-center mb-12">
                 <span class="text-primary text-sm font-bold uppercase tracking-widest">Gallery</span>
@@ -326,7 +499,7 @@
     </section>
 
     <!-- Specifications Section -->
-    <section class="py-20 bg-surface">
+    <section class="py-20 bg-background-dark">
         <div class="max-w-7xl mx-auto px-6">
             <div class="text-center mb-12">
                 <span class="text-primary text-sm font-bold uppercase tracking-widest">Specifications</span>
@@ -339,63 +512,63 @@
                     <ul class="space-y-4 text-white/70">
                         <li class="flex justify-between">
                             <span>Total Area</span>
-                            <span class="text-white font-medium">350-600 m²</span>
+                            <span class="text-white font-medium">80-150 m²</span>
                         </li>
                         <li class="flex justify-between">
                             <span>Bedrooms</span>
-                            <span class="text-white font-medium">4-7</span>
+                            <span class="text-white font-medium">2-3</span>
                         </li>
                         <li class="flex justify-between">
                             <span>Bathrooms</span>
-                            <span class="text-white font-medium">5-6</span>
+                            <span class="text-white font-medium">1-2</span>
                         </li>
                         <li class="flex justify-between">
                             <span>Plot Size</span>
-                            <span class="text-white font-medium">1000-2000 m²</span>
+                            <span class="text-white font-medium">200-400 m²</span>
                         </li>
                     </ul>
                 </div>
                 
                 <div class="bg-surface-light rounded-2xl p-8 border border-white/5">
-                    <h3 class="font-serif text-2xl mb-6 text-primary">Amenities</h3>
+                    <h3 class="font-serif text-2xl mb-6 text-primary">Features</h3>
                     <ul class="space-y-4 text-white/70">
                         <li class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-primary">check_circle</span>
-                            Helipad access
+                            Pre-fab modern construction
                         </li>
                         <li class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-primary">check_circle</span>
-                            Private vineyard
+                            Energy efficient design
                         </li>
                         <li class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-primary">check_circle</span>
-                            Tennis court
+                            Private outdoor terrace
                         </li>
                         <li class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-primary">check_circle</span>
-                            Cinema room
+                            Panoramic views
                         </li>
                     </ul>
                 </div>
                 
                 <div class="bg-surface-light rounded-2xl p-8 border border-white/5">
-                    <h3 class="font-serif text-2xl mb-6 text-primary">Services</h3>
+                    <h3 class="font-serif text-2xl mb-6 text-primary">Golden Visa Benefits</h3>
                     <ul class="space-y-4 text-white/70">
                         <li class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-primary">check_circle</span>
-                            Private security
+                            EU residency permit
                         </li>
                         <li class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-primary">check_circle</span>
-                            Personal chef service
+                            Schengen travel access
                         </li>
                         <li class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-primary">check_circle</span>
-                            Estate management
+                            No minimum stay required
                         </li>
                         <li class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-primary">check_circle</span>
-                            Yacht access
+                            Family inclusion eligible
                         </li>
                     </ul>
                 </div>
@@ -404,16 +577,16 @@
     </section>
 
     <!-- CTA Section -->
-    <section class="py-20 bg-background-dark">
+    <section class="py-20 bg-surface">
         <div class="max-w-4xl mx-auto px-6 text-center">
-            <h2 class="font-serif text-4xl md:text-5xl mb-6">Rise to the Heights</h2>
+            <h2 class="font-serif text-4xl md:text-5xl mb-6">Secure Your Golden Visa</h2>
             <p class="text-white/70 text-lg mb-8 max-w-2xl mx-auto">
-                Experience the pinnacle of Mediterranean luxury. Only 12 exclusive estates available.
+                Join the first 40 investors in the Kea Heights Starter Home Subdivision. EU residency, Schengen travel, and Mediterranean living await.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="/presale" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-black font-bold rounded-lg hover:bg-primary-light transition-colors">
                     <span class="material-symbols-outlined">shopping_cart</span>
-                    Join Presale
+                    Join Sale
                 </a>
                 <a href="/pdfs/residences-by-kea-heights.pdf" target="_blank" class="inline-flex items-center justify-center gap-2 px-8 py-4 border border-primary/30 text-primary font-bold rounded-lg hover:bg-primary/10 transition-colors">
                     <span class="material-symbols-outlined">download</span>
@@ -424,7 +597,7 @@
     </section>
 
     <!-- Footer -->
-    <footer class="py-12 bg-surface border-t border-white/10">
+    <footer class="py-12 bg-background-dark border-t border-white/10">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex flex-col md:flex-row items-center justify-between gap-6">
                 <a href="/">
@@ -465,7 +638,7 @@
     </div>
 
     <script>
-        // Gallery configuration - CHANGE THIS FOR EACH RESIDENCE PAGE
+        // Gallery configuration
         const RESIDENCE_ID = 'kea-heights';
         
         // Gallery state
