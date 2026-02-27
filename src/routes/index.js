@@ -265,7 +265,7 @@ router.get('/api/presale/packages', async (req, res) => {
                 name: '2026 Holiday Pack',
                 price: 5000,
                 tokens: 10000,
-                totalAvailable: 30,
+                totalAvailable: 13,
                 sold: holidaySold,
                 remaining: Math.max(0, 30 - holidaySold)
             },
@@ -280,7 +280,7 @@ router.get('/api/presale/packages', async (req, res) => {
         });
     } catch (error) {
         res.json({
-            holiday: { totalAvailable: 30, sold: 0, remaining: 30 },
+            holiday: { totalAvailable: 13, sold: 0, remaining: 30 },
             membership: { totalAvailable: null, sold: 0, remaining: null }
         });
     }
