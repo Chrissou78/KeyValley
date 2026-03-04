@@ -177,19 +177,25 @@
 
     <!-- Header -->
     <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24 relative">
+            <!-- Logo (left) -->
             <a href="/" class="flex items-center gap-4 group cursor-pointer">
                 <img src="/images/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
                 <div>
                     <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
                 </div>
             </a>
-            <nav class="hidden lg:flex items-center gap-8 xl:gap-12">
+            
+            <!-- Nav (centered) -->
+            <nav class="hidden lg:flex items-center gap-8 xl:gap-12 absolute left-1/2 transform -translate-x-1/2">
                 <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/presale/packages">Summer Season 2026</a>
                 <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/presale/token-sale">VIP TOKEN</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://keanaissance.com" target="_blank" rel="noopener noreferrer">Kenaissance</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://keanaissance.com" target="_blank" rel="noopener noreferrer">Keanaissance</a>
                 <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://villacarpediemkea.com" target="_blank" rel="noopener noreferrer">Kea Valley - History</a>
             </nav>
+            
+            <!-- Spacer (right) - to balance the layout -->
+            <div class="hidden lg:block w-48"></div>
         </div>
     </header>
 
