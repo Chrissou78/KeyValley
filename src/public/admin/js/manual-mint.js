@@ -27,7 +27,7 @@ const ManualMint = {
         if (summaryTokens) summaryTokens.textContent = `${tokensToMint.toFixed(2)} VIP`;
     },
 
-    // Mint claim tokens (free claim amount)
+    // Mint claim tokens (claim amount)
     async mintClaim() {
         const addressInput = document.getElementById('manualMintAddress');
         const resultDiv = document.getElementById('manualMintResult');

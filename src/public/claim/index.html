@@ -56,7 +56,7 @@
             </a>
             <nav class="hidden md:flex items-center gap-8 lg:gap-12">
                 <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/">Home</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/profile">My Profile</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/profile">Profile</a>
             </nav>
         </div>
     </header>
@@ -73,7 +73,7 @@
                     <div class="h-[1px] w-8 bg-primary"></div>
                 </div>
                 <h1 class="text-4xl md:text-5xl font-serif italic font-medium text-white mb-4">Claim Your Tokens</h1>
-                <p class="text-slate-400 font-light">Receive your free VIP tokens to join the Kea Valley community.</p>
+                <p class="text-slate-400 font-light">Receive your VIP tokens to join the Kea Valley community.</p>
             </div>
 
             <!-- Card -->
@@ -114,7 +114,7 @@
         // ============================================
         const CONFIG = {
             STORAGE_KEY: 'keavalley_profile',
-            WALLETTWO_LOGIN_URL: 'https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=FREE_BONUS_TOKENS_KEA_VALLEY&redirect_uri=' + encodeURIComponent(window.location.origin + '/claim')
+            WALLETTWO_LOGIN_URL: 'https://wallet.wallettwo.com/auth/login?companyId=6a27c2f8-894c-46c7-bf9f-f5af11d4e092&action=signature&message=BONUS_TOKENS_KEA_VALLEY&redirect_uri=' + encodeURIComponent(window.location.origin + '/claim')
         };
 
         const statusEl = document.getElementById('claimStatus');
@@ -303,7 +303,7 @@
                     <span class="material-symbols-outlined text-primary text-3xl">account_balance_wallet</span>
                 </div>
                 <h3 class="text-xl font-serif text-white mb-2">Connect Your Wallet</h3>
-                <p class="text-slate-500 text-sm mb-8">Please connect your wallet to claim your free VIP tokens.</p>
+                <p class="text-slate-500 text-sm mb-8">Please connect your wallet to claim your VIP tokens.</p>
                 <a href="${CONFIG.WALLETTWO_LOGIN_URL}" class="inline-block bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-transform">
                     Connect Wallet
                 </a>
@@ -354,7 +354,7 @@
                 ` : '<p class="text-slate-500 text-xs mb-6">Transaction hash will appear shortly...</p>'}
                 <div>
                     <a href="${getProfileURL()}" class="inline-block bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-transform">
-                        View My Profile
+                        View Profile
                     </a>
                 </div>
             `;
@@ -370,7 +370,7 @@
                 <p class="text-slate-400 text-sm mb-2">${data.message || 'This wallet has already claimed tokens.'}</p>
                 ${data.balance ? `<p class="text-primary text-lg font-semibold mb-6">Balance: ${parseFloat(data.balance).toFixed(2)} VIP</p>` : '<div class="mb-6"></div>'}
                 <a href="${getProfileURL()}" class="inline-block bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-transform">
-                    View My Profile
+                    View Profile
                 </a>
             `;
         }
@@ -459,7 +459,7 @@
                     body: JSON.stringify({
                         wallet_address: wallet,
                         signature: signature,
-                        message: 'FREE_BONUS_TOKENS_KEA_VALLEY'
+                        message: 'BONUS_TOKENS_KEA_VALLEY'
                     })
                 });
 

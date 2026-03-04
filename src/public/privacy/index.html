@@ -115,14 +115,14 @@
             </a>
             <nav class="hidden lg:flex items-center gap-8 xl:gap-12">
                 <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/#vision">The Vision</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/#residences">Residences</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/#lifestyle">Lifestyle</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://keanaissance.com" target="_blank" rel="noopener noreferrer">keanaissance</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/#lifestyle">Kea Rising</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://villacarpediemkea.com" target="_blank" rel="noopener noreferrer">Kea Valley - History</a>
                 <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/#tokenisation">VIP Tokens</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/profile">My Profile</a>
             </nav>
             <div class="flex items-center gap-4">
-                <a href="#" id="freeTokensLink" class="hidden md:block bg-transparent border border-primary/30 text-primary px-6 lg:px-8 py-3 rounded-sm text-xs font-bold uppercase tracking-widest gold-glow transition-all hover:bg-primary hover:text-background-dark">
-                    Free Tokens
+                <a href="#" id="TokensLink" class="hidden md:block bg-transparent border border-primary/30 text-primary px-6 lg:px-8 py-3 rounded-sm text-xs font-bold uppercase tracking-widest gold-glow transition-all hover:bg-primary hover:text-background-dark">
+                    Profile
                 </a>
                 <button class="lg:hidden text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
                     <span class="material-symbols-outlined">menu</span>
@@ -133,10 +133,11 @@
         <div id="mobileMenu" class="hidden lg:hidden bg-background-dark border-t border-white/5 px-6 py-4">
             <nav class="flex flex-col gap-4">
                 <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/#vision">The Vision</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/#residences">Residences</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/#lifestyle">Lifestyle</a>
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="https://keanaissance.com" target="_blank" rel="noopener noreferrer">keanaissance</a>
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/#lifestyle">Kea Rising</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://villacarpediemkea.com" target="_blank" rel="noopener noreferrer">Kea Valley - History</a>
                 <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/#tokenisation">VIP Tokens</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/profile">My Profile</a>
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/profile">Profile</a>
             </nav>
         </div>
     </header>
@@ -319,7 +320,7 @@
                         <span class="text-sm font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
                     </a>
                     <div class="flex flex-wrap justify-center gap-6 md:gap-8 text-slate-500 text-[0.65rem] tracking-[0.2em] font-bold uppercase font-sans">
-                        <a class="hover:text-primary transition-colors" href="/profile">My Profile</a>
+                        <a class="hover:text-primary transition-colors" href="/profile">Profile</a>
                         <a class="hover:text-primary transition-colors" href="/claim">Claim Tokens</a>
                         <a class="hover:text-primary transition-colors" href="/#tokenisation">VIP Tokens</a>
                         <a class="hover:text-primary transition-colors" href="/privacy">Privacy Policy</a>
@@ -351,15 +352,15 @@
         const WALLETTWO_COMPANY_ID = '6a27c2f8-894c-46c7-bf9f-f5af11d4e092';
         
         function buildWalletTwoUrl(redirectPath, message) {
-            message = message || 'FREE_BONUS_TOKENS_KEA_VALLEY';
+            message = message || 'BONUS_TOKENS_KEA_VALLEY';
             return 'https://wallet.wallettwo.com/auth/login?companyId=' + WALLETTWO_COMPANY_ID + 
                    '&action=signature&message=' + message + 
                    '&redirect_uri=' + encodeURIComponent(window.location.origin + redirectPath);
         }
         
-        var freeTokensLink = document.getElementById('freeTokensLink');
-        if (freeTokensLink) {
-            freeTokensLink.href = buildWalletTwoUrl('/claim');
+        var TokensLink = document.getElementById('TokensLink');
+        if (TokensLink) {
+            TokensLink.href = buildWalletTwoUrl('/claim');
         }
     })();
     </script>
