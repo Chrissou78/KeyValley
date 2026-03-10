@@ -1,5 +1,5 @@
 // src/routes/stripe.js
-// Stripe webhook handler - preserved exactly from old server.js
+// Stripe webhook handler with payment distribution (no DB for distributions)
 
 const express = require('express');
 const router = express.Router();
@@ -16,6 +16,15 @@ if (process.env.STRIPE_SECRET_KEY) {
   console.log('Stripe not configured - STRIPE_SECRET_KEY missing');
 }
 
+// Connected account for distribution
+const CONNECTED_ACCOUNT_ID = process.env.STRIPE_CONNECTED_ACCOUNT_ID;
+
+if (CONNECTED_ACCOUNT_ID) {
+  console.log('Stripe Connect distribution enabled');
+} else {
+  console.log('Stripe Connect not configured - STRIPE_CONNECTED_ACCOUNT_ID missing');
+}
+
 // Helper function to calculate fees
 function calculateFees(amountEUR, paymentMethod) {
   const feePercent = paymentMethod === 'crypto' 
@@ -26,11 +35,107 @@ function calculateFees(amountEUR, paymentMethod) {
   return { feePercent, feeAmount, netAmount };
 }
 
-// Helper function for EUR to USD conversion (approximate)
-async function getEURtoUSDRate() {
-  // For production, you might want to use a real exchange rate API
-  // Default rate if API fails
-  return 1.08;
+// ============================================
+// PAYMENT DISTRIBUTION LOGIC (No DB required)
+// ============================================
+async function distributePayment(paymentIntent) {
+  if (!CONNECTED_ACCOUNT_ID) {
+    console.log('⚠️ No connected account configured - skipping distribution');
+    return null;
+  }
+
+  try {
+    const chargedAmount = parseFloat(paymentIntent.metadata.amount_eur) || (paymentIntent.amount / 100);
+    
+    // Get the charge to find balance transaction
+    const charges = await stripe.charges.list({
+      payment_intent: paymentIntent.id,
+      limit: 1
+    });
+
+    if (!charges.data.length) {
+      console.error('No charge found for payment intent:', paymentIntent.id);
+      return null;
+    }
+
+    const charge = charges.data[0];
+    
+    // Get balance transaction to find actual net amount (after Stripe fees)
+    const balanceTransaction = await stripe.balanceTransactions.retrieve(
+      charge.balance_transaction
+    );
+
+    const netAmountCents = balanceTransaction.net;
+    const netAmount = netAmountCents / 100;
+    
+    // Calculate threshold: 97% of charged amount
+    const threshold = chargedAmount * 0.97;
+    
+    let transferAmount;
+    let feeType;
+
+    if (netAmount >= threshold) {
+      // Net is within 3% of charged: send charged - 4% to connected account
+      transferAmount = chargedAmount * 0.96;
+      feeType = 'standard';
+      console.log(`✅ Standard distribution: Net €${netAmount.toFixed(2)} >= threshold €${threshold.toFixed(2)}`);
+    } else {
+      // Net is less than 97%: send net - 1% to connected account
+      transferAmount = netAmount * 0.99;
+      feeType = 'reduced';
+      console.log(`⚠️ Reduced distribution: Net €${netAmount.toFixed(2)} < threshold €${threshold.toFixed(2)}`);
+    }
+
+    const transferAmountCents = Math.round(transferAmount * 100);
+    const platformKeeps = netAmount - transferAmount;
+
+    console.log('💰 Payment Distribution:', {
+      paymentIntentId: paymentIntent.id,
+      charged: `€${chargedAmount.toFixed(2)}`,
+      stripeFees: `€${(chargedAmount - netAmount).toFixed(2)}`,
+      netReceived: `€${netAmount.toFixed(2)}`,
+      toConnectedAccount: `€${transferAmount.toFixed(2)}`,
+      platformKeeps: `€${platformKeeps.toFixed(2)}`,
+      feeType: feeType,
+      wallet: paymentIntent.metadata.wallet_address
+    });
+
+    // Create transfer to connected account
+    const transfer = await stripe.transfers.create({
+      amount: transferAmountCents,
+      currency: paymentIntent.currency || 'eur',
+      destination: CONNECTED_ACCOUNT_ID,
+      transfer_group: paymentIntent.id,
+      metadata: {
+        payment_intent: paymentIntent.id,
+        charged_amount: chargedAmount.toFixed(2),
+        net_amount: netAmount.toFixed(2),
+        transfer_amount: transferAmount.toFixed(2),
+        platform_fee: platformKeeps.toFixed(2),
+        fee_type: feeType,
+        wallet_address: paymentIntent.metadata.wallet_address
+      }
+    });
+
+    console.log('✅ Transfer created:', transfer.id);
+
+    return {
+      success: true,
+      transferId: transfer.id,
+      transferAmount,
+      platformKeeps,
+      feeType
+    };
+
+  } catch (error) {
+    console.error('❌ Distribution failed:', {
+      paymentIntentId: paymentIntent.id,
+      error: error.message,
+      wallet: paymentIntent.metadata.wallet_address
+    });
+
+    return { success: false, error: error.message };
+  }
 }
 
 // Stripe webhook endpoint
@@ -101,6 +206,16 @@ async function handlePaymentSuccess(paymentIntent) {
 
     // Calculate fees
     const { feeAmount, netAmount } = calculateFees(amountEUR, 'card');
+
+    // ============================================
+    // DISTRIBUTE PAYMENT TO CONNECTED ACCOUNT
+    // ============================================
+    const distributionResult = await distributePayment(paymentIntent);
+    if (distributionResult?.success) {
+      console.log('✅ Distribution completed:', distributionResult.transferId);
+    } else if (distributionResult) {
+      console.error('❌ Distribution failed - check Stripe dashboard');
+    }
 
     // Process referral bonus if applicable
     let referralBonus = 0;
