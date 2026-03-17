@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Profile | Kea Valley</title>
+    <title>Profile | Kea Valley Private Members Club</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
@@ -18,6 +18,7 @@
                         "primary-light": "#fbdea6",
                         "background-dark": "#0a0a0a",
                         "surface": "#121212",
+                        "surface-light": "#1a1a1a",
                     },
                     fontFamily: {
                         "sans": ["Manrope", "sans-serif"],
@@ -36,7 +37,7 @@
         }
         .glass-nav {
             backdrop-filter: blur(12px);
-            background-color: rgba(10, 10, 10, 0.7);
+            background-color: rgba(10, 10, 10, 0.85);
         }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #0a0a0a; }
@@ -56,58 +57,19 @@
             display: block;
         }
         
-        .copy-btn:active { transform: scale(0.95); }
-        
-        .presale-banner {
-            background: linear-gradient(135deg, rgba(238, 157, 43, 0.15) 0%, rgba(212, 165, 67, 0.1) 100%);
-            border: 2px solid rgba(238, 157, 43, 0.5);
-            animation: pulse-border 2s infinite;
+        .card-hover {
+            transition: all 0.3s ease;
         }
-        @keyframes pulse-border {
-            0%, 100% { border-color: rgba(238, 157, 43, 0.5); }
-            50% { border-color: rgba(238, 157, 43, 0.9); }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(238, 157, 43, 0.15);
+            border-color: rgba(238, 157, 43, 0.3);
+        }
+        
+        .balance-glow {
+            text-shadow: 0 0 40px rgba(238, 157, 43, 0.4);
         }
 
-        @media (max-width: 640px) {
-            .referral-code-display {
-                font-size: 1rem;
-                letter-spacing: 0.05em;
-                padding: 0.5rem 0.75rem;
-            }
-            
-            #referralCodeInput {
-                font-size: 0.875rem;
-                padding: 0.5rem;
-            }
-            
-            .referral-stats {
-                flex-direction: row;
-                gap: 0.5rem;
-            }
-            
-            .referral-stats > div {
-                padding: 0.75rem;
-                min-width: 0;
-                flex: 1;
-            }
-            
-            .referral-stats .text-2xl {
-                font-size: 1.25rem;
-            }
-            
-            .referral-section {
-                padding: 1rem;
-            }
-            
-            .referral-section h3 {
-                font-size: 0.875rem;
-            }
-            
-            .referral-section p {
-                font-size: 0.75rem;
-            }
-        }
-        
         .referral-code-box {
             background: linear-gradient(135deg, rgba(238, 157, 43, 0.1) 0%, rgba(212, 165, 67, 0.05) 100%);
             border: 2px dashed rgba(238, 157, 43, 0.4);
@@ -118,18 +80,14 @@
             letter-spacing: 0.15em;
         }
 
-        /* Modal Styles */
         .modal-overlay {
             background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(4px);
         }
-        
         .modal-content {
             max-height: 90vh;
             overflow-y: auto;
         }
-        
-        /* Custom radio for modal */
         .modal-radio {
             appearance: none;
             width: 18px;
@@ -157,7 +115,6 @@
         .modal-radio:hover {
             border-color: #ee9d2b;
         }
-        
         .modal-input {
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -171,79 +128,188 @@
             outline: none;
             border-color: #ee9d2b;
         }
+
+        .list-item {
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Header User Dropdown */
+        .user-dropdown {
+            position: relative;
+        }
+        .user-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            min-width: 260px;
+            background: rgba(18, 18, 18, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(238, 157, 43, 0.2);
+            border-radius: 1rem;
+            padding: 0.5rem;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            z-index: 100;
+        }
+        .user-dropdown:hover .user-dropdown-menu,
+        .user-dropdown-menu:hover {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .user-dropdown-menu a,
+        .user-dropdown-menu button {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            color: #fff;
+            text-decoration: none;
+            transition: background 0.2s;
+            border: none;
+            background: none;
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+        .user-dropdown-menu a:hover,
+        .user-dropdown-menu button:hover {
+            background: rgba(238, 157, 43, 0.1);
+        }
     </style>
 </head>
 <body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
 
-    <!-- Header -->
+    <!-- Header with Profile Widget -->
     <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24 relative">
-            <!-- Logo (left) -->
-            <a href="/" class="flex items-center gap-4 group cursor-pointer">
-                <img src="/images/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
-                <div>
-                    <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between h-16 lg:h-20">
+            <a href="/" class="flex items-center gap-3 group cursor-pointer">
+                <img src="/images/logo.png" alt="Kea Valley" class="h-10 lg:h-12 w-auto"/>
+                <div class="hidden sm:block">
+                    <h2 class="text-lg lg:text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
                 </div>
             </a>
             
-            <!-- Nav (centered) -->
-            <nav class="hidden lg:flex items-center gap-8 xl:gap-12 absolute left-1/2 transform -translate-x-1/2">
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/presale/packages">Summer Season 2026</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/presale/token-sale">VIP TOKEN</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://keanaissance.com" target="_blank" rel="noopener noreferrer">Keanaissance</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://villacarpediemkea.com" target="_blank" rel="noopener noreferrer">Kea Valley - History</a>
+            <nav class="hidden lg:flex items-center gap-6 xl:gap-10">
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/marketplace">Marketplace</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/package">Packages</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://keanaissance.com" target="_blank">Keanaissance</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://kearising.net" target="_blank">Kea Rising</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://villacarpediemkea.com" target="_blank">History</a>
             </nav>
-            
-            <!-- Spacer (right) - to balance the layout -->
-            <div class="hidden lg:block w-48"></div>
+
+            <!-- User Section in Header -->
+            <div class="flex items-center gap-4">
+                <!-- Connected State - Header Widget -->
+                <div id="headerConnected" class="hidden">
+                    <div class="user-dropdown">
+                        <button class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors">
+                            <div class="text-right hidden sm:block">
+                                <p class="text-sm font-medium" id="headerUserName">Member</p>
+                                <p class="text-xs text-primary font-semibold">€<span id="headerUserBalance">0</span></p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center">
+                                <span id="headerAvatarInitials" class="text-black font-bold text-sm">--</span>
+                            </div>
+                        </button>
+                        
+                        <div class="user-dropdown-menu">
+                            <!-- Balance Display -->
+                            <div class="px-4 py-3 border-b border-white/10 mb-2">
+                                <p class="text-xs text-slate-400 mb-1">Buying Power</p>
+                                <p class="text-2xl font-bold text-primary">€<span id="dropdownBalance">0</span></p>
+                                <p class="text-xs text-slate-500 mt-1" id="dropdownEmail"></p>
+                            </div>
+                            
+                            <a href="/profile">
+                                <span class="material-symbols-outlined text-xl">account_circle</span>
+                                <span>My Profile</span>
+                            </a>
+                            <a href="/marketplace">
+                                <span class="material-symbols-outlined text-xl">storefront</span>
+                                <span>Marketplace</span>
+                            </a>
+                            <a href="/package">
+                                <span class="material-symbols-outlined text-xl">add_card</span>
+                                <span>Add Buying Power</span>
+                            </a>
+                            
+                            <div class="border-t border-white/10 mt-2 pt-2">
+                                <button onclick="disconnect()" class="text-red-400 hover:text-red-300 w-full">
+                                    <span class="material-symbols-outlined text-xl">logout</span>
+                                    <span>Disconnect</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Disconnected State -->
+                <div id="headerDisconnected" class="hidden">
+                    <a href="/profile" class="px-5 py-2.5 bg-primary hover:bg-primary-light text-black font-bold text-xs uppercase tracking-widest rounded-full transition-all">
+                        Connect
+                    </a>
+                </div>
+
+                <button id="mobileMenuBtn" class="lg:hidden text-white/70 hover:text-white p-2">
+                    <span class="material-symbols-outlined text-2xl">menu</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="mobileMenu" class="hidden lg:hidden border-t border-white/5 bg-background-dark/95">
+            <nav class="px-4 py-4 flex flex-col gap-1">
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="/marketplace">Marketplace</a>
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="/package">Packages</a>
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="https://keanaissance.com" target="_blank">Keanaissance</a>
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="https://kearising.net" target="_blank">Kea Rising</a>
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="https://villacarpediemkea.com" target="_blank">History</a>
+                
+                <!-- Mobile User Section -->
+                <div id="mobileUserSection" class="hidden border-t border-white/10 mt-2 pt-4">
+                    <div class="px-2 py-2 mb-2">
+                        <p class="text-xs text-slate-400">Buying Power</p>
+                        <p class="text-xl font-bold text-primary">€<span id="mobileBalance">0</span></p>
+                    </div>
+                    <button onclick="disconnect()" class="w-full text-left text-sm font-bold tracking-widest text-red-400 hover:text-red-300 py-3 px-2">
+                        Disconnect
+                    </button>
+                </div>
+                <div id="mobileConnectSection" class="border-t border-white/10 mt-2 pt-4">
+                    <a href="/profile" class="block text-center py-3 px-4 bg-primary text-black font-bold text-sm uppercase tracking-widest rounded-lg">
+                        Connect
+                    </a>
+                </div>
+            </nav>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 pt-32 pb-20 px-6 flex items-center justify-center">
-        <div class="max-w-lg mx-auto w-full">
-            
-            <!-- Page Title -->
-            <div class="text-center mb-12">
-                <div class="flex items-center justify-center gap-4 mb-6">
-                    <div class="h-[1px] w-8 bg-primary"></div>
-                    <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Member Area</span>
-                    <div class="h-[1px] w-8 bg-primary"></div>
-                </div>
-                <h1 class="text-4xl md:text-5xl font-serif italic font-medium text-white mb-4">Profile</h1>
-                <p class="text-slate-400 font-light">View your wallet and token balance.</p>
-            </div>
+    <main class="flex-1 pt-24 lg:pt-28 pb-12 px-4 sm:px-6">
+        <div class="max-w-6xl mx-auto">
 
-            <!-- Presale Banner -->
-            <div id="presaleBanner" class="presale-banner rounded-lg p-6 mb-8 hidden">
-                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-2">
-                            <span class="text-2xl">🚀</span>
-                            <h3 class="text-lg font-bold text-primary">VIP Token Sale Now Live!</h3>
+            <!-- Login Container -->
+            <div id="loginContainer">
+                <div class="max-w-lg mx-auto">
+                    <div class="text-center mb-8">
+                        <div class="flex items-center justify-center gap-4 mb-4">
+                            <div class="h-[1px] w-8 bg-primary"></div>
+                            <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Member Area</span>
+                            <div class="h-[1px] w-8 bg-primary"></div>
                         </div>
-                        <p class="text-slate-400 text-sm mb-3">Get VIP tokens at the best price. Pay with POL or USDC.</p>
-                        <p class="text-slate-500 text-xs"><strong class="text-primary">€1.00</strong> per token • Min 10 • Max 10,000</p>
+                        <h1 class="text-3xl md:text-4xl font-serif italic font-medium text-white mb-3">Welcome Back</h1>
+                        <p class="text-slate-400 font-light">Connect your wallet to access your profile</p>
                     </div>
-                    <a href="/presale" class="bg-primary text-background-dark px-6 py-3 rounded font-bold text-sm uppercase tracking-wider hover:scale-105 transition-transform whitespace-nowrap">
-                        Join Sale →
-                    </a>
-                </div>
-            </div>
-
-            <!-- Card -->
-            <div class="bg-surface border border-white/5 rounded-sm overflow-hidden">
-                <div class="px-8 py-5 border-b border-white/5 flex items-center justify-between">
-                    <h3 id="cardTitle" class="text-xs font-bold uppercase tracking-widest text-primary">Profile</h3>
-                    <span class="material-symbols-outlined text-primary/50">person</span>
-                </div>
-                <div class="p-6">
-                    
-                    <!-- Login Container -->
-                    <div id="loginContainer">
-                        <p class="text-slate-400 text-sm text-center mb-6">Connect your wallet to view your profile</p>
+                    <div class="bg-surface border border-white/5 rounded-lg overflow-hidden">
                         <div class="wallet-iframe-container">
-                            <!-- iframe src will be set dynamically after loading config -->
                             <iframe 
                                 id="walletIframe"
                                 src=""
@@ -252,257 +318,320 @@
                             ></iframe>
                         </div>
                     </div>
+                    <p class="text-center text-slate-500 text-sm mt-6">
+                        Not a member yet? <a href="/package" class="text-primary hover:underline">Join the Club</a>
+                    </p>
+                </div>
+            </div>
 
-                    <!-- Loading Container -->
-                    <div id="loadingContainer" class="hidden text-center py-12">
-                        <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-                        <p class="text-slate-400 text-sm">Loading your profile...</p>
-                    </div>
+            <!-- Loading Container -->
+            <div id="loadingContainer" class="hidden">
+                <div class="flex flex-col items-center justify-center min-h-[60vh]">
+                    <div class="w-14 h-14 border-2 border-primary border-t-transparent rounded-full animate-spin mb-6"></div>
+                    <p class="text-slate-400">Loading your profile...</p>
+                </div>
+            </div>
 
-                    <!-- Profile Container -->
-                    <div id="profileContainer" class="hidden">
-                        <!-- Avatar & Name -->
-                        <div class="flex items-center gap-4 mb-8">
-                            <div class="size-16 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
-                                <span id="avatarInitials" class="text-primary text-xl font-bold">--</span>
+            <!-- Profile Container -->
+            <div id="profileContainer" class="hidden">
+                
+                <!-- ROW 1: Profile Header + Buying Power -->
+                <div class="grid lg:grid-cols-3 gap-6 mb-6">
+                    <!-- Profile Info (2 cols) -->
+                    <div class="lg:col-span-2 bg-surface border border-white/5 rounded-xl p-6 lg:p-8">
+                        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                            <div class="size-20 lg:size-24 rounded-full bg-primary/20 border-2 border-primary/30 flex items-center justify-center flex-shrink-0">
+                                <span id="avatarInitials" class="text-primary text-2xl lg:text-3xl font-bold">--</span>
                             </div>
-                            <div>
-                                <h2 id="displayName" class="text-xl font-serif text-white">Loading...</h2>
-                                <p id="displayEmail" class="text-slate-500 text-sm hidden"></p>
-                            </div>
-                        </div>
-
-                        <!-- Wallet Address -->
-                        <div class="mb-6">
-                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Wallet Address</label>
-                            <div class="flex items-center gap-2 bg-background-dark border border-white/5 rounded-sm p-4">
-                                <span id="walletAddress" class="text-white font-mono text-sm flex-1 truncate">0x...</span>
-                                <button id="copyBtn" class="copy-btn text-slate-500 hover:text-primary transition-colors" title="Copy address">
-                                    <span class="material-symbols-outlined text-xl">content_copy</span>
+                            
+                            <div class="flex-1 text-center sm:text-left">
+                                <h2 id="displayName" class="text-xl lg:text-2xl font-serif text-white mb-1">Loading...</h2>
+                                <p id="displayEmail" class="text-slate-400 text-sm mb-4"></p>
+                                
+                                <button id="disconnectBtn" class="px-4 py-2 border border-white/10 text-slate-500 rounded-lg text-xs font-bold uppercase tracking-wider hover:border-red-500/30 hover:text-red-400 transition-all flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-lg">logout</span>
+                                    Disconnect
                                 </button>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- VIP Token Balance -->
-                        <div class="mb-6">
-                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">VIP Token Balance</label>
-                            <div class="bg-background-dark border border-white/5 rounded-sm p-6 text-center">
-                                <div id="balanceLoading" class="flex items-center justify-center gap-2">
-                                    <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                    <span class="text-slate-500 text-sm">Loading balance...</span>
+                    <!-- Buying Power (1 col) -->
+                    <div class="bg-surface border border-white/5 rounded-xl p-6 lg:p-8 flex flex-col justify-center">
+                        <div class="flex items-center gap-2 text-slate-500 text-xs font-bold uppercase tracking-widest mb-3">
+                            <span class="material-symbols-outlined text-primary text-lg">account_balance_wallet</span>
+                            Buying Power
+                        </div>
+                        <div id="balanceLoading" class="flex items-center gap-2">
+                            <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                            <span class="text-slate-500 text-sm">Loading...</span>
+                        </div>
+                        <div id="balanceDisplay" class="hidden">
+                            <p class="text-4xl lg:text-5xl font-serif text-primary balance-glow">
+                                €<span id="balanceAmount">0</span>
+                            </p>
+                            <p class="text-slate-500 text-xs mt-2">1 VIP Token = €1</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ROW 2: Marketplace + Add Power -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <a href="/marketplace" class="bg-surface border border-white/5 rounded-xl p-5 lg:p-6 card-hover flex items-center gap-4 group">
+                        <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors flex-shrink-0">
+                            <span class="material-symbols-outlined text-primary text-2xl">storefront</span>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-white">Marketplace</h3>
+                            <p class="text-slate-500 text-sm hidden sm:block">Browse & book services</p>
+                        </div>
+                    </a>
+
+                    <a href="/package" class="bg-surface border border-white/5 rounded-xl p-5 lg:p-6 card-hover flex items-center gap-4 group">
+                        <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors flex-shrink-0">
+                            <span class="material-symbols-outlined text-emerald-400 text-2xl">add_circle</span>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-white">Add Power</h3>
+                            <p class="text-slate-500 text-sm hidden sm:block">Buy packages & tokens</p>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- ROW 3: Vouchers + Orders -->
+                <div class="grid lg:grid-cols-2 gap-6 mb-6">
+                    <!-- Vouchers -->
+                    <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
+                        <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-purple-400">confirmation_number</span>
+                                <h3 class="text-xs font-bold uppercase tracking-widest text-white">Vouchers</h3>
+                            </div>
+                            <span id="vouchersCount" class="text-primary font-bold text-lg">0</span>
+                        </div>
+                        <div class="p-4 max-h-64 overflow-y-auto">
+                            <div id="vouchersLoading" class="text-center py-4">
+                                <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                            </div>
+                            <div id="vouchersEmpty" class="hidden text-center py-6">
+                                <span class="material-symbols-outlined text-slate-600 text-4xl mb-2">confirmation_number</span>
+                                <p class="text-slate-500 text-sm">No vouchers yet</p>
+                                <a href="/marketplace" class="text-primary text-sm hover:underline">Browse marketplace →</a>
+                            </div>
+                            <div id="vouchersList" class="hidden space-y-1">
+                                <!-- Vouchers will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Orders -->
+                    <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
+                        <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-blue-400">receipt_long</span>
+                                <h3 class="text-xs font-bold uppercase tracking-widest text-white">Order History</h3>
+                            </div>
+                            <span id="ordersCount" class="text-primary font-bold text-lg">0</span>
+                        </div>
+                        <div class="p-4 max-h-64 overflow-y-auto">
+                            <div id="ordersLoading" class="text-center py-4">
+                                <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                            </div>
+                            <div id="ordersEmpty" class="hidden text-center py-6">
+                                <span class="material-symbols-outlined text-slate-600 text-4xl mb-2">receipt_long</span>
+                                <p class="text-slate-500 text-sm">No orders yet</p>
+                                <a href="/marketplace" class="text-primary text-sm hover:underline">Start shopping →</a>
+                            </div>
+                            <div id="ordersList" class="hidden space-y-1">
+                                <!-- Orders will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ROW 4: Referral Program -->
+                <div class="grid lg:grid-cols-2 gap-6 mb-6">
+                    <!-- Left: Were you referred + Your Code -->
+                    <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
+                        <div class="px-6 py-4 border-b border-white/5 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">share</span>
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-white">Referral Program</h3>
+                        </div>
+                        <div class="p-6">
+                            <div id="referralLoading" class="text-center py-4">
+                                <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                                <p class="text-slate-500 text-xs">Loading...</p>
+                            </div>
+                            
+                            <div id="referralDisabled" class="hidden text-center py-4">
+                                <p class="text-slate-500 text-sm">Referral program is currently inactive.</p>
+                            </div>
+                            
+                            <div id="referralContent" class="hidden space-y-6">
+                                <!-- Were you referred? -->
+                                <div id="setReferrerSection">
+                                    <p class="text-white font-medium mb-2 text-sm">Were you referred by someone?</p>
+                                    <div class="flex gap-2">
+                                        <input 
+                                            type="text" 
+                                            id="referralCodeInput" 
+                                            class="referral-input flex-1 bg-background-dark border border-white/10 rounded-lg px-4 py-2.5 text-primary text-center font-mono text-sm focus:border-primary focus:outline-none"
+                                            placeholder="XXXXXXXX"
+                                            maxlength="8"
+                                        >
+                                        <button 
+                                            id="setReferrerBtn"
+                                            class="bg-primary text-background-dark px-4 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider hover:opacity-90 transition-opacity"
+                                        >
+                                            Apply
+                                        </button>
+                                    </div>
+                                    <p id="setReferrerError" class="text-red-400 text-xs mt-2 hidden"></p>
+                                    <p id="setReferrerSuccess" class="text-green-400 text-xs mt-2 hidden"></p>
                                 </div>
-                                <div id="balanceDisplay" class="hidden">
-                                    <p class="text-4xl font-serif text-primary mb-1">
-                                        <span id="balanceAmount">0.00</span>
-                                        <span class="text-xl text-primary/60">VIP</span>
-                                    </p>
-                                    <a id="explorerLink" href="#" target="_blank" class="inline-flex items-center gap-1 text-slate-500 text-xs hover:text-primary transition-colors">
-                                        View on Polygonscan <span class="material-symbols-outlined text-sm">open_in_new</span>
-                                    </a>
+                                
+                                <!-- Referrer Already Set -->
+                                <div id="referrerSetSection" class="hidden">
+                                    <div class="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                                        <div class="flex items-center gap-2 text-green-400">
+                                            <span class="material-symbols-outlined text-lg">check_circle</span>
+                                            <span class="text-sm">Referred by: <span id="referrerDisplay" class="font-mono text-white"></span></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Divider -->
+                                <div class="border-t border-white/10"></div>
+                                
+                                <!-- Your Referral Code -->
+                                <div>
+                                    <p class="text-white font-medium mb-3 text-sm">Your Referral Code</p>
+                                    
+                                    <div id="generateCodeSection" class="text-center">
+                                        <button 
+                                            id="generateCodeBtn"
+                                            class="bg-primary/20 text-primary px-6 py-3 rounded-lg font-bold uppercase tracking-widest text-xs hover:bg-primary/30 transition-colors border border-primary/30 w-full"
+                                        >
+                                            Generate My Code
+                                        </button>
+                                    </div>
+                                    
+                                    <div id="myCodeSection" class="hidden">
+                                        <div class="referral-code-box rounded-lg p-4 text-center">
+                                            <div class="flex items-center justify-center gap-3">
+                                                <span id="myReferralCode" class="text-primary text-2xl font-mono font-bold tracking-widest"></span>
+                                                <button id="copyCodeBtn" class="text-slate-500 hover:text-primary transition-colors" title="Copy code">
+                                                    <span class="material-symbols-outlined text-xl">content_copy</span>
+                                                </button>
+                                            </div>
+                                            <p id="referralBonusInfo" class="text-xs text-slate-500 mt-2"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Referrals List + Bonuses -->
+                    <div class="grid grid-rows-2 gap-4">
+                        <!-- Referrals List -->
+                        <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
+                            <div class="px-5 py-3 border-b border-white/5 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-green-400 text-lg">group_add</span>
+                                    <h3 class="text-xs font-bold uppercase tracking-widest text-white">My Referrals</h3>
+                                </div>
+                                <span id="referralCount" class="text-primary font-bold">0</span>
+                            </div>
+                            <div class="p-3 max-h-32 overflow-y-auto">
+                                <div id="referralsListLoading" class="text-center py-2">
+                                    <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                                </div>
+                                <div id="referralsListEmpty" class="hidden text-center py-3">
+                                    <p class="text-slate-500 text-xs">No referrals yet. Share your code!</p>
+                                </div>
+                                <div id="referralsList" class="hidden space-y-1 text-sm">
+                                    <!-- Referrals will be populated here -->
                                 </div>
                             </div>
                         </div>
 
-                        <!-- ============================================ -->
-                        <!-- PREFERENCES SECTION -->
-                        <!-- ============================================ -->
-                        <div class="mb-6">
-                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">
-                                <span class="flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-sm text-primary">tune</span>
-                                    My Preferences
-                                </span>
-                            </label>
-                            <div class="bg-background-dark border border-white/5 rounded-sm p-4">
-                                <div id="preferencesLoading" class="text-center py-2">
-                                    <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                        <!-- Referral Bonuses -->
+                        <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
+                            <div class="px-5 py-3 border-b border-white/5 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-amber-400 text-lg">monetization_on</span>
+                                    <h3 class="text-xs font-bold uppercase tracking-widest text-white">Referral Bonuses</h3>
                                 </div>
-                                <div id="preferencesContent" class="hidden">
-                                    <div class="flex flex-wrap gap-2 mb-4" id="preferencesTags">
-                                        <!-- Tags will be populated here -->
-                                    </div>
-                                    <button 
-                                        id="updatePreferencesBtn"
-                                        class="w-full border border-primary/30 text-primary px-4 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/10 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <span class="material-symbols-outlined text-lg">edit</span>
-                                        Update Preferences
-                                    </button>
+                                <span id="referralEarned" class="text-primary font-bold">€0</span>
+                            </div>
+                            <div class="p-3 max-h-32 overflow-y-auto">
+                                <div id="bonusesListLoading" class="text-center py-2">
+                                    <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
                                 </div>
-                                <div id="preferencesEmpty" class="hidden text-center py-4">
-                                    <p class="text-slate-500 text-sm mb-3">You haven't set your preferences yet.</p>
-                                    <button 
-                                        id="setPreferencesBtn"
-                                        class="border border-primary/30 text-primary px-6 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/10 transition-colors"
-                                    >
-                                        Set Preferences
-                                    </button>
+                                <div id="bonusesListEmpty" class="hidden text-center py-3">
+                                    <p class="text-slate-500 text-xs">No bonuses earned yet</p>
+                                </div>
+                                <div id="bonusesList" class="hidden space-y-1 text-sm">
+                                    <!-- Bonuses will be populated here -->
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- ============================================ -->
-                        <!-- REFERRAL SECTION -->
-                        <!-- ============================================ -->
-                        <div id="referralSection" class="mb-6">
-                            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">
-                                <span class="flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-sm text-primary">share</span>
-                                    Referral Program
-                                </span>
-                            </label>
-                            <div class="bg-background-dark border border-white/5 rounded-sm p-4">
-                                
-                                <!-- Loading state -->
-                                <div id="referralLoading" class="text-center py-4">
-                                    <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                                    <p class="text-slate-500 text-xs">Loading referral info...</p>
-                                </div>
-                                
-                                <!-- Program disabled message -->
-                                <div id="referralDisabled" class="hidden text-center py-4">
-                                    <p class="text-slate-500 text-sm">Referral program is currently inactive.</p>
-                                </div>
-                                
-                                <!-- Referral content (when program is enabled) -->
-                                <div id="referralContent" class="hidden">
-                                    
-                                    <!-- ======================================== -->
-                                    <!-- PART 1: ENTER A REFERRAL CODE (if no referrer yet) -->
-                                    <!-- ======================================== -->
-                                    <div id="setReferrerSection" class="mb-6 pb-6 border-b border-white/10">
-                                        <p class="text-white font-medium mb-2">Were you referred by someone?</p>
-                                        <p class="text-slate-400 text-xs mb-4">Enter their referral code below to link your account.</p>
-                                        <div class="flex flex-col sm:flex-row gap-2">
-                                            <input 
-                                                type="text" 
-                                                id="referralCodeInput" 
-                                                class="referral-input flex-1 bg-surface border border-white/10 rounded-sm px-4 py-3 text-primary text-center font-mono text-lg focus:border-primary focus:outline-none"
-                                                placeholder="XXXXXXXX"
-                                                maxlength="8"
-                                            >
-                                            <button 
-                                                id="setReferrerBtn"
-                                                class="bg-primary text-background-dark px-5 py-3 rounded-sm font-bold text-sm uppercase tracking-wider hover:opacity-90 transition-opacity whitespace-nowrap"
-                                            >
-                                                Apply
-                                            </button>
-                                        </div>
-                                        <p id="setReferrerError" class="text-red-400 text-xs mt-2 hidden"></p>
-                                        <p id="setReferrerSuccess" class="text-green-400 text-xs mt-2 hidden"></p>
-                                        <p class="text-yellow-500/70 text-xs mt-3 flex items-start gap-1">
-                                            <span class="material-symbols-outlined text-sm">warning</span>
-                                            <span>This can only be set once and cannot be changed later.</span>
-                                        </p>
-                                    </div>
-                                    
-                                    <!-- Referrer Already Set (replaces setReferrerSection) -->
-                                    <div id="referrerSetSection" class="mb-6 pb-6 border-b border-white/10 hidden">
-                                        <div class="p-4 bg-green-500/10 border border-green-500/20 rounded-sm">
-                                            <div class="flex items-center gap-2 text-green-400 mb-2">
-                                                <span class="material-symbols-outlined text-lg">check_circle</span>
-                                                <span class="font-medium">Referrer Linked!</span>
-                                            </div>
-                                            <p class="text-slate-400 text-sm">
-                                                You were referred by: <span id="referrerDisplay" class="font-mono text-white"></span>
-                                            </p>
-                                            <p class="text-slate-500 text-xs mt-1">
-                                                Code: <span id="referrerCodeDisplay" class="text-primary font-mono"></span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- ======================================== -->
-                                    <!-- PART 2: YOUR OWN REFERRAL CODE -->
-                                    <!-- ======================================== -->
-                                    <div>
-                                        <p class="text-white font-medium mb-3">Your Referral Code</p>
-                                        
-                                        <!-- No code yet - show generate button -->
-                                        <div id="generateCodeSection" class="text-center py-4">
-                                            <p class="text-slate-400 text-sm mb-4">Generate your referral code and invite friends to earn VIP tokens!</p>
-                                            <button 
-                                                id="generateCodeBtn"
-                                                class="bg-primary/20 text-primary px-6 py-3 rounded-sm font-bold uppercase tracking-widest text-xs hover:bg-primary/30 transition-colors border border-primary/30"
-                                            >
-                                                Generate My Code
-                                            </button>
-                                        </div>
-                                        
-                                        <!-- Has code - show it -->
-                                        <div id="myCodeSection" class="hidden">
-                                            <!-- The Code Display -->
-                                            <div class="referral-code-box rounded-sm p-4 mb-4 text-center">
-                                                <p class="text-slate-500 text-xs mb-2 uppercase tracking-widest">Share this code with friends</p>
-                                                <div class="flex items-center justify-center gap-3">
-                                                    <span id="myReferralCode" class="text-primary text-3xl font-mono font-bold tracking-widest"></span>
-                                                    <button id="copyCodeBtn" class="text-slate-500 hover:text-primary transition-colors" title="Copy code">
-                                                        <span class="material-symbols-outlined text-xl">content_copy</span>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Referral Stats -->
-                                            <div class="grid grid-cols-2 gap-3 mb-4">
-                                                <div class="bg-surface rounded-sm p-3 text-center border border-white/5">
-                                                    <p id="referralCount" class="text-2xl font-serif text-primary">0</p>
-                                                    <p class="text-xs text-slate-500 uppercase tracking-widest">Friends Referred</p>
-                                                </div>
-                                                <div class="bg-surface rounded-sm p-3 text-center border border-white/5">
-                                                    <p id="referralEarned" class="text-2xl font-serif text-primary">0</p>
-                                                    <p class="text-xs text-slate-500 uppercase tracking-widest">VIP Earned</p>
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Bonus Info -->
-                                            <p id="referralBonusInfo" class="text-xs text-slate-500 text-center"></p>
-                                        </div>
-                                    </div>
-                                    
-                                </div>
-                            </div>
+                <!-- ROW 5: Preferences (Full Width) -->
+                <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
+                    <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">tune</span>
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-white">My Preferences</h3>
                         </div>
-
-                        <!-- Presale Button -->
-                        <div class="mb-4">
-                            <a href="/presale" class="block w-full bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs text-center gold-glow hover:translate-y-[-2px] transition-transform">
-                                🚀 Join Sale
-                            </a>
-                        </div>
-
-                        <!-- Claim Button (shown if balance < 2) -->
-                        <div id="claimButtonContainer" class="hidden mb-4">
-                            <a id="claimLink" href="/claim" class="block w-full border border-primary/50 text-primary px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs text-center hover:bg-primary/10 transition-colors">
-                                🎁 Claim Tokens
-                            </a>
-                        </div>
-
-                        <!-- Disconnect Button -->
-                        <button id="disconnectBtn" class="w-full border border-white/10 text-slate-500 px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs hover:border-red-500/30 hover:text-red-400 transition-all">
-                            Disconnect Wallet
+                        <button 
+                            id="updatePreferencesBtn"
+                            class="text-primary text-xs font-bold uppercase tracking-widest hover:underline flex items-center gap-1"
+                        >
+                            <span class="material-symbols-outlined text-sm">edit</span>
+                            Edit
                         </button>
                     </div>
-
-                    <!-- Disconnecting Container -->
-                    <div id="disconnectingContainer" class="hidden text-center py-12">
-                        <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-                        <p class="text-slate-400 text-sm">Disconnecting...</p>
+                    <div class="p-6">
+                        <div id="preferencesLoading" class="text-center py-4">
+                            <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                        </div>
+                        <div id="preferencesContent" class="hidden">
+                            <div class="flex flex-wrap gap-2" id="preferencesTags"></div>
+                        </div>
+                        <div id="preferencesEmpty" class="hidden text-center py-4">
+                            <p class="text-slate-500 text-sm mb-3">You haven't set your preferences yet.</p>
+                            <button 
+                                id="setPreferencesBtn"
+                                class="border border-primary/30 text-primary px-6 py-2 rounded-lg font-bold uppercase tracking-widest text-xs hover:bg-primary/10 transition-colors"
+                            >
+                                Set Preferences
+                            </button>
+                        </div>
                     </div>
+                </div>
 
+            </div>
+
+            <!-- Disconnecting Container -->
+            <div id="disconnectingContainer" class="hidden">
+                <div class="flex flex-col items-center justify-center min-h-[60vh]">
+                    <div class="w-14 h-14 border-2 border-primary border-t-transparent rounded-full animate-spin mb-6"></div>
+                    <p class="text-slate-400">Disconnecting...</p>
                 </div>
             </div>
 
         </div>
     </main>
 
-    <!-- ============================================ -->
-    <!-- QUESTIONNAIRE UPDATE MODAL -->
-    <!-- ============================================ -->
+    <!-- Questionnaire Modal -->
     <div id="questionnaireModal" class="fixed inset-0 z-[100] hidden">
         <div class="modal-overlay absolute inset-0" onclick="closeQuestionnaireModal()"></div>
         <div class="absolute inset-4 md:inset-8 lg:inset-16 flex items-center justify-center">
             <div class="modal-content bg-surface border border-white/10 rounded-lg w-full max-w-2xl max-h-full overflow-y-auto">
-                <!-- Modal Header -->
                 <div class="sticky top-0 bg-surface border-b border-white/10 px-6 py-4 flex items-center justify-between z-10">
                     <div>
                         <h2 class="text-xl font-serif text-white">Update Preferences</h2>
@@ -513,11 +642,9 @@
                     </button>
                 </div>
                 
-                <!-- Modal Body -->
                 <div class="p-6">
                     <form id="updateQuestionnaireForm" class="space-y-6">
                         
-                        <!-- Question 1: Property Owner -->
                         <div class="border-b border-white/5 pb-6">
                             <h3 class="text-white font-medium mb-3">Are you a current property owner in Kea?</h3>
                             <div class="flex gap-6 mb-3">
@@ -531,12 +658,11 @@
                                 </label>
                             </div>
                             <div id="modalPropertyLocationField" class="hidden">
-                                <label class="block text-xs text-slate-500 mb-2">Property location (Google Maps link or address)</label>
-                                <input type="text" name="modal_property_location" placeholder="Paste location" class="modal-input text-sm">
+                                <label class="block text-xs text-slate-500 mb-2">Property location</label>
+                                <input type="text" name="modal_property_location" placeholder="Google Maps link or address" class="modal-input text-sm">
                             </div>
                         </div>
 
-                        <!-- Question 2: Property Index -->
                         <div class="border-b border-white/5 pb-6">
                             <h3 class="text-white font-medium mb-2">Interested in monthly Kea Property Index?</h3>
                             <p class="text-slate-500 text-xs mb-3">Monthly review of property sales on the island.</p>
@@ -552,7 +678,6 @@
                             </div>
                         </div>
 
-                        <!-- Question 3: Property Tour -->
                         <div class="border-b border-white/5 pb-6">
                             <h3 class="text-white font-medium mb-2">Interested in the next Kea Property Tour?</h3>
                             <p class="text-slate-500 text-xs mb-3">April 2026 exclusive property tour.</p>
@@ -568,7 +693,6 @@
                             </div>
                         </div>
 
-                        <!-- Question 4: Members Club -->
                         <div class="border-b border-white/5 pb-6">
                             <h3 class="text-white font-medium mb-2">Interested in Kea Valley Private Members Club?</h3>
                             <p class="text-slate-500 text-xs mb-3">Exclusive access to summits and premium experiences.</p>
@@ -584,7 +708,6 @@
                             </div>
                         </div>
 
-                        <!-- Question 5: Boat/Yacht -->
                         <div class="border-b border-white/5 pb-6">
                             <h3 class="text-white font-medium mb-3">Do you own a boat or yacht?</h3>
                             <div class="flex gap-6 mb-3">
@@ -612,7 +735,6 @@
                             </div>
                         </div>
 
-                        <!-- Question 6: Restaurant Review -->
                         <div class="pb-2">
                             <h3 class="text-white font-medium mb-2">Interested in monthly Kea Restaurant Review?</h3>
                             <p class="text-slate-500 text-xs mb-3">Monthly review of top restaurants on the island.</p>
@@ -631,14 +753,13 @@
                     </form>
                 </div>
                 
-                <!-- Modal Footer -->
                 <div class="sticky bottom-0 bg-surface border-t border-white/10 px-6 py-4 flex items-center justify-between gap-4">
                     <p id="modalStatus" class="text-sm hidden"></p>
                     <div class="flex gap-3 ml-auto">
-                        <button type="button" onclick="closeQuestionnaireModal()" class="px-6 py-3 border border-white/10 text-slate-400 rounded-sm text-xs font-bold uppercase tracking-widest hover:border-white/30 transition-colors">
+                        <button type="button" onclick="closeQuestionnaireModal()" class="px-6 py-3 border border-white/10 text-slate-400 rounded-lg text-xs font-bold uppercase tracking-widest hover:border-white/30 transition-colors">
                             Cancel
                         </button>
-                        <button type="button" id="savePreferencesBtn" onclick="saveQuestionnaireUpdates()" class="px-6 py-3 bg-primary text-background-dark rounded-sm text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity">
+                        <button type="button" id="savePreferencesBtn" onclick="saveQuestionnaireUpdates()" class="px-6 py-3 bg-primary text-background-dark rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity">
                             Save Changes
                         </button>
                     </div>
@@ -648,14 +769,14 @@
     </div>
 
     <!-- Footer -->
-    <footer class="bg-background-dark py-8 border-t border-white/5">
-        <div class="max-w-7xl mx-auto px-6 lg:px-12">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+    <footer class="bg-background-dark py-6 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
                 <a href="/" class="flex items-center gap-2">
                     <img src="/images/logo.png" alt="Kea Valley" class="h-6 w-auto"/>
                     <span class="text-xs font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
                 </a>
-                <div class="text-slate-600 text-xs font-light">© 2026 Kea Valley</div>
+                <div class="text-slate-600 text-xs">© 2026 Kea Valley Private Members Club</div>
             </div>
         </div>
     </footer>
@@ -664,16 +785,15 @@
 
     <script>
         // ============================================
-        // Configuration (loaded from server)
+        // Configuration
         // ============================================
         let CONFIG = {
             VIP_TOKEN_ADDRESS: '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F',
             POLYGON_RPC: 'https://polygon-mainnet.g.alchemy.com/v2/IoufBRdGO6MKWC6pxqbZW',
             POLYGON_EXPLORER: 'https://polygonscan.com',
             WALLETTWO_ORIGIN: 'https://wallet.wallettwo.com',
-            WALLETTWO_COMPANY_ID: null, // Loaded from server
+            WALLETTWO_COMPANY_ID: null,
             STORAGE_KEY: 'keavalley_profile',
-            MIN_BALANCE_TO_HIDE_CLAIM: 2,
             SESSION_DURATION: 24 * 60 * 60 * 1000
         };
 
@@ -683,6 +803,7 @@
         // State
         // ============================================
         let currentUser = null;
+        let currentBalance = 0;
         let acceptMessages = true;
         let isDisconnecting = false;
         let savedToDatabase = false;
@@ -696,10 +817,15 @@
         const loadingContainer = document.getElementById('loadingContainer');
         const profileContainer = document.getElementById('profileContainer');
         const disconnectingContainer = document.getElementById('disconnectingContainer');
-        const presaleBanner = document.getElementById('presaleBanner');
-        const cardTitle = document.getElementById('cardTitle');
         const logoutIframe = document.getElementById('logoutIframe');
         const walletIframe = document.getElementById('walletIframe');
+
+        // ============================================
+        // Mobile Menu
+        // ============================================
+        document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
+            document.getElementById('mobileMenu').classList.toggle('hidden');
+        });
 
         // ============================================
         // Load Config from Server
@@ -793,6 +919,57 @@
         }
 
         // ============================================
+        // Header UI Updates
+        // ============================================
+        function updateHeaderUI(user, balance) {
+            const headerConnected = document.getElementById('headerConnected');
+            const headerDisconnected = document.getElementById('headerDisconnected');
+            const mobileUserSection = document.getElementById('mobileUserSection');
+            const mobileConnectSection = document.getElementById('mobileConnectSection');
+            
+            if (user && user.wallet) {
+                // Show connected state
+                headerConnected.classList.remove('hidden');
+                headerDisconnected.classList.add('hidden');
+                mobileUserSection.classList.remove('hidden');
+                mobileConnectSection.classList.add('hidden');
+                
+                // Set user name
+                const firstName = user.firstName || '';
+                const lastName = user.lastName || '';
+                const fullName = user.name || `${firstName} ${lastName}`.trim() || 'Member';
+                document.getElementById('headerUserName').textContent = fullName;
+                
+                // Set initials
+                let initials = '--';
+                if (firstName && lastName) {
+                    initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
+                } else if (fullName && fullName !== 'Member') {
+                    const parts = fullName.split(' ');
+                    initials = parts.length > 1 
+                        ? `${parts[0][0]}${parts[parts.length-1][0]}`.toUpperCase()
+                        : fullName.slice(0, 2).toUpperCase();
+                }
+                document.getElementById('headerAvatarInitials').textContent = initials;
+                
+                // Set balance
+                const balanceStr = balance.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                document.getElementById('headerUserBalance').textContent = balanceStr;
+                document.getElementById('dropdownBalance').textContent = balanceStr;
+                document.getElementById('mobileBalance').textContent = balanceStr;
+                
+                // Set email
+                document.getElementById('dropdownEmail').textContent = user.email || '';
+            } else {
+                // Show disconnected state
+                headerConnected.classList.add('hidden');
+                headerDisconnected.classList.remove('hidden');
+                mobileUserSection.classList.add('hidden');
+                mobileConnectSection.classList.remove('hidden');
+            }
+        }
+
+        // ============================================
         // UI State Functions
         // ============================================
         function showLogin() {
@@ -800,10 +977,9 @@
             loadingContainer.classList.add('hidden');
             profileContainer.classList.add('hidden');
             disconnectingContainer.classList.add('hidden');
-            cardTitle.textContent = 'Connect Wallet';
-            presaleBanner?.classList.add('hidden');
             acceptMessages = true;
             isDisconnecting = false;
+            updateHeaderUI(null, 0);
         }
 
         function showLoading() {
@@ -811,8 +987,6 @@
             loadingContainer.classList.remove('hidden');
             profileContainer.classList.add('hidden');
             disconnectingContainer.classList.add('hidden');
-            cardTitle.textContent = 'Loading';
-            presaleBanner?.classList.add('hidden');
         }
 
         function showDisconnecting() {
@@ -820,68 +994,166 @@
             loadingContainer.classList.add('hidden');
             profileContainer.classList.add('hidden');
             disconnectingContainer.classList.remove('hidden');
-            cardTitle.textContent = 'Disconnecting';
-            presaleBanner?.classList.add('hidden');
         }
 
         async function showProfile(user) {
-            // Check questionnaire first
             const canProceed = await checkQuestionnaireRequired(user.wallet);
             if (!canProceed) return;
             
             currentUser = user;
             acceptMessages = false;
             
-            // Fetch email from database if not in session
-            if (!currentUser.email) {
+            // Fetch user info from database
+            if (!currentUser.email || !currentUser.name) {
                 try {
                     const response = await fetch(`/api/wallet/info/${user.wallet}`);
                     const data = await response.json();
-                    if (data.success && data.email) {
-                        currentUser.email = data.email;
-                        localStorage.setItem('userEmail', data.email);
-                        console.log('📧 Email loaded from DB:', data.email);
+                    if (data.success) {
+                        if (data.email) currentUser.email = data.email;
+                        if (data.name) currentUser.name = data.name;
+                        if (data.firstName) currentUser.firstName = data.firstName;
+                        if (data.lastName) currentUser.lastName = data.lastName;
+                        localStorage.setItem('userEmail', data.email || '');
                     }
                 } catch (error) {
                     console.error('Error fetching user data:', error);
                 }
             }
             
-            // Hide login, show profile
+            // Show profile
             loginContainer.classList.add('hidden');
             loadingContainer.classList.add('hidden');
             profileContainer.classList.remove('hidden');
             disconnectingContainer.classList.add('hidden');
-            cardTitle.textContent = 'Profile';
-            presaleBanner?.classList.remove('hidden');
             
             // Set profile info
-            const initials = user.wallet.slice(2, 4).toUpperCase();
-            document.getElementById('avatarInitials').textContent = initials;
-            document.getElementById('displayName').textContent = `Wallet ${user.wallet.slice(0, 6)}...${user.wallet.slice(-4)}`;
+            const firstName = currentUser.firstName || '';
+            const lastName = currentUser.lastName || '';
+            const fullName = currentUser.name || `${firstName} ${lastName}`.trim();
             
+            // Avatar initials
+            let initials = '--';
+            if (firstName && lastName) {
+                initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
+            } else if (fullName) {
+                const parts = fullName.split(' ');
+                initials = parts.length > 1 
+                    ? `${parts[0][0]}${parts[parts.length-1][0]}`.toUpperCase()
+                    : fullName.slice(0, 2).toUpperCase();
+            }
+            document.getElementById('avatarInitials').textContent = initials;
+            
+            // Display name
+            document.getElementById('displayName').textContent = fullName || 'Member';
+            
+            // Email
+            const emailEl = document.getElementById('displayEmail');
             if (currentUser.email) {
-                document.getElementById('displayEmail').textContent = currentUser.email;
-                document.getElementById('displayEmail').classList.remove('hidden');
+                emailEl.textContent = currentUser.email;
+                emailEl.classList.remove('hidden');
+            } else {
+                emailEl.classList.add('hidden');
             }
             
-            document.getElementById('walletAddress').textContent = user.wallet;
-            document.getElementById('explorerLink').href = `${CONFIG.POLYGON_EXPLORER}/address/${user.wallet}`;
-            
             // Save to database
-            await saveToDatabase(user.wallet, currentUser.email, null);
+            await saveToDatabase(user.wallet, currentUser.email, fullName);
             
-            // Check for pending transactions
-            await checkClaimStatus(user.wallet);
+            // Fetch all data
+            await Promise.all([
+                fetchBalance(user.wallet),
+                fetchVouchers(user.wallet),
+                fetchOrders(user.wallet),
+                loadPreferences(),
+                loadReferralStatus()
+            ]);
+        }
+
+        // ============================================
+        // Fetch Vouchers
+        // ============================================
+        async function fetchVouchers(wallet) {
+            const loading = document.getElementById('vouchersLoading');
+            const empty = document.getElementById('vouchersEmpty');
+            const list = document.getElementById('vouchersList');
+            const count = document.getElementById('vouchersCount');
             
-            // Fetch balance
-            await fetchBalance(user.wallet);
+            try {
+                const response = await fetch(`/api/member/vouchers/${wallet}`);
+                const data = await response.json();
+                
+                loading.classList.add('hidden');
+                
+                if (data.success && data.vouchers && data.vouchers.length > 0) {
+                    count.textContent = data.vouchers.length;
+                    list.classList.remove('hidden');
+                    list.innerHTML = data.vouchers.map(v => `
+                        <div class="list-item flex items-center justify-between py-2 px-3 rounded hover:bg-white/5">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-purple-400 text-lg">confirmation_number</span>
+                                <div>
+                                    <p class="text-white text-sm">${v.service_name || v.name || 'Voucher'}</p>
+                                    <p class="text-slate-500 text-xs">${v.code || ''}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-primary font-medium">€${v.value || 0}</p>
+                                <p class="text-xs ${v.status === 'active' ? 'text-green-400' : 'text-slate-500'}">${v.status || 'active'}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    count.textContent = '0';
+                    empty.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error fetching vouchers:', error);
+                loading.classList.add('hidden');
+                empty.classList.remove('hidden');
+            }
+        }
+
+        // ============================================
+        // Fetch Orders
+        // ============================================
+        async function fetchOrders(wallet) {
+            const loading = document.getElementById('ordersLoading');
+            const empty = document.getElementById('ordersEmpty');
+            const list = document.getElementById('ordersList');
+            const count = document.getElementById('ordersCount');
             
-            // Load preferences/questionnaire
-            await loadPreferences();
-            
-            // Load referral status
-            await loadReferralStatus();
+            try {
+                const response = await fetch(`/api/member/orders/${wallet}`);
+                const data = await response.json();
+                
+                loading.classList.add('hidden');
+                
+                if (data.success && data.orders && data.orders.length > 0) {
+                    count.textContent = data.orders.length;
+                    list.classList.remove('hidden');
+                    list.innerHTML = data.orders.map(o => `
+                        <div class="list-item flex items-center justify-between py-2 px-3 rounded hover:bg-white/5">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-blue-400 text-lg">receipt_long</span>
+                                <div>
+                                    <p class="text-white text-sm">${o.order_number || `Order #${o.id}`}</p>
+                                    <p class="text-slate-500 text-xs">${new Date(o.created_at).toLocaleDateString()}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-primary font-medium">€${o.total_amount || 0}</p>
+                                <p class="text-xs ${o.status === 'completed' ? 'text-green-400' : o.status === 'pending' ? 'text-yellow-400' : 'text-slate-500'}">${o.status || 'pending'}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    count.textContent = '0';
+                    empty.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error fetching orders:', error);
+                loading.classList.add('hidden');
+                empty.classList.remove('hidden');
+            }
         }
 
         // ============================================
@@ -909,7 +1181,6 @@
                     questionnaireData = result.data;
                     contentEl.classList.remove('hidden');
                     
-                    // Build preference tags
                     const tags = [];
                     if (result.data.is_property_owner) tags.push({ icon: 'home', text: 'Property Owner' });
                     if (result.data.interested_property_index) tags.push({ icon: 'analytics', text: 'Property Index' });
@@ -944,11 +1215,9 @@
             modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
             
-            // Pre-fill with existing data
             if (questionnaireData) {
                 const d = questionnaireData;
                 
-                // Property owner
                 const propOwnerYes = document.querySelector('input[name="modal_is_property_owner"][value="yes"]');
                 const propOwnerNo = document.querySelector('input[name="modal_is_property_owner"][value="no"]');
                 if (d.is_property_owner) {
@@ -959,16 +1228,10 @@
                 }
                 document.querySelector('input[name="modal_property_location"]').value = d.property_location || '';
                 
-                // Property index
                 document.querySelector(`input[name="modal_interested_property_index"][value="${d.interested_property_index ? 'yes' : 'no'}"]`).checked = true;
-                
-                // Property tour
                 document.querySelector(`input[name="modal_interested_property_tour"][value="${d.interested_property_tour ? 'yes' : 'no'}"]`).checked = true;
-                
-                // Members club
                 document.querySelector(`input[name="modal_interested_members_club"][value="${d.interested_members_club ? 'yes' : 'no'}"]`).checked = true;
                 
-                // Boat owner
                 const boatYes = document.querySelector('input[name="modal_owns_boat"][value="yes"]');
                 const boatNo = document.querySelector('input[name="modal_owns_boat"][value="no"]');
                 if (d.owns_boat) {
@@ -981,7 +1244,6 @@
                     boatNo.checked = true;
                 }
                 
-                // Restaurant review
                 document.querySelector(`input[name="modal_interested_restaurant_review"][value="${d.interested_restaurant_review ? 'yes' : 'no'}"]`).checked = true;
             }
         }
@@ -994,21 +1256,11 @@
         }
 
         function toggleModalPropertyLocation(show) {
-            const field = document.getElementById('modalPropertyLocationField');
-            if (show) {
-                field.classList.remove('hidden');
-            } else {
-                field.classList.add('hidden');
-            }
+            document.getElementById('modalPropertyLocationField').classList.toggle('hidden', !show);
         }
 
         function toggleModalYachtClub(show) {
-            const field = document.getElementById('modalYachtClubField');
-            if (show) {
-                field.classList.remove('hidden');
-            } else {
-                field.classList.add('hidden');
-            }
+            document.getElementById('modalYachtClubField').classList.toggle('hidden', !show);
         }
 
         async function saveQuestionnaireUpdates() {
@@ -1021,7 +1273,6 @@
             btn.textContent = 'Saving...';
             statusEl.classList.add('hidden');
             
-            // Get email from localStorage
             const userEmail = localStorage.getItem('userEmail') || currentUser.email || null;
             
             const formData = {
@@ -1050,14 +1301,8 @@
                     statusEl.textContent = 'Preferences saved!';
                     statusEl.className = 'text-sm text-green-400';
                     statusEl.classList.remove('hidden');
-                    
-                    // Reload preferences
                     await loadPreferences();
-                    
-                    // Close modal after short delay
-                    setTimeout(() => {
-                        closeQuestionnaireModal();
-                    }, 1000);
+                    setTimeout(() => closeQuestionnaireModal(), 1000);
                 } else {
                     statusEl.textContent = result.error || 'Failed to save';
                     statusEl.className = 'text-sm text-red-400';
@@ -1074,107 +1319,24 @@
             }
         }
 
-        // Check claim status
-        async function checkClaimStatus(wallet) {
-            try {
-                const response = await fetch(`/api/claim/check-status/${wallet}`);
-                const data = await response.json();
-                
-                console.log('Claim status:', data);
-                
-                if (data.tx_status === 'pending') {
-                    showPendingClaimNotification(data);
-                }
-            } catch (error) {
-                console.error('Error checking claim status:', error);
-            }
-        }
-
-        function showPendingClaimNotification(data) {
-            const existing = document.getElementById('pendingClaimBanner');
-            if (existing) existing.remove();
-            
-            const banner = document.createElement('div');
-            banner.id = 'pendingClaimBanner';
-            banner.className = 'fixed top-24 left-1/2 -translate-x-1/2 bg-yellow-500/20 border border-yellow-500/30 rounded-lg px-6 py-4 z-50 max-w-md mx-auto';
-            banner.innerHTML = `
-                <div class="flex items-center gap-3">
-                    <div class="w-6 h-6 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
-                    <div>
-                        <p class="text-yellow-400 font-medium text-sm">Token Claim Processing</p>
-                        <p class="text-slate-400 text-xs">Your transaction is being confirmed...</p>
-                    </div>
-                    ${data.tx_hash ? `
-                        <a href="https://polygonscan.com/tx/${data.tx_hash}" target="_blank" class="text-primary text-xs hover:underline ml-2">
-                            View →
-                        </a>
-                    ` : ''}
-                </div>
-            `;
-            document.body.appendChild(banner);
-            
-            const checkInterval = setInterval(async () => {
-                try {
-                    const response = await fetch(`/api/claim/check-status/${currentUser.wallet}`);
-                    const newData = await response.json();
-                    
-                    if (newData.tx_status === 'confirmed') {
-                        clearInterval(checkInterval);
-                        banner.remove();
-                        fetchBalance(currentUser.wallet);
-                        showSuccessNotification();
-                    } else if (newData.tx_status === 'failed' || newData.tx_status === 'timeout') {
-                        clearInterval(checkInterval);
-                        banner.innerHTML = `
-                            <div class="flex items-center gap-3">
-                                <span class="material-symbols-outlined text-red-400">error</span>
-                                <div>
-                                    <p class="text-red-400 font-medium text-sm">Claim Failed</p>
-                                    <p class="text-slate-400 text-xs">Please try claiming again.</p>
-                                </div>
-                                <a href="/claim" class="text-primary text-xs hover:underline ml-2">Retry →</a>
-                            </div>
-                        `;
-                    }
-                } catch (e) {
-                    console.error('Error refreshing status:', e);
-                }
-            }, 15000);
-            
-            setTimeout(() => clearInterval(checkInterval), 600000);
-        }
-
-        function showSuccessNotification() {
-            const notification = document.createElement('div');
-            notification.className = 'fixed top-24 left-1/2 -translate-x-1/2 bg-green-500/20 border border-green-500/30 rounded-lg px-6 py-4 z-50';
-            notification.innerHTML = `
-                <div class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-green-400">check_circle</span>
-                    <p class="text-green-400 font-medium text-sm">Tokens Claimed Successfully!</p>
-                </div>
-            `;
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 5000);
-        }
-
         // ============================================
         // Balance
         // ============================================
         async function fetchBalance(address) {
             const balanceLoading = document.getElementById('balanceLoading');
             const balanceDisplay = document.getElementById('balanceDisplay');
-            const claimContainer = document.getElementById('claimButtonContainer');
             
             balanceLoading.classList.remove('hidden');
             balanceDisplay.classList.add('hidden');
-            claimContainer.classList.add('hidden');
 
             try {
                 const response = await fetch(`https://api.wallettwo.com/blockchain/balance/137/${address}/${CONFIG.VIP_TOKEN_ADDRESS}`);
                 if (response.ok) {
                     const data = await response.json();
                     let balance = typeof data === 'number' ? data : (data.balance || data.result || data.value || 0);
-                    displayBalance(parseFloat(balance));
+                    currentBalance = parseFloat(balance);
+                    displayBalance(currentBalance);
+                    updateHeaderUI(currentUser, currentBalance);
                     return;
                 }
             } catch (e) {
@@ -1185,21 +1347,23 @@
                 const provider = new ethers.JsonRpcProvider(CONFIG.POLYGON_RPC);
                 const contract = new ethers.Contract(CONFIG.VIP_TOKEN_ADDRESS, ERC20_ABI, provider);
                 const balance = await contract.balanceOf(address);
-                displayBalance(parseFloat(ethers.formatUnits(balance, 18)));
+                currentBalance = parseFloat(ethers.formatUnits(balance, 18));
+                displayBalance(currentBalance);
+                updateHeaderUI(currentUser, currentBalance);
             } catch (e) {
                 console.error('RPC failed:', e);
                 displayBalance(0);
+                updateHeaderUI(currentUser, 0);
             }
         }
 
         function displayBalance(balance) {
             document.getElementById('balanceLoading').classList.add('hidden');
             document.getElementById('balanceDisplay').classList.remove('hidden');
-            document.getElementById('balanceAmount').textContent = balance.toFixed(2);
-            
-            if (balance < CONFIG.MIN_BALANCE_TO_HIDE_CLAIM) {
-                document.getElementById('claimButtonContainer').classList.remove('hidden');
-            }
+            document.getElementById('balanceAmount').textContent = balance.toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
         }
 
         // ============================================
@@ -1220,12 +1384,11 @@
                 const response = await fetch(`/api/referral/status/${currentUser.wallet}`);
                 referralStatus = await response.json();
                 
-                console.log('Referral status loaded:', referralStatus);
-                
                 referralLoading.classList.add('hidden');
 
                 if (!referralStatus.programEnabled) {
                     referralDisabled.classList.remove('hidden');
+                    hideReferralLists();
                     return;
                 }
 
@@ -1241,7 +1404,6 @@
                     const wallet = referralStatus.referrerWallet || '';
                     const shortWallet = wallet ? `${wallet.slice(0, 6)}...${wallet.slice(-4)}` : 'Unknown';
                     document.getElementById('referrerDisplay').textContent = shortWallet;
-                    document.getElementById('referrerCodeDisplay').textContent = referralStatus.referrerCode || '--';
                 } else {
                     setReferrerSection.classList.remove('hidden');
                     referrerSetSection.classList.add('hidden');
@@ -1255,32 +1417,103 @@
                     myCodeSection.classList.remove('hidden');
                     
                     document.getElementById('myReferralCode').textContent = referralStatus.myCode;
-                    document.getElementById('referralCount').textContent = referralStatus.stats?.totalReferrals || 0;
-                    document.getElementById('referralEarned').textContent = (referralStatus.stats?.totalBonusEarned || 0).toFixed(2);
 
                     const info = referralStatus.bonusInfo || {};
                     let bonusText = '';
                     if (info.signupAmount > 0) {
                         bonusText = info.signupType === 'fixed' 
-                            ? `Earn ${info.signupAmount} VIP per friend` 
+                            ? `Earn €${info.signupAmount} per friend` 
                             : `Earn ${info.signupAmount}% of friend's purchase`;
                     }
-                    if (info.presaleAmount > 0) {
-                        if (bonusText) bonusText += ' • ';
-                        bonusText += info.presaleType === 'fixed'
-                            ? `${info.presaleAmount} VIP per presale`
-                            : `${info.presaleAmount}% of presale`;
-                    }
-                    document.getElementById('referralBonusInfo').textContent = bonusText || 'Invite friends to earn rewards!';
+                    document.getElementById('referralBonusInfo').textContent = bonusText || 'Share & earn rewards!';
                 } else {
                     generateCodeSection.classList.remove('hidden');
                     myCodeSection.classList.add('hidden');
                 }
 
+                // Load referrals list and bonuses
+                await loadReferralsList();
+                await loadReferralBonuses();
+
             } catch (error) {
                 console.error('Failed to load referral status:', error);
                 referralLoading.classList.add('hidden');
                 referralDisabled.classList.remove('hidden');
+                hideReferralLists();
+            }
+        }
+
+        function hideReferralLists() {
+            document.getElementById('referralsListLoading').classList.add('hidden');
+            document.getElementById('referralsListEmpty').classList.remove('hidden');
+            document.getElementById('bonusesListLoading').classList.add('hidden');
+            document.getElementById('bonusesListEmpty').classList.remove('hidden');
+        }
+
+        async function loadReferralsList() {
+            const loading = document.getElementById('referralsListLoading');
+            const empty = document.getElementById('referralsListEmpty');
+            const list = document.getElementById('referralsList');
+            const count = document.getElementById('referralCount');
+            
+            try {
+                const response = await fetch(`/api/referral/list/${currentUser.wallet}`);
+                const data = await response.json();
+                
+                loading.classList.add('hidden');
+                
+                if (data.success && data.referrals && data.referrals.length > 0) {
+                    count.textContent = data.referrals.length;
+                    list.classList.remove('hidden');
+                    list.innerHTML = data.referrals.map(r => `
+                        <div class="list-item flex items-center justify-between py-1.5">
+                            <span class="text-slate-400 font-mono text-xs">${r.wallet ? `${r.wallet.slice(0,6)}...${r.wallet.slice(-4)}` : 'User'}</span>
+                            <span class="text-slate-500 text-xs">${r.date ? new Date(r.date).toLocaleDateString() : ''}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    count.textContent = referralStatus?.stats?.totalReferrals || '0';
+                    empty.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error fetching referrals list:', error);
+                loading.classList.add('hidden');
+                count.textContent = referralStatus?.stats?.totalReferrals || '0';
+                empty.classList.remove('hidden');
+            }
+        }
+
+        async function loadReferralBonuses() {
+            const loading = document.getElementById('bonusesListLoading');
+            const empty = document.getElementById('bonusesListEmpty');
+            const list = document.getElementById('bonusesList');
+            const earned = document.getElementById('referralEarned');
+            
+            try {
+                const response = await fetch(`/api/referral/bonuses/${currentUser.wallet}`);
+                const data = await response.json();
+                
+                loading.classList.add('hidden');
+                
+                if (data.success && data.bonuses && data.bonuses.length > 0) {
+                    const total = data.bonuses.reduce((sum, b) => sum + (b.amount || 0), 0);
+                    earned.textContent = `€${total}`;
+                    list.classList.remove('hidden');
+                    list.innerHTML = data.bonuses.map(b => `
+                        <div class="list-item flex items-center justify-between py-1.5">
+                            <span class="text-slate-400 text-xs">${b.type || 'Referral bonus'}</span>
+                            <span class="text-primary text-xs font-medium">+€${b.amount || 0}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    earned.textContent = `€${referralStatus?.stats?.totalBonusEarned || 0}`;
+                    empty.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error fetching referral bonuses:', error);
+                loading.classList.add('hidden');
+                earned.textContent = `€${referralStatus?.stats?.totalBonusEarned || 0}`;
+                empty.classList.remove('hidden');
             }
         }
 
@@ -1296,7 +1529,7 @@
             successEl.classList.add('hidden');
             
             if (!code || code.length < 6) {
-                errorEl.textContent = 'Please enter a valid 8-character code';
+                errorEl.textContent = 'Please enter a valid code';
                 errorEl.classList.remove('hidden');
                 return;
             }
@@ -1377,21 +1610,6 @@
         }
 
         // ============================================
-        // Copy Wallet
-        // ============================================
-        function copyAddress() {
-            if (currentUser?.wallet) {
-                navigator.clipboard.writeText(currentUser.wallet).then(() => {
-                    const btn = document.getElementById('copyBtn');
-                    btn.innerHTML = '<span class="material-symbols-outlined text-xl text-green-400">check</span>';
-                    setTimeout(() => {
-                        btn.innerHTML = '<span class="material-symbols-outlined text-xl">content_copy</span>';
-                    }, 2000);
-                });
-            }
-        }
-
-        // ============================================
         // Disconnect
         // ============================================
         function disconnect() {
@@ -1400,12 +1618,14 @@
 
             clearSession();
             currentUser = null;
+            currentBalance = 0;
             acceptMessages = false;
             savedToDatabase = false;
             referralStatus = null;
             questionnaireData = null;
 
             showDisconnecting();
+            updateHeaderUI(null, 0);
 
             logoutIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
 
@@ -1440,11 +1660,11 @@
         });
 
         // ============================================
-        // Token Exchange - SERVER SIDE (with API key)
+        // Token Exchange - SERVER SIDE
         // ============================================
         async function exchangeCode(code, wallet, userId) {
             showLoading();
-            console.log('🔄 Exchanging code via server...', { code: code.substring(0, 10) + '...', wallet });
+            console.log('🔄 Exchanging code via server...');
             
             try {
                 const tokenResponse = await fetch('/api/wallettwo/exchange', {
@@ -1454,10 +1674,9 @@
                 });
                 
                 const tokenData = await tokenResponse.json();
-                console.log('🔑 Token exchange response:', tokenData);
                 
                 if (!tokenData.success && !tokenData.access_token) {
-                    console.warn('⚠️ Token exchange failed:', tokenData.error || 'No access token');
+                    console.warn('⚠️ Token exchange failed');
                     const userData = { wallet, userId, timestamp: Date.now() };
                     saveSession(userData);
                     showProfile(userData);
@@ -1466,10 +1685,11 @@
 
                 const accessToken = tokenData.access_token;
                 let userEmail = tokenData.email || tokenData.user?.email;
-                let userName = tokenData.name || tokenData.user?.name || tokenData.user?.given_name;
+                let userName = tokenData.name || tokenData.user?.name;
+                let firstName = tokenData.user?.given_name || tokenData.firstName;
+                let lastName = tokenData.user?.family_name || tokenData.lastName;
 
                 if (accessToken && !userEmail) {
-                    console.log('📧 Fetching user info...');
                     try {
                         const userInfoResponse = await fetch('/api/wallettwo/userinfo', {
                             method: 'POST',
@@ -1478,11 +1698,12 @@
                         });
                         
                         const userInfoData = await userInfoResponse.json();
-                        console.log('👤 User info response:', userInfoData);
                         
                         if (userInfoData.success || userInfoData.email) {
                             userEmail = userInfoData.email || userInfoData.user?.email;
                             userName = userName || userInfoData.name || userInfoData.user?.name;
+                            firstName = firstName || userInfoData.user?.given_name;
+                            lastName = lastName || userInfoData.user?.family_name;
                         }
                     } catch (userInfoError) {
                         console.error('Failed to fetch user info:', userInfoError);
@@ -1494,20 +1715,14 @@
                     userId: userId || tokenData.user?.sub || tokenData.user?.id,
                     email: userEmail,
                     name: userName,
+                    firstName,
+                    lastName,
                     accessToken: accessToken,
                     timestamp: Date.now()
                 };
                 
-                console.log('✅ Final user data:', { 
-                    wallet: userData.wallet, 
-                    email: userData.email, 
-                    name: userData.name,
-                    hasToken: !!userData.accessToken 
-                });
-                
                 if (userData.email) {
                     localStorage.setItem('userEmail', userData.email);
-                    console.log('💾 Email saved to localStorage:', userData.email);
                 }
                 
                 saveSession(userData);
@@ -1524,7 +1739,6 @@
         // ============================================
         // Event Listeners
         // ============================================
-        document.getElementById('copyBtn').addEventListener('click', copyAddress);
         document.getElementById('disconnectBtn').addEventListener('click', disconnect);
         document.getElementById('setReferrerBtn').addEventListener('click', setReferrer);
         document.getElementById('generateCodeBtn').addEventListener('click', generateReferralCode);
@@ -1544,8 +1758,6 @@
                 const response = await fetch(`/api/questionnaire/status/${wallet}`);
                 const result = await response.json();
                 
-                console.log('Profile - Questionnaire status:', result);
-                
                 if (result.success && result.exists && !result.registration_complete) {
                     const params = new URLSearchParams(window.location.search);
                     const signature = params.get('signature') || params.get('sig');
@@ -1556,7 +1768,6 @@
                     if (userId) questionnaireUrl += `&usr=${encodeURIComponent(userId)}`;
                     questionnaireUrl += `&returnTo=profile`;
                     
-                    console.log('Questionnaire required, redirecting to:', questionnaireUrl);
                     window.location.href = questionnaireUrl;
                     return false;
                 }
@@ -1571,14 +1782,12 @@
         // Initialize
         // ============================================
         async function init() {
-            // Load config first
             const configLoaded = await loadConfig();
             if (!configLoaded) {
                 console.error('Failed to load config - cannot initialize');
                 return;
             }
             
-            // Initialize the WalletTwo iframe with companyId
             initWalletIframe();
             
             const params = new URLSearchParams(window.location.search);

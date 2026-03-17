@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Marketplace | Kea Valley Private Members Club</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ee9d2b",
+                        "primary-light": "#fbdea6",
+                        "background-dark": "#0a0a0a",
+                        "surface": "#121212",
+                        "surface-light": "#1a1a1a",
+                    },
+                    fontFamily: {
+                        "sans": ["Manrope", "sans-serif"],
+                        "serif": ["Playfair Display", "serif"],
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Manrope', sans-serif; }
+        h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
+        .glass-nav {
+            backdrop-filter: blur(12px);
+            background-color: rgba(10, 10, 10, 0.85);
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(238, 157, 43, 0.15);
+            border-color: rgba(238, 157, 43, 0.3);
+        }
+        
+        .category-btn.active {
+            background: rgba(238, 157, 43, 0.2);
+            border-color: #ee9d2b;
+            color: #ee9d2b;
+        }
+
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+        }
+
+        .badge-limited {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .wallet-iframe-container {
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .wallet-iframe {
+            width: 100%;
+            height: 500px;
+            border: none;
+        }
+
+        /* User dropdown */
+        .user-dropdown {
+            position: relative;
+        }
+        .user-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: rgba(26, 26, 26, 0.98);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            z-index: 100;
+        }
+        .user-dropdown:hover .user-dropdown-menu,
+        .user-dropdown-menu:hover {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between h-16 lg:h-20">
+        <a href="/" class="flex items-center gap-3">
+            <img src="/images/logo.png" alt="Kea Valley" class="h-10 lg:h-12 w-auto"/>
+            <span class="hidden sm:block text-lg lg:text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
+        </a>
+        
+        <nav class="hidden lg:flex items-center gap-6 xl:gap-10">
+            <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/#services">Services</a>
+            <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/marketplace">Marketplace</a>
+            <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/package">Membership</a>
+            <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://keanaissance.com" target="_blank">Keanaissance</a>
+            <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://kearising.net" target="_blank">Kea Rising</a>
+        </nav>
+
+        <div class="flex items-center gap-4">
+            <!-- Connected State -->
+            <div id="headerConnected" class="hidden items-center gap-4">
+                <div class="user-dropdown">
+                    <button class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/5 transition-colors">
+                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center">
+                            <span class="material-symbols-outlined text-background-dark text-lg">person</span>
+                        </div>
+                        <div class="hidden sm:block text-left">
+                            <div id="headerUserName" class="text-sm font-medium text-white">Member</div>
+                            <div id="headerUserEmail" class="text-xs text-gray-400 max-w-[150px] truncate"></div>
+                        </div>
+                        <span class="material-symbols-outlined text-gray-400 text-lg">expand_more</span>
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    <div class="user-dropdown-menu">
+                        <div class="p-2">
+                            <div class="px-4 py-3 border-b border-white/10">
+                                <p class="text-xs text-slate-400">Buying Power</p>
+                                <p class="text-lg font-semibold text-primary">€<span data-user-balance>0</span></p>
+                            </div>
+                            <a href="/profile" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors">
+                                <span class="material-symbols-outlined text-primary">account_circle</span>
+                                <span class="text-sm">My Profile</span>
+                            </a>
+                            <a href="/marketplace" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors">
+                                <span class="material-symbols-outlined text-primary">storefront</span>
+                                <span class="text-sm">Marketplace</span>
+                            </a>
+                            <a href="/package" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors">
+                                <span class="material-symbols-outlined text-primary">card_membership</span>
+                                <span class="text-sm">Add Buying Power</span>
+                            </a>
+                            <div class="border-t border-white/10 my-2"></div>
+                            <button onclick="disconnect()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors">
+                                <span class="material-symbols-outlined">logout</span>
+                                <span class="text-sm">Disconnect</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Disconnected State -->
+            <div id="headerDisconnected" class="flex items-center gap-3">
+                <button onclick="showLoginModal()" class="hidden sm:flex items-center gap-2 px-5 py-2.5 border border-primary/50 text-primary text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-primary hover:text-background-dark transition-all">
+                    <span class="material-symbols-outlined text-lg">account_circle</span>
+                    Connect
+                </button>
+                <button onclick="showLoginModal()" class="sm:hidden flex items-center justify-center w-10 h-10 border border-primary/50 text-primary rounded-lg hover:bg-primary hover:text-background-dark transition-all">
+                    <span class="material-symbols-outlined">account_circle</span>
+                </button>
+            </div>
+
+            <button id="mobileMenuBtn" class="lg:hidden text-white/70 hover:text-white p-2">
+                <span class="material-symbols-outlined text-2xl">menu</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="hidden lg:hidden border-t border-white/5 bg-background-dark/95">
+        <nav class="px-4 py-4 flex flex-col gap-1">
+            <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="/#services">Services</a>
+            <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="/marketplace">Marketplace</a>
+            <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="/package">Membership</a>
+            <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="/profile">Profile</a>
+        </nav>
+    </div>
+</header>
+
+    <!-- Main Content -->
+    <main class="flex-1 pt-24 lg:pt-28 pb-12 px-4 sm:px-6">
+        <div class="max-w-7xl mx-auto">
+
+            <!-- Page Header -->
+            <div class="text-center mb-10">
+                <div class="flex items-center justify-center gap-4 mb-4">
+                    <div class="h-[1px] w-8 bg-primary"></div>
+                    <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Exclusive Services</span>
+                    <div class="h-[1px] w-8 bg-primary"></div>
+                </div>
+                <h1 class="text-3xl md:text-4xl lg:text-5xl font-serif italic font-medium text-white mb-3">Marketplace</h1>
+                <p class="text-slate-400 font-light max-w-2xl mx-auto">Discover premium experiences and services available exclusively to Kea Valley members.</p>
+            </div>
+
+            <!-- Buying Power Banner (if logged in) -->
+            <div id="buyingPowerBanner" class="hidden bg-surface border border-white/5 rounded-xl p-4 mb-8">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-primary text-2xl">account_balance_wallet</span>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-sm">Your Buying Power</p>
+                            <p class="text-2xl font-serif text-primary">€<span id="userBalance">0</span></p>
+                        </div>
+                    </div>
+                    <a href="/package" class="bg-primary/20 text-primary px-6 py-2 rounded-lg text-sm font-bold uppercase tracking-wider hover:bg-primary/30 transition-colors border border-primary/30">
+                        Add More Power
+                    </a>
+                </div>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="flex flex-wrap gap-2 mb-8">
+                <button class="category-btn active px-4 py-2 rounded-lg border border-white/10 text-sm font-medium transition-all" data-category="all">
+                    All Services
+                </button>
+                <button class="category-btn px-4 py-2 rounded-lg border border-white/10 text-slate-400 text-sm font-medium hover:border-white/30 transition-all" data-category="accommodation">
+                    <span class="material-symbols-outlined text-base align-middle mr-1">villa</span>
+                    Accommodation
+                </button>
+                <button class="category-btn px-4 py-2 rounded-lg border border-white/10 text-slate-400 text-sm font-medium hover:border-white/30 transition-all" data-category="experiences">
+                    <span class="material-symbols-outlined text-base align-middle mr-1">sailing</span>
+                    Experiences
+                </button>
+                <button class="category-btn px-4 py-2 rounded-lg border border-white/10 text-slate-400 text-sm font-medium hover:border-white/30 transition-all" data-category="dining">
+                    <span class="material-symbols-outlined text-base align-middle mr-1">restaurant</span>
+                    Dining
+                </button>
+                <button class="category-btn px-4 py-2 rounded-lg border border-white/10 text-slate-400 text-sm font-medium hover:border-white/30 transition-all" data-category="wellness">
+                    <span class="material-symbols-outlined text-base align-middle mr-1">spa</span>
+                    Wellness
+                </button>
+                <button class="category-btn px-4 py-2 rounded-lg border border-white/10 text-slate-400 text-sm font-medium hover:border-white/30 transition-all" data-category="transport">
+                    <span class="material-symbols-outlined text-base align-middle mr-1">directions_boat</span>
+                    Transport
+                </button>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="text-center py-20">
+                <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p class="text-slate-400">Loading services...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden text-center py-20">
+                <span class="material-symbols-outlined text-6xl text-slate-600 mb-4">inventory_2</span>
+                <h3 class="text-xl font-serif text-white mb-2">No services available</h3>
+                <p class="text-slate-500">Check back soon for new offerings.</p>
+            </div>
+
+            <!-- Services Grid -->
+            <div id="servicesGrid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Services will be populated here -->
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Cart Sidebar -->
+    <div id="cartSidebar" class="fixed inset-0 z-[60] hidden">
+        <div class="absolute inset-0 bg-black/70" id="cartOverlay"></div>
+        <div class="absolute right-0 top-0 bottom-0 w-full max-w-md bg-surface border-l border-white/5 flex flex-col">
+            <div class="p-6 border-b border-white/5 flex items-center justify-between">
+                <h2 class="text-xl font-serif text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">shopping_cart</span>
+                    Your Cart
+                </h2>
+                <button id="closeCart" class="text-slate-400 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined text-2xl">close</span>
+                </button>
+            </div>
+
+            <div id="cartItems" class="flex-1 overflow-y-auto p-6">
+                <div id="cartEmpty" class="text-center py-12">
+                    <span class="material-symbols-outlined text-5xl text-slate-600 mb-3">shopping_cart</span>
+                    <p class="text-slate-500">Your cart is empty</p>
+                    <button class="text-primary text-sm hover:underline mt-2" onclick="closeCartSidebar()">Continue shopping</button>
+                </div>
+                <div id="cartItemsList" class="hidden space-y-4"></div>
+            </div>
+
+            <div id="cartFooter" class="hidden border-t border-white/5 p-6">
+                <div class="space-y-3 mb-6">
+                    <div class="flex justify-between text-slate-400">
+                        <span>Subtotal</span>
+                        <span id="cartSubtotal">€0</span>
+                    </div>
+                    <div class="flex justify-between text-white text-lg font-semibold">
+                        <span>Total</span>
+                        <span id="cartTotal">€0</span>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <button id="payWithTokensBtn" class="w-full bg-primary text-background-dark py-4 rounded-xl font-bold uppercase tracking-wider hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span class="material-symbols-outlined">account_balance_wallet</span>
+                        Pay with Buying Power
+                    </button>
+                    <button id="payWithStripeBtn" class="w-full bg-white/10 text-white py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-white/20 transition-colors flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">credit_card</span>
+                        Pay with Card
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Detail Modal -->
+    <div id="serviceModal" class="fixed inset-0 z-[70] hidden">
+        <div class="modal-overlay absolute inset-0" id="serviceModalOverlay"></div>
+        <div class="absolute inset-4 md:inset-8 lg:inset-12 flex items-center justify-center">
+            <div class="bg-surface border border-white/10 rounded-2xl w-full max-w-4xl max-h-full overflow-hidden flex flex-col">
+                <div class="relative">
+                    <img id="modalServiceImage" src="" alt="" class="w-full h-48 md:h-64 object-cover">
+                    <button id="closeServiceModal" class="absolute top-4 right-4 w-10 h-10 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-colors">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                    <div id="modalBadges" class="absolute bottom-4 left-4 flex gap-2"></div>
+                </div>
+
+                <div class="p-6 md:p-8 overflow-y-auto flex-1">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+                        <div>
+                            <p id="modalServiceCategory" class="text-primary text-xs font-bold uppercase tracking-widest mb-2"></p>
+                            <h2 id="modalServiceName" class="text-2xl md:text-3xl font-serif text-white mb-2"></h2>
+                            <p id="modalServiceLocation" class="text-slate-400 text-sm flex items-center gap-1">
+                                <span class="material-symbols-outlined text-base">location_on</span>
+                                <span></span>
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-3xl md:text-4xl font-serif text-primary">€<span id="modalServicePrice">0</span></p>
+                            <p id="modalPriceNote" class="text-slate-500 text-sm"></p>
+                        </div>
+                    </div>
+
+                    <div class="prose prose-invert max-w-none mb-6">
+                        <p id="modalServiceDescription" class="text-slate-300 leading-relaxed"></p>
+                    </div>
+
+                    <div id="modalFeatures" class="mb-6">
+                        <h3 class="text-white font-semibold mb-3">What's Included</h3>
+                        <ul id="modalFeaturesList" class="grid grid-cols-1 md:grid-cols-2 gap-2"></ul>
+                    </div>
+
+                    <div id="modalBookingOptions" class="hidden mb-6">
+                        <h3 class="text-white font-semibold mb-3">Select Dates</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-slate-400 text-sm mb-1">Check-in</label>
+                                <input type="date" id="modalCheckIn" class="w-full bg-background-dark border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-slate-400 text-sm mb-1">Check-out</label>
+                                <input type="date" id="modalCheckOut" class="w-full bg-background-dark border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary focus:outline-none">
+                            </div>
+                        </div>
+                        <p id="modalBookingTotal" class="text-right text-primary mt-3 hidden">Total: €<span>0</span></p>
+                    </div>
+
+                    <div id="modalQuantitySection" class="mb-6">
+                        <h3 class="text-white font-semibold mb-3">Quantity</h3>
+                        <div class="flex items-center gap-4">
+                            <button id="modalQtyMinus" class="w-10 h-10 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors flex items-center justify-center">
+                                <span class="material-symbols-outlined">remove</span>
+                            </button>
+                            <span id="modalQty" class="text-2xl font-bold text-white w-12 text-center">1</span>
+                            <button id="modalQtyPlus" class="w-10 h-10 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors flex items-center justify-center">
+                                <span class="material-symbols-outlined">add</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-white/5 p-6 flex flex-col sm:flex-row gap-4">
+                    <button id="modalAddToCart" class="flex-1 bg-primary text-background-dark py-4 rounded-xl font-bold uppercase tracking-wider hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">add_shopping_cart</span>
+                        Add to Cart
+                    </button>
+                    <button id="modalBuyNow" class="flex-1 bg-white/10 text-white py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-white/20 transition-colors flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">bolt</span>
+                        Buy Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 z-[80] hidden">
+        <div class="modal-overlay absolute inset-0" id="loginModalOverlay"></div>
+        <div class="absolute inset-4 flex items-center justify-center">
+            <div class="bg-surface border border-white/10 rounded-2xl w-full max-w-md overflow-hidden">
+                <div class="p-6 border-b border-white/5 flex items-center justify-between">
+                    <h2 class="text-xl font-serif text-white">Connect to Continue</h2>
+                    <button id="closeLoginModal" class="text-slate-400 hover:text-white transition-colors">
+                        <span class="material-symbols-outlined text-2xl">close</span>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <p class="text-slate-400 text-sm mb-6">Please connect your account to make purchases.</p>
+                    <div class="wallet-iframe-container">
+                        <iframe 
+                            id="loginWalletIframe"
+                            src=""
+                            class="wallet-iframe"
+                            allow="clipboard-write"
+                        ></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="fixed inset-0 z-[80] hidden">
+        <div class="modal-overlay absolute inset-0" id="checkoutModalOverlay"></div>
+        <div class="absolute inset-4 flex items-center justify-center">
+            <div class="bg-surface border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden">
+                <div class="p-6 border-b border-white/5 flex items-center justify-between">
+                    <h2 class="text-xl font-serif text-white">Complete Purchase</h2>
+                    <button id="closeCheckoutModal" class="text-slate-400 hover:text-white transition-colors">
+                        <span class="material-symbols-outlined text-2xl">close</span>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <div class="bg-background-dark rounded-xl p-4 mb-6">
+                        <h3 class="text-white font-semibold mb-3">Order Summary</h3>
+                        <div id="checkoutItems" class="space-y-2 mb-4 max-h-40 overflow-y-auto"></div>
+                        <div class="border-t border-white/10 pt-3 flex justify-between text-lg font-semibold">
+                            <span class="text-white">Total</span>
+                            <span id="checkoutTotal" class="text-primary">€0</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 mb-6">
+                        <div>
+                            <label class="block text-slate-400 text-sm mb-1">Email for confirmation *</label>
+                            <input type="email" id="checkoutEmail" class="w-full bg-background-dark border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary focus:outline-none" placeholder="your@email.com">
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 text-sm mb-1">Phone (optional)</label>
+                            <input type="tel" id="checkoutPhone" class="w-full bg-background-dark border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary focus:outline-none" placeholder="+30 ...">
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 text-sm mb-1">Special requests (optional)</label>
+                            <textarea id="checkoutNotes" rows="2" class="w-full bg-background-dark border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary focus:outline-none resize-none" placeholder="Any special requirements..."></textarea>
+                        </div>
+                    </div>
+
+                    <div id="checkoutPaymentMethod" class="mb-6">
+                        <h3 class="text-white font-semibold mb-3">Payment Method</h3>
+                        <div class="space-y-2">
+                            <label id="tokenPaymentOption" class="flex items-center gap-3 p-4 bg-background-dark rounded-xl border border-white/10 cursor-pointer hover:border-primary/50 transition-colors">
+                                <input type="radio" name="paymentMethod" value="tokens" class="w-4 h-4 text-primary bg-transparent border-white/30 focus:ring-primary">
+                                <span class="material-symbols-outlined text-primary">account_balance_wallet</span>
+                                <div class="flex-1">
+                                    <p class="text-white font-medium">Buying Power</p>
+                                    <p class="text-slate-500 text-xs">Balance: €<span id="checkoutBalance">0</span></p>
+                                </div>
+                            </label>
+                            <label class="flex items-center gap-3 p-4 bg-background-dark rounded-xl border border-white/10 cursor-pointer hover:border-primary/50 transition-colors">
+                                <input type="radio" name="paymentMethod" value="card" class="w-4 h-4 text-primary bg-transparent border-white/30 focus:ring-primary" checked>
+                                <span class="material-symbols-outlined text-blue-400">credit_card</span>
+                                <div class="flex-1">
+                                    <p class="text-white font-medium">Credit / Debit Card</p>
+                                    <p class="text-slate-500 text-xs">Secure payment via Stripe</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="cardElementContainer" class="mb-6">
+                        <label class="block text-slate-400 text-sm mb-2">Card Details</label>
+                        <div id="cardElement" class="bg-background-dark border border-white/10 rounded-lg p-4"></div>
+                        <p id="cardError" class="text-red-400 text-sm mt-2 hidden"></p>
+                    </div>
+
+                    <button id="submitPayment" class="w-full bg-primary text-background-dark py-4 rounded-xl font-bold uppercase tracking-wider hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span class="material-symbols-outlined">lock</span>
+                        Complete Purchase
+                    </button>
+
+                    <p class="text-slate-500 text-xs text-center mt-4">
+                        Your order will be sent to our team for validation. You'll receive a confirmation email shortly.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="fixed inset-0 z-[90] hidden">
+        <div class="modal-overlay absolute inset-0"></div>
+        <div class="absolute inset-4 flex items-center justify-center">
+            <div class="bg-surface border border-white/10 rounded-2xl w-full max-w-md p-8 text-center">
+                <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-5xl text-green-400">check_circle</span>
+                </div>
+                <h2 class="text-2xl font-serif text-white mb-3">Order Submitted!</h2>
+                <p class="text-slate-400 mb-6">Your order has been received and is pending validation. You'll receive a confirmation email shortly.</p>
+                <p class="text-slate-500 text-sm mb-6">Order #<span id="successOrderId">---</span></p>
+                <div class="flex gap-4">
+                    <a href="/profile" class="flex-1 bg-white/10 text-white py-3 rounded-xl font-bold uppercase tracking-wider hover:bg-white/20 transition-colors">
+                        View Orders
+                    </a>
+                    <button onclick="closeSuccessModal()" class="flex-1 bg-primary text-background-dark py-3 rounded-xl font-bold uppercase tracking-wider hover:opacity-90 transition-opacity">
+                        Continue Shopping
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-background-dark py-6 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <a href="/" class="flex items-center gap-2">
+                    <img src="/images/logo.png" alt="Kea Valley" class="h-6 w-auto"/>
+                    <span class="text-xs font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
+                </a>
+                <div class="text-slate-600 text-xs">© 2026 Kea Valley Private Members Club</div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Logout iframe -->
+    <iframe id="walletTwoLogoutIframe" style="display:none;"></iframe>
+
+    <script>
+        // ============================================
+        // Configuration
+        // ============================================
+        let CONFIG = {
+            VIP_TOKEN_ADDRESS: '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F',
+            POLYGON_RPC: 'https://polygon-mainnet.g.alchemy.com/v2/IoufBRdGO6MKWC6pxqbZW',
+            WALLETTWO_ORIGIN: 'https://wallet.wallettwo.com',
+            WALLETTWO_COMPANY_ID: null,
+            STRIPE_PUBLIC_KEY: null,
+            STORAGE_KEY: 'keavalley_profile',
+            CART_KEY: 'keavalley_cart',
+            SESSION_DURATION: 24 * 60 * 60 * 1000
+        };
+
+        // ============================================
+        // State
+        // ============================================
+        let currentUser = null;
+        let userBalance = 0;
+        let services = [];
+        let cart = [];
+        let selectedService = null;
+        let selectedQuantity = 1;
+        let stripe = null;
+        let cardElement = null;
+        let activeCategory = 'all';
+        let acceptMessages = true;
+        let pendingAction = null;
+
+        // ============================================
+        // Initialize
+        // ============================================
+        async function init() {
+            await loadConfig();
+            loadCart();
+            checkSession();
+            await loadServices();
+            setupEventListeners();
+            setupWalletListener();
+        }
+
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config/public');
+                const config = await response.json();
+                
+                if (config.walletTwoCompanyId) {
+                    CONFIG.WALLETTWO_COMPANY_ID = config.walletTwoCompanyId;
+                }
+                if (config.stripePublicKey) {
+                    CONFIG.STRIPE_PUBLIC_KEY = config.stripePublicKey;
+                    stripe = Stripe(CONFIG.STRIPE_PUBLIC_KEY);
+                }
+            } catch (error) {
+                console.error('Failed to load config:', error);
+            }
+        }
+
+        // ============================================
+        // Session Management
+        // ============================================
+        function checkSession() {
+            try {
+                const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
+                if (stored) {
+                    const data = JSON.parse(stored);
+                    const age = Date.now() - (data.timestamp || 0);
+                    if (data.wallet && age < CONFIG.SESSION_DURATION) {
+                        currentUser = data;
+                        onUserConnected();
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.error('Session check error:', e);
+            }
+            
+            // Not logged in - show connect buttons
+            document.getElementById('headerDisconnected').classList.remove('hidden');
+            document.getElementById('headerConnected').classList.add('hidden');
+        }
+
+        function saveSession(data) {
+            localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify({
+                ...data,
+                timestamp: Date.now()
+            }));
+        }
+
+        function onUserConnected() {
+            if (currentUser && currentUser.wallet) {
+                fetchUserBalance(currentUser.wallet);
+            }
+            
+            // Update header UI
+            document.getElementById('headerDisconnected').classList.add('hidden');
+            document.getElementById('headerConnected').classList.remove('hidden');
+            document.getElementById('headerConnected').style.display = 'flex';
+            document.getElementById('buyingPowerBanner').classList.remove('hidden');
+            
+            // Set user name/email in header
+            const name = [currentUser.firstName, currentUser.lastName].filter(Boolean).join(' ') || 
+                         currentUser.name || 
+                         'Member';
+            document.getElementById('headerUserName').textContent = name;
+            document.getElementById('headerUserEmail').textContent = currentUser.email || '';
+            
+            // Close login modal if open
+            document.getElementById('loginModal').classList.add('hidden');
+            
+            // Execute pending action if any
+            if (pendingAction) {
+                pendingAction();
+                pendingAction = null;
+            }
+        }
+
+        function disconnect() {
+            // Clear session
+            currentUser = null;
+            localStorage.removeItem(CONFIG.STORAGE_KEY);
+            
+            // Logout from WalletTwo via iframe
+            const iframe = document.getElementById('walletTwoLogoutIframe');
+            if (iframe && CONFIG.WALLETTWO_COMPANY_ID) {
+                iframe.src = CONFIG.WALLETTWO_ORIGIN + '/auth/logout?companyId=' + CONFIG.WALLETTWO_COMPANY_ID;
+            }
+            
+            // Update UI
+            document.getElementById('headerConnected').classList.add('hidden');
+            document.getElementById('headerConnected').style.display = '';
+            document.getElementById('headerDisconnected').classList.remove('hidden');
+            document.getElementById('buyingPowerBanner').classList.add('hidden');
+            
+            userBalance = 0;
+            updateTokenPaymentOption();
+        }
+
+        async function fetchUserBalance(wallet) {
+            try {
+                const response = await fetch('https://api.wallettwo.com/blockchain/balance/137/' + wallet + '/' + CONFIG.VIP_TOKEN_ADDRESS);
+                if (response.ok) {
+                    const data = await response.json();
+                    userBalance = typeof data === 'number' ? data : (data.balance || 0);
+                } else {
+                    userBalance = 0;
+                }
+            } catch (e) {
+                userBalance = 0;
+            }
+            
+            document.getElementById('userBalance').textContent = Math.floor(userBalance).toLocaleString();
+            document.getElementById('checkoutBalance').textContent = Math.floor(userBalance).toLocaleString();
+            
+            updateTokenPaymentOption();
+        }
+
+        function updateTokenPaymentOption() {
+            const cartTotalValue = getCartTotal();
+            const tokenOption = document.getElementById('tokenPaymentOption');
+            const payWithTokensBtn = document.getElementById('payWithTokensBtn');
+            
+            const hasEnoughBalance = userBalance >= cartTotalValue && cartTotalValue > 0;
+            
+            if (tokenOption) {
+                if (hasEnoughBalance) {
+                    tokenOption.classList.remove('opacity-50', 'cursor-not-allowed');
+                    const input = tokenOption.querySelector('input');
+                    if (input) input.disabled = false;
+                } else {
+                    tokenOption.classList.add('opacity-50', 'cursor-not-allowed');
+                    const input = tokenOption.querySelector('input');
+                    if (input) input.disabled = true;
+                }
+            }
+            
+            if (payWithTokensBtn) {
+                if (hasEnoughBalance) {
+                    payWithTokensBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    payWithTokensBtn.disabled = false;
+                } else {
+                    payWithTokensBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    payWithTokensBtn.disabled = true;
+                }
+            }
+        }
+
+        // ============================================
+        // Wallet Connection
+        // ============================================
+        function setupWalletListener() {
+            window.addEventListener('message', function(event) {
+                if (!event.origin.includes('wallettwo.com')) return;
+                if (!acceptMessages) return;
+
+                const data = event.data;
+                
+                if (data && (data.type === 'wallet_login' || data.event === 'wallet_login')) {
+                    const wallet = data.wallet || data.wlt || data.address;
+                    if (wallet) {
+                        if (data.code) {
+                            exchangeCode(data.code, wallet, data.user);
+                        } else {
+                            currentUser = { wallet: wallet, timestamp: Date.now() };
+                            saveSession(currentUser);
+                            onUserConnected();
+                        }
+                    }
+                }
+            });
+        }
+
+        async function exchangeCode(code, wallet, userId) {
+            try {
+                const response = await fetch('/api/wallettwo/exchange', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code })
+                });
+                
+                const data = await response.json();
+                
+                currentUser = {
+                    wallet: wallet,
+                    userId: userId || (data.user && data.user.sub),
+                    email: data.email || (data.user && data.user.email),
+                    firstName: data.firstName || (data.user && data.user.given_name),
+                    lastName: data.lastName || (data.user && data.user.family_name),
+                    name: data.name || (data.user && data.user.name),
+                    accessToken: data.access_token,
+                    timestamp: Date.now()
+                };
+                
+                saveSession(currentUser);
+                onUserConnected();
+            } catch (error) {
+                console.error('Exchange failed:', error);
+                currentUser = { wallet: wallet, timestamp: Date.now() };
+                saveSession(currentUser);
+                onUserConnected();
+            }
+        }
+
+        function showLoginModal(action) {
+            pendingAction = action || null;
+            const iframe = document.getElementById('loginWalletIframe');
+            if (CONFIG.WALLETTWO_COMPANY_ID) {
+                iframe.src = CONFIG.WALLETTWO_ORIGIN + '/auth/login?action=auth&iframe=true&companyId=' + CONFIG.WALLETTWO_COMPANY_ID;
+            }
+            document.getElementById('loginModal').classList.remove('hidden');
+        }
+
+        // ============================================
+        // Services
+        // ============================================
+        async function loadServices() {
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const servicesGrid = document.getElementById('servicesGrid');
+            
+            try {
+                const response = await fetch('/api/marketplace/services');
+                const data = await response.json();
+                
+                loadingState.classList.add('hidden');
+                
+                if (data.success && data.services && data.services.length > 0) {
+                    services = data.services.filter(function(s) { return s.is_active; });
+                    renderServices();
+                    servicesGrid.classList.remove('hidden');
+                } else {
+                    emptyState.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Failed to load services:', error);
+                loadingState.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            }
+        }
+
+        function renderServices() {
+            const grid = document.getElementById('servicesGrid');
+            let filtered;
+            
+            if (activeCategory === 'all') {
+                filtered = services;
+            } else {
+                filtered = services.filter(function(s) { return s.category === activeCategory; });
+            }
+            
+            if (filtered.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center py-12"><span class="material-symbols-outlined text-5xl text-slate-600 mb-3">search_off</span><p class="text-slate-500">No services in this category</p></div>';
+                return;
+            }
+            
+            grid.innerHTML = filtered.map(function(service) {
+                return '<div class="bg-surface border border-white/5 rounded-xl overflow-hidden card-hover cursor-pointer" onclick="openServiceModal(\'' + service.id + '\')">' +
+                    '<div class="relative">' +
+                        '<img src="' + (service.image_url || '/images/placeholder.jpg') + '" alt="' + service.name + '" class="w-full h-48 object-cover">' +
+                        (service.is_limited ? '<span class="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full badge-limited">Limited</span>' : '') +
+                        (service.is_featured ? '<span class="absolute top-3 left-3 bg-primary text-background-dark text-xs font-bold px-2 py-1 rounded-full">Featured</span>' : '') +
+                    '</div>' +
+                    '<div class="p-5">' +
+                        '<p class="text-primary text-xs font-bold uppercase tracking-widest mb-2">' + getCategoryLabel(service.category) + '</p>' +
+                        '<h3 class="font-serif text-lg text-white mb-2 line-clamp-1">' + service.name + '</h3>' +
+                        '<p class="text-slate-400 text-sm mb-4 line-clamp-2">' + (service.short_description || service.description || '') + '</p>' +
+                        '<div class="flex items-center justify-between">' +
+                            '<p class="text-xl font-serif text-primary">€' + service.price.toLocaleString() + '</p>' +
+                            (service.price_note ? '<p class="text-slate-500 text-xs">' + service.price_note + '</p>' : '') +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function getCategoryLabel(category) {
+            var labels = {
+                'accommodation': 'Accommodation',
+                'experiences': 'Experiences',
+                'dining': 'Dining',
+                'wellness': 'Wellness',
+                'transport': 'Transport',
+                'concierge': 'Concierge'
+            };
+            return labels[category] || category;
+        }
+
+        // ============================================
+        // Service Modal
+        // ============================================
+        function openServiceModal(serviceId) {
+            selectedService = services.find(function(s) { return s.id === serviceId; });
+            if (!selectedService) return;
+            
+            selectedQuantity = 1;
+            
+            document.getElementById('modalServiceImage').src = selectedService.image_url || '/images/placeholder.jpg';
+            document.getElementById('modalServiceCategory').textContent = getCategoryLabel(selectedService.category);
+            document.getElementById('modalServiceName').textContent = selectedService.name;
+            document.getElementById('modalServicePrice').textContent = selectedService.price.toLocaleString();
+            document.getElementById('modalServiceDescription').textContent = selectedService.description || '';
+            document.getElementById('modalPriceNote').textContent = selectedService.price_note || '';
+            
+            var locationEl = document.getElementById('modalServiceLocation');
+            if (selectedService.location) {
+                locationEl.querySelector('span:last-child').textContent = selectedService.location;
+                locationEl.classList.remove('hidden');
+            } else {
+                locationEl.classList.add('hidden');
+            }
+            
+            var badgesEl = document.getElementById('modalBadges');
+            var badges = '';
+            if (selectedService.is_limited) badges += '<span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">Limited</span>';
+            if (selectedService.is_featured) badges += '<span class="bg-primary text-background-dark text-xs font-bold px-2 py-1 rounded-full">Featured</span>';
+            badgesEl.innerHTML = badges;
+            
+            var featuresSection = document.getElementById('modalFeatures');
+            var featuresList = document.getElementById('modalFeaturesList');
+            if (selectedService.features && selectedService.features.length > 0) {
+                featuresList.innerHTML = selectedService.features.map(function(f) {
+                    return '<li class="flex items-center gap-2 text-slate-300 text-sm"><span class="material-symbols-outlined text-green-400 text-base">check_circle</span>' + f + '</li>';
+                }).join('');
+                featuresSection.classList.remove('hidden');
+            } else {
+                featuresSection.classList.add('hidden');
+            }
+            
+            var bookingSection = document.getElementById('modalBookingOptions');
+            var quantitySection = document.getElementById('modalQuantitySection');
+            if (selectedService.requires_booking) {
+                bookingSection.classList.remove('hidden');
+                quantitySection.classList.add('hidden');
+                var today = new Date().toISOString().split('T')[0];
+                document.getElementById('modalCheckIn').min = today;
+                document.getElementById('modalCheckOut').min = today;
+            } else {
+                bookingSection.classList.add('hidden');
+                quantitySection.classList.remove('hidden');
+            }
+            
+            document.getElementById('modalQty').textContent = selectedQuantity;
+            document.getElementById('serviceModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeServiceModal() {
+            document.getElementById('serviceModal').classList.add('hidden');
+            document.body.style.overflow = '';
+            selectedService = null;
+            selectedQuantity = 1;
+        }
+
+        // ============================================
+        // Cart Management
+        // ============================================
+        function loadCart() {
+            try {
+                var stored = localStorage.getItem(CONFIG.CART_KEY);
+                if (stored) {
+                    cart = JSON.parse(stored);
+                    updateCartUI();
+                }
+            } catch (e) {
+                cart = [];
+            }
+        }
+
+        function saveCart() {
+            localStorage.setItem(CONFIG.CART_KEY, JSON.stringify(cart));
+            updateCartUI();
+        }
+
+        function addToCart(service, quantity, options) {
+            quantity = quantity || 1;
+            options = options || {};
+            
+            var existingIndex = cart.findIndex(function(item) {
+                return item.serviceId === service.id && JSON.stringify(item.options) === JSON.stringify(options);
+            });
+            
+            if (existingIndex >= 0) {
+                cart[existingIndex].quantity += quantity;
+            } else {
+                cart.push({
+                    serviceId: service.id,
+                    name: service.name,
+                    price: service.price,
+                    image: service.image_url,
+                    category: service.category,
+                    quantity: quantity,
+                    options: options
+                });
+            }
+            
+            saveCart();
+            showCartNotification('Added to cart');
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            saveCart();
+        }
+
+        function updateCartItemQuantity(index, delta) {
+            cart[index].quantity += delta;
+            if (cart[index].quantity <= 0) {
+                removeFromCart(index);
+            } else {
+                saveCart();
+            }
+        }
+
+        function getCartTotal() {
+            return cart.reduce(function(sum, item) {
+                return sum + (item.price * item.quantity);
+            }, 0);
+        }
+
+        function updateCartUI() {
+            var countEl = document.getElementById('cartCount');
+            var totalItems = cart.reduce(function(sum, item) { return sum + item.quantity; }, 0);
+            
+            if (totalItems > 0) {
+                countEl.textContent = totalItems;
+                countEl.classList.remove('hidden');
+            } else {
+                countEl.classList.add('hidden');
+            }
+            
+            var cartEmpty = document.getElementById('cartEmpty');
+            var cartItemsList = document.getElementById('cartItemsList');
+            var cartFooter = document.getElementById('cartFooter');
+            
+            if (cart.length === 0) {
+                cartEmpty.classList.remove('hidden');
+                cartItemsList.classList.add('hidden');
+                cartFooter.classList.add('hidden');
+            } else {
+                cartEmpty.classList.add('hidden');
+                cartItemsList.classList.remove('hidden');
+                cartFooter.classList.remove('hidden');
+                
+                cartItemsList.innerHTML = cart.map(function(item, index) {
+                    return '<div class="flex gap-4 bg-background-dark rounded-xl p-4">' +
+                        '<img src="' + (item.image || '/images/placeholder.jpg') + '" alt="' + item.name + '" class="w-20 h-20 object-cover rounded-lg">' +
+                        '<div class="flex-1">' +
+                            '<h4 class="text-white font-medium mb-1">' + item.name + '</h4>' +
+                            '<p class="text-primary font-semibold">€' + item.price.toLocaleString() + '</p>' +
+                            (item.options && item.options.checkIn ? '<p class="text-slate-500 text-xs">' + item.options.checkIn + ' - ' + item.options.checkOut + '</p>' : '') +
+                            '<div class="flex items-center gap-2 mt-2">' +
+                                '<button onclick="updateCartItemQuantity(' + index + ', -1)" class="w-6 h-6 rounded bg-white/10 text-white hover:bg-white/20 flex items-center justify-center text-sm">-</button>' +
+                                '<span class="text-white text-sm w-6 text-center">' + item.quantity + '</span>' +
+                                '<button onclick="updateCartItemQuantity(' + index + ', 1)" class="w-6 h-6 rounded bg-white/10 text-white hover:bg-white/20 flex items-center justify-center text-sm">+</button>' +
+                                '<button onclick="removeFromCart(' + index + ')" class="ml-auto text-slate-500 hover:text-red-400 transition-colors"><span class="material-symbols-outlined text-lg">delete</span></button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+                
+                var total = getCartTotal();
+                document.getElementById('cartSubtotal').textContent = '€' + total.toLocaleString();
+                document.getElementById('cartTotal').textContent = '€' + total.toLocaleString();
+            }
+            
+            updateTokenPaymentOption();
+        }
+
+        function showCartNotification(message) {
+            var notification = document.createElement('div');
+            notification.className = 'fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2';
+            notification.innerHTML = '<span class="material-symbols-outlined">check_circle</span>' + message;
+            document.body.appendChild(notification);
+            
+            setTimeout(function() {
+                notification.classList.add('opacity-0', 'transition-opacity');
+                setTimeout(function() { notification.remove(); }, 300);
+            }, 2000);
+        }
+
+        function openCartSidebar() {
+            document.getElementById('cartSidebar').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCartSidebar() {
+            document.getElementById('cartSidebar').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        // ============================================
+        // Checkout
+        // ============================================
+        function startCheckout(paymentMethod) {
+            paymentMethod = paymentMethod || 'card';
+            
+            if (!currentUser) {
+                showLoginModal(function() { startCheckout(paymentMethod); });
+                return;
+            }
+            
+            if (cart.length === 0) {
+                alert('Your cart is empty');
+                return;
+            }
+            
+            closeCartSidebar();
+            
+            var checkoutItems = document.getElementById('checkoutItems');
+            checkoutItems.innerHTML = cart.map(function(item) {
+                return '<div class="flex justify-between text-sm"><span class="text-slate-400">' + item.name + ' x' + item.quantity + '</span><span class="text-white">€' + (item.price * item.quantity).toLocaleString() + '</span></div>';
+            }).join('');
+            
+            var total = getCartTotal();
+            document.getElementById('checkoutTotal').textContent = '€' + total.toLocaleString();
+            
+            if (currentUser.email) {
+                document.getElementById('checkoutEmail').value = currentUser.email;
+            }
+            
+            if (paymentMethod === 'tokens' && userBalance >= total) {
+                var tokenRadio = document.querySelector('input[name="paymentMethod"][value="tokens"]');
+                if (tokenRadio) tokenRadio.checked = true;
+                document.getElementById('cardElementContainer').classList.add('hidden');
+            } else {
+                var cardRadio = document.querySelector('input[name="paymentMethod"][value="card"]');
+                if (cardRadio) cardRadio.checked = true;
+                document.getElementById('cardElementContainer').classList.remove('hidden');
+                initStripeCard();
+            }
+            
+            document.getElementById('checkoutModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function initStripeCard() {
+            if (!stripe) return;
+            
+            if (cardElement) {
+                cardElement.destroy();
+            }
+            
+            var elements = stripe.elements();
+            cardElement = elements.create('card', {
+                style: {
+                    base: {
+                        color: '#ffffff',
+                        fontFamily: 'Manrope, sans-serif',
+                        fontSize: '16px',
+                        '::placeholder': { color: '#64748b' }
+                    },
+                    invalid: { color: '#ef4444' }
+                }
+            });
+            
+            cardElement.mount('#cardElement');
+            
+            cardElement.on('change', function(event) {
+                var errorEl = document.getElementById('cardError');
+                if (event.error) {
+                    errorEl.textContent = event.error.message;
+                    errorEl.classList.remove('hidden');
+                } else {
+                    errorEl.classList.add('hidden');
+                }
+            });
+        }
+
+        async function submitPayment() {
+            var submitBtn = document.getElementById('submitPayment');
+            var email = document.getElementById('checkoutEmail').value.trim();
+            var phone = document.getElementById('checkoutPhone').value.trim();
+            var notes = document.getElementById('checkoutNotes').value.trim();
+            var paymentMethodRadio = document.querySelector('input[name="paymentMethod"]:checked');
+            var paymentMethod = paymentMethodRadio ? paymentMethodRadio.value : 'card';
+            
+            if (!email) {
+                alert('Please enter your email address');
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> Processing...';
+            
+            try {
+                var total = getCartTotal();
+                
+                if (paymentMethod === 'tokens') {
+                    var response = await fetch('/api/marketplace/checkout/tokens', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            wallet: currentUser.wallet,
+                            email: email,
+                            phone: phone,
+                            notes: notes,
+                            items: cart,
+                            total: total
+                        })
+                    });
+                    
+                    var result = await response.json();
+                    
+                    if (result.success) {
+                        onPaymentSuccess(result.orderId);
+                    } else {
+                        throw new Error(result.error || 'Payment failed');
+                    }
+                } else {
+                    var intentResponse = await fetch('/api/marketplace/checkout/create-intent', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            wallet: currentUser.wallet,
+                            email: email,
+                            phone: phone,
+                            notes: notes,
+                            items: cart,
+                            total: total
+                        })
+                    });
+                    
+                    var intentData = await intentResponse.json();
+                    
+                    if (!intentData.success) {
+                        throw new Error(intentData.error || 'Failed to create payment');
+                    }
+                    
+                    var stripeResult = await stripe.confirmCardPayment(intentData.clientSecret, {
+                        payment_method: {
+                            card: cardElement,
+                            billing_details: { email: email }
+                        }
+                    });
+                    
+                    if (stripeResult.error) {
+                        throw new Error(stripeResult.error.message);
+                    }
+                    
+                    if (stripeResult.paymentIntent.status === 'succeeded') {
+                        onPaymentSuccess(intentData.orderId);
+                    } else {
+                        throw new Error('Payment was not completed');
+                    }
+                }
+            } catch (error) {
+                console.error('Payment error:', error);
+                alert(error.message || 'Payment failed. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span class="material-symbols-outlined">lock</span> Complete Purchase';
+            }
+        }
+
+        function onPaymentSuccess(orderId) {
+            cart = [];
+            saveCart();
+            
+            document.getElementById('checkoutModal').classList.add('hidden');
+            
+            document.getElementById('successOrderId').textContent = orderId;
+            document.getElementById('successModal').classList.remove('hidden');
+            
+            if (currentUser && currentUser.wallet) {
+                fetchUserBalance(currentUser.wallet);
+            }
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        // ============================================
+        // Event Listeners
+        // ============================================
+        function setupEventListeners() {
+            // Mobile menu
+            var mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    document.getElementById('mobileMenu').classList.toggle('hidden');
+                });
+            }
+            
+            // Cart button
+            var cartBtn = document.getElementById('cartBtn');
+            if (cartBtn) cartBtn.addEventListener('click', openCartSidebar);
+            
+            var closeCartBtn = document.getElementById('closeCart');
+            if (closeCartBtn) closeCartBtn.addEventListener('click', closeCartSidebar);
+            
+            var cartOverlay = document.getElementById('cartOverlay');
+            if (cartOverlay) cartOverlay.addEventListener('click', closeCartSidebar);
+            
+            // Category filters
+            document.querySelectorAll('.category-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.category-btn').forEach(function(b) { b.classList.remove('active'); });
+                    btn.classList.add('active');
+                    activeCategory = btn.dataset.category;
+                    renderServices();
+                });
+            });
+            
+            // Service modal
+            var closeServiceModalBtn = document.getElementById('closeServiceModal');
+            if (closeServiceModalBtn) closeServiceModalBtn.addEventListener('click', closeServiceModal);
+            
+            var serviceModalOverlay = document.getElementById('serviceModalOverlay');
+            if (serviceModalOverlay) serviceModalOverlay.addEventListener('click', closeServiceModal);
+            
+            // Quantity controls
+            var qtyMinus = document.getElementById('modalQtyMinus');
+            if (qtyMinus) {
+                qtyMinus.addEventListener('click', function() {
+                    if (selectedQuantity > 1) {
+                        selectedQuantity--;
+                        document.getElementById('modalQty').textContent = selectedQuantity;
+                    }
+                });
+            }
+            
+            var qtyPlus = document.getElementById('modalQtyPlus');
+            if (qtyPlus) {
+                qtyPlus.addEventListener('click', function() {
+                    selectedQuantity++;
+                    document.getElementById('modalQty').textContent = selectedQuantity;
+                });
+            }
+            
+            // Add to cart from modal
+            var addToCartBtn = document.getElementById('modalAddToCart');
+            if (addToCartBtn) {
+                addToCartBtn.addEventListener('click', function() {
+                    if (!selectedService) return;
+                    
+                    var options = {};
+                    if (selectedService.requires_booking) {
+                        var checkIn = document.getElementById('modalCheckIn').value;
+                        var checkOut = document.getElementById('modalCheckOut').value;
+                        if (!checkIn || !checkOut) {
+                            alert('Please select check-in and check-out dates');
+                            return;
+                        }
+                        options = { checkIn: checkIn, checkOut: checkOut };
+                    }
+                    
+                    addToCart(selectedService, selectedQuantity, options);
+                    closeServiceModal();
+                });
+            }
+            
+            // Buy now from modal
+            var buyNowBtn = document.getElementById('modalBuyNow');
+            if (buyNowBtn) {
+                buyNowBtn.addEventListener('click', function() {
+                    if (!selectedService) return;
+                    
+                    var options = {};
+                    if (selectedService.requires_booking) {
+                        var checkIn = document.getElementById('modalCheckIn').value;
+                        var checkOut = document.getElementById('modalCheckOut').value;
+                        if (!checkIn || !checkOut) {
+                            alert('Please select check-in and check-out dates');
+                            return;
+                        }
+                        options = { checkIn: checkIn, checkOut: checkOut };
+                    }
+                    
+                    addToCart(selectedService, selectedQuantity, options);
+                    closeServiceModal();
+                    startCheckout();
+                });
+            }
+            
+            // Cart payment buttons
+            var payWithTokensBtn = document.getElementById('payWithTokensBtn');
+            if (payWithTokensBtn) {
+                payWithTokensBtn.addEventListener('click', function() { startCheckout('tokens'); });
+            }
+            
+            var payWithStripeBtn = document.getElementById('payWithStripeBtn');
+            if (payWithStripeBtn) {
+                payWithStripeBtn.addEventListener('click', function() { startCheckout('card'); });
+            }
+            
+            // Login modal
+            var closeLoginModalBtn = document.getElementById('closeLoginModal');
+            if (closeLoginModalBtn) {
+                closeLoginModalBtn.addEventListener('click', function() {
+                    document.getElementById('loginModal').classList.add('hidden');
+                    pendingAction = null;
+                });
+            }
+            
+            var loginModalOverlay = document.getElementById('loginModalOverlay');
+            if (loginModalOverlay) {
+                loginModalOverlay.addEventListener('click', function() {
+                    document.getElementById('loginModal').classList.add('hidden');
+                    pendingAction = null;
+                });
+            }
+            
+            // Checkout modal
+            var closeCheckoutModalBtn = document.getElementById('closeCheckoutModal');
+            if (closeCheckoutModalBtn) {
+                closeCheckoutModalBtn.addEventListener('click', function() {
+                    document.getElementById('checkoutModal').classList.add('hidden');
+                    document.body.style.overflow = '';
+                });
+            }
+            
+            var checkoutModalOverlay = document.getElementById('checkoutModalOverlay');
+            if (checkoutModalOverlay) {
+                checkoutModalOverlay.addEventListener('click', function() {
+                    document.getElementById('checkoutModal').classList.add('hidden');
+                    document.body.style.overflow = '';
+                });
+            }
+            
+            // Payment method toggle
+            document.querySelectorAll('input[name="paymentMethod"]').forEach(function(radio) {
+                radio.addEventListener('change', function(e) {
+                    if (e.target.value === 'card') {
+                        document.getElementById('cardElementContainer').classList.remove('hidden');
+                        initStripeCard();
+                    } else {
+                        document.getElementById('cardElementContainer').classList.add('hidden');
+                    }
+                });
+            });
+            
+            // Submit payment
+            var submitPaymentBtn = document.getElementById('submitPayment');
+            if (submitPaymentBtn) {
+                submitPaymentBtn.addEventListener('click', submitPayment);
+            }
+            
+            // Booking date change
+            var checkInInput = document.getElementById('modalCheckIn');
+            if (checkInInput) checkInInput.addEventListener('change', updateBookingTotal);
+            
+            var checkOutInput = document.getElementById('modalCheckOut');
+            if (checkOutInput) checkOutInput.addEventListener('change', updateBookingTotal);
+        }
+
+        function updateBookingTotal() {
+            var checkIn = document.getElementById('modalCheckIn').value;
+            var checkOut = document.getElementById('modalCheckOut').value;
+            var totalEl = document.getElementById('modalBookingTotal');
+            
+            if (checkIn && checkOut && selectedService) {
+                var days = Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
+                if (days > 0) {
+                    var total = days * selectedService.price;
+                    totalEl.querySelector('span').textContent = total.toLocaleString();
+                    totalEl.classList.remove('hidden');
+                    
+                    document.getElementById('modalServicePrice').textContent = total.toLocaleString();
+                    document.getElementById('modalPriceNote').textContent = days + ' night' + (days > 1 ? 's' : '') + ' × €' + selectedService.price.toLocaleString();
+                } else {
+                    totalEl.classList.add('hidden');
+                }
+            } else {
+                totalEl.classList.add('hidden');
+            }
+        }
+
+        // Initialize
+        init();
+    </script>
+    <iframe id="walletTwoLogoutIframe" style="display:none;"></iframe>
+</body>
+</html>

@@ -58,6 +58,13 @@
             font-size: 20px;
         }
         
+        /* Status badges */
+        .status-pending { background: rgba(234, 179, 8, 0.2); color: #fbbf24; }
+        .status-confirmed { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .status-completed { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .status-cancelled { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .status-refunded { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+        
         /* Scrollbar styling */
         ::-webkit-scrollbar {
             height: 6px;
@@ -72,6 +79,12 @@
         }
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(255,255,255,0.3);
+        }
+        
+        /* Modal */
+        .modal-backdrop {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
         }
     </style>
 </head>
@@ -112,25 +125,33 @@
         <nav class="fixed top-16 left-0 right-0 z-40 border-b border-white/10" style="backdrop-filter: blur(12px); background-color: rgba(20, 20, 20, 0.95);">
             <div class="w-full px-4 sm:px-6">
                 <div class="flex items-center justify-center gap-1 sm:gap-2 py-3 overflow-x-auto">
-                    <button data-tab="claims" class="nav-tab active flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
-                        <span class="material-symbols-outlined">how_to_reg</span>
-                        <span class="hidden sm:inline">Claims</span>
+                    <button data-tab="overview" class="nav-tab active flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <span class="hidden sm:inline">Overview</span>
                     </button>
-                    <button data-tab="questionnaire" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
-                        <span class="material-symbols-outlined">quiz</span>
-                        <span class="hidden sm:inline">Questionnaire</span>
+                    <button data-tab="orders" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
+                        <span class="material-symbols-outlined">receipt_long</span>
+                        <span class="hidden sm:inline">Orders</span>
                     </button>
-                    <button data-tab="presale" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
-                        <span class="material-symbols-outlined">shopping_cart</span>
-                        <span class="hidden sm:inline">Sale</span>
+                    <button data-tab="marketplace" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
+                        <span class="material-symbols-outlined">storefront</span>
+                        <span class="hidden sm:inline">Marketplace</span>
+                    </button>
+                    <button data-tab="memberships" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
+                        <span class="material-symbols-outlined">card_membership</span>
+                        <span class="hidden sm:inline">Memberships</span>
+                    </button>
+                    <button data-tab="members" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
+                        <span class="material-symbols-outlined">group</span>
+                        <span class="hidden sm:inline">Members</span>
+                    </button>
+                    <button data-tab="vouchers" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
+                        <span class="material-symbols-outlined">confirmation_number</span>
+                        <span class="hidden sm:inline">Vouchers</span>
                     </button>
                     <button data-tab="referrals" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
                         <span class="material-symbols-outlined">share</span>
                         <span class="hidden sm:inline">Referrals</span>
-                    </button>
-                    <button data-tab="manual-mint" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
-                        <span class="material-symbols-outlined">token</span>
-                        <span class="hidden sm:inline">Manual Mint</span>
                     </button>
                     <button data-tab="admins" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all">
                         <span class="material-symbols-outlined">admin_panel_settings</span>
@@ -147,163 +168,377 @@
         <!-- Main Content -->
         <main class="w-full px-6 py-8" style="padding-top: 140px;">
             
-            <!-- Claims Panel -->
-            <div data-panel="claims">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                    <h2 class="text-2xl font-bold">Claims / Registrants</h2>
-                    <div class="flex gap-2">
-                        <button onclick="Claims.fullSync()" id="fullSyncBtn" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                            <span class="flex items-center gap-2">
-                                <span class="material-symbols-outlined text-lg">sync</span>
-                                Full Sync
-                            </span>
-                        </button>
-                        <button onclick="Claims.exportCSV()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                            <span class="flex items-center gap-2">
-                                <span class="material-symbols-outlined text-lg">download</span>
-                                Export CSV
-                            </span>
-                        </button>
-                    </div>
-                </div>
+            <!-- Overview Panel -->
+            <div data-panel="overview">
+                <h2 class="text-2xl font-bold mb-6">Dashboard Overview</h2>
                 
-                <!-- Stats -->
+                <!-- Quick Stats -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold" id="totalRegistrants">-</div>
-                        <div class="text-sm text-gray-400 mt-1">Total Registrants</div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="material-symbols-outlined text-primary">euro</span>
+                            <span class="text-xs text-green-400">+12%</span>
+                        </div>
+                        <div class="text-3xl font-bold" id="totalRevenue">€0</div>
+                        <div class="text-sm text-gray-400 mt-1">Total Revenue</div>
                     </div>
                     <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold text-green-400" id="mintedCount">-</div>
-                        <div class="text-sm text-gray-400 mt-1">Minted</div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="material-symbols-outlined text-blue-400">shopping_cart</span>
+                            <span class="text-xs text-yellow-400" id="pendingOrdersBadge">0 pending</span>
+                        </div>
+                        <div class="text-3xl font-bold" id="totalOrders">0</div>
+                        <div class="text-sm text-gray-400 mt-1">Total Orders</div>
                     </div>
                     <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold text-yellow-400" id="pendingCount">-</div>
-                        <div class="text-sm text-gray-400 mt-1">Pending</div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="material-symbols-outlined text-green-400">group</span>
+                        </div>
+                        <div class="text-3xl font-bold" id="totalMembers">0</div>
+                        <div class="text-sm text-gray-400 mt-1">Active Members</div>
                     </div>
                     <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold text-blue-400" id="withBalanceCount">-</div>
-                        <div class="text-sm text-gray-400 mt-1">With Balance</div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="material-symbols-outlined text-purple-400">confirmation_number</span>
+                        </div>
+                        <div class="text-3xl font-bold" id="activeVouchers">0</div>
+                        <div class="text-sm text-gray-400 mt-1">Active Vouchers</div>
                     </div>
                 </div>
                 
-                <!-- Table -->
-                <div class="glass rounded-xl overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-800/50">
-                                <tr>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Email</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Wallet</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Status</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">TX Hash</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Registered</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="claimsTableBody"></tbody>
-                        </table>
+                <!-- Two Column Layout -->
+                <div class="grid lg:grid-cols-2 gap-6">
+                    <!-- Recent Orders -->
+                    <div class="glass rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-lg flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary">receipt_long</span>
+                                Recent Orders
+                            </h3>
+                            <a href="#" data-goto="orders" class="text-primary text-sm hover:text-primary-light">View All</a>
+                        </div>
+                        <div id="recentOrdersList" class="space-y-3">
+                            <p class="text-gray-500 text-sm">Loading...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Memberships -->
+                    <div class="glass rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-lg flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary">card_membership</span>
+                                Recent Memberships
+                            </h3>
+                            <a href="#" data-goto="memberships" class="text-primary text-sm hover:text-primary-light">View All</a>
+                        </div>
+                        <div id="recentMembershipsList" class="space-y-3">
+                            <p class="text-gray-500 text-sm">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Revenue Chart Placeholder -->
+                <div class="glass rounded-xl p-6 mt-6">
+                    <h3 class="font-semibold text-lg mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">trending_up</span>
+                        Revenue Overview
+                    </h3>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="bg-gray-800/50 rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-primary" id="revenueToday">€0</div>
+                            <div class="text-gray-500 text-sm mt-1">Today</div>
+                        </div>
+                        <div class="bg-gray-800/50 rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-blue-400" id="revenueWeek">€0</div>
+                            <div class="text-gray-500 text-sm mt-1">This Week</div>
+                        </div>
+                        <div class="bg-gray-800/50 rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-green-400" id="revenueMonth">€0</div>
+                            <div class="text-gray-500 text-sm mt-1">This Month</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Questionnaire Panel -->
-            <div data-panel="questionnaire" class="hidden">
+            <!-- Orders Panel -->
+            <div data-panel="orders" class="hidden">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                    <h2 class="text-2xl font-bold">Questionnaire Responses</h2>
+                    <h2 class="text-2xl font-bold">Marketplace Orders</h2>
                     <div class="flex gap-2">
-                        <button onclick="Questionnaire.load()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                            <span class="flex items-center gap-2">
-                                <span class="material-symbols-outlined text-lg">refresh</span>
-                                Refresh
-                            </span>
-                        </button>
-                        <button onclick="Questionnaire.exportCSV()" class="bg-primary hover:bg-primary-light hover:text-black px-4 py-2 rounded-lg text-sm font-medium text-black transition-colors">
+                        <select id="orderStatusFilter" onchange="Orders.filter()" class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm">
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="refunded">Refunded</option>
+                        </select>
+                        <button onclick="Orders.export()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                             <span class="flex items-center gap-2">
                                 <span class="material-symbols-outlined text-lg">download</span>
-                                Export CSV
+                                Export
                             </span>
                         </button>
                     </div>
                 </div>
                 
-                <!-- Stats -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold text-primary" id="qTotalResponses">-</div>
-                        <div class="text-sm text-gray-400 mt-1">Total Responses</div>
+                <!-- Order Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                    <div class="glass rounded-xl p-4">
+                        <div class="text-2xl font-bold" id="ordersTotal">0</div>
+                        <div class="text-sm text-gray-400">Total</div>
                     </div>
-                    <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold text-green-400" id="qPropertyOwners">-</div>
-                        <div class="text-sm text-gray-400 mt-1">Property Owners</div>
+                    <div class="glass rounded-xl p-4">
+                        <div class="text-2xl font-bold text-yellow-400" id="ordersPending">0</div>
+                        <div class="text-sm text-gray-400">Pending</div>
                     </div>
-                    <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold text-blue-400" id="qMembersClub">-</div>
-                        <div class="text-sm text-gray-400 mt-1">Interested in Members Club</div>
+                    <div class="glass rounded-xl p-4">
+                        <div class="text-2xl font-bold text-blue-400" id="ordersConfirmed">0</div>
+                        <div class="text-sm text-gray-400">Confirmed</div>
                     </div>
-                    <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold text-yellow-400" id="qBoatOwners">-</div>
-                        <div class="text-sm text-gray-400 mt-1">Boat Owners</div>
+                    <div class="glass rounded-xl p-4">
+                        <div class="text-2xl font-bold text-green-400" id="ordersCompleted">0</div>
+                        <div class="text-sm text-gray-400">Completed</div>
+                    </div>
+                    <div class="glass rounded-xl p-4">
+                        <div class="text-2xl font-bold text-red-400" id="ordersCancelled">0</div>
+                        <div class="text-sm text-gray-400">Cancelled</div>
                     </div>
                 </div>
                 
-                <!-- Table -->
+                <!-- Orders Table -->
                 <div class="glass rounded-xl overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead class="bg-gray-800/50">
                                 <tr>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Wallet</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Email</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Property Owner</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Location</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Members Club</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Boat Owner</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Date</th>
-                                </tr>
-                            </thead>
-                            <tbody id="questionnaireTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Presale Panel -->
-            <div data-panel="presale" class="hidden">
-                <h2 class="text-2xl font-bold mb-6">Sale Management</h2>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold text-primary" id="presaleEurRaised">-</div>
-                        <div class="text-sm text-gray-400 mt-1">EUR Raised</div>
-                    </div>
-                    <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold" id="presaleTokensSold">-</div>
-                        <div class="text-sm text-gray-400 mt-1">Tokens Sold</div>
-                    </div>
-                    <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold" id="presaleTotalPurchases">-</div>
-                        <div class="text-sm text-gray-400 mt-1">Purchases</div>
-                    </div>
-                    <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold text-yellow-400" id="presalePendingMint">-</div>
-                        <div class="text-sm text-gray-400 mt-1">Pending Mint</div>
-                    </div>
-                </div>
-                <div class="glass rounded-xl overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-800/50">
-                                <tr>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Wallet</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Tokens</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Amount</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Method</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Order #</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Customer</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Items</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Total</th>
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Status</th>
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Date</th>
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="presaleTableBody"></tbody>
+                            <tbody id="ordersTableBody">
+                                <tr><td colspan="7" class="py-8 text-center text-gray-500">Loading orders...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Marketplace Panel -->
+            <div data-panel="marketplace" class="hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold">Marketplace Services</h2>
+                    <button onclick="Marketplace.openAddModal()" class="bg-primary hover:bg-primary-light hover:text-black px-4 py-2 rounded-lg text-sm font-medium text-black transition-colors">
+                        <span class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-lg">add</span>
+                            Add Service
+                        </span>
+                    </button>
+                </div>
+                
+                <!-- Category Filter -->
+                <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+                    <button onclick="Marketplace.filterCategory('all')" data-category="all" class="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-black">All</button>
+                    <button onclick="Marketplace.filterCategory('accommodation')" data-category="accommodation" class="px-4 py-2 rounded-lg text-sm font-medium bg-gray-700 hover:bg-gray-600">Accommodation</button>
+                    <button onclick="Marketplace.filterCategory('experiences')" data-category="experiences" class="px-4 py-2 rounded-lg text-sm font-medium bg-gray-700 hover:bg-gray-600">Experiences</button>
+                    <button onclick="Marketplace.filterCategory('dining')" data-category="dining" class="px-4 py-2 rounded-lg text-sm font-medium bg-gray-700 hover:bg-gray-600">Dining</button>
+                    <button onclick="Marketplace.filterCategory('wellness')" data-category="wellness" class="px-4 py-2 rounded-lg text-sm font-medium bg-gray-700 hover:bg-gray-600">Wellness</button>
+                    <button onclick="Marketplace.filterCategory('transport')" data-category="transport" class="px-4 py-2 rounded-lg text-sm font-medium bg-gray-700 hover:bg-gray-600">Transport</button>
+                </div>
+                
+                <!-- Services Grid -->
+                <div id="servicesGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <p class="text-gray-500 col-span-full text-center py-8">Loading services...</p>
+                </div>
+            </div>
+
+            <!-- Memberships Panel -->
+            <div data-panel="memberships" class="hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold">Membership Purchases</h2>
+                    <div class="flex gap-2">
+                        <select id="membershipStatusFilter" onchange="Memberships.filter()" class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm">
+                            <option value="all">All Status</option>
+                            <option value="completed">Completed</option>
+                            <option value="pending">Pending</option>
+                            <option value="failed">Failed</option>
+                        </select>
+                        <button onclick="Memberships.export()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <span class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-lg">download</span>
+                                Export
+                            </span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Membership Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-primary" id="membershipRevenue">€0</div>
+                        <div class="text-sm text-gray-400 mt-1">Total Revenue</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold" id="membershipSilver">0</div>
+                        <div class="text-sm text-gray-400 mt-1">Silver Packages</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-yellow-400" id="membershipGold">0</div>
+                        <div class="text-sm text-gray-400 mt-1">Gold Packages</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-purple-400" id="membershipPlatinum">0</div>
+                        <div class="text-sm text-gray-400 mt-1">Platinum Packages</div>
+                    </div>
+                </div>
+                
+                <!-- Memberships Table -->
+                <div class="glass rounded-xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-800/50">
+                                <tr>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Order #</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Member</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Package</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Amount Paid</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Buying Power</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Status</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="membershipsTableBody">
+                                <tr><td colspan="7" class="py-8 text-center text-gray-500">Loading memberships...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Members Panel -->
+            <div data-panel="members" class="hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold">Member Management</h2>
+                    <div class="flex gap-2">
+                        <input type="text" id="memberSearch" placeholder="Search by email or name..." 
+                               class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm w-64"
+                               oninput="Members.search()">
+                        <button onclick="Members.export()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <span class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-lg">download</span>
+                                Export
+                            </span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Members Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold" id="membersTotal">0</div>
+                        <div class="text-sm text-gray-400 mt-1">Total Members</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-green-400" id="membersWithBalance">0</div>
+                        <div class="text-sm text-gray-400 mt-1">With Buying Power</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-primary" id="totalBuyingPower">€0</div>
+                        <div class="text-sm text-gray-400 mt-1">Total Buying Power</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-blue-400" id="membersThisMonth">0</div>
+                        <div class="text-sm text-gray-400 mt-1">New This Month</div>
+                    </div>
+                </div>
+                
+                <!-- Members Table -->
+                <div class="glass rounded-xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-800/50">
+                                <tr>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Member</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Email</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Buying Power</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Total Spent</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Orders</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Joined</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="membersTableBody">
+                                <tr><td colspan="7" class="py-8 text-center text-gray-500">Loading members...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vouchers Panel -->
+            <div data-panel="vouchers" class="hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold">Voucher Management</h2>
+                    <div class="flex gap-2">
+                        <select id="voucherStatusFilter" onchange="Vouchers.filter()" class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm">
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="redeemed">Redeemed</option>
+                            <option value="expired">Expired</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <button onclick="Vouchers.export()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <span class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-lg">download</span>
+                                Export
+                            </span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Voucher Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold" id="vouchersTotal">0</div>
+                        <div class="text-sm text-gray-400 mt-1">Total Issued</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-green-400" id="vouchersActive">0</div>
+                        <div class="text-sm text-gray-400 mt-1">Active</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-blue-400" id="vouchersRedeemed">0</div>
+                        <div class="text-sm text-gray-400 mt-1">Redeemed</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-primary" id="vouchersValue">€0</div>
+                        <div class="text-sm text-gray-400 mt-1">Total Value</div>
+                    </div>
+                </div>
+                
+                <!-- Vouchers Table -->
+                <div class="glass rounded-xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-800/50">
+                                <tr>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Code</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Service</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Member</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Value</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Status</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Valid Until</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vouchersTableBody">
+                                <tr><td colspan="7" class="py-8 text-center text-gray-500">Loading vouchers...</td></tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -312,7 +547,7 @@
             <!-- Referrals Panel -->
             <div data-panel="referrals" class="hidden">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                    <h2 class="text-2xl font-bold">Referral Management</h2>
+                    <h2 class="text-2xl font-bold">Referral Program</h2>
                     <div class="flex gap-2">
                         <button onclick="Referrals.load()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                             <span class="flex items-center gap-2">
@@ -323,7 +558,7 @@
                         <button onclick="Referrals.exportCodesCSV()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                             <span class="flex items-center gap-2">
                                 <span class="material-symbols-outlined text-lg">download</span>
-                                Export Codes
+                                Export
                             </span>
                         </button>
                     </div>
@@ -332,19 +567,19 @@
                 <!-- Stats -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold text-primary" id="refTotalCodes">-</div>
+                        <div class="text-3xl font-bold text-primary" id="refTotalCodes">0</div>
                         <div class="text-sm text-gray-400 mt-1">Total Codes</div>
                     </div>
                     <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold text-green-400" id="refActiveCodes">-</div>
+                        <div class="text-3xl font-bold text-green-400" id="refActiveCodes">0</div>
                         <div class="text-sm text-gray-400 mt-1">Active Codes</div>
                     </div>
                     <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold" id="refTotalReferrals">-</div>
+                        <div class="text-3xl font-bold" id="refTotalReferrals">0</div>
                         <div class="text-sm text-gray-400 mt-1">Total Referrals</div>
                     </div>
                     <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold text-blue-400" id="refTotalBonus">-</div>
+                        <div class="text-3xl font-bold text-blue-400" id="refTotalBonus">€0</div>
                         <div class="text-sm text-gray-400 mt-1">Total Bonus Paid</div>
                     </div>
                 </div>
@@ -361,7 +596,7 @@
                         <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg">
                             <div>
                                 <p class="font-medium">Referral Program Enabled</p>
-                                <p class="text-gray-500 text-sm">Allow users to generate and share referral codes</p>
+                                <p class="text-gray-500 text-sm">Allow members to generate and share referral codes</p>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="refEnabled" class="sr-only peer" onchange="Referrals.settingsChanged()">
@@ -369,15 +604,16 @@
                             </label>
                         </div>
                         
-                        <!-- Signup Bonus -->
+                        <!-- Membership Bonus -->
                         <div class="p-4 bg-gray-800/50 rounded-lg">
-                            <p class="font-medium mb-4">Signup/Claim Bonus (when referee claims tokens)</p>
+                            <p class="font-medium mb-4">Membership Purchase Bonus</p>
+                            <p class="text-gray-500 text-sm mb-4">Bonus credited to referrer when referee purchases a membership package</p>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-gray-400 text-sm block mb-2">Bonus Type</label>
                                     <select id="refBonusType" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" onchange="Referrals.updateExplanations()">
-                                        <option value="percentage">Percentage (%)</option>
-                                        <option value="fixed">Fixed (VIP tokens)</option>
+                                        <option value="percentage">Percentage of Purchase (%)</option>
+                                        <option value="fixed">Fixed Amount (€)</option>
                                     </select>
                                 </div>
                                 <div>
@@ -385,33 +621,7 @@
                                     <input type="number" id="refBonusAmount" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="5" step="0.01" min="0" oninput="Referrals.updateExplanations()">
                                 </div>
                             </div>
-                            <p id="refBonusExplanation" class="text-gray-500 text-sm mt-2">Referrer receives 5% of referee's claim amount</p>
-                        </div>
-                        
-                        <!-- Presale Bonus -->
-                        <div class="p-4 bg-gray-800/50 rounded-lg">
-                            <p class="font-medium mb-4">Sale Purchase Bonus (when referee buys tokens)</p>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-gray-400 text-sm block mb-2">Bonus Type</label>
-                                    <select id="refPresaleBonusType" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" onchange="Referrals.updateExplanations()">
-                                        <option value="percentage">Percentage (%)</option>
-                                        <option value="fixed">Fixed (VIP tokens)</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="text-gray-400 text-sm block mb-2">Bonus Amount</label>
-                                    <input type="number" id="refPresaleBonusAmount" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="5" step="0.01" min="0" oninput="Referrals.updateExplanations()">
-                                </div>
-                            </div>
-                            <p id="refPresaleBonusExplanation" class="text-gray-500 text-sm mt-2">Referrer receives 5% of referee's purchase in VIP tokens</p>
-                        </div>
-                        
-                        <!-- Minimum Purchase -->
-                        <div>
-                            <label class="text-gray-400 text-sm block mb-2">Minimum Purchase for Presale Bonus (EUR)</label>
-                            <input type="number" id="refMinPurchase" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="10" step="1" min="0">
-                            <p class="text-gray-500 text-xs mt-1">Referee must spend at least this amount for referrer to earn presale bonus</p>
+                            <p id="refBonusExplanation" class="text-gray-500 text-sm mt-2">Referrer receives 5% of referee's membership purchase as buying power</p>
                         </div>
                         
                         <!-- Save Button -->
@@ -439,7 +649,7 @@
                             <thead class="bg-gray-800/50">
                                 <tr>
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Code</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Owner Wallet</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Owner</th>
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Referrals</th>
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Bonus Earned</th>
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Status</th>
@@ -447,7 +657,9 @@
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="referralCodesBody"></tbody>
+                            <tbody id="referralCodesBody">
+                                <tr><td colspan="7" class="py-8 text-center text-gray-500">Loading referral codes...</td></tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -469,87 +681,10 @@
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Date</th>
                                 </tr>
                             </thead>
-                            <tbody id="referralActivityBody"></tbody>
+                            <tbody id="referralActivityBody">
+                                <tr><td colspan="6" class="py-8 text-center text-gray-500">Loading activity...</td></tr>
+                            </tbody>
                         </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Manual Mint Panel -->
-            <div data-panel="manual-mint" class="hidden">
-                <h2 class="text-2xl font-bold mb-6">Manual Mint</h2>
-                <div class="grid md:grid-cols-2 gap-6">
-                    <!-- Claim Mint -->
-                    <div class="glass rounded-xl p-6">
-                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary">verified</span>
-                            Mint Claim Tokens
-                        </h3>
-                        <p class="text-gray-500 text-sm mb-4">Mint the standard claim amount (from settings) to a wallet</p>
-                        <input type="text" id="manualMintAddress" placeholder="0x..." 
-                               class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 mb-4 outline-none transition-colors">
-                        <button onclick="ManualMint.mintClaim()" id="manualMintBtn"
-                                class="w-full bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-3 font-medium transition-colors">
-                            <span class="flex items-center justify-center gap-2">
-                                <span class="material-symbols-outlined">token</span>
-                                Mint Claim Tokens
-                            </span>
-                        </button>
-                        <div id="manualMintResult" class="mt-4"></div>
-                    </div>
-                    
-                    <!-- Presale Mint -->
-                    <div class="glass rounded-xl p-6">
-                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary">payments</span>
-                            Sale Manual Mint
-                        </h3>
-                        <p class="text-gray-500 text-sm mb-4">Record a manual presale purchase and mint tokens</p>
-                        <form id="manual-mint-form" onsubmit="ManualMint.submit(event)">
-                            <input type="text" id="mint-wallet" placeholder="0x..." 
-                                   class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 mb-4 outline-none transition-colors" required>
-                            <input type="number" id="mint-eur" placeholder="EUR Amount" 
-                                   oninput="ManualMint.updateSummary()"
-                                   class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 mb-4 outline-none transition-colors" min="1" step="0.01" required>
-                            
-                            <!-- Summary -->
-                            <div class="p-3 bg-gray-800/50 rounded-lg mb-4 text-sm">
-                                <div class="flex justify-between mb-1">
-                                    <span class="text-gray-400">Amount:</span>
-                                    <span id="summary-eur" class="text-white">€0.00</span>
-                                </div>
-                                <div class="flex justify-between mb-1">
-                                    <span class="text-gray-400">Fee (1%):</span>
-                                    <span id="summary-fee" class="text-gray-400">€0.00</span>
-                                </div>
-                                <div class="flex justify-between font-semibold">
-                                    <span class="text-gray-400">Tokens:</span>
-                                    <span id="summary-tokens" class="text-primary">0.00 VIP</span>
-                                </div>
-                            </div>
-                            
-                            <div id="mint-error" class="hidden text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg"></div>
-                            <div id="mint-success" class="hidden text-green-400 text-sm mb-4 p-3 bg-green-500/10 rounded-lg"></div>
-                            
-                            <button type="submit" id="mint-submit-btn"
-                                    class="w-full bg-green-600 hover:bg-green-700 rounded-lg px-4 py-3 font-medium transition-colors">
-                                <span class="flex items-center justify-center gap-2">
-                                    <span class="material-symbols-outlined">shopping_cart</span>
-                                    Mint Presale Tokens
-                                </span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-                
-                <!-- Recent Manual Mints -->
-                <div class="glass rounded-xl p-6 mt-6">
-                    <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary">history</span>
-                        Recent Manual Mints
-                    </h3>
-                    <div id="manual-mints-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <p class="text-gray-500 text-sm col-span-full">Loading...</p>
                     </div>
                 </div>
             </div>
@@ -589,7 +724,9 @@
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="adminsTableBody"></tbody>
+                            <tbody id="adminsTableBody">
+                                <tr><td colspan="5" class="py-8 text-center text-gray-500">Loading admins...</td></tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -597,87 +734,65 @@
 
             <!-- Settings Panel -->
             <div data-panel="settings" class="hidden">
-                <h2 class="text-2xl font-bold mb-6">Settings</h2>
+                <h2 class="text-2xl font-bold mb-6">System Settings</h2>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     
-                    <!-- Presale Configuration -->
+                    <!-- Platform Configuration -->
                     <div class="glass rounded-xl p-6">
                         <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary">payments</span>
-                            Sale Configuration
+                            <span class="material-symbols-outlined text-primary">tune</span>
+                            Platform Configuration
                         </h3>
                         
                         <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <label class="text-gray-300">Presale Enabled</label>
-                                <button id="presale-enabled-toggle" onclick="Settings.togglePresale()" 
-                                        class="w-12 h-6 rounded-full bg-gray-700 relative transition-colors">
-                                    <span class="absolute left-1 top-1 w-4 h-4 rounded-full bg-white transition-transform"></span>
-                                </button>
+                            <div>
+                                <label class="text-gray-400 text-sm block mb-2">Platform Fee (%)</label>
+                                <input type="number" id="setting-platform-fee" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="10" min="0" max="100" step="0.1">
+                                <p class="text-gray-500 text-xs mt-1">Fee retained from each marketplace purchase</p>
                             </div>
                             
                             <div>
-                                <label class="text-gray-400 text-sm block mb-2">Sale Target (EUR)</label>
-                                <input type="number" id="setting-sale-target" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="500000" min="1000">
+                                <label class="text-gray-400 text-sm block mb-2">Voucher Validity (days)</label>
+                                <input type="number" id="setting-voucher-validity" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="365" min="30" max="730">
+                                <p class="text-gray-500 text-xs mt-1">Default validity period for issued vouchers</p>
                             </div>
                             
-                            <div>
-                                <label class="text-gray-400 text-sm block mb-2">Token Price (EUR)</label>
-                                <input type="number" id="setting-token-price" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="1.00" step="0.01" min="0.01">
-                            </div>
-                            
-                            <div>
-                                <label class="text-gray-400 text-sm block mb-2">Minimum Purchase (EUR)</label>
-                                <input type="number" id="setting-min-purchase" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="10" min="1">
-                            </div>
-                            
-                            <div>
-                                <label class="text-gray-400 text-sm block mb-2">Presale Wallet</label>
-                                <input type="text" id="setting-presale-wallet" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 font-mono text-sm outline-none transition-colors" placeholder="0x...">
-                            </div>
-                            
-                            <button onclick="Settings.savePresale()" class="w-full bg-primary hover:bg-primary-light hover:text-black rounded-lg px-4 py-3 font-medium text-black transition-colors">
-                                Save Presale Settings
+                            <button onclick="Settings.savePlatform()" class="w-full bg-primary hover:bg-primary-light hover:text-black rounded-lg px-4 py-3 font-medium text-black transition-colors">
+                                Save Platform Settings
                             </button>
-                            <div id="presale-settings-status" class="text-sm text-center"></div>
+                            <div id="platform-settings-status" class="text-sm text-center"></div>
                         </div>
                     </div>
                     
-                    <!-- Claim Configuration -->
+                    <!-- Token Configuration -->
                     <div class="glass rounded-xl p-6">
                         <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary">verified</span>
-                            Claim Configuration
+                            <span class="material-symbols-outlined text-primary">token</span>
+                            VIP Token (Buying Power)
                         </h3>
                         
                         <div class="space-y-4">
                             <div>
-                                <label class="text-gray-400 text-sm block mb-2">Mint Amount per Claim</label>
-                                <input type="number" id="setting-mint-amount" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="2" min="1" max="100">
-                                <p class="text-gray-500 text-xs mt-1">VIP tokens minted per claim</p>
-                            </div>
-                            
-                            <button onclick="Settings.saveClaim()" class="w-full bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-3 font-medium transition-colors">
-                                Save Claim Settings
-                            </button>
-                            <div id="claim-settings-status" class="text-sm text-center"></div>
-                            
-                            <div class="pt-4 border-t border-gray-700">
-                                <label class="text-gray-400 text-sm block mb-2">VIP Token Contract</label>
-                                <input type="text" id="setting-contract" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 font-mono text-sm text-gray-400" 
+                                <label class="text-gray-400 text-sm block mb-2">Token Contract</label>
+                                <input type="text" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 font-mono text-sm text-gray-400" 
                                     value="0x6860c34db140DB7B589DaDA38859a1d3736bbE3F" readonly>
-                                <a href="https://polygonscan.com/token/0x6860c34db140DB7B589DaDA38859a1d3736bbE3F" target="_blank" 
-                                   class="text-xs text-primary hover:text-primary-light mt-2 inline-flex items-center gap-1 transition-colors">
-                                    View on Polygonscan
-                                    <span class="material-symbols-outlined text-sm">open_in_new</span>
-                                </a>
                             </div>
                             
                             <div>
                                 <label class="text-gray-400 text-sm block mb-2">Network</label>
-                                <input type="text" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-gray-400" value="Polygon Mainnet (Chain ID: 137)" readonly>
+                                <input type="text" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-gray-400" value="Polygon Mainnet (137)" readonly>
                             </div>
+                            
+                            <div>
+                                <label class="text-gray-400 text-sm block mb-2">Token Rate</label>
+                                <input type="text" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-gray-400" value="1 VIP = €1" readonly>
+                            </div>
+                            
+                            <a href="https://polygonscan.com/token/0x6860c34db140DB7B589DaDA38859a1d3736bbE3F" target="_blank" 
+                            class="block w-full text-center text-primary hover:text-primary-light text-sm transition-colors">
+                                View on Polygonscan →
+                            </a>
                         </div>
                     </div>
                     
@@ -696,12 +811,12 @@
                             
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="p-4 bg-gray-800/50 rounded-lg text-center">
-                                    <div class="text-3xl font-bold" id="db-registrants">--</div>
-                                    <div class="text-gray-500 text-sm mt-1">Registrants</div>
+                                    <div class="text-2xl font-bold" id="db-members">--</div>
+                                    <div class="text-gray-500 text-sm mt-1">Members</div>
                                 </div>
                                 <div class="p-4 bg-gray-800/50 rounded-lg text-center">
-                                    <div class="text-3xl font-bold" id="db-purchases">--</div>
-                                    <div class="text-gray-500 text-sm mt-1">Transactions</div>
+                                    <div class="text-2xl font-bold" id="db-orders">--</div>
+                                    <div class="text-gray-500 text-sm mt-1">Orders</div>
                                 </div>
                             </div>
                         </div>
@@ -714,13 +829,26 @@
                             System Health
                         </h3>
                         <div id="healthStatus" class="space-y-3">
-                            <p class="text-gray-500">Loading...</p>
+                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                                <span class="text-gray-300">API Server</span>
+                                <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">Online</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                                <span class="text-gray-300">Stripe</span>
+                                <span id="stripe-status" class="px-3 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400">Checking...</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                                <span class="text-gray-300">WalletTwo</span>
+                                <span id="wallettwo-status" class="px-3 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400">Checking...</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                                <span class="text-gray-300">Webhooks</span>
+                                <span id="webhook-status" class="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">Active</span>
+                            </div>
                         </div>
-                    </div>
-                    
+                    </div>   
                 </div>
             </div>
-
         </main>
     </div>
 
@@ -732,18 +860,161 @@
         </div>
     </div>
 
+    <!-- Order Detail Modal -->
+    <div id="orderModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-backdrop absolute inset-0" onclick="Orders.closeModal()"></div>
+        <div class="relative z-10 min-h-screen flex items-center justify-center p-4">
+            <div class="glass rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b border-white/10 flex items-center justify-between">
+                    <h3 class="text-xl font-bold">Order Details</h3>
+                    <button onclick="Orders.closeModal()" class="text-gray-400 hover:text-white">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div id="orderModalContent" class="p-6">
+                    <!-- Content loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Modal -->
+    <div id="serviceModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-backdrop absolute inset-0" onclick="Marketplace.closeModal()"></div>
+        <div class="relative z-10 min-h-screen flex items-center justify-center p-4">
+            <div class="glass rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b border-white/10 flex items-center justify-between">
+                    <h3 id="serviceModalTitle" class="text-xl font-bold">Add Service</h3>
+                    <button onclick="Marketplace.closeModal()" class="text-gray-400 hover:text-white">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div id="serviceModalContent" class="p-6">
+                    <form id="serviceForm" onsubmit="Marketplace.saveService(event)">
+                        <input type="hidden" id="serviceId">
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-gray-400 text-sm block mb-2">Service Name *</label>
+                                <input type="text" id="serviceName" required class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none">
+                            </div>
+                            
+                            <div>
+                                <label class="text-gray-400 text-sm block mb-2">Short Description *</label>
+                                <input type="text" id="serviceShortDesc" required maxlength="100" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none">
+                            </div>
+                            
+                            <div>
+                                <label class="text-gray-400 text-sm block mb-2">Full Description</label>
+                                <textarea id="serviceDesc" rows="3" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none"></textarea>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-gray-400 text-sm block mb-2">Category *</label>
+                                    <select id="serviceCategory" required class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none">
+                                        <option value="accommodation">Accommodation</option>
+                                        <option value="experiences">Experiences</option>
+                                        <option value="dining">Dining</option>
+                                        <option value="wellness">Wellness</option>
+                                        <option value="transport">Transport</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-gray-400 text-sm block mb-2">Location</label>
+                                    <input type="text" id="serviceLocation" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none" placeholder="Kea Island">
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-gray-400 text-sm block mb-2">Price (€) *</label>
+                                    <input type="number" id="servicePrice" required min="1" step="0.01" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none">
+                                </div>
+                                <div>
+                                    <label class="text-gray-400 text-sm block mb-2">Price Note</label>
+                                    <input type="text" id="servicePriceNote" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none" placeholder="per night, per person, etc.">
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-gray-400 text-sm block mb-2">Quantity Available</label>
+                                    <input type="number" id="serviceQuantity" min="0" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none" placeholder="Unlimited if empty">
+                                </div>
+                                <div>
+                                    <label class="text-gray-400 text-sm block mb-2">Max per Order</label>
+                                    <input type="number" id="serviceMaxPerOrder" min="1" value="10" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none">
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-wrap gap-4">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="serviceActive" checked class="w-4 h-4 accent-primary">
+                                    <span class="text-sm">Active</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="serviceFeatured" class="w-4 h-4 accent-primary">
+                                    <span class="text-sm">Featured</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="serviceLimited" class="w-4 h-4 accent-primary">
+                                    <span class="text-sm">Limited Edition</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="serviceBooking" class="w-4 h-4 accent-primary">
+                                    <span class="text-sm">Requires Booking</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 flex gap-4">
+                            <button type="button" onclick="Marketplace.closeModal()" class="flex-1 bg-gray-700 hover:bg-gray-600 rounded-lg px-4 py-3 font-medium transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" class="flex-1 bg-primary hover:bg-primary-light hover:text-black rounded-lg px-4 py-3 font-medium text-black transition-colors">
+                                Save Service
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Member Detail Modal -->
+    <div id="memberModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-backdrop absolute inset-0" onclick="Members.closeModal()"></div>
+        <div class="relative z-10 min-h-screen flex items-center justify-center p-4">
+            <div class="glass rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b border-white/10 flex items-center justify-between">
+                    <h3 class="text-xl font-bold">Member Details</h3>
+                    <button onclick="Members.closeModal()" class="text-gray-400 hover:text-white">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div id="memberModalContent" class="p-6">
+                    <!-- Content loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <iframe id="walletTwoLogoutIframe" style="display:none;"></iframe>
+    
     <!-- Scripts -->
     <script src="/admin/js/api.js"></script>
     <script src="/admin/js/utils.js"></script>
     <script src="/admin/js/auth.js"></script>
-    <script src="/admin/js/claims.js"></script>
-    <script src="/admin/js/presale.js"></script>
+    <script src="/admin/js/overview.js"></script>
+    <script src="/admin/js/orders.js"></script>
+    <script src="/admin/js/marketplace.js"></script>
+    <script src="/admin/js/memberships.js"></script>
+    <script src="/admin/js/members.js"></script>
+    <script src="/admin/js/vouchers.js"></script>
     <script src="/admin/js/referrals.js"></script>
     <script src="/admin/js/admins.js"></script>
     <script src="/admin/js/settings.js"></script>
-    <script src="/admin/js/manual-mint.js"></script>
-    <script src="/admin/js/questionnaire.js"></script>
     <script src="/admin/js/main.js"></script>
 
 </body>

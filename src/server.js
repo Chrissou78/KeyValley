@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const marketplaceRoutes = require('./routes/marketplace');
 
 const app = express();
 
@@ -42,6 +43,8 @@ app.use('/fonts', express.static(path.join(publicPath, 'fonts')));
 app.use('/css', express.static(path.join(publicPath, 'css')));
 app.use('/js', express.static(path.join(publicPath, 'js')));
 
+// REMOVED marketplace routes from here - moved below
+
 // Admin static files
 app.use('/admin', express.static(path.join(publicPath, 'admin')));
 
@@ -53,6 +56,12 @@ app.use('/claim', express.static(path.join(publicPath, 'claim')));
 
 // Presale static files
 app.use('/presale', express.static(path.join(publicPath, 'presale')));
+
+// Marketplace static files
+app.use('/marketplace', express.static(path.join(publicPath, 'marketplace')));
+
+// Package static files
+app.use('/package', express.static(path.join(publicPath, 'package')));
 
 app.get('/favicon.ico', (req, res) => {
     res.sendFile(path.join(publicPath, 'favicon.ico'), err => {
@@ -85,6 +94,13 @@ app.use('/api/stripe', stripeRoutes);
 // JSON and URL-encoded parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ========================================
+// API ROUTES - AFTER JSON PARSER
+// ========================================
+
+// Marketplace routes (moved here - after express.json())
+app.use('/api/marketplace', marketplaceRoutes);
 
 const walletTwoAuthRoutes = require('./routes/wallettwo-auth');
 app.use('/api/wallettwo', walletTwoAuthRoutes);
