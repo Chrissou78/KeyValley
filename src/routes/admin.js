@@ -5,6 +5,37 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db-postgres');
 const { requireAdminAuth, requireSuperAdmin } = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Create upload folder if it doesn't exist
+const uploadDir = path.join(__dirname, '../public/images/services');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Configure image upload
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadDir),
+    filename: (req, file, cb) => {
+        const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`;
+        cb(null, uniqueName);
+    }
+});
+
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const allowed = /jpeg|jpg|png|webp/;
+        if (allowed.test(path.extname(file.originalname).toLowerCase()) && allowed.test(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only images allowed'));
+        }
+    }
+});
 
 // POST /api/admin/auth - Authenticate via WalletTwo
 router.post('/auth', async (req, res) => {
@@ -379,6 +410,411 @@ router.get('/questionnaire/stats', requireAdminAuth, async (req, res) => {
     } catch (error) {
         console.error('Error getting questionnaire stats:', error);
         res.status(500).json({ success: false, error: 'Failed to get questionnaire stats' });
+    }
+});
+
+// ==========================================
+// DASHBOARD OVERVIEW
+// ==========================================
+
+router.get('/overview', requireAdminAuth, async (req, res) => {
+    try {
+        const [revenue, orders, members, vouchers, recentOrders, recentMemberships] = await Promise.all([
+            db.pool.query(`
+                SELECT 
+                    COALESCE(SUM(total_amount), 0) as total,
+                    COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE THEN total_amount ELSE 0 END), 0) as today,
+                    COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '7 days' THEN total_amount ELSE 0 END), 0) as week,
+                    COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '30 days' THEN total_amount ELSE 0 END), 0) as month
+                FROM marketplace_orders WHERE status != 'cancelled'
+            `),
+            db.pool.query(`
+                SELECT 
+                    COUNT(*) as total,
+                    COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending
+                FROM marketplace_orders 
+            `),
+            db.pool.query('SELECT COUNT(*) as total FROM registrants'),
+            db.pool.query(`
+                SELECT 
+                    COUNT(*) as total,
+                    COUNT(CASE WHEN status = 'active' THEN 1 END) as active
+                FROM marketplace_vouchers
+            `).catch(() => ({ rows: [{ total: 0, active: 0 }] })),
+            db.pool.query('SELECT * FROM marketplace_orders  ORDER BY created_at DESC LIMIT 5').catch(() => ({ rows: [] })),
+            db.pool.query('SELECT * FROM membership_purchases ORDER BY created_at DESC LIMIT 5').catch(() => ({ rows: [] }))
+        ]);
+
+        res.json({
+            success: true,
+            stats: {
+                totalRevenue: parseFloat(revenue.rows[0]?.total || 0),
+                revenueToday: parseFloat(revenue.rows[0]?.today || 0),
+                revenueWeek: parseFloat(revenue.rows[0]?.week || 0),
+                revenueMonth: parseFloat(revenue.rows[0]?.month || 0),
+                totalOrders: parseInt(orders.rows[0]?.total || 0),
+                pendingOrders: parseInt(orders.rows[0]?.pending || 0),
+                totalMembers: parseInt(members.rows[0]?.total || 0),
+                totalVouchers: parseInt(vouchers.rows[0]?.total || 0),
+                activeVouchers: parseInt(vouchers.rows[0]?.active || 0)
+            },
+            recentOrders: recentOrders.rows,
+            recentMemberships: recentMemberships.rows
+        });
+    } catch (error) {
+        console.error('Overview error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ==========================================
+// ORDERS
+// ==========================================
+
+router.get('/orders', requireAdminAuth, async (req, res) => {
+    try {
+        const result = await db.pool.query(`
+            SELECT o.*, r.email
+            FROM marketplace_orders o
+            LEFT JOIN registrants r ON LOWER(o.wallet_address) = LOWER(r.wallet_address)
+            ORDER BY o.created_at DESC
+        `);
+        res.json({ success: true, orders: result.rows });
+    } catch (error) {
+        console.error('Orders error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.put('/orders/:id/status', requireAdminAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        
+        const result = await db.pool.query(
+            'UPDATE marketplace_orders SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+            [status, id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Order not found' });
+        }
+        
+        res.json({ success: true, order: result.rows[0] });
+    } catch (error) {
+        console.error('Update order error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ==========================================
+// SERVICES (MARKETPLACE)
+// ==========================================
+
+router.get('/services', requireAdminAuth, async (req, res) => {
+    try {
+        const result = await db.pool.query('SELECT * FROM marketplace_services ORDER BY category, name');
+        res.json({ success: true, services: result.rows });
+    } catch (error) {
+        console.error('Services error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post('/services', requireAdminAuth, async (req, res) => {
+    try {
+        const { name, short_description, description, category, price, price_note, image_url, location, features, is_active, max_quantity, booking_type, slots_per_day, booking_start_time, booking_end_time, slot_duration_minutes, available_days } = req.body;
+        
+        const result = await db.pool.query(`
+            INSERT INTO marketplace_services 
+            (name, short_description, description, category, price, price_note, image_url, location, features, is_active, max_quantity, booking_type, slots_per_day, booking_start_time, booking_end_time, slot_duration_minutes, available_days)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+            RETURNING *
+        `, [name, short_description, description, category, price, price_note, image_url, location, features, is_active ?? true, max_quantity ?? 10, booking_type || 'none', slots_per_day || 1, booking_start_time || '09:00', booking_end_time || '18:00', slot_duration_minutes || 60, available_days || '1,2,3,4,5,6,0']);
+        
+        res.json({ success: true, service: result.rows[0] });
+    } catch (error) {
+        console.error('Create service error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.put('/services/:id', requireAdminAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, short_description, description, category, price, price_note, image_url, location, features, is_active, max_quantity, booking_type, slots_per_day, booking_start_time, booking_end_time, slot_duration_minutes, available_days } = req.body;
+        
+        const result = await db.pool.query(`
+            UPDATE marketplace_services SET
+                name = $1, short_description = $2, description = $3, category = $4,
+                price = $5, price_note = $6, image_url = $7, location = $8,
+                features = $9, is_active = $10, max_quantity = $11, 
+                booking_type = $12, slots_per_day = $13, booking_start_time = $14,
+                booking_end_time = $15, slot_duration_minutes = $16, available_days = $17,
+                updated_at = NOW()
+            WHERE id = $18 RETURNING *
+        `, [name, short_description, description, category, price, price_note, image_url, location, features, is_active, max_quantity, booking_type || 'none', slots_per_day || 1, booking_start_time || '09:00', booking_end_time || '18:00', slot_duration_minutes || 60, available_days || '1,2,3,4,5,6,0', id]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Service not found' });
+        }
+        
+        res.json({ success: true, service: result.rows[0] });
+    } catch (error) {
+        console.error('Update service error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.delete('/services/:id', requireAdminAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        await db.pool.query('DELETE FROM marketplace_services WHERE id = $1', [id]);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Delete service error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ==========================================
+// MEMBERSHIPS
+// ==========================================
+
+router.get('/memberships', requireAdminAuth, async (req, res) => {
+    try {
+        const result = await db.pool.query(`
+            SELECT *
+            FROM membership_purchases
+            ORDER BY created_at DESC
+        `);
+        res.json({ success: true, memberships: result.rows });
+    } catch (error) {
+        console.error('Memberships error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ==========================================
+// MEMBERS (REGISTRANTS)
+// ==========================================
+
+router.get('/members', requireAdminAuth, async (req, res) => {
+    try {
+        const result = await db.pool.query(`
+            SELECT 
+                r.id,
+                r.wallet_address,
+                r.email,
+                r.registered_at as created_at,
+                COALESCE(mb.balance, 0) as balance,
+                COALESCE(mb.total_spent, 0) as total_spent
+            FROM registrants r
+            LEFT JOIN member_balances mb ON LOWER(r.wallet_address) = LOWER(mb.wallet_address)
+            ORDER BY r.registered_at DESC
+        `);
+        res.json({ success: true, members: result.rows });
+    } catch (error) {
+        console.error('Members error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post('/members/adjust-balance', requireAdminAuth, async (req, res) => {
+    try {
+        const { wallet_address, amount, reason } = req.body;
+        
+        // Update or insert token balance
+        await db.pool.query(`
+            INSERT INTO member_balances (wallet_address, balance, updated_at)
+            VALUES (LOWER($1), $2, NOW())
+            ON CONFLICT (wallet_address) 
+            DO UPDATE SET balance = token_balances.balance + $2, updated_at = NOW()
+        `, [wallet_address, amount]);
+        
+        // Log the adjustment
+        await db.pool.query(`
+            INSERT INTO balance_adjustments (wallet_address, amount, reason, admin_email, created_at)
+            VALUES (LOWER($1), $2, $3, $4, NOW())
+        `, [wallet_address, amount, reason, req.adminSession?.email]).catch(() => {});
+        
+        res.json({ success: true, message: 'Balance adjusted' });
+    } catch (error) {
+        console.error('Adjust balance error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ==========================================
+// VOUCHERS
+// ==========================================
+
+router.get('/vouchers', requireAdminAuth, async (req, res) => {
+    try {
+        const result = await db.pool.query(`
+            SELECT v.*, r.email
+            FROM marketplace_vouchers v
+            LEFT JOIN registrants r ON LOWER(v.wallet_address) = LOWER(r.wallet_address)
+            ORDER BY v.created_at DESC
+        `);
+        res.json({ success: true, vouchers: result.rows });
+    } catch (error) {
+        console.error('Vouchers error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post('/vouchers/:id/redeem', requireAdminAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const result = await db.pool.query(
+            'UPDATE marketplace_vouchers SET status = $1, redeemed_at = NOW() WHERE id = $2 RETURNING *',
+            ['redeemed', id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Voucher not found' });
+        }
+        
+        res.json({ success: true, voucher: result.rows[0] });
+    } catch (error) {
+        console.error('Redeem voucher error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ==========================================
+// ADMINS (uses whitelist routes above)
+// ==========================================
+
+router.get('/admins', requireAdminAuth, async (req, res) => {
+    try {
+        const result = await db.pool.query(`
+            SELECT id, email, name, role, wallet_address, last_login, created_at
+            FROM admin_whitelist
+            ORDER BY created_at DESC
+        `);
+        res.json({ success: true, admins: result.rows });
+    } catch (error) {
+        console.error('Admins error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ==========================================
+// SETTINGS
+// ==========================================
+
+router.get('/settings', requireAdminAuth, async (req, res) => {
+    try {
+        const result = await db.pool.query('SELECT * FROM app_settings');
+        const settings = {};
+        result.rows.forEach(s => { settings[s.key] = s.value; });
+        res.json({ success: true, settings });
+    } catch (error) {
+        console.error('Settings error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.put('/settings', requireAdminAuth, async (req, res) => {
+    try {
+        const updates = req.body;
+        
+        for (const [key, value] of Object.entries(updates)) {
+            await db.pool.query(
+                'INSERT INTO app_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2',
+                [key, value]
+            );
+        }
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Update settings error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post('/upload/service-image', requireAdminAuth, upload.single('image'), (req, res) => {
+    console.log('📸 Upload request received');
+    if (!req.file) {
+        return res.status(400).json({ success: false, error: 'No image uploaded' });
+    }
+    
+    // Delete old image if provided
+    const oldImageUrl = req.body.oldImageUrl;
+    if (oldImageUrl && oldImageUrl.startsWith('/images/services/')) {
+        const oldFileName = oldImageUrl.replace('/images/services/', '');
+        const oldFilePath = path.join(uploadDir, oldFileName);
+        
+        // Don't delete the default images (villa.jpg, yacht.jpg, etc.)
+        const defaultImages = ['villa.jpg', 'yacht.jpg', 'chef.jpg', 'spa.jpg', 'transfer.jpg', 'wine.jpg', 'helicopter.jpg', 'training.jpg', 'dinner.jpg', 'scuba.jpg'];
+        
+        if (!defaultImages.includes(oldFileName) && fs.existsSync(oldFilePath)) {
+            fs.unlink(oldFilePath, (err) => {
+                if (err) console.error('Failed to delete old image:', err);
+                else console.log('🗑️ Deleted old image:', oldFileName);
+            });
+        }
+    }
+    
+    const imageUrl = `/images/services/${req.file.filename}`;
+    console.log('✅ Image uploaded:', imageUrl);
+    res.json({ success: true, imageUrl });
+});
+
+router.get('/referrals', requireAdminAuth, async (req, res) => {
+    try {
+        const [codes, activity, stats] = await Promise.all([
+            db.pool.query(`
+                SELECT 
+                    code,
+                    owner_wallet as wallet_address,
+                    owner_email as email,
+                    enabled,
+                    total_referrals,
+                    total_claims,
+                    total_presale_purchases,
+                    total_bonus_earned,
+                    created_at,
+                    updated_at
+                FROM referral_codes
+                ORDER BY created_at DESC
+            `),
+            db.pool.query(`
+                SELECT 
+                    referral_code,
+                    referrer_wallet,
+                    referred_wallet,
+                    referred_email,
+                    bonus_type,
+                    bonus_amount,
+                    bonus_paid,
+                    created_at
+                FROM referral_tracking
+                ORDER BY created_at DESC
+                LIMIT 50
+            `),
+            db.pool.query(`
+                SELECT 
+                    COUNT(*) as total_codes,
+                    COUNT(*) FILTER (WHERE enabled = true) as active_codes,
+                    COALESCE(SUM(total_referrals), 0) as total_referrals,
+                    COALESCE(SUM(total_bonus_earned), 0) as total_bonus
+                FROM referral_codes
+            `)
+        ]);
+
+        res.json({
+            success: true,
+            codes: codes.rows,
+            activity: activity.rows,
+            stats: stats.rows[0]
+        });
+    } catch (error) {
+        console.error('Referrals error:', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
