@@ -70,7 +70,7 @@
                     <a href="/profile" class="text-gray-300 hover:text-primary transition-colors">Profile</a>
                 </nav>
                 <div id="wallet-section">
-                    <button id="connect-wallet-btn" onclick="connectWallet()" class="btn-primary px-6 py-2 rounded-lg text-sm">Connect Wallet</button>
+                    <button id="connect-wallet-btn" onclick="connectWallet()" class="btn-primary px-6 py-2 rounded-lg text-sm">Login</button>
                     <div id="wallet-connected" class="hidden flex items-center space-x-3">
                         <span id="wallet-address" class="text-gray-300 text-sm"></span>
                         <button onclick="disconnectWallet()" class="text-gray-400 hover:text-primary transition-colors">
@@ -221,7 +221,7 @@
                 </div>
 
                 <!-- Buy Button -->
-                <button id="buy-button" onclick="executePurchase()" class="btn-primary w-full py-4 rounded-xl text-lg font-semibold" disabled>Connect Wallet to Purchase</button>
+                <button id="buy-button" onclick="executePurchase()" class="btn-primary w-full py-4 rounded-xl text-lg font-semibold" disabled>Login to Purchase</button>
 
                 <!-- Referral -->
                 <div id="referral-section" class="mt-6 hidden">
@@ -259,9 +259,9 @@
     <div id="connect-overlay" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center">
         <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4 text-center">
             <span class="material-symbols-outlined text-5xl gold-text mb-4">account_balance_wallet</span>
-            <h3 class="text-2xl font-serif font-bold mb-4">Connect Your Wallet</h3>
-            <p class="text-gray-400 mb-6">Connect your WalletTwo wallet to purchase tokens.</p>
-            <button onclick="redirectToWalletTwo()" class="btn-primary w-full py-3 rounded-xl font-semibold mb-3">Connect with WalletTwo</button>
+            <h3 class="text-2xl font-serif font-bold mb-4">Login</h3>
+            <p class="text-gray-400 mb-6">Login to purchase</p>
+            <button onclick="redirectToWalletTwo()" class="btn-primary w-full py-3 rounded-xl font-semibold mb-3">Login</button>
             <button onclick="hideConnectOverlay()" class="text-gray-400 hover:text-white transition-colors">Cancel</button>
         </div>
     </div>
@@ -467,7 +467,7 @@
         if (!btn) return;
         const p = window.currentPurchase || {};
         
-        if (!currentWallet) { btn.textContent = 'Connect Wallet to Purchase'; btn.disabled = true; return; }
+        if (!currentWallet) { btn.textContent = 'Login to Purchase'; btn.disabled = true; return; }
         if (!CONFIG.presaleEnabled) { btn.textContent = 'Sale Not Active'; btn.disabled = true; return; }
         if (p.eurAmount < CONFIG.minPurchase) { btn.textContent = 'Minimum EUR ' + CONFIG.minPurchase; btn.disabled = true; return; }
         

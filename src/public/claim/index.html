@@ -297,15 +297,15 @@
         // UI Functions
         // ============================================
         function showConnectWallet() {
-            cardTitle.textContent = 'Connect Wallet';
+            cardTitle.textContent = 'Login';
             statusEl.innerHTML = `
                 <div class="size-16 mx-auto rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-6">
                     <span class="material-symbols-outlined text-primary text-3xl">account_balance_wallet</span>
                 </div>
-                <h3 class="text-xl font-serif text-white mb-2">Connect Your Wallet</h3>
-                <p class="text-slate-500 text-sm mb-8">Please connect your wallet to claim your VIP tokens.</p>
+                <h3 class="text-xl font-serif text-white mb-2">Login</h3>
+                <p class="text-slate-500 text-sm mb-8">Please login to claim your bonuses.</p>
                 <a href="${CONFIG.WALLETTWO_LOGIN_URL}" class="inline-block bg-primary text-background-dark px-8 py-4 rounded-sm font-bold uppercase tracking-widest text-xs gold-glow hover:translate-y-[-2px] transition-transform">
-                    Connect Wallet
+                    Login
                 </a>
             `;
         }

@@ -35,11 +35,11 @@
         .glass-card { background: rgba(18, 18, 18, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(238, 157, 43, 0.1); }
         .glass-nav { background-color: rgba(10, 10, 10, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(238, 157, 43, 0.1); }
         .gold-text { color: #ee9d2b; }
-        .gold-gradient { background: linear-gradient(135deg, #ee9d2b 0%, #fbdea6 50%, #ee9d2b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .gold-gradient { background: linear-gradient(135deg, #ee9d2b 0%, #fbdea6 50%, #ee9d2b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; padding-bottom: 0.1em; line-height: 1.2;}
         .btn-primary { background: linear-gradient(135deg, #ee9d2b 0%, #d4880c 100%); color: #0a0a0a; font-weight: 600; transition: all 0.3s ease; }
         .btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #fbdea6 0%, #ee9d2b 100%); transform: translateY(-2px); box-shadow: 0 10px 40px rgba(238, 157, 43, 0.3); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-        .package-card { transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; }
+        .package-card { transition: all 0.3s ease; cursor: pointer; position: relative; overflow: visible; }
         .package-card:hover { transform: translateY(-8px); border-color: rgba(238, 157, 43, 0.5); box-shadow: 0 20px 60px rgba(238, 157, 43, 0.2); }
         .package-card.selected { border-color: #ee9d2b; background: rgba(238, 157, 43, 0.05); box-shadow: 0 0 40px rgba(238, 157, 43, 0.25); }
         .package-card.selected::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #ee9d2b, #fbdea6); }
@@ -47,7 +47,12 @@
         .animate-spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .bonus-badge { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-        .popular-badge { background: linear-gradient(135deg, #ee9d2b 0%, #d4880c 100%); animation: pulse 2s infinite; }
+        .popular-badge {
+    background: linear-gradient(135deg, #ee9d2b, #fbdea6);
+    line-height: 1.5;
+    padding: 0.35em 1em;
+    display: inline-block;
+}
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
         .wallet-iframe-container { background: #ffffff; border-radius: 8px; overflow: hidden; }
         .wallet-iframe { width: 100%; height: 500px; border: none; }
@@ -172,7 +177,7 @@
 
                     <!-- Disconnected State -->
                     <div id="headerDisconnected">
-                        <button id="connect-wallet-btn" onclick="showLoginModal()" class="btn-primary px-4 py-2 rounded-lg text-sm">Connect</button>
+                        <button id="connect-wallet-btn" onclick="showLoginModal()" class="btn-primary px-4 py-2 rounded-lg text-sm">Login</button>
                     </div>
 
                     <!-- Mobile Menu Button -->
@@ -222,8 +227,8 @@
                     <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Exclusive Access</span>
                     <div class="h-[1px] w-8 bg-primary"></div>
                 </div>
-                <h1 class="font-serif text-4xl md:text-5xl lg:text-6xl font-bold gold-gradient mb-4">Membership Packages</h1>
-                <p class="text-gray-400 text-lg max-w-2xl mx-auto">Unlock premium buying power and exclusive benefits in the Kea Valley marketplace.</p>
+                <h1 class="font-serif text-4xl md:text-5xl lg:text-6xl font-bold gold-gradient mb-6">Membership Packages</h1>
+                <p class="text-gray-400 text-lg max-w-2xl mb-6 mx-auto">Unlock premium buying power and exclusive benefits in the Kea Valley marketplace.</p>
             </div>
 
             <!-- How It Works -->
@@ -304,8 +309,8 @@
 
                 <!-- Gold Package (Popular) -->
                 <div id="package-gold" class="glass-card package-card rounded-2xl p-6 border-2 tier-gold selected relative" onclick="selectPackage('gold')">
-                    <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <span class="popular-badge text-background-dark text-xs font-bold px-4 py-1 rounded-full">MOST POPULAR</span>
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+                        <span class="popular-badge text-background-dark text-xs font-bold px-4 py-1.5 rounded-full leading-normal inline-block">MOST POPULAR</span>
                     </div>
                     
                     <div class="text-center mb-6 mt-2">
@@ -429,7 +434,7 @@
                 <!-- Buy Button -->
                 <button id="buy-button" onclick="startPurchase()" class="btn-primary w-full py-4 rounded-xl text-lg font-semibold flex items-center justify-center gap-2">
                     <span class="material-symbols-outlined">credit_card</span>
-                    <span id="buy-button-text">Connect Wallet to Purchase</span>
+                    <span id="buy-button-text">Login to Purchase</span>
                 </button>
 
                 <p class="text-gray-500 text-xs text-center mt-4">
@@ -491,13 +496,13 @@
     <div id="login-modal" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center p-4">
         <div class="glass-card rounded-2xl max-w-md w-full">
             <div class="p-6 border-b border-white/10 flex items-center justify-between">
-                <h2 class="font-serif text-xl font-bold text-white">Connect to Continue</h2>
+                <h2 class="font-serif text-xl font-bold text-white">Login to Continue</h2>
                 <button onclick="closeLoginModal()" class="text-gray-400 hover:text-white transition-colors">
                     <span class="material-symbols-outlined text-2xl">close</span>
                 </button>
             </div>
             <div class="p-6">
-                <p class="text-gray-400 text-sm mb-6">Connect your wallet to purchase membership packages.</p>
+                <p class="text-gray-400 text-sm mb-6">Login to purchase membership packages.</p>
                 <div class="wallet-iframe-container">
                     <iframe id="login-wallet-iframe" src="" class="wallet-iframe" allow="clipboard-write"></iframe>
                 </div>
@@ -965,7 +970,7 @@
         const pkg = PACKAGES[selectedPackage];
         
         if (!currentWallet) {
-            btnText.textContent = 'Connect Wallet to Purchase';
+            btnText.textContent = 'Login to Purchase';
             btn.onclick = showLoginModal;
         } else {
             btnText.textContent = 'Pay €' + pkg.price.toLocaleString();
