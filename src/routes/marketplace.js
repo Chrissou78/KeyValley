@@ -74,10 +74,11 @@ router.get('/services/:id/availability', async (req, res) => {
         const { id } = req.params;
         const { month, year } = req.query;
         
-        // Get service booking settings
+        // Get service booking settings INCLUDING fixed_duration
         const serviceResult = await db.pool.query(`
             SELECT booking_type, slot_duration_minutes, slots_per_day, 
-                   available_days, booking_start_time, booking_end_time
+                   available_days, booking_start_time, booking_end_time,
+                   fixed_duration
             FROM marketplace_services WHERE id = $1
         `, [id]);
         
@@ -94,7 +95,8 @@ router.get('/services/:id/availability', async (req, res) => {
             slots_per_day: service.slots_per_day || 1,
             available_days: service.available_days || '0,1,2,3,4,5,6',
             booking_start_time: service.booking_start_time || '09:00',
-            booking_end_time: service.booking_end_time || '18:00'
+            booking_end_time: service.booking_end_time || '18:00',
+            fixed_duration: service.fixed_duration || null  // <-- ADD THIS
         };
         
         // If no booking required, return early
@@ -124,10 +126,8 @@ router.get('/services/:id/availability', async (req, res) => {
             
             bookingsResult.rows.forEach(row => {
                 const dateKey = row.booking_date.toISOString().split('T')[0];
-                // Count total bookings for the date
                 bookedSlots[dateKey] = (bookedSlots[dateKey] || 0) + parseInt(row.booked_count);
                 
-                // Also track specific time slots
                 if (row.time_slot && row.time_slot !== 'full_day') {
                     const slotKey = dateKey + '_slots';
                     if (!bookedSlots[slotKey]) bookedSlots[slotKey] = [];
@@ -135,7 +135,6 @@ router.get('/services/:id/availability', async (req, res) => {
                 }
             });
         } catch (e) {
-            // Table might not exist yet
             console.log('Note: service_bookings query error (table may not exist):', e.message);
         }
         

@@ -1,54 +1,59 @@
 // src/routes/wallettwo.js
-// WalletTwo integration routes
+// WalletTwo integration routes - UPDATED for new SDK
 
 const express = require('express');
 const router = express.Router();
-const db = require('../db-postgres');
 
 const WALLETTWO_API = 'https://api.wallettwo.com';
 
-// POST /api/wallettwo/exchange - Exchange auth code for user info
+// POST /api/wallettwo/exchange - Exchange one-time token for session
 router.post('/exchange', async (req, res) => {
     try {
-        const { code } = req.body;
+        const { code, token } = req.body;
+        const tokenToExchange = token || code; // Support both old and new field names
         
-        if (!code) {
-            return res.status(400).json({ success: false, error: 'Code is required' });
+        if (!tokenToExchange) {
+            return res.status(400).json({ success: false, error: 'Token is required' });
         }
         
-        console.log('🔄 Exchanging WalletTwo code...');
+        console.log('🔄 Exchanging WalletTwo token...');
         
-        // WalletTwo uses GET /auth/consent?code={code} to exchange the code
-        const response = await fetch(`${WALLETTWO_API}/auth/consent?code=${encodeURIComponent(code)}`);
+        // NEW: Use the one-time-token/verify endpoint
+        const response = await fetch(`${WALLETTWO_API}/auth/api/auth/one-time-token/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: tokenToExchange })
+        });
         
         if (!response.ok) {
             const errorText = await response.text();
             console.error('❌ WalletTwo exchange failed:', response.status, errorText);
             return res.status(response.status).json({ 
                 success: false, 
-                error: 'Failed to exchange code with WalletTwo' 
+                error: 'Failed to exchange token with WalletTwo' 
             });
         }
         
         const data = await response.json();
-        console.log('✅ WalletTwo exchange success, got access_token');
+        console.log('✅ WalletTwo exchange success');
         
-        // Now get user info using the access token
-        if (data.access_token) {
-            const userResponse = await fetch(`${WALLETTWO_API}/auth/userinfo`, {
+        // Get user info using the session token
+        if (data.session && data.session.token) {
+            const userResponse = await fetch(`${WALLETTWO_API}/auth/api/auth/get-session`, {
                 headers: {
-                    'Authorization': `Bearer ${data.access_token}`
+                    'Authorization': `Bearer ${data.session.token}`
                 }
             });
             
             if (userResponse.ok) {
                 const userData = await userResponse.json();
-                console.log('✅ WalletTwo user info:', userData.email);
+                console.log('✅ WalletTwo user info:', userData.user?.email);
                 
                 return res.json({
                     success: true,
-                    user: userData,
-                    access_token: data.access_token
+                    user: userData.user,
+                    session: data.session,
+                    access_token: data.session.token
                 });
             }
         }
@@ -56,8 +61,8 @@ router.post('/exchange', async (req, res) => {
         // Return what we have
         res.json({
             success: true,
-            user: data.user || data,
-            access_token: data.access_token
+            session: data.session,
+            access_token: data.session?.token
         });
         
     } catch (error) {
@@ -75,7 +80,8 @@ router.get('/userinfo', async (req, res) => {
             return res.status(401).json({ success: false, error: 'No authorization header' });
         }
         
-        const response = await fetch(`${WALLETTWO_API}/auth/userinfo`, {
+        // NEW: Use the get-session endpoint
+        const response = await fetch(`${WALLETTWO_API}/auth/api/auth/get-session`, {
             headers: {
                 'Authorization': authHeader
             }
@@ -86,7 +92,7 @@ router.get('/userinfo', async (req, res) => {
         }
         
         const data = await response.json();
-        res.json({ success: true, user: data });
+        res.json({ success: true, user: data.user });
         
     } catch (error) {
         console.error('WalletTwo userinfo error:', error);

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html class="dark" lang="en">
+<!-- VERSION: 2026-03-30 - Fixed WalletTwo message handler -->
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -69,18 +70,42 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            min-width: 220px;
+            min-width: 240px;
+            padding: 8px;
             opacity: 0;
             visibility: hidden;
             transform: translateY(-10px);
             transition: all 0.2s ease;
             z-index: 100;
+            display: flex;
+            flex-direction: column;
         }
         .user-dropdown:hover .user-dropdown-menu,
         .user-dropdown-menu:hover {
             opacity: 1;
             visibility: visible;
             transform: translateY(0);
+        }
+        .user-dropdown-menu a,
+        .user-dropdown-menu button {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: #fff;
+            text-decoration: none;
+            transition: background 0.2s;
+            border: none;
+            background: none;
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+        .user-dropdown-menu a:hover,
+        .user-dropdown-menu button:hover {
+            background: rgba(255, 255, 255, 0.05);
         }
 
         /* Services Vertical Carousel */
@@ -252,95 +277,126 @@
 </head>
 <body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased">
 
-    <!-- Header -->
+    <!-- ============================================ -->
+    <!-- HEADER - Fixed Spacing & Layout -->
+    <!-- ============================================ -->
     <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
-            <a href="/" class="flex items-center gap-4 group cursor-pointer">
-                <img src="/images/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
-                <div>
-                    <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
+        <div class="max-w-[1400px] mx-auto px-8 lg:px-16 flex items-center justify-between h-20 lg:h-24">
+            <!-- Logo -->
+            <a href="/" class="flex items-center gap-3 group cursor-pointer flex-shrink-0">
+                <img src="/images/logo.png" alt="Kea Valley" class="h-10 lg:h-12 w-auto"/>
+                <div class="hidden sm:block">
+                    <h2 class="text-base lg:text-lg font-serif font-bold tracking-widest uppercase text-white leading-tight">Kea<br/>Valley</h2>
                 </div>
             </a>
             
-            <nav class="hidden lg:flex items-center gap-8 xl:gap-12">
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/Package">Summer Season 2026</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://keanaissance.com" target="_blank" rel="noopener noreferrer">Keanaissance</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://kearising.net" target="_blank" rel="noopener noreferrer">Kea Rising</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://villacarpediemkea.com" target="_blank" rel="noopener noreferrer">Kea Valley - History</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/marketplace">Marketplace</a>
+            <!-- Desktop Navigation - Centered -->
+            <nav class="hidden xl:flex items-center justify-center gap-10 2xl:gap-14">
+                <a class="text-[10px] 2xl:text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase text-center whitespace-nowrap" href="/package">
+                    Summer<br/>Season 2026
+                </a>
+                <a class="text-[10px] 2xl:text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase text-center whitespace-nowrap" href="https://keanaissance.com" target="_blank" rel="noopener noreferrer">
+                    Keanaissance
+                </a>
+                <a class="text-[10px] 2xl:text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase text-center whitespace-nowrap" href="https://kearising.net" target="_blank" rel="noopener noreferrer">
+                    Kea<br/>Rising
+                </a>
+                <a class="text-[10px] 2xl:text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase text-center whitespace-nowrap" href="https://villacarpediemkea.com" target="_blank" rel="noopener noreferrer">
+                    Kea Valley<br/>History
+                </a>
+                <a class="text-[10px] 2xl:text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase text-center whitespace-nowrap" href="/marketplace">
+                    Marketplace
+                </a>
             </nav>
-            
-            <div class="flex items-center gap-4">
+
+            <!-- Right Side - User Section -->
+            <div class="flex items-center gap-4 flex-shrink-0">
                 <!-- Connected State -->
-                <div id="headerConnected" class="hidden items-center gap-4">
+                <div id="headerConnected" class="hidden">
                     <div class="user-dropdown">
-                        <button class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/5 transition-colors">
-                            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center">
-                                <span class="material-symbols-outlined text-background-dark text-lg">person</span>
+                        <button class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors">
+                            <div class="text-right hidden lg:block">
+                                <p class="text-sm font-medium truncate max-w-[150px]" id="headerUserName">Member</p>
+                                <p class="text-xs text-primary font-semibold" id="headerUserEmail"></p>
                             </div>
-                            <div class="hidden sm:block text-left">
-                                <div id="headerUserName" class="text-sm font-medium text-white">Member</div>
-                                <div id="headerUserEmail" class="text-xs text-gray-400 max-w-[150px] truncate"></div>
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center">
+                                <span id="headerAvatarInitials" class="text-black font-bold text-sm">--</span>
                             </div>
-                            <span class="material-symbols-outlined text-gray-400 text-lg">expand_more</span>
                         </button>
                         
-                        <!-- Dropdown Menu -->
                         <div class="user-dropdown-menu">
-                            <div class="p-2">
-                                <div class="px-4 py-3 border-b border-white/10">
-                                    <p class="text-xs text-slate-400">Buying Power</p>
-                                    <p class="text-lg font-semibold text-primary">€<span id="headerUserBalance">0</span></p>
-                                </div>
-                                <a href="/profile" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors">
-                                    <span class="material-symbols-outlined text-primary">account_circle</span>
-                                    <span class="text-sm">My Profile</span>
-                                </a>
-                                <a href="/marketplace" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors">
-                                    <span class="material-symbols-outlined text-primary">storefront</span>
-                                    <span class="text-sm">Marketplace</span>
-                                </a>
-                                <a href="/package" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors">
-                                    <span class="material-symbols-outlined text-primary">card_membership</span>
-                                    <span class="text-sm">Buy More</span>
-                                </a>
-                                <div class="border-t border-white/10 my-2"></div>
-                                <button onclick="disconnect()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors">
-                                    <span class="material-symbols-outlined">logout</span>
-                                    <span class="text-sm">Disconnect</span>
+                            <!-- Balance Display -->
+                            <div class="px-4 py-3 border-b border-white/10 mb-2">
+                                <p class="text-xs text-slate-400 mb-1">Buying Power</p>
+                                <p class="text-2xl font-bold text-primary">€<span id="dropdownBalance">0</span></p>
+                                <p class="text-xs text-slate-500 mt-1 truncate" id="dropdownEmail"></p>
+                            </div>
+                            
+                            <a href="/profile">
+                                <span class="material-symbols-outlined text-xl">account_circle</span>
+                                <span>My Profile</span>
+                            </a>
+                            <a href="/marketplace">
+                                <span class="material-symbols-outlined text-xl">storefront</span>
+                                <span>Marketplace</span>
+                            </a>
+                            <a href="/package">
+                                <span class="material-symbols-outlined text-xl">add_card</span>
+                                <span>Add Buying Power</span>
+                            </a>
+                            
+                            <div class="border-t border-white/10 mt-2 pt-2">
+                                <button onclick="disconnect()" class="text-red-400 hover:text-red-300 w-full">
+                                    <span class="material-symbols-outlined text-xl">logout</span>
+                                    <span>Disconnect</span>
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Disconnected State -->
-                <div id="headerDisconnected" class="flex items-center gap-3">
-                    <button onclick="showLoginModal()" class="hidden sm:flex items-center gap-2 px-5 py-2.5 border border-primary/50 text-primary text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-primary hover:text-background-dark transition-all">
-                        <span class="material-symbols-outlined text-lg">account_circle</span>
+                <div id="headerDisconnected" class="hidden items-center gap-3">
+                    <a href="/profile" class="hidden lg:flex border border-primary/50 text-primary px-5 py-2.5 rounded-lg hover:bg-primary hover:text-black font-bold uppercase text-[10px] tracking-wide transition-all whitespace-nowrap">
                         Login
-                    </button>
-                    <button onclick="showLoginModal()" class="sm:hidden flex items-center justify-center w-10 h-10 border border-primary/50 text-primary rounded-lg hover:bg-primary hover:text-background-dark transition-all">
-                        <span class="material-symbols-outlined">account_circle</span>
-                    </button>
+                    </a>
+                    <a href="/profile" class="lg:hidden border border-primary/50 text-primary rounded-lg p-2">
+                        <span class="material-symbols-outlined">login</span>
+                    </a>
                 </div>
-                
-                <button class="lg:hidden text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
-                    <span class="material-symbols-outlined">menu</span>
+
+                <!-- Mobile menu button -->
+                <button id="mobileMenuBtn" class="xl:hidden text-white/70 hover:text-white p-2">
+                    <span class="material-symbols-outlined text-2xl">menu</span>
                 </button>
             </div>
         </div>
-        
+
         <!-- Mobile Menu -->
-        <div id="mobileMenu" class="hidden lg:hidden bg-background-dark border-t border-white/5 px-6 py-4">
-            <nav class="flex flex-col gap-4">
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="#services">Services</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="#membership">Membership</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="https://keanaissance.com" target="_blank">Keanaissance</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="https://kearising.net" target="_blank">Kea Rising</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="https://villacarpediemkea.com" target="_blank">History</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/marketplace">Marketplace</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/profile">Profile</a>
+        <div id="mobileMenu" class="hidden xl:hidden bg-surface border-t border-white/5">
+            <nav class="px-6 py-4 space-y-4">
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="/package">Summer Season 2026</a>
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="https://keanaissance.com" target="_blank">Keanaissance</a>
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="https://kearising.net" target="_blank">Kea Rising</a>
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="https://villacarpediemkea.com" target="_blank">Kea Valley History</a>
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="/marketplace">Marketplace</a>
+                
+                <!-- Mobile User Section -->
+                <div id="mobileUserSection" class="hidden border-t border-white/10 mt-4 pt-4">
+                    <div class="px-2 py-2 mb-2">
+                        <p class="text-xs text-slate-400">Buying Power</p>
+                        <p class="text-xl font-bold text-primary">€<span id="mobileBalance">0</span></p>
+                    </div>
+                    <a href="/profile" class="block text-sm font-bold tracking-widest text-primary py-3 px-2">My Profile</a>
+                    <button onclick="disconnect()" class="w-full text-left text-sm font-bold tracking-widest text-red-400 hover:text-red-300 py-3 px-2">
+                        Disconnect
+                    </button>
+                </div>
+                <div id="mobileConnectSection" class="border-t border-white/10 mt-4 pt-4">
+                    <a href="/profile" class="block text-center py-3 px-4 bg-primary text-black font-bold text-sm uppercase tracking-widest rounded-lg">
+                        Login
+                    </a>
+                </div>
             </nav>
         </div>
     </header>
@@ -425,7 +481,7 @@
 
         <!-- SERVICES SECTION -->
         <section class="py-24 md:py-32 bg-surface" id="services">
-            <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
                 <div class="grid lg:grid-cols-2 gap-16 items-center">
                     
                     <!-- Left: Text Content -->
@@ -487,7 +543,7 @@
 
         <!-- MEMBERSHIP PACKAGES SECTION -->
         <section class="py-24 md:py-32 bg-background-dark" id="membership">
-            <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
                 
                 <div class="text-center mb-16">
                     <span class="inline-block text-xs font-bold tracking-[0.2em] text-primary uppercase mb-6 px-5 py-2 border border-primary/30 rounded-full">Membership</span>
@@ -546,12 +602,12 @@
                             <p class="text-slate-500 text-sm">For the discerning traveler</p>
                         </div>
                         <div class="mb-4">
-                            <span class="text-4xl font-bold text-white">€6,000</span>
+                            <span class="text-4xl font-bold text-white">€8,000</span>
                         </div>
                         <div class="buying-power-highlight">
                             <p class="text-sm text-slate-400 mb-1">Buying Power</p>
-                            <p class="text-3xl font-bold text-emerald-400">€8,000</p>
-                            <p class="text-xs text-emerald-400/80 mt-1">+33% bonus</p>
+                            <p class="text-3xl font-bold text-emerald-400">€10,000</p>
+                            <p class="text-xs text-emerald-400/80 mt-1">+25% bonus</p>
                         </div>
                         <div class="flex-1 space-y-3 mb-8">
                             <div class="benefit-item">
@@ -693,7 +749,7 @@
 
     <!-- Footer -->
     <footer class="py-12 md:py-16 border-t border-white/5" style="background-color: #1a1a1a;">
-        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+        <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
             <div class="flex flex-col gap-8">
                 <div class="flex flex-col lg:flex-row justify-between items-center gap-8">
                     <a href="/" class="flex items-center gap-3">
@@ -733,6 +789,10 @@
     <!-- JavaScript -->
     <script>
         // ============================================
+        // VERSION: 2026-03-30 - Fixed WalletTwo URLs
+        // ============================================
+        
+        // ============================================
         // Configuration
         // ============================================
         var CONFIG = {
@@ -750,6 +810,7 @@
         // Initialize
         // ============================================
         async function init() {
+            console.log('🚀 Homepage initializing... (v2026-03-30)');
             await loadConfig();
             checkSession();
             setupWalletListener();
@@ -758,14 +819,37 @@
 
         async function loadConfig() {
             try {
+                console.log('📥 Loading config...');
                 var response = await fetch('/api/config/public');
                 var config = await response.json();
                 if (config.walletTwoCompanyId) {
                     CONFIG.WALLETTWO_COMPANY_ID = config.walletTwoCompanyId;
+                    console.log('✅ Config loaded, companyId:', CONFIG.WALLETTWO_COMPANY_ID);
                 }
             } catch (e) {
-                console.error('Failed to load config:', e);
+                console.error('❌ Failed to load config:', e);
             }
+        }
+
+        // ============================================
+        // Build WalletTwo URL helper
+        // ============================================
+        function buildWalletTwoUrl(action, extraParams) {
+            extraParams = extraParams || {};
+            var url = CONFIG.WALLETTWO_ORIGIN + '/action/' + action + '?iframe=true';
+            
+            if (CONFIG.WALLETTWO_COMPANY_ID) {
+                url += '&companyId=' + CONFIG.WALLETTWO_COMPANY_ID;
+            }
+            
+            for (var key in extraParams) {
+                if (extraParams.hasOwnProperty(key)) {
+                    url += '&' + key + '=' + encodeURIComponent(extraParams[key]);
+                }
+            }
+            
+            console.log('🔗 Built URL:', url);
+            return url;
         }
 
         // ============================================
@@ -848,7 +932,7 @@
             // Logout from WalletTwo
             var iframe = document.getElementById('walletTwoLogoutIframe');
             if (iframe && CONFIG.WALLETTWO_COMPANY_ID) {
-                iframe.src = CONFIG.WALLETTWO_ORIGIN + '/auth/logout?companyId=' + CONFIG.WALLETTWO_COMPANY_ID;
+                iframe.src = buildWalletTwoUrl('logout');
             }
             
             // Update UI
@@ -859,18 +943,40 @@
 
         // ============================================
         // Wallet Connection
+        // FIXED: Listen for both wallet_login AND wallet_session
+        // FIXED: Accept both code AND token fields
         // ============================================
         function setupWalletListener() {
             window.addEventListener('message', function(event) {
-                if (!event.origin.includes('wallettwo.com')) return;
+                // Log ALL messages for debugging
+                console.log('📨 Message from:', event.origin, 'Data:', event.data);
+                
+                if (!event.origin.includes('wallettwo.com')) {
+                    return;
+                }
 
                 var data = event.data;
+                console.log('✅ WalletTwo message:', data);
                 
-                if (data && (data.type === 'wallet_login' || data.event === 'wallet_login')) {
+                // FIXED: Accept both wallet_login AND wallet_session events
+                var isLoginEvent = data && (
+                    data.type === 'wallet_login' || 
+                    data.event === 'wallet_login' ||
+                    data.type === 'wallet_session' || 
+                    data.event === 'wallet_session'
+                );
+                
+                if (isLoginEvent) {
                     var wallet = data.wallet || data.wlt || data.address;
+                    // FIXED: Accept both code AND token fields
+                    var code = data.code || data.token;
+                    
+                    console.log('🔐 Login event - wallet:', wallet, 'code:', code ? 'YES' : 'NO');
+                    
                     if (wallet) {
-                        if (data.code) {
-                            exchangeCode(data.code, wallet, data.user);
+                        if (code) {
+                            console.log('🚀 Exchanging code...');
+                            exchangeCode(code, wallet, data.user);
                         } else {
                             currentUser = { wallet: wallet, timestamp: Date.now() };
                             saveSession();
@@ -890,6 +996,7 @@
                 });
                 
                 var data = await response.json();
+                console.log('📥 Exchange response:', data);
                 
                 currentUser = {
                     wallet: wallet,
@@ -905,7 +1012,7 @@
                 saveSession();
                 onUserConnected();
             } catch (error) {
-                console.error('Exchange failed:', error);
+                console.error('❌ Exchange failed:', error);
                 currentUser = { wallet: wallet, timestamp: Date.now() };
                 saveSession();
                 onUserConnected();
@@ -914,11 +1021,10 @@
 
         function showLoginModal() {
             var iframe = document.getElementById('loginWalletIframe');
-            if (CONFIG.WALLETTWO_COMPANY_ID) {
-                iframe.src = CONFIG.WALLETTWO_ORIGIN + '/auth/login?action=auth&iframe=true&companyId=' + CONFIG.WALLETTWO_COMPANY_ID;
-            }
+            iframe.src = buildWalletTwoUrl('auth');
             document.getElementById('loginModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+            console.log('🖼️ Login modal opened');
         }
 
         function closeLoginModal() {

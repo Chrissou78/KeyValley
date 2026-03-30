@@ -110,6 +110,12 @@ app.use('/api/config', configRoutes);
 
 const galleryRoutes = require('./routes/gallery');
 app.use('/api/gallery', galleryRoutes);
+// ADD THESE TWO LINES:
+const memberRoutes = require('./routes/member');
+app.use('/api/member', memberRoutes);
+
+const referralRoutes = require('./routes/referral');
+app.use('/api/referral', referralRoutes);
 
 // ========================================
 // ROUTES

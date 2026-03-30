@@ -1,3 +1,4 @@
+<!-- VERSION: 2026-03-30 - Fixed WalletTwo URLs and message handling -->
 <!DOCTYPE html>
 <html class="dark" lang="en">
 <head>
@@ -33,7 +34,7 @@
         h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
         .glass-nav {
             backdrop-filter: blur(12px);
-            background-color: rgba(10, 10, 10, 0.85);
+            background-color: rgba(26, 26, 26, 0.9);
         }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #0a0a0a; }
@@ -110,19 +111,21 @@
 <body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
 
     <!-- Header -->
-    <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between h-16 lg:h-20">
-            <a href="/" class="flex items-center gap-3">
-                <img src="/images/logo.png" alt="Kea Valley" class="h-10 lg:h-12 w-auto"/>
-                <span class="hidden sm:block text-lg lg:text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
+    <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5 transition-all duration-300">
+        <div class="max-w-[1400px] mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
+            <a href="/" class="flex items-center gap-4 group cursor-pointer">
+                <img src="/images/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
+                <div>
+                    <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea<br>Valley</h2>
+                </div>
             </a>
             
-            <nav class="hidden lg:flex items-center gap-6 xl:gap-10">
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/#services">Services</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/marketplace">Marketplace</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/package">Membership</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://keanaissance.com" target="_blank">Keanaissance</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://kearising.net" target="_blank">Kea Rising</a>
+            <nav class="hidden lg:flex items-center gap-8 xl:gap-12">
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/Package">Summer <br>Season 2026</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://keanaissance.com" target="_blank" rel="noopener noreferrer">Keanaissance</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://kearising.net" target="_blank" rel="noopener noreferrer">Kea Rising</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://villacarpediemkea.com" target="_blank" rel="noopener noreferrer">Kea Valley <br> History</a>
+                <a class="text-xs font-bold tracking-widest text-primary transition-colors uppercase" href="/marketplace">Marketplace</a>
             </nav>
 
             <div class="flex items-center gap-4">
@@ -157,13 +160,9 @@
                                     <span class="material-symbols-outlined text-primary">account_circle</span>
                                     <span class="text-sm">My Profile</span>
                                 </a>
-                                <a href="/marketplace" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors">
-                                    <span class="material-symbols-outlined text-primary">storefront</span>
-                                    <span class="text-sm">Marketplace</span>
-                                </a>
                                 <a href="/package" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors">
                                     <span class="material-symbols-outlined text-primary">card_membership</span>
-                                    <span class="text-sm">Add Buying Power</span>
+                                    <span class="text-sm">Buy More</span>
                                 </a>
                                 <div class="border-t border-white/10 my-2"></div>
                                 <button onclick="disconnect()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors">
@@ -186,26 +185,27 @@
                     </button>
                 </div>
 
-                <button id="mobileMenuBtn" class="lg:hidden text-white/70 hover:text-white p-2">
-                    <span class="material-symbols-outlined text-2xl">menu</span>
+                <button class="lg:hidden text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
+                    <span class="material-symbols-outlined">menu</span>
                 </button>
             </div>
         </div>
 
         <!-- Mobile Menu -->
-        <div id="mobileMenu" class="hidden lg:hidden border-t border-white/5 bg-background-dark/95">
-            <nav class="px-4 py-4 flex flex-col gap-1">
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="/#services">Services</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="/marketplace">Marketplace</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="/package">Membership</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="/profile">Profile</a>
+        <div id="mobileMenu" class="hidden lg:hidden bg-background-dark border-t border-white/5 px-6 py-4">
+            <nav class="flex flex-col gap-4">
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/package">Summer Season 2026</a>
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="https://keanaissance.com" target="_blank">Keanaissance</a>
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="https://kearising.net" target="_blank">Kea Rising</a>
+                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="https://villacarpediemkea.com" target="_blank">Kea Valley - History</a>
+                <a class="text-sm font-bold tracking-widest text-primary uppercase py-2" href="/marketplace">Marketplace</a>
             </nav>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 pt-24 lg:pt-28 pb-12 px-4 sm:px-6">
-        <div class="max-w-7xl mx-auto">
+    <main class="flex-1 pt-28 lg:pt-32 pb-12 px-4 sm:px-6">
+        <div class="max-w-[1400px] mx-auto">
 
             <!-- Page Header -->
             <div class="text-center mb-10">
@@ -559,7 +559,7 @@
 
     <!-- Footer -->
     <footer class="bg-background-dark py-6 border-t border-white/5">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+        <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12">
             <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
                 <a href="/" class="flex items-center gap-2">
                     <img src="/images/logo.png" alt="Kea Valley" class="h-6 w-auto"/>
@@ -574,6 +574,11 @@
     <iframe id="walletTwoLogoutIframe" style="display:none;"></iframe>
 
     <script>
+        // ============================================
+        // VERSION: 2026-03-30 - Fixed WalletTwo integration
+        // ============================================
+        console.log('🚀 Marketplace page initializing... (v2026-03-30)');
+
         // ============================================
         // Configuration
         // ============================================
@@ -603,29 +608,50 @@
         let acceptMessages = true;
         let pendingAction = null;
         
-        // NEW: Calendar booking state
+        // Calendar booking state
         window.selectedBookingDate = null;
         window.selectedBookingSlot = null;
+
+        // ============================================
+        // Helper: Build WalletTwo URL
+        // ============================================
+        function buildWalletTwoUrl(action, extraParams) {
+            var base = CONFIG.WALLETTWO_ORIGIN + '/action/' + action + '?iframe=true';
+            if (CONFIG.WALLETTWO_COMPANY_ID) {
+                base += '&companyId=' + CONFIG.WALLETTWO_COMPANY_ID;
+            }
+            if (extraParams) {
+                for (var key in extraParams) {
+                    base += '&' + key + '=' + encodeURIComponent(extraParams[key]);
+                }
+            }
+            console.log('🔗 Built WalletTwo URL:', base);
+            return base;
+        }
 
         // ============================================
         // Initialize
         // ============================================
         async function init() {
+            console.log('🔧 Initializing marketplace...');
             await loadConfig();
             loadCart();
             checkSession();
             await loadServices();
             setupEventListeners();
             setupWalletListener();
+            console.log('✅ Marketplace initialized');
         }
 
         async function loadConfig() {
             try {
                 const response = await fetch('/api/config/public');
                 const config = await response.json();
+                console.log('📦 Config loaded:', config);
                 
                 if (config.walletTwoCompanyId) {
                     CONFIG.WALLETTWO_COMPANY_ID = config.walletTwoCompanyId;
+                    console.log('✅ WalletTwo Company ID:', CONFIG.WALLETTWO_COMPANY_ID);
                 }
                 if (config.stripePublicKey) {
                     CONFIG.STRIPE_PUBLIC_KEY = config.stripePublicKey;
@@ -647,6 +673,7 @@
                     const age = Date.now() - (data.timestamp || 0);
                     if (data.wallet && age < CONFIG.SESSION_DURATION) {
                         currentUser = data;
+                        console.log('✅ Session restored for wallet:', currentUser.wallet);
                         onUserConnected();
                         return;
                     }
@@ -655,7 +682,7 @@
                 console.error('Session check error:', e);
             }
             
-            // Not logged in - show connect buttons
+            console.log('ℹ️ No valid session found');
             document.getElementById('headerDisconnected').classList.remove('hidden');
             document.getElementById('headerConnected').classList.add('hidden');
         }
@@ -672,23 +699,19 @@
                 fetchUserBalance(currentUser.wallet);
             }
             
-            // Update header UI
             document.getElementById('headerDisconnected').classList.add('hidden');
             document.getElementById('headerConnected').classList.remove('hidden');
             document.getElementById('headerConnected').style.display = 'flex';
             document.getElementById('buyingPowerBanner').classList.remove('hidden');
             
-            // Set user name/email in header
             const name = [currentUser.firstName, currentUser.lastName].filter(Boolean).join(' ') || 
                          currentUser.name || 
                          'Member';
             document.getElementById('headerUserName').textContent = name;
             document.getElementById('headerUserEmail').textContent = currentUser.email || '';
             
-            // Close login modal if open
             document.getElementById('loginModal').classList.add('hidden');
             
-            // Execute pending action if any
             if (pendingAction) {
                 pendingAction();
                 pendingAction = null;
@@ -696,17 +719,16 @@
         }
 
         function disconnect() {
-            // Clear session
+            console.log('🔌 Disconnecting...');
             currentUser = null;
             localStorage.removeItem(CONFIG.STORAGE_KEY);
             
-            // Logout from WalletTwo via iframe
+            // Logout from WalletTwo via iframe - FIXED URL
             const iframe = document.getElementById('walletTwoLogoutIframe');
             if (iframe && CONFIG.WALLETTWO_COMPANY_ID) {
-                iframe.src = CONFIG.WALLETTWO_ORIGIN + '/auth/logout?companyId=' + CONFIG.WALLETTWO_COMPANY_ID;
+                iframe.src = buildWalletTwoUrl('logout');
             }
             
-            // Update UI
             document.getElementById('headerConnected').classList.add('hidden');
             document.getElementById('headerConnected').style.display = '';
             document.getElementById('headerDisconnected').classList.remove('hidden');
@@ -723,14 +745,25 @@
                     const data = await response.json();
                     userBalance = typeof data === 'number' ? data : (data.balance || 0);
                 } else {
+                    console.warn('WalletTwo balance API failed, balance set to 0');
                     userBalance = 0;
                 }
             } catch (e) {
+                console.warn('Balance fetch error:', e);
                 userBalance = 0;
             }
             
-            document.getElementById('userBalance').textContent = Math.floor(userBalance).toLocaleString();
-            document.getElementById('checkoutBalance').textContent = Math.floor(userBalance).toLocaleString();
+            const balanceStr = Math.floor(userBalance).toLocaleString();
+            
+            const userBalanceEl = document.getElementById('userBalance');
+            if (userBalanceEl) userBalanceEl.textContent = balanceStr;
+            
+            const checkoutBalanceEl = document.getElementById('checkoutBalance');
+            if (checkoutBalanceEl) checkoutBalanceEl.textContent = balanceStr;
+            
+            document.querySelectorAll('[data-user-balance]').forEach(el => {
+                el.textContent = balanceStr;
+            });
             
             updateTokenPaymentOption();
         }
@@ -766,20 +799,31 @@
         }
 
         // ============================================
-        // Wallet Connection
+        // Wallet Connection - FIXED FOR NEW SDK
         // ============================================
         function setupWalletListener() {
+            console.log('👂 Setting up WalletTwo message listener...');
+            
             window.addEventListener('message', function(event) {
+                // Only accept messages from WalletTwo
                 if (!event.origin.includes('wallettwo.com')) return;
                 if (!acceptMessages) return;
 
                 const data = event.data;
+                console.log('📨 Message received from WalletTwo:', data);
                 
-                if (data && (data.type === 'wallet_login' || data.event === 'wallet_login')) {
+                // FIXED: Handle both wallet_login AND wallet_session events
+                if (data && (data.type === 'wallet_login' || data.event === 'wallet_login' ||
+                             data.type === 'wallet_session' || data.event === 'wallet_session')) {
+                    
                     const wallet = data.wallet || data.wlt || data.address;
+                    const code = data.code || data.token; // FIXED: Accept both code and token
+                    
+                    console.log('🔐 Login event - wallet:', wallet, 'code/token present:', !!code);
+                    
                     if (wallet) {
-                        if (data.code) {
-                            exchangeCode(data.code, wallet, data.user);
+                        if (code) {
+                            exchangeCode(code, wallet, data.user);
                         } else {
                             currentUser = { wallet: wallet, timestamp: Date.now() };
                             saveSession(currentUser);
@@ -791,6 +835,7 @@
         }
 
         async function exchangeCode(code, wallet, userId) {
+            console.log('🔄 Exchanging code for wallet:', wallet);
             try {
                 const response = await fetch('/api/wallettwo/exchange', {
                     method: 'POST',
@@ -799,6 +844,7 @@
                 });
                 
                 const data = await response.json();
+                console.log('📦 Exchange response:', data);
                 
                 currentUser = {
                     wallet: wallet,
@@ -815,6 +861,7 @@
                 onUserConnected();
             } catch (error) {
                 console.error('Exchange failed:', error);
+                // Still save basic session on error
                 currentUser = { wallet: wallet, timestamp: Date.now() };
                 saveSession(currentUser);
                 onUserConnected();
@@ -824,9 +871,14 @@
         function showLoginModal(action) {
             pendingAction = action || null;
             const iframe = document.getElementById('loginWalletIframe');
+            
+            // FIXED: Use buildWalletTwoUrl helper with correct /action/auth path
             if (CONFIG.WALLETTWO_COMPANY_ID) {
-                iframe.src = CONFIG.WALLETTWO_ORIGIN + '/auth/login?action=auth&iframe=true&companyId=' + CONFIG.WALLETTWO_COMPANY_ID;
+                iframe.src = buildWalletTwoUrl('auth');
+            } else {
+                console.warn('⚠️ No WalletTwo Company ID configured');
             }
+            
             document.getElementById('loginModal').classList.remove('hidden');
         }
 
@@ -874,7 +926,6 @@
             }
             
             grid.innerHTML = filtered.map(function(service) {
-                // NEW: Add booking badge for services with calendar
                 var bookingBadge = '';
                 if (service.booking_type && service.booking_type !== 'none') {
                     bookingBadge = '<span class="absolute top-3 ' + (service.is_limited ? 'right-20' : 'right-3') + ' bg-blue-500/80 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1"><span class="material-symbols-outlined text-xs">calendar_month</span>Booking</span>';
@@ -913,7 +964,7 @@
         }
 
         // ============================================
-        // Service Modal - MODIFIED FOR CALENDAR
+        // Service Modal
         // ============================================
         function openServiceModal(serviceId) {
             selectedService = services.find(function(s) { return s.id === serviceId; });
@@ -921,7 +972,6 @@
             
             selectedQuantity = 1;
             
-            // Reset calendar booking state
             window.selectedBookingDate = null;
             window.selectedBookingSlot = null;
             window.selectedBookingStart = null;
@@ -960,7 +1010,6 @@
                 featuresSection.classList.add('hidden');
             }
             
-            // MODIFIED: Handle booking options with calendar support
             var bookingSection = document.getElementById('modalBookingOptions');
             var quantitySection = document.getElementById('modalQuantitySection');
             var dateRangeBooking = document.getElementById('dateRangeBooking');
@@ -968,24 +1017,21 @@
             var calendarRequired = document.getElementById('calendarBookingRequired');
             
             if (selectedService.booking_type && selectedService.booking_type !== 'none') {
-                // Service uses calendar booking (daily or time_slots)
                 bookingSection.classList.remove('hidden');
                 quantitySection.classList.add('hidden');
                 dateRangeBooking.classList.add('hidden');
                 calendarContainer.classList.remove('hidden');
                 calendarRequired.classList.remove('hidden');
                 
-                // Initialize calendar if BookingCalendar is available
                 if (typeof BookingCalendar !== 'undefined') {
                     BookingCalendar.init(selectedService.id, function(selection) {
                         window.selectedBookingStart = selection.startDate;
                         window.selectedBookingEnd = selection.endDate;
                         window.selectedBookingNights = selection.nights;
-                        window.selectedBookingDate = selection.startDate; // For compatibility
+                        window.selectedBookingDate = selection.startDate;
                         calendarRequired.classList.add('hidden');
                         updateModalButtons();
                         
-                        // Update price display for multi-day bookings
                         if (selection.nights > 0 && selectedService) {
                             var totalPrice = selectedService.price * selection.nights;
                             document.getElementById('modalServicePrice').textContent = totalPrice.toLocaleString();
@@ -996,7 +1042,6 @@
                     calendarContainer.innerHTML = '<p class="text-slate-400 text-center py-8">Calendar loading...</p>';
                 }
             } else if (selectedService.requires_booking) {
-                // Traditional date range booking (accommodation)
                 bookingSection.classList.remove('hidden');
                 quantitySection.classList.add('hidden');
                 dateRangeBooking.classList.remove('hidden');
@@ -1007,7 +1052,6 @@
                 document.getElementById('modalCheckIn').min = today;
                 document.getElementById('modalCheckOut').min = today;
             } else {
-                // No booking required - show quantity selector
                 bookingSection.classList.add('hidden');
                 quantitySection.classList.remove('hidden');
             }
@@ -1030,7 +1074,6 @@
             window.selectedBookingNights = 0;
         }
         
-        // NEW: Update modal buttons based on booking requirements
         function updateModalButtons() {
             var addBtn = document.getElementById('modalAddToCart');
             var buyBtn = document.getElementById('modalBuyNow');
@@ -1052,6 +1095,7 @@
                 buyBtn.disabled = false;
             }
         }
+
         // ============================================
         // Cart Management
         // ============================================
@@ -1114,7 +1158,6 @@
 
         function getCartTotal() {
             return cart.reduce(function(sum, item) {
-                // Use totalPrice from options if available (for bookings with nights)
                 if (item.options && item.options.totalPrice) {
                     return sum + item.options.totalPrice;
                 }
@@ -1126,7 +1169,6 @@
             var countEl = document.getElementById('cartCount');
             var totalItems = cart.reduce(function(sum, item) { return sum + item.quantity; }, 0);
             
-            // Add null check
             if (countEl) {
                 if (totalItems > 0) {
                     countEl.textContent = totalItems;
@@ -1140,7 +1182,6 @@
             var cartItemsList = document.getElementById('cartItemsList');
             var cartFooter = document.getElementById('cartFooter');
             
-            // Add null check
             if (!cartEmpty || !cartItemsList || !cartFooter) {
                 console.warn('Cart elements not found');
                 return;
@@ -1403,7 +1444,6 @@
         // Event Listeners
         // ============================================
         function setupEventListeners() {
-            // Mobile menu
             var mobileMenuBtn = document.getElementById('mobileMenuBtn');
             if (mobileMenuBtn) {
                 mobileMenuBtn.addEventListener('click', function() {
@@ -1411,7 +1451,6 @@
                 });
             }
             
-            // Cart button
             var cartBtn = document.getElementById('cartBtn');
             if (cartBtn) cartBtn.addEventListener('click', openCartSidebar);
             
@@ -1421,7 +1460,6 @@
             var cartOverlay = document.getElementById('cartOverlay');
             if (cartOverlay) cartOverlay.addEventListener('click', closeCartSidebar);
             
-            // Category filters
             document.querySelectorAll('.category-btn').forEach(function(btn) {
                 btn.addEventListener('click', function() {
                     document.querySelectorAll('.category-btn').forEach(function(b) { b.classList.remove('active'); });
@@ -1431,14 +1469,12 @@
                 });
             });
             
-            // Service modal
             var closeServiceModalBtn = document.getElementById('closeServiceModal');
             if (closeServiceModalBtn) closeServiceModalBtn.addEventListener('click', closeServiceModal);
             
             var serviceModalOverlay = document.getElementById('serviceModalOverlay');
             if (serviceModalOverlay) serviceModalOverlay.addEventListener('click', closeServiceModal);
             
-            // Quantity controls
             var qtyMinus = document.getElementById('modalQtyMinus');
             if (qtyMinus) {
                 qtyMinus.addEventListener('click', function() {
@@ -1457,16 +1493,14 @@
                 });
             }
             
-            // MODIFIED: Add to cart from modal - supports calendar booking
             var addToCartBtn = document.getElementById('modalAddToCart');
             if (addToCartBtn) {
                 addToCartBtn.addEventListener('click', function() {
                     if (!selectedService) return;
                     
                     var options = {};
-                    var quantity = 1; // Always 1 for bookings - the price is calculated from nights
+                    var quantity = 1;
                     
-                    // Calendar date range booking
                     if (selectedService.booking_type && selectedService.booking_type !== 'none') {
                         if (!window.selectedBookingStart || !window.selectedBookingEnd) {
                             alert('Please select your check-in and check-out dates');
@@ -1479,7 +1513,6 @@
                             totalPrice: selectedService.price * window.selectedBookingNights
                         };
                     }
-                    // Traditional date range booking (accommodation with requires_booking)
                     else if (selectedService.requires_booking) {
                         var checkIn = document.getElementById('modalCheckIn').value;
                         var checkOut = document.getElementById('modalCheckOut').value;
@@ -1501,7 +1534,6 @@
                 });
             } 
 
-            // MODIFIED: Buy now from modal - supports calendar booking
             var buyNowBtn = document.getElementById('modalBuyNow');
             if (buyNowBtn) {
                 buyNowBtn.addEventListener('click', function() {
@@ -1510,7 +1542,6 @@
                     var options = {};
                     var quantity = 1;
                     
-                    // Calendar date range booking
                     if (selectedService.booking_type && selectedService.booking_type !== 'none') {
                         if (!window.selectedBookingStart || !window.selectedBookingEnd) {
                             alert('Please select your check-in and check-out dates');
@@ -1523,7 +1554,6 @@
                             totalPrice: selectedService.price * window.selectedBookingNights
                         };
                     }
-                    // Traditional date range booking
                     else if (selectedService.requires_booking) {
                         var checkIn = document.getElementById('modalCheckIn').value;
                         var checkOut = document.getElementById('modalCheckOut').value;
@@ -1546,7 +1576,6 @@
                 });
             }
 
-            // Cart payment buttons
             var payWithTokensBtn = document.getElementById('payWithTokensBtn');
             if (payWithTokensBtn) {
                 payWithTokensBtn.addEventListener('click', function() { startCheckout('tokens'); });
@@ -1557,7 +1586,6 @@
                 payWithStripeBtn.addEventListener('click', function() { startCheckout('card'); });
             }
             
-            // Login modal
             var closeLoginModalBtn = document.getElementById('closeLoginModal');
             if (closeLoginModalBtn) {
                 closeLoginModalBtn.addEventListener('click', function() {
@@ -1574,7 +1602,6 @@
                 });
             }
             
-            // Checkout modal
             var closeCheckoutModalBtn = document.getElementById('closeCheckoutModal');
             if (closeCheckoutModalBtn) {
                 closeCheckoutModalBtn.addEventListener('click', function() {
@@ -1591,7 +1618,6 @@
                 });
             }
             
-            // Payment method toggle
             document.querySelectorAll('input[name="paymentMethod"]').forEach(function(radio) {
                 radio.addEventListener('change', function(e) {
                     if (e.target.value === 'card') {
@@ -1603,13 +1629,11 @@
                 });
             });
             
-            // Submit payment
             var submitPaymentBtn = document.getElementById('submitPayment');
             if (submitPaymentBtn) {
                 submitPaymentBtn.addEventListener('click', submitPayment);
             }
             
-            // Booking date change
             var checkInInput = document.getElementById('modalCheckIn');
             if (checkInInput) checkInInput.addEventListener('change', updateBookingTotal);
             
@@ -1643,9 +1667,8 @@
         init();
     </script>
     
-    <!-- NEW: Booking Calendar Component (inline) -->
+    <!-- Booking Calendar Component -->
     <script>
-        // Booking Calendar Component with Date Range Support
         var BookingCalendar = {
             serviceId: null,
             currentDate: new Date(),
@@ -1656,6 +1679,7 @@
             settings: {},
             onSelectCallback: null,
             containerId: 'bookingCalendarContainer',
+            fixedDuration: null,
 
             init: async function(serviceId, onSelect) {
                 this.serviceId = serviceId;
@@ -1664,6 +1688,7 @@
                 this.endDate = null;
                 this.selectingEnd = false;
                 this.currentDate = new Date();
+                this.fixedDuration = null;
                 
                 await this.loadAvailability();
                 this.render();
@@ -1680,12 +1705,39 @@
                     if (data.success) {
                         this.settings = data.settings || {};
                         this.availability = data.bookedSlots || {};
+                        this.fixedDuration = this.settings.fixed_duration || null;
                     }
                 } catch (error) {
                     console.error('Failed to load availability:', error);
                     this.settings = {};
                     this.availability = {};
                 }
+            },
+
+            isRangeAvailable: function(startDateStr, nights) {
+                var start = new Date(startDateStr + 'T00:00:00');
+                var today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                var availableDays = this.settings.available_days 
+                    ? this.settings.available_days.split(',').map(function(d) { return parseInt(d.trim()); })
+                    : [0, 1, 2, 3, 4, 5, 6];
+                
+                for (var i = 0; i < nights; i++) {
+                    var checkDate = new Date(start);
+                    checkDate.setDate(checkDate.getDate() + i);
+                    var dateStr = this.formatDate(checkDate);
+                    var dayOfWeek = checkDate.getDay();
+                    
+                    if (checkDate < today) return false;
+                    if (availableDays.indexOf(dayOfWeek) === -1) return false;
+                    
+                    var bookedCount = this.availability[dateStr] || 0;
+                    var maxSlots = this.settings.slots_per_day || 1;
+                    if (bookedCount >= maxSlots) return false;
+                }
+                
+                return true;
             },
 
             render: function() {
@@ -1709,14 +1761,19 @@
 
                 var html = '<div class="bg-surface-light rounded-xl p-4 border border-white/10">';
                 
-                // Instructions
-                html += '<p class="text-slate-400 text-sm mb-4 text-center">' +
-                    (this.startDate && !this.endDate ? 
-                        '<span class="text-primary">Now select your end date</span>' : 
-                        'Select your check-in date') +
-                    '</p>';
+                if (this.fixedDuration) {
+                    html += '<p class="text-slate-400 text-sm mb-4 text-center">' +
+                        '<span class="text-primary font-semibold">' + this.fixedDuration + '-night stay</span> — ' +
+                        'Click a date to select your check-in' +
+                        '</p>';
+                } else {
+                    html += '<p class="text-slate-400 text-sm mb-4 text-center">' +
+                        (this.startDate && !this.endDate ? 
+                            '<span class="text-primary">Now select your check-out date</span>' : 
+                            'Select your check-in date') +
+                        '</p>';
+                }
                 
-                // Month navigation
                 html += '<div class="flex items-center justify-between mb-4">' +
                         '<button type="button" onclick="BookingCalendar.prevMonth()" class="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white">' +
                             '<span class="material-symbols-outlined">chevron_left</span>' +
@@ -1727,22 +1784,18 @@
                         '</button>' +
                     '</div>';
                 
-                // Day headers
                 html += '<div class="grid grid-cols-7 gap-1 mb-2">';
                 for (var i = 0; i < dayNames.length; i++) {
                     html += '<div class="text-center text-xs font-medium text-slate-500 py-2">' + dayNames[i] + '</div>';
                 }
                 html += '</div>';
                 
-                // Calendar grid
                 html += '<div class="grid grid-cols-7 gap-1">';
 
-                // Empty cells before first day
                 for (var i = 0; i < firstDay; i++) {
                     html += '<div class="aspect-square"></div>';
                 }
 
-                // Day cells
                 for (var day = 1; day <= daysInMonth; day++) {
                     var date = new Date(year, month, day);
                     var dateStr = this.formatDate(date);
@@ -1758,17 +1811,24 @@
                     var isEnd = this.endDate === dateStr;
                     var isInRange = this.isDateInRange(dateStr);
                     
+                    var canStartFixedRange = false;
+                    if (this.fixedDuration && !isPast && isAvailableDay && !isFullyBooked) {
+                        canStartFixedRange = this.isRangeAvailable(dateStr, this.fixedDuration);
+                    }
+                    
                     var isDisabled = isPast || !isAvailableDay || isFullyBooked;
                     
-                    // Don't allow selecting end date before start date
-                    if (this.startDate && !this.endDate && dateStr < this.startDate) {
+                    if (this.fixedDuration && !canStartFixedRange && !isInRange && !isStart && !isEnd) {
+                        isDisabled = true;
+                    }
+                    
+                    if (!this.fixedDuration && this.startDate && !this.endDate && dateStr < this.startDate) {
                         isDisabled = true;
                     }
 
                     var cellClass = 'aspect-square flex items-center justify-center text-sm font-medium transition-all relative ';
                     
                     if (isStart && isEnd) {
-                        // Single day selection
                         cellClass += 'bg-primary text-background-dark rounded-lg cursor-pointer';
                     } else if (isStart) {
                         cellClass += 'bg-primary text-background-dark rounded-l-lg cursor-pointer';
@@ -1778,6 +1838,8 @@
                         cellClass += 'bg-primary/30 text-white cursor-pointer';
                     } else if (isDisabled) {
                         cellClass += 'bg-background-dark/50 text-slate-600 cursor-not-allowed rounded-lg';
+                    } else if (this.fixedDuration && canStartFixedRange) {
+                        cellClass += 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 cursor-pointer rounded-lg border border-emerald-500/30';
                     } else if (bookedCount > 0) {
                         cellClass += 'bg-primary/20 text-primary hover:bg-primary/30 cursor-pointer rounded-lg border border-primary/30';
                     } else {
@@ -1786,19 +1848,24 @@
 
                     var clickHandler = isDisabled ? '' : ' onclick="BookingCalendar.selectDate(\'' + dateStr + '\')"';
                     
-                    html += '<div class="' + cellClass + '"' + clickHandler + '>' + day + '</div>';
+                    var hoverHandler = '';
+                    if (this.fixedDuration && canStartFixedRange && !isDisabled) {
+                        hoverHandler = ' onmouseenter="BookingCalendar.previewRange(\'' + dateStr + '\')" onmouseleave="BookingCalendar.clearPreview()"';
+                    }
+                    
+                    html += '<div class="' + cellClass + '"' + clickHandler + hoverHandler + '>' + day + '</div>';
                 }
 
                 html += '</div>';
                 
-                // Legend
-                html += '<div class="flex items-center justify-center gap-4 mt-4 text-xs text-slate-500">' +
-                        '<div class="flex items-center gap-1"><div class="w-3 h-3 rounded bg-white/5"></div><span>Available</span></div>' +
-                        '<div class="flex items-center gap-1"><div class="w-3 h-3 rounded bg-primary"></div><span>Selected</span></div>' +
+                html += '<div class="flex flex-wrap items-center justify-center gap-3 mt-4 text-xs text-slate-500">';
+                if (this.fixedDuration) {
+                    html += '<div class="flex items-center gap-1"><div class="w-3 h-3 rounded bg-emerald-500/20 border border-emerald-500/30"></div><span>Available start</span></div>';
+                }
+                html += '<div class="flex items-center gap-1"><div class="w-3 h-3 rounded bg-primary"></div><span>Selected</span></div>' +
                         '<div class="flex items-center gap-1"><div class="w-3 h-3 rounded bg-background-dark/50"></div><span>Unavailable</span></div>' +
                     '</div>';
 
-                // Selected range display
                 if (this.startDate) {
                     var startDisplay = new Date(this.startDate + 'T00:00:00');
                     var dateOptions = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
@@ -1830,7 +1897,19 @@
                             '<p class="text-slate-400 text-sm text-center mt-2">Select check-out date</p>';
                     }
                     
-                    // Clear selection button
+                    if (this.fixedDuration && this.endDate) {
+                        html += '<div class="flex items-center justify-center gap-4 mt-4 pt-3 border-t border-white/10">' +
+                            '<button type="button" onclick="BookingCalendar.slideSelection(-1)" ' +
+                                'class="flex items-center gap-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm text-slate-300 hover:text-white">' +
+                                '<span class="material-symbols-outlined text-lg">chevron_left</span> Earlier' +
+                            '</button>' +
+                            '<button type="button" onclick="BookingCalendar.slideSelection(1)" ' +
+                                'class="flex items-center gap-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm text-slate-300 hover:text-white">' +
+                                'Later <span class="material-symbols-outlined text-lg">chevron_right</span>' +
+                            '</button>' +
+                        '</div>';
+                    }
+                    
                     html += '<button type="button" onclick="BookingCalendar.clearSelection()" ' +
                         'class="w-full mt-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">' +
                         'Clear selection</button>';
@@ -1838,8 +1917,68 @@
                     html += '</div>';
                 }
 
+                html += '<div id="calendarPreview" class="hidden mt-2 text-center text-sm text-slate-400"></div>';
+
                 html += '</div>';
                 container.innerHTML = html;
+            },
+
+            previewRange: function(dateStr) {
+                if (!this.fixedDuration) return;
+                
+                var previewEl = document.getElementById('calendarPreview');
+                if (!previewEl) return;
+                
+                var start = new Date(dateStr + 'T00:00:00');
+                var end = new Date(start);
+                end.setDate(end.getDate() + this.fixedDuration);
+                
+                var dateOptions = { month: 'short', day: 'numeric' };
+                previewEl.innerHTML = start.toLocaleDateString('en-US', dateOptions) + ' → ' + 
+                                    end.toLocaleDateString('en-US', dateOptions) + 
+                                    ' (' + this.fixedDuration + ' nights)';
+                previewEl.classList.remove('hidden');
+            },
+
+            clearPreview: function() {
+                var previewEl = document.getElementById('calendarPreview');
+                if (previewEl) {
+                    previewEl.classList.add('hidden');
+                }
+            },
+
+            slideSelection: function(direction) {
+                if (!this.fixedDuration || !this.startDate) return;
+                
+                var start = new Date(this.startDate + 'T00:00:00');
+                start.setDate(start.getDate() + direction);
+                var newStartStr = this.formatDate(start);
+                
+                if (this.isRangeAvailable(newStartStr, this.fixedDuration)) {
+                    this.startDate = newStartStr;
+                    var end = new Date(start);
+                    end.setDate(end.getDate() + this.fixedDuration);
+                    this.endDate = this.formatDate(end);
+                    
+                    this.render();
+                    this.triggerCallback();
+                } else {
+                    this.showSlideError(direction > 0 ? 'No availability for later dates' : 'No availability for earlier dates');
+                }
+            },
+
+            showSlideError: function(message) {
+                var container = document.getElementById(this.containerId);
+                if (!container) return;
+                
+                var errorEl = document.createElement('div');
+                errorEl.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-red-500/90 text-white px-4 py-2 rounded-lg text-sm z-50';
+                errorEl.textContent = message;
+                document.body.appendChild(errorEl);
+                
+                setTimeout(function() {
+                    errorEl.remove();
+                }, 2000);
             },
 
             isDateInRange: function(dateStr) {
@@ -1862,15 +2001,27 @@
             },
 
             selectDate: function(dateStr) {
+                if (this.fixedDuration) {
+                    if (!this.isRangeAvailable(dateStr, this.fixedDuration)) {
+                        return;
+                    }
+                    
+                    this.startDate = dateStr;
+                    var end = new Date(dateStr + 'T00:00:00');
+                    end.setDate(end.getDate() + this.fixedDuration);
+                    this.endDate = this.formatDate(end);
+                    
+                    this.render();
+                    this.triggerCallback();
+                    return;
+                }
+                
                 if (!this.startDate || (this.startDate && this.endDate)) {
-                    // First click or reset: set start date
                     this.startDate = dateStr;
                     this.endDate = null;
                     this.render();
                 } else {
-                    // Second click: set end date
                     if (dateStr <= this.startDate) {
-                        // If clicked date is before or same as start, reset to new start
                         this.startDate = dateStr;
                         this.endDate = null;
                     } else {
@@ -1916,12 +2067,10 @@
                 this.endDate = null;
                 this.render();
                 
-                // Reset button states
                 if (typeof updateModalButtons === 'function') {
                     updateModalButtons();
                 }
                 
-                // Show required message again
                 var calendarRequired = document.getElementById('calendarBookingRequired');
                 if (calendarRequired) {
                     calendarRequired.classList.remove('hidden');
@@ -1930,8 +2079,6 @@
         };
 
         window.BookingCalendar = BookingCalendar;
-        </script>
-    
-    <iframe id="walletTwoLogoutIframe" style="display:none;"></iframe>
+    </script>
 </body>
 </html>

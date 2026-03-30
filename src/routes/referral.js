@@ -560,4 +560,68 @@ router.post('/generate', async (req, res) => {
     }
 });
 
+router.get('/list/:wallet', async (req, res) => {
+    try {
+        const { wallet } = req.params;
+        
+        const result = await db.pool.query(`
+            SELECT referred_wallet as wallet, created_at as date
+            FROM referrals
+            WHERE LOWER(referrer_wallet) = LOWER($1)
+            ORDER BY created_at DESC
+            LIMIT 50
+        `, [wallet]);
+
+        res.json({
+            success: true,
+            referrals: result.rows
+        });
+    } catch (error) {
+        console.error('Error fetching referrals list:', error);
+        res.json({ success: true, referrals: [] });
+    }
+});
+
+// GET /api/referral/bonuses/:wallet - Get referral bonuses earned
+router.get('/bonuses/:wallet', async (req, res) => {
+    try {
+        const { wallet } = req.params;
+        
+        // Check if referral_bonuses table exists, if not return empty
+        const tableCheck = await db.pool.query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'referral_bonuses'
+            )
+        `);
+        
+        if (!tableCheck.rows[0].exists) {
+            return res.json({
+                success: true,
+                bonuses: []
+            });
+        }
+        
+        const result = await db.pool.query(
+            `SELECT bonus_type as type, bonus_amount as amount, created_at as date
+             FROM referral_bonuses
+             WHERE LOWER(wallet) = LOWER($1)
+             ORDER BY created_at DESC
+             LIMIT 50`,
+            [wallet]
+        );
+        
+        res.json({
+            success: true,
+            bonuses: result.rows
+        });
+    } catch (error) {
+        console.error('Error fetching referral bonuses:', error);
+        res.json({
+            success: true,
+            bonuses: []
+        });
+    }
+});
+
 module.exports = router;

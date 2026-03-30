@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <meta name="description" content="Terms and Conditions - Kea Valley ">
-    <title>Terms & Conditions | Kea Valley </title>
+    <meta name="description" content="Terms and Conditions - Kea Valley Private Members Club">
+    <title>Terms & Conditions | Kea Valley Private Members Club</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -15,10 +15,10 @@
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#ee9d2b",
-                        "primary-light": "#fbdea6",
-                        "background-dark": "#0a0a0a",
-                        "surface": "#121212",
+                        "primary": "#daa520",
+                        "primary-light": "#f4d03f",
+                        "background-dark": "#0d0d0d",
+                        "surface": "#1a1a1a",
                     },
                     fontFamily: {
                         "sans": ["Manrope", "sans-serif"],
@@ -32,22 +32,28 @@
         body { font-family: 'Manrope', sans-serif; }
         h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
         .gold-glow:hover {
-            box-shadow: 0 0 25px rgba(238, 157, 43, 0.3);
-            border-color: #ee9d2b;
+            box-shadow: 0 0 25px rgba(218, 165, 32, 0.3);
+            border-color: #daa520;
             transition: all 0.5s ease;
         }
         .glass-nav {
             backdrop-filter: blur(12px);
             background-color: rgba(26, 26, 26, 0.9);
         }
+        .gold-text {
+            background: linear-gradient(135deg, #daa520 0%, #f4d03f 50%, #daa520 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-track { background: #0d0d0d; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
+        ::-webkit-scrollbar-thumb:hover { background: #daa520; }
         .legal-content h2 {
             font-family: 'Playfair Display', serif;
             font-size: 1.5rem;
-            color: #ee9d2b;
+            color: #daa520;
             margin-top: 2.5rem;
             margin-bottom: 1rem;
         }
@@ -75,54 +81,68 @@
             line-height: 1.7;
         }
         .legal-content a {
-            color: #ee9d2b;
+            color: #daa520;
             text-decoration: underline;
         }
         .legal-content a:hover {
-            color: #fbdea6;
+            color: #f4d03f;
         }
     </style>
 </head>
 <body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased">
 
-    <!-- Header -->
+    <!-- ============================================ -->
+    <!-- HEADER - Matching Main Page Style -->
+    <!-- ============================================ -->
     <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
+        <div class="max-w-[1400px] mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
+            <!-- Logo -->
             <a href="/" class="flex items-center gap-4 group cursor-pointer">
                 <img src="/images/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
                 <div>
-                    <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
+                    <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea<br/>Valley</h2>
                 </div>
             </a>
+            
+            <!-- Desktop Navigation -->
             <nav class="hidden lg:flex items-center gap-8 xl:gap-12">
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/presale/packages">Summer Season 2026</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://keanaissance.com" target="_blank" rel="noopener noreferrer">keanaissance</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://kearising.net">Kea Rising</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://villacarpediemkea.com" target="_blank" rel="noopener noreferrer">Kea Valley - History</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/#tokenisation">VIP Tokens</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/profile">Profile</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/package">Summer<br/>Season 2026</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://keanaissance.com" target="_blank" rel="noopener noreferrer">Keanaissance</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://kearising.net" target="_blank" rel="noopener noreferrer">Kea Rising</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://villacarpediemkea.com" target="_blank" rel="noopener noreferrer">Kea Valley<br/>History</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/marketplace">Marketplace</a>
             </nav>
+
+            <!-- Right Side -->
             <div class="flex items-center gap-4">
-                <button class="lg:hidden text-white" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
-                    <span class="material-symbols-outlined">menu</span>
+                <a href="/profile" class="hidden sm:flex border border-primary/50 text-primary px-5 py-2.5 rounded-lg hover:bg-primary hover:text-black font-bold uppercase text-xs tracking-wide transition-all">
+                    Profile
+                </a>
+                <button class="lg:hidden text-white p-2" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
+                    <span class="material-symbols-outlined text-2xl">menu</span>
                 </button>
             </div>
         </div>
+        
         <!-- Mobile Menu -->
-        <div id="mobileMenu" class="hidden lg:hidden bg-background-dark border-t border-white/5 px-6 py-4">
-            <nav class="flex flex-col gap-4">
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/presale/packages">Summer Season 2026</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="https://keanaissance.com" target="_blank" rel="noopener noreferrer">keanaissance</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="https://kearising.net">Kea Rising</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://villacarpediemkea.com" target="_blank" rel="noopener noreferrer">Kea Valley - History</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/#tokenisation">VIP Tokens</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-2" href="/profile">Profile</a>
+        <div id="mobileMenu" class="hidden lg:hidden bg-surface border-t border-white/5">
+            <nav class="px-6 py-4 space-y-4">
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="/package">Summer Season 2026</a>
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="https://keanaissance.com" target="_blank">Keanaissance</a>
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="https://kearising.net" target="_blank">Kea Rising</a>
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="https://villacarpediemkea.com" target="_blank">Kea Valley History</a>
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="/marketplace">Marketplace</a>
+                <div class="border-t border-white/10 pt-4 mt-4">
+                    <a href="/profile" class="block text-center py-3 px-4 bg-primary text-black font-bold text-sm uppercase tracking-widest rounded-lg">
+                        Profile
+                    </a>
+                </div>
             </nav>
         </div>
     </header>
 
     <!-- Page Header -->
-    <section class="pt-32 pb-16 px-6 bg-surface border-b border-white/5">
+    <section class="pt-36 lg:pt-40 pb-16 px-6 bg-surface border-b border-white/5">
         <div class="max-w-4xl mx-auto">
             <div class="flex items-center gap-2 text-sm text-slate-500 mb-6">
                 <a href="/" class="hover:text-primary transition-colors">Home</a>
@@ -130,7 +150,7 @@
                 <span class="text-slate-400">Terms & Conditions</span>
             </div>
             <h1 class="text-4xl md:text-5xl lg:text-6xl font-serif font-medium text-white mb-4">Terms & Conditions</h1>
-            <p class="text-slate-400 font-light">Last updated: February 2026</p>
+            <p class="text-slate-400 font-light">Last updated: March 2026</p>
         </div>
     </section>
 
@@ -138,12 +158,12 @@
     <main class="py-16 px-6 bg-background-dark">
         <div class="max-w-4xl mx-auto legal-content">
             
-            <p>Welcome to Kea Valley. These Terms and Conditions ("Terms") govern your access to and use of our website, services, and VIP Token ecosystem. By accessing or using our services, you agree to be bound by these Terms.</p>
+            <p>Welcome to Kea Valley Private Members Club. These Terms and Conditions ("Terms") govern your access to and use of our website, services, and VIP Token ecosystem. By accessing or using our services, you agree to be bound by these Terms.</p>
 
             <h2>1. Definitions</h2>
             <p>In these Terms:</p>
             <ul>
-                <li><strong>"Kea Valley," "we," "us," or "our"</strong> refers to Kea Valley and its affiliated entities.</li>
+                <li><strong>"Kea Valley," "we," "us," or "our"</strong> refers to Kea Valley Private Members Club and its affiliated entities.</li>
                 <li><strong>"Services"</strong> refers to all products, services, content, features, and technologies offered by Kea Valley, including but not limited to the VIP Token system, property rentals, experiences, and membership programs.</li>
                 <li><strong>"VIP Tokens"</strong> refers to the digital tokens issued by Kea Valley that represent EUR 1 equivalent value redeemable for services on Kea Island.</li>
                 <li><strong>"User," "you," or "your"</strong> refers to any individual or entity accessing or using our Services.</li>
@@ -232,18 +252,18 @@
     </main>
 
     <!-- Footer -->
-    <footer class="py-12 md:py-16 border-t border-white/5" style="background-color: #1a1a1a;">
-        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+    <footer class="bg-surface py-12 border-t border-white/5">
+        <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
             <div class="flex flex-col gap-8">
                 <div class="flex flex-col lg:flex-row justify-between items-center gap-8">
                     <a href="/" class="flex items-center gap-3">
                         <img src="/images/logo.png" alt="Kea Valley" class="h-8 w-auto"/>
-                        <span class="text-sm font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
+                        <span class="font-serif text-lg gold-text">Kea Valley</span>
                     </a>
                     <div class="flex flex-wrap justify-center gap-6 md:gap-8 text-slate-500 text-[0.65rem] tracking-[0.2em] font-bold uppercase font-sans">
                         <a class="hover:text-primary transition-colors" href="/profile">Profile</a>
-                        <a class="hover:text-primary transition-colors" href="/claim">Claim Tokens</a>
-                        <a class="hover:text-primary transition-colors" href="/#tokenisation">VIP Tokens</a>
+                        <a class="hover:text-primary transition-colors" href="/marketplace">Marketplace</a>
+                        <a class="hover:text-primary transition-colors" href="/package">Packages</a>
                         <a class="hover:text-primary transition-colors" href="/privacy">Privacy Policy</a>
                         <a class="hover:text-primary transition-colors" href="/terms">Terms</a>
                     </div>
@@ -259,33 +279,11 @@
                     </div>
                 </div>
                 <div class="pt-6 border-t border-white/5 text-center">
-                    <div class="text-slate-600 text-xs font-light">
-                        © 2026 Kea Valley. All rights reserved.
-                    </div>
+                    <div class="text-gray-500 text-sm">© 2026 Kea Valley Private Members Club. All rights reserved.</div>
                 </div>
             </div>
         </div>
     </footer>
-
-    <!-- Dynamic WalletTwo Links -->
-    <script>
-    (function() {
-        const WALLETTWO_COMPANY_ID = '6a27c2f8-894c-46c7-bf9f-f5af11d4e092';
-        
-        function buildWalletTwoUrl(redirectPath, message) {
-            message = message || 'BONUS_TOKENS_KEA_VALLEY';
-            return 'https://wallet.wallettwo.com/auth/login?companyId=' + WALLETTWO_COMPANY_ID + 
-                   '&action=signature&message=' + message + 
-                   '&redirect_uri=' + encodeURIComponent(window.location.origin + redirectPath);
-        }
-        
-        // Set dynamic URLs
-        var TokensLink = document.getElementById('TokensLink');
-        if (TokensLink) {
-            TokensLink.href = buildWalletTwoUrl('/claim');
-        }
-    })();
-    </script>
 
 </body>
 </html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html class="dark" lang="en">
+<!-- VERSION: 2026-03-30 - Fixed WalletTwo URLs + Matching Header -->
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -14,10 +15,10 @@
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#ee9d2b",
-                        "primary-light": "#fbdea6",
-                        "background-dark": "#0a0a0a",
-                        "surface": "#121212",
+                        "primary": "#daa520",
+                        "primary-light": "#f4d03f",
+                        "background-dark": "#0d0d0d",
+                        "surface": "#1a1a1a",
                         "surface-light": "#1a1a1a",
                     },
                     fontFamily: {
@@ -32,17 +33,17 @@
         body { font-family: 'Manrope', sans-serif; }
         h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
         .gold-glow:hover {
-            box-shadow: 0 0 25px rgba(238, 157, 43, 0.3);
-            border-color: #ee9d2b;
+            box-shadow: 0 0 25px rgba(218, 165, 32, 0.3);
+            border-color: #daa520;
         }
         .glass-nav {
             backdrop-filter: blur(12px);
-            background-color: rgba(10, 10, 10, 0.85);
+            background-color: rgba(26, 26, 26, 0.9);
         }
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-track { background: #0d0d0d; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
+        ::-webkit-scrollbar-thumb:hover { background: #daa520; }
         
         .wallet-iframe-container {
             background: #ffffff;
@@ -62,17 +63,17 @@
         }
         .card-hover:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(238, 157, 43, 0.15);
-            border-color: rgba(238, 157, 43, 0.3);
+            box-shadow: 0 8px 30px rgba(218, 165, 32, 0.15);
+            border-color: rgba(218, 165, 32, 0.3);
         }
         
         .balance-glow {
-            text-shadow: 0 0 40px rgba(238, 157, 43, 0.4);
+            text-shadow: 0 0 40px rgba(218, 165, 32, 0.4);
         }
 
         .referral-code-box {
-            background: linear-gradient(135deg, rgba(238, 157, 43, 0.1) 0%, rgba(212, 165, 67, 0.05) 100%);
-            border: 2px dashed rgba(238, 157, 43, 0.4);
+            background: linear-gradient(135deg, rgba(218, 165, 32, 0.1) 0%, rgba(212, 165, 67, 0.05) 100%);
+            border: 2px dashed rgba(218, 165, 32, 0.4);
         }
         
         .referral-input {
@@ -100,20 +101,20 @@
             flex-shrink: 0;
         }
         .modal-radio:checked {
-            border-color: #ee9d2b;
-            background: #ee9d2b;
+            border-color: #daa520;
+            background: #daa520;
         }
         .modal-radio:checked::after {
             content: '';
             display: block;
             width: 6px;
             height: 6px;
-            background: #0a0a0a;
+            background: #0d0d0d;
             border-radius: 50%;
             margin: 4px auto;
         }
         .modal-radio:hover {
-            border-color: #ee9d2b;
+            border-color: #daa520;
         }
         .modal-input {
             background: rgba(0, 0, 0, 0.3);
@@ -126,7 +127,7 @@
         }
         .modal-input:focus {
             outline: none;
-            border-color: #ee9d2b;
+            border-color: #daa520;
         }
 
         .list-item {
@@ -148,7 +149,7 @@
             min-width: 260px;
             background: rgba(18, 18, 18, 0.98);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(238, 157, 43, 0.2);
+            border: 1px solid rgba(218, 165, 32, 0.2);
             border-radius: 1rem;
             padding: 0.5rem;
             opacity: 0;
@@ -182,28 +183,39 @@
         }
         .user-dropdown-menu a:hover,
         .user-dropdown-menu button:hover {
-            background: rgba(238, 157, 43, 0.1);
+            background: rgba(218, 165, 32, 0.1);
+        }
+
+        .gold-text {
+            background: linear-gradient(135deg, #daa520 0%, #f4d03f 50%, #daa520 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
     </style>
 </head>
 <body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
 
-    <!-- Header with Profile Widget -->
+    <!-- ============================================ -->
+    <!-- HEADER - Matching Main Page Style -->
+    <!-- ============================================ -->
     <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex items-center justify-between h-16 lg:h-20">
-            <a href="/" class="flex items-center gap-3 group cursor-pointer">
-                <img src="/images/logo.png" alt="Kea Valley" class="h-10 lg:h-12 w-auto"/>
-                <div class="hidden sm:block">
-                    <h2 class="text-lg lg:text-xl font-serif font-bold tracking-widest uppercase text-white">Kea Valley</h2>
+        <div class="max-w-[1400px] mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
+            <!-- Logo -->
+            <a href="/" class="flex items-center gap-4 group cursor-pointer">
+                <img src="/images/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
+                <div>
+                    <h2 class="text-xl font-serif font-bold tracking-widest uppercase text-white">Kea<br/>Valley</h2>
                 </div>
             </a>
             
-            <nav class="hidden lg:flex items-center gap-6 xl:gap-10">
+            <!-- Desktop Navigation -->
+            <nav class="hidden lg:flex items-center gap-8 xl:gap-12">
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/package">Summer<br/>Season 2026</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://keanaissance.com" target="_blank" rel="noopener noreferrer">Keanaissance</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://kearising.net" target="_blank" rel="noopener noreferrer">Kea Rising</a>
+                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://villacarpediemkea.com" target="_blank" rel="noopener noreferrer">Kea Valley<br/>History</a>
                 <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/marketplace">Marketplace</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/package">Packages</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://keanaissance.com" target="_blank">Keanaissance</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://kearising.net" target="_blank">Kea Rising</a>
-                <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://villacarpediemkea.com" target="_blank">History</a>
             </nav>
 
             <!-- User Section in Header -->
@@ -253,28 +265,33 @@
                 </div>
 
                 <!-- Disconnected State -->
-                <div id="headerDisconnected" class="hidden">
-                    <a href="/profile" class="px-5 py-2.5 bg-primary hover:bg-primary-light text-black font-bold text-xs uppercase tracking-widest rounded-full transition-all">
+                <div id="headerDisconnected" class="hidden items-center gap-3">
+                    <button onclick="showLoginModal()" class="hidden sm:flex border border-primary/50 text-primary px-5 py-2.5 rounded-lg hover:bg-primary hover:text-black font-bold uppercase text-xs tracking-wide transition-all">
                         Login
-                    </a>
+                    </button>
+                    <button onclick="showLoginModal()" class="sm:hidden border border-primary/50 text-primary rounded-lg p-2">
+                        <span class="material-symbols-outlined">login</span>
+                    </button>
                 </div>
 
+                <!-- Mobile menu button -->
                 <button id="mobileMenuBtn" class="lg:hidden text-white/70 hover:text-white p-2">
                     <span class="material-symbols-outlined text-2xl">menu</span>
                 </button>
             </div>
         </div>
 
-        <div id="mobileMenu" class="hidden lg:hidden border-t border-white/5 bg-background-dark/95">
-            <nav class="px-4 py-4 flex flex-col gap-1">
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="/marketplace">Marketplace</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="/package">Packages</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="https://keanaissance.com" target="_blank">Keanaissance</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="https://kearising.net" target="_blank">Kea Rising</a>
-                <a class="text-sm font-bold tracking-widest hover:text-primary transition-colors uppercase py-3 px-2" href="https://villacarpediemkea.com" target="_blank">History</a>
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden lg:hidden border-t border-white/5 bg-surface">
+            <nav class="px-6 py-4 space-y-4">
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="/package">Summer Season 2026</a>
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="https://keanaissance.com" target="_blank">Keanaissance</a>
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="https://kearising.net" target="_blank">Kea Rising</a>
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="https://villacarpediemkea.com" target="_blank">Kea Valley History</a>
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="/marketplace">Marketplace</a>
                 
                 <!-- Mobile User Section -->
-                <div id="mobileUserSection" class="hidden border-t border-white/10 mt-2 pt-4">
+                <div id="mobileUserSection" class="hidden border-t border-white/10 mt-4 pt-4">
                     <div class="px-2 py-2 mb-2">
                         <p class="text-xs text-slate-400">Buying Power</p>
                         <p class="text-xl font-bold text-primary">€<span id="mobileBalance">0</span></p>
@@ -283,17 +300,17 @@
                         Disconnect
                     </button>
                 </div>
-                <div id="mobileConnectSection" class="border-t border-white/10 mt-2 pt-4">
-                    <a href="/profile" class="block text-center py-3 px-4 bg-primary text-black font-bold text-sm uppercase tracking-widest rounded-lg">
-                        Connect
-                    </a>
+                <div id="mobileConnectSection" class="border-t border-white/10 mt-4 pt-4">
+                    <button onclick="showLoginModal()" class="block w-full text-center py-3 px-4 bg-primary text-black font-bold text-sm uppercase tracking-widest rounded-lg">
+                        Login
+                    </button>
                 </div>
             </nav>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 pt-24 lg:pt-28 pb-12 px-4 sm:px-6">
+    <main class="flex-1 pt-28 lg:pt-32 pb-12 px-4 sm:px-6">
         <div class="max-w-6xl mx-auto">
 
             <!-- Login Container -->
@@ -410,10 +427,10 @@
                             <span id="vouchersCount" class="text-primary font-bold text-lg">0</span>
                         </div>
                         <div class="p-4 max-h-64 overflow-y-auto">
-                            <div id="vouchersLoading" class="text-center py-4">
+                            <div id="vouchersLoading" class="hidden text-center py-4">
                                 <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
                             </div>
-                            <div id="vouchersEmpty" class="hidden text-center py-6">
+                            <div id="vouchersEmpty" class="text-center py-6">
                                 <span class="material-symbols-outlined text-slate-600 text-4xl mb-2">confirmation_number</span>
                                 <p class="text-slate-500 text-sm">No vouchers yet</p>
                                 <a href="/marketplace" class="text-primary text-sm hover:underline">Browse marketplace →</a>
@@ -434,10 +451,10 @@
                             <span id="ordersCount" class="text-primary font-bold text-lg">0</span>
                         </div>
                         <div class="p-4 max-h-64 overflow-y-auto">
-                            <div id="ordersLoading" class="text-center py-4">
+                            <div id="ordersLoading" class="hidden text-center py-4">
                                 <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
                             </div>
-                            <div id="ordersEmpty" class="hidden text-center py-6">
+                            <div id="ordersEmpty" class="text-center py-6">
                                 <span class="material-symbols-outlined text-slate-600 text-4xl mb-2">receipt_long</span>
                                 <p class="text-slate-500 text-sm">No orders yet</p>
                                 <a href="/marketplace" class="text-primary text-sm hover:underline">Start shopping →</a>
@@ -544,10 +561,10 @@
                                 <span id="referralCount" class="text-primary font-bold">0</span>
                             </div>
                             <div class="p-3 max-h-32 overflow-y-auto">
-                                <div id="referralsListLoading" class="text-center py-2">
+                                <div id="referralsListLoading" class="hidden text-center py-2">
                                     <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
                                 </div>
-                                <div id="referralsListEmpty" class="hidden text-center py-3">
+                                <div id="referralsListEmpty" class="text-center py-3">
                                     <p class="text-slate-500 text-xs">No referrals yet. Share your code!</p>
                                 </div>
                                 <div id="referralsList" class="hidden space-y-1 text-sm">
@@ -566,10 +583,10 @@
                                 <span id="referralEarned" class="text-primary font-bold">€0</span>
                             </div>
                             <div class="p-3 max-h-32 overflow-y-auto">
-                                <div id="bonusesListLoading" class="text-center py-2">
+                                <div id="bonusesListLoading" class="hidden text-center py-2">
                                     <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
                                 </div>
-                                <div id="bonusesListEmpty" class="hidden text-center py-3">
+                                <div id="bonusesListEmpty" class="text-center py-3">
                                     <p class="text-slate-500 text-xs">No bonuses earned yet</p>
                                 </div>
                                 <div id="bonusesList" class="hidden space-y-1 text-sm">
@@ -626,6 +643,32 @@
 
         </div>
     </main>
+
+    <!-- Login Modal (for header button) -->
+    <div id="loginModal" class="fixed inset-0 z-[100] hidden">
+        <div class="modal-overlay absolute inset-0" onclick="closeLoginModal()"></div>
+        <div class="absolute inset-4 md:inset-8 lg:inset-16 flex items-center justify-center">
+            <div class="modal-content bg-surface border border-white/10 rounded-lg w-full max-w-md">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                    <h2 class="text-lg font-serif text-white">Login with WalletTwo</h2>
+                    <button onclick="closeLoginModal()" class="text-slate-500 hover:text-white transition-colors">
+                        <span class="material-symbols-outlined text-2xl">close</span>
+                    </button>
+                </div>
+                <div class="p-4">
+                    <div class="wallet-iframe-container">
+                        <iframe 
+                            id="modalWalletIframe"
+                            src=""
+                            class="wallet-iframe"
+                            style="height: 500px;"
+                            allow="clipboard-write"
+                        ></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Questionnaire Modal -->
     <div id="questionnaireModal" class="fixed inset-0 z-[100] hidden">
@@ -769,15 +812,13 @@
     </div>
 
     <!-- Footer -->
-    <footer class="bg-background-dark py-6 border-t border-white/5">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-                <a href="/" class="flex items-center gap-2">
-                    <img src="/images/logo.png" alt="Kea Valley" class="h-6 w-auto"/>
-                    <span class="text-xs font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
-                </a>
-                <div class="text-slate-600 text-xs">© 2026 Kea Valley Private Members Club</div>
-            </div>
+    <footer class="bg-surface py-12 border-t border-white/5">
+        <div class="max-w-[1400px] mx-auto px-6 lg:px-12 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <a href="/" class="flex items-center gap-3">
+                <img src="/images/logo.png" alt="Kea Valley" class="h-8 w-auto"/>
+                <span class="font-serif text-lg gold-text">Kea Valley</span>
+            </a>
+            <div class="text-gray-500 text-sm">© 2026 Kea Valley Private Members Club</div>
         </div>
     </footer>
 
@@ -785,11 +826,15 @@
 
     <script>
         // ============================================
+        // VERSION: 2026-03-30 - Fixed WalletTwo URLs + Matching Header
+        // ============================================
+        
+        // ============================================
         // Configuration
         // ============================================
         let CONFIG = {
             VIP_TOKEN_ADDRESS: '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F',
-            POLYGON_RPC: 'https://polygon-mainnet.g.alchemy.com/v2/IoufBRdGO6MKWC6pxqbZW',
+            POLYGON_RPC: 'https://polygon-rpc.com',
             POLYGON_EXPLORER: 'https://polygonscan.com',
             WALLETTWO_ORIGIN: 'https://wallet.wallettwo.com',
             WALLETTWO_COMPANY_ID: null,
@@ -832,6 +877,7 @@
         // ============================================
         async function loadConfig() {
             try {
+                console.log('📥 Loading config...');
                 const response = await fetch('/api/config/public');
                 const config = await response.json();
                 
@@ -850,6 +896,25 @@
         }
 
         // ============================================
+        // Build WalletTwo URL Helper
+        // CORRECT: /action/auth and /action/logout
+        // ============================================
+        function buildWalletTwoUrl(action, extraParams = {}) {
+            let url = `${CONFIG.WALLETTWO_ORIGIN}/action/${action}?iframe=true`;
+            
+            if (CONFIG.WALLETTWO_COMPANY_ID) {
+                url += `&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
+            }
+            
+            for (const [key, value] of Object.entries(extraParams)) {
+                url += `&${key}=${encodeURIComponent(value)}`;
+            }
+            
+            console.log('🔗 Built URL:', url);
+            return url;
+        }
+
+        // ============================================
         // Initialize WalletTwo Iframe
         // ============================================
         function initWalletIframe() {
@@ -857,7 +922,32 @@
                 console.error('Cannot init iframe: missing companyId');
                 return;
             }
-            walletIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=auth&iframe=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
+            const iframeSrc = buildWalletTwoUrl('auth');
+            console.log('🖼️ Initializing iframe:', iframeSrc);
+            walletIframe.src = iframeSrc;
+        }
+
+        // ============================================
+        // Login Modal Functions
+        // ============================================
+        function showLoginModal() {
+            const modal = document.getElementById('loginModal');
+            const iframe = document.getElementById('modalWalletIframe');
+            
+            if (CONFIG.WALLETTWO_COMPANY_ID) {
+                iframe.src = buildWalletTwoUrl('auth');
+            }
+            
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLoginModal() {
+            const modal = document.getElementById('loginModal');
+            const iframe = document.getElementById('modalWalletIframe');
+            iframe.src = '';
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
         }
 
         // ============================================
@@ -928,19 +1018,17 @@
             const mobileConnectSection = document.getElementById('mobileConnectSection');
             
             if (user && user.wallet) {
-                // Show connected state
                 headerConnected.classList.remove('hidden');
                 headerDisconnected.classList.add('hidden');
+                headerDisconnected.classList.remove('flex');
                 mobileUserSection.classList.remove('hidden');
                 mobileConnectSection.classList.add('hidden');
                 
-                // Set user name
                 const firstName = user.firstName || '';
                 const lastName = user.lastName || '';
                 const fullName = user.name || `${firstName} ${lastName}`.trim() || 'Member';
                 document.getElementById('headerUserName').textContent = fullName;
                 
-                // Set initials
                 let initials = '--';
                 if (firstName && lastName) {
                     initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
@@ -952,18 +1040,16 @@
                 }
                 document.getElementById('headerAvatarInitials').textContent = initials;
                 
-                // Set balance
                 const balanceStr = balance.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
                 document.getElementById('headerUserBalance').textContent = balanceStr;
                 document.getElementById('dropdownBalance').textContent = balanceStr;
                 document.getElementById('mobileBalance').textContent = balanceStr;
                 
-                // Set email
                 document.getElementById('dropdownEmail').textContent = user.email || '';
             } else {
-                // Show disconnected state
                 headerConnected.classList.add('hidden');
                 headerDisconnected.classList.remove('hidden');
+                headerDisconnected.classList.add('flex');
                 mobileUserSection.classList.add('hidden');
                 mobileConnectSection.classList.remove('hidden');
             }
@@ -980,6 +1066,7 @@
             acceptMessages = true;
             isDisconnecting = false;
             updateHeaderUI(null, 0);
+            console.log('✅ Login shown, acceptMessages =', acceptMessages);
         }
 
         function showLoading() {
@@ -1003,7 +1090,9 @@
             currentUser = user;
             acceptMessages = false;
             
-            // Fetch user info from database
+            // Close login modal if open
+            closeLoginModal();
+            
             if (!currentUser.email || !currentUser.name) {
                 try {
                     const response = await fetch(`/api/wallet/info/${user.wallet}`);
@@ -1020,18 +1109,15 @@
                 }
             }
             
-            // Show profile
             loginContainer.classList.add('hidden');
             loadingContainer.classList.add('hidden');
             profileContainer.classList.remove('hidden');
             disconnectingContainer.classList.add('hidden');
             
-            // Set profile info
             const firstName = currentUser.firstName || '';
             const lastName = currentUser.lastName || '';
             const fullName = currentUser.name || `${firstName} ${lastName}`.trim();
             
-            // Avatar initials
             let initials = '--';
             if (firstName && lastName) {
                 initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
@@ -1043,10 +1129,8 @@
             }
             document.getElementById('avatarInitials').textContent = initials;
             
-            // Display name
             document.getElementById('displayName').textContent = fullName || 'Member';
             
-            // Email
             const emailEl = document.getElementById('displayEmail');
             if (currentUser.email) {
                 emailEl.textContent = currentUser.email;
@@ -1055,10 +1139,8 @@
                 emailEl.classList.add('hidden');
             }
             
-            // Save to database
             await saveToDatabase(user.wallet, currentUser.email, fullName);
             
-            // Fetch all data
             await Promise.all([
                 fetchBalance(user.wallet),
                 fetchVouchers(user.wallet),
@@ -1069,7 +1151,7 @@
         }
 
         // ============================================
-        // Fetch Vouchers
+        // Fetch Vouchers (handles 404 gracefully)
         // ============================================
         async function fetchVouchers(wallet) {
             const loading = document.getElementById('vouchersLoading');
@@ -1077,8 +1159,20 @@
             const list = document.getElementById('vouchersList');
             const count = document.getElementById('vouchersCount');
             
+            loading.classList.remove('hidden');
+            empty.classList.add('hidden');
+            list.classList.add('hidden');
+            
             try {
                 const response = await fetch(`/api/member/vouchers/${wallet}`);
+                
+                if (!response.ok) {
+                    loading.classList.add('hidden');
+                    count.textContent = '0';
+                    empty.classList.remove('hidden');
+                    return;
+                }
+                
                 const data = await response.json();
                 
                 loading.classList.add('hidden');
@@ -1108,12 +1202,13 @@
             } catch (error) {
                 console.error('Error fetching vouchers:', error);
                 loading.classList.add('hidden');
+                count.textContent = '0';
                 empty.classList.remove('hidden');
             }
         }
 
         // ============================================
-        // Fetch Orders
+        // Fetch Orders (handles 404 gracefully)
         // ============================================
         async function fetchOrders(wallet) {
             const loading = document.getElementById('ordersLoading');
@@ -1121,8 +1216,20 @@
             const list = document.getElementById('ordersList');
             const count = document.getElementById('ordersCount');
             
+            loading.classList.remove('hidden');
+            empty.classList.add('hidden');
+            list.classList.add('hidden');
+            
             try {
                 const response = await fetch(`/api/member/orders/${wallet}`);
+                
+                if (!response.ok) {
+                    loading.classList.add('hidden');
+                    count.textContent = '0';
+                    empty.classList.remove('hidden');
+                    return;
+                }
+                
                 const data = await response.json();
                 
                 loading.classList.add('hidden');
@@ -1152,6 +1259,7 @@
             } catch (error) {
                 console.error('Error fetching orders:', error);
                 loading.classList.add('hidden');
+                count.textContent = '0';
                 empty.classList.remove('hidden');
             }
         }
@@ -1173,6 +1281,13 @@
             
             try {
                 const response = await fetch(`/api/questionnaire/${currentUser.wallet}`);
+                
+                if (!response.ok) {
+                    loadingEl.classList.add('hidden');
+                    emptyEl.classList.remove('hidden');
+                    return;
+                }
+                
                 const result = await response.json();
                 
                 loadingEl.classList.add('hidden');
@@ -1320,7 +1435,7 @@
         }
 
         // ============================================
-        // Balance
+        // Balance - Uses RPC directly (no WalletTwo API)
         // ============================================
         async function fetchBalance(address) {
             const balanceLoading = document.getElementById('balanceLoading');
@@ -1330,20 +1445,6 @@
             balanceDisplay.classList.add('hidden');
 
             try {
-                const response = await fetch(`https://api.wallettwo.com/blockchain/balance/137/${address}/${CONFIG.VIP_TOKEN_ADDRESS}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    let balance = typeof data === 'number' ? data : (data.balance || data.result || data.value || 0);
-                    currentBalance = parseFloat(balance);
-                    displayBalance(currentBalance);
-                    updateHeaderUI(currentUser, currentBalance);
-                    return;
-                }
-            } catch (e) {
-                console.log('WalletTwo API failed, using RPC');
-            }
-
-            try {
                 const provider = new ethers.JsonRpcProvider(CONFIG.POLYGON_RPC);
                 const contract = new ethers.Contract(CONFIG.VIP_TOKEN_ADDRESS, ERC20_ABI, provider);
                 const balance = await contract.balanceOf(address);
@@ -1351,7 +1452,7 @@
                 displayBalance(currentBalance);
                 updateHeaderUI(currentUser, currentBalance);
             } catch (e) {
-                console.error('RPC failed:', e);
+                console.error('RPC balance fetch failed:', e);
                 displayBalance(0);
                 updateHeaderUI(currentUser, 0);
             }
@@ -1367,7 +1468,7 @@
         }
 
         // ============================================
-        // REFERRAL SYSTEM
+        // REFERRAL SYSTEM (handles 404 gracefully)
         // ============================================
         async function loadReferralStatus() {
             if (!currentUser?.wallet) return;
@@ -1382,6 +1483,14 @@
 
             try {
                 const response = await fetch(`/api/referral/status/${currentUser.wallet}`);
+                
+                if (!response.ok) {
+                    referralLoading.classList.add('hidden');
+                    referralDisabled.classList.remove('hidden');
+                    hideReferralLists();
+                    return;
+                }
+                
                 referralStatus = await response.json();
                 
                 referralLoading.classList.add('hidden');
@@ -1431,7 +1540,6 @@
                     myCodeSection.classList.add('hidden');
                 }
 
-                // Load referrals list and bonuses
                 await loadReferralsList();
                 await loadReferralBonuses();
 
@@ -1456,8 +1564,20 @@
             const list = document.getElementById('referralsList');
             const count = document.getElementById('referralCount');
             
+            loading.classList.remove('hidden');
+            empty.classList.add('hidden');
+            list.classList.add('hidden');
+            
             try {
                 const response = await fetch(`/api/referral/list/${currentUser.wallet}`);
+                
+                if (!response.ok) {
+                    loading.classList.add('hidden');
+                    count.textContent = referralStatus?.stats?.totalReferrals || '0';
+                    empty.classList.remove('hidden');
+                    return;
+                }
+                
                 const data = await response.json();
                 
                 loading.classList.add('hidden');
@@ -1489,8 +1609,20 @@
             const list = document.getElementById('bonusesList');
             const earned = document.getElementById('referralEarned');
             
+            loading.classList.remove('hidden');
+            empty.classList.add('hidden');
+            list.classList.add('hidden');
+            
             try {
                 const response = await fetch(`/api/referral/bonuses/${currentUser.wallet}`);
+                
+                if (!response.ok) {
+                    loading.classList.add('hidden');
+                    earned.textContent = `€${referralStatus?.stats?.totalBonusEarned || 0}`;
+                    empty.classList.remove('hidden');
+                    return;
+                }
+                
                 const data = await response.json();
                 
                 loading.classList.add('hidden');
@@ -1627,7 +1759,8 @@
             showDisconnecting();
             updateHeaderUI(null, 0);
 
-            logoutIframe.src = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
+            logoutIframe.src = buildWalletTwoUrl('logout');
+            console.log('🚪 Logout iframe:', logoutIframe.src);
 
             setTimeout(() => {
                 window.location.href = '/';
@@ -1636,20 +1769,36 @@
 
         // ============================================
         // WalletTwo Message Handler
+        // Supports both wallet_login AND wallet_session
+        // Supports both 'code' and 'token' fields
         // ============================================
         window.addEventListener('message', (event) => {
+            console.log('📨 Message from:', event.origin);
+            
             if (!event.origin.includes('wallettwo.com')) return;
             if (!acceptMessages || isDisconnecting) return;
 
             const data = event.data;
-            console.log('WalletTwo message:', data);
+            console.log('🔔 WalletTwo message:', data);
 
-            if (data && (data.type === 'wallet_login' || data.event === 'wallet_login')) {
+            const isLoginEvent = data && (
+                data.type === 'wallet_login' ||
+                data.event === 'wallet_login' ||
+                data.type === 'wallet_session' ||
+                data.event === 'wallet_session'
+            );
+
+            if (isLoginEvent) {
                 const wallet = data.wallet || data.wlt || data.address;
+                const code = data.code || data.token;
+                
+                console.log('🔐 Login event - wallet:', wallet, 'code:', code ? 'present' : 'missing');
+                
                 if (wallet) {
                     acceptMessages = false;
-                    if (data.code) {
-                        exchangeCode(data.code, wallet, data.user);
+                    if (code) {
+                        console.log('🚀 Exchanging code...');
+                        exchangeCode(code, wallet, data.user);
                     } else {
                         const userData = { wallet, userId: data.user || data.usr, timestamp: Date.now() };
                         saveSession(userData);
@@ -1674,6 +1823,7 @@
                 });
                 
                 const tokenData = await tokenResponse.json();
+                console.log('📥 Exchange response:', tokenData);
                 
                 if (!tokenData.success && !tokenData.access_token) {
                     console.warn('⚠️ Token exchange failed');
@@ -1756,6 +1906,9 @@
         async function checkQuestionnaireRequired(wallet) {
             try {
                 const response = await fetch(`/api/questionnaire/status/${wallet}`);
+                
+                if (!response.ok) return true;
+                
                 const result = await response.json();
                 
                 if (result.success && result.exists && !result.registration_complete) {
@@ -1782,6 +1935,8 @@
         // Initialize
         // ============================================
         async function init() {
+            console.log('🚀 Profile page initializing... (v2026-03-30)');
+            
             const configLoaded = await loadConfig();
             if (!configLoaded) {
                 console.error('Failed to load config - cannot initialize');

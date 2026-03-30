@@ -1,21 +1,21 @@
 // src/routes/member.js
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../config/database');
+const db = require('../db-postgres');
 
 // GET /api/member/vouchers/:wallet
 router.get('/vouchers/:wallet', async (req, res) => {
     try {
         const { wallet } = req.params;
         
-        const result = await pool.query(`
+        const result = await db.pool.query(`
             SELECT 
                 v.id, v.code, v.service_name, v.value, 
                 v.valid_from, v.valid_until, v.status, v.redeemed_at,
                 s.image_url, s.category
             FROM marketplace_vouchers v
             LEFT JOIN marketplace_services s ON v.service_id = s.id
-            WHERE v.wallet_address = $1
+            WHERE LOWER(v.wallet_address) = LOWER($1)
             ORDER BY v.created_at DESC
         `, [wallet]);
 
@@ -34,12 +34,12 @@ router.get('/orders/:wallet', async (req, res) => {
     try {
         const { wallet } = req.params;
         
-        const result = await pool.query(`
+        const result = await db.pool.query(`
             SELECT 
                 id, order_number, items, total_amount, 
                 payment_method, status, created_at
             FROM marketplace_orders
-            WHERE wallet_address = $1
+            WHERE LOWER(wallet_address) = LOWER($1)
             ORDER BY created_at DESC
         `, [wallet]);
 
@@ -47,7 +47,7 @@ router.get('/orders/:wallet', async (req, res) => {
             success: true,
             orders: result.rows.map(o => ({
                 ...o,
-                items: JSON.parse(o.items)
+                items: typeof o.items === 'string' ? JSON.parse(o.items) : o.items
             }))
         });
     } catch (error) {
@@ -62,16 +62,16 @@ router.get('/stats/:wallet', async (req, res) => {
         const { wallet } = req.params;
         
         const [vouchersResult, ordersResult, referralsResult] = await Promise.all([
-            pool.query(
-                "SELECT COUNT(*) FROM marketplace_vouchers WHERE wallet_address = $1 AND status = 'active'",
+            db.pool.query(
+                "SELECT COUNT(*) FROM marketplace_vouchers WHERE LOWER(wallet_address) = LOWER($1) AND status = 'active'",
                 [wallet]
             ),
-            pool.query(
-                'SELECT COUNT(*) FROM marketplace_orders WHERE wallet_address = $1',
+            db.pool.query(
+                'SELECT COUNT(*) FROM marketplace_orders WHERE LOWER(wallet_address) = LOWER($1)',
                 [wallet]
             ),
-            pool.query(
-                'SELECT COUNT(*) FROM referrals WHERE referrer_wallet = $1',
+            db.pool.query(
+                'SELECT COUNT(*) FROM referrals WHERE LOWER(referrer_wallet) = LOWER($1)',
                 [wallet]
             )
         ]);

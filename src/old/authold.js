@@ -1,6 +1,6 @@
 // src/auth.js
 const crypto = require('crypto');
-const db = require('./db-postgres');
+const db = require('../db-postgres');
 
 // Default admin credentials (only used if no admin exists)
 const DEFAULT_USERNAME = process.env.ADMIN_USERNAME || 'admin';
