@@ -135,55 +135,51 @@
             </nav>
             
             <div class="flex items-center gap-4">
-                <!-- Connected State -->
+                <!-- Connected State - starts HIDDEN -->
                 <div id="headerConnected" class="hidden">
                     <div class="user-dropdown">
-                        <button class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/5 transition-colors">
-                            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center">
-                                <span id="headerAvatarInitials" class="text-background-dark font-bold text-sm">--</span>
+                        <button class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors">
+                            <!-- Round avatar FIRST (before text) -->
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center flex-shrink-0">
+                                <span id="headerAvatarInitials" class="text-black font-bold text-sm">--</span>
                             </div>
-                            <div class="hidden sm:block text-left">
-                                <div id="headerUserName" class="text-sm font-medium text-white">Member</div>
-                                <div class="text-xs text-primary font-semibold">€<span id="headerUserBalance">0</span></div>
+                            <!-- Name and email AFTER the avatar -->
+                            <div class="text-left hidden lg:block">
+                                <p class="text-sm font-medium" id="headerUserName">Member</p>
+                                <p class="text-xs text-slate-400 lowercase" id="headerUserEmail"></p>
                             </div>
-                            <span class="material-symbols-outlined text-gray-400 text-lg">expand_more</span>
                         </button>
                         
                         <!-- Dropdown Menu -->
                         <div class="user-dropdown-menu">
                             <div class="px-4 py-3 border-b border-white/10">
                                 <p class="text-xs text-slate-400">Buying Power</p>
-                                <p class="text-lg font-semibold text-primary">€<span id="dropdownBalance">0</span></p>
-                                <p class="text-xs text-slate-500 mt-1 truncate max-w-[220px]" id="dropdownEmail"></p>
+                                <p class="text-lg font-semibold text-primary">€<span id="headerUserBalance">0</span></p>
+                                <p class="text-xs text-slate-500 mt-1 lowercase" id="dropdownEmail"></p>
                             </div>
-                            
                             <a href="/profile">
                                 <span class="material-symbols-outlined text-primary">account_circle</span>
-                                <span>My Profile</span>
+                                <span class="text-sm">My Profile</span>
                             </a>
-                            
                             <a href="/marketplace">
                                 <span class="material-symbols-outlined text-primary">storefront</span>
-                                <span>Marketplace</span>
+                                <span class="text-sm">Marketplace</span>
                             </a>
-                            
                             <a href="/package">
                                 <span class="material-symbols-outlined text-primary">add_card</span>
-                                <span>Add Buying Power</span>
+                                <span class="text-sm">Add Buying Power</span>
                             </a>
-                            
                             <div class="border-t border-white/10 my-2"></div>
-                            
-                            <button onclick="disconnect()" class="text-red-400 hover:bg-red-500/10">
-                                <span class="material-symbols-outlined">logout</span>
-                                <span>Disconnect</span>
+                            <button onclick="disconnect()">
+                                <span class="material-symbols-outlined text-red-400">logout</span>
+                                <span class="text-sm text-red-400">Disconnect</span>
                             </button>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Disconnected State -->
-                <div id="headerDisconnected" class="hidden">
+                <!-- Disconnected State - starts VISIBLE -->
+                <div id="headerDisconnected" class="flex items-center gap-4">
                     <button onclick="showLoginModal()" class="hidden sm:flex items-center gap-2 px-5 py-2.5 border border-primary/50 text-primary text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-primary hover:text-background-dark transition-all">
                         <span class="material-symbols-outlined text-lg">account_circle</span>
                         Login
@@ -592,9 +588,9 @@
 
     <script>
     // ============================================
-    // VERSION: 2026-03-30 - Fixed session persistence
+    // VERSION: 2026-03-30 - Fixed header visibility
     // ============================================
-    console.log('🚀 Package page initializing... (v2026-03-30-fix)');
+    console.log('🚀 Package page initializing... (v2026-03-30-header-fix)');
 
     // ============================================
     // Configuration
@@ -664,7 +660,9 @@
     // Initialization
     // ============================================
     document.addEventListener('DOMContentLoaded', async () => {
-        // IMPORTANT: Check session FIRST before anything else
+        console.log('📄 DOM loaded, checking session...');
+        
+        // Check session FIRST - this updates the header immediately
         checkSession();
         
         // Then load config and setup
@@ -732,7 +730,7 @@
     }
 
     // ============================================
-    // Session Management - FIXED
+    // Session Management
     // ============================================
     function checkSession() {
         console.log('🔍 Checking session...');
@@ -786,7 +784,7 @@
     }
 
     // ============================================
-    // Header UI Updates - FIXED
+    // Header UI Updates
     // ============================================
     function updateHeaderUI(user, balance) {
         const headerConnected = document.getElementById('headerConnected');
@@ -795,17 +793,20 @@
         console.log('🎨 Updating header - user:', user?.wallet ? 'connected' : 'disconnected', 'balance:', balance);
         
         if (user && user.wallet) {
-            // Show connected state
+            // Show connected state, hide disconnected
             headerConnected.classList.remove('hidden');
-            headerConnected.classList.add('flex');
             headerDisconnected.classList.add('hidden');
-            headerDisconnected.classList.remove('flex');
             
             // Set name
             const firstName = user.firstName || '';
             const lastName = user.lastName || '';
             const fullName = user.name || `${firstName} ${lastName}`.trim() || 'Member';
             document.getElementById('headerUserName').textContent = fullName;
+            
+            // Set email (full, lowercase)
+            const email = user.email ? user.email.toLowerCase() : '';
+            document.getElementById('headerUserEmail').textContent = email;
+            document.getElementById('dropdownEmail').textContent = email;
             
             // Set initials
             let initials = '--';
@@ -824,14 +825,12 @@
             // Set balance
             const balanceStr = Math.floor(balance).toLocaleString();
             document.getElementById('headerUserBalance').textContent = balanceStr;
-            document.getElementById('dropdownBalance').textContent = balanceStr;
-            document.getElementById('dropdownEmail').textContent = user.email || '';
+            const dropdownBalance = document.getElementById('dropdownBalance');
+            if (dropdownBalance) dropdownBalance.textContent = balanceStr;
         } else {
-            // Show disconnected state
+            // Show disconnected state, hide connected
             headerConnected.classList.add('hidden');
-            headerConnected.classList.remove('flex');
             headerDisconnected.classList.remove('hidden');
-            headerDisconnected.classList.add('flex');
         }
     }
 
