@@ -664,6 +664,13 @@
             selectedService = services.find(s => s.id === serviceId);
             if (!selectedService) return;
 
+             console.log('🔍 SERVICE DATA:', {
+                name: selectedService.name,
+                price: selectedService.price,
+                fixed_duration: selectedService.fixed_duration,
+                settings: selectedService.settings
+            });
+
             const modal = document.getElementById('bookingModal');
             const img = document.querySelector('#modalServiceImage img');
             const isFixedDuration = selectedService.fixed_duration || (selectedService.settings && selectedService.settings.fixed_duration);
