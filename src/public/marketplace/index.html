@@ -1032,14 +1032,24 @@
                         calendarRequired.classList.add('hidden');
                         updateModalButtons();
                         
+                        // FIXED: Check if fixed duration - show total price, not per-night calculation
                         if (selection.nights > 0 && selectedService) {
-                            var totalPrice = selectedService.price * selection.nights;
-                            document.getElementById('modalServicePrice').textContent = totalPrice.toLocaleString();
-                            document.getElementById('modalPriceNote').textContent = selection.nights + ' night' + (selection.nights > 1 ? 's' : '') + ' × €' + selectedService.price.toLocaleString();
+                            var isFixedDuration = selectedService.fixed_duration || 
+                                                (selectedService.settings && selectedService.settings.fixed_duration) ||
+                                                BookingCalendar.fixedDuration;
+                            
+                            if (isFixedDuration) {
+                                // Fixed duration: price shown is the total package price
+                                document.getElementById('modalServicePrice').textContent = selectedService.price.toLocaleString();
+                                document.getElementById('modalPriceNote').textContent = selection.nights + '-night package';
+                            } else {
+                                // Variable duration: calculate total from nights × price
+                                var totalPrice = selectedService.price * selection.nights;
+                                document.getElementById('modalServicePrice').textContent = totalPrice.toLocaleString();
+                                document.getElementById('modalPriceNote').textContent = selection.nights + ' night' + (selection.nights > 1 ? 's' : '') + ' × €' + selectedService.price.toLocaleString();
+                            }
                         }
                     });
-                } else {
-                    calendarContainer.innerHTML = '<p class="text-slate-400 text-center py-8">Calendar loading...</p>';
                 }
             } else if (selectedService.requires_booking) {
                 bookingSection.classList.remove('hidden');
@@ -1506,11 +1516,27 @@
                             alert('Please select your check-in and check-out dates');
                             return;
                         }
+                        
+                        // FIXED: For fixed duration stays, use the service price as the TOTAL price
+                        // not price per night
+                        var nights = window.selectedBookingNights || 1;
+                        var totalPrice;
+                        
+                        // Check if this is a fixed-duration package (price is for the whole stay)
+                        if (selectedService.fixed_duration || (selectedService.settings && selectedService.settings.fixed_duration)) {
+                            // Fixed duration: price is the total package price
+                            totalPrice = selectedService.price;
+                        } else {
+                            // Variable duration: price is per night
+                            totalPrice = selectedService.price * nights;
+                        }
+                        
                         options = { 
                             bookingStart: window.selectedBookingStart,
                             bookingEnd: window.selectedBookingEnd,
-                            nights: window.selectedBookingNights,
-                            totalPrice: selectedService.price * window.selectedBookingNights
+                            nights: nights,
+                            totalPrice: totalPrice,
+                            isFixedDuration: !!(selectedService.fixed_duration || (selectedService.settings && selectedService.settings.fixed_duration))
                         };
                     }
                     else if (selectedService.requires_booking) {
@@ -1527,13 +1553,14 @@
                             nights: nights,
                             totalPrice: selectedService.price * nights
                         };
+                    } else {
+                        quantity = selectedQuantity;
                     }
                     
                     addToCart(selectedService, quantity, options);
                     closeServiceModal();
                 });
-            } 
-
+            }
             var buyNowBtn = document.getElementById('modalBuyNow');
             if (buyNowBtn) {
                 buyNowBtn.addEventListener('click', function() {
@@ -1547,11 +1574,23 @@
                             alert('Please select your check-in and check-out dates');
                             return;
                         }
+                        
+                        var nights = window.selectedBookingNights || 1;
+                        var totalPrice;
+                        
+                        // Check if this is a fixed-duration package (price is for the whole stay)
+                        if (selectedService.fixed_duration || (selectedService.settings && selectedService.settings.fixed_duration)) {
+                            totalPrice = selectedService.price;
+                        } else {
+                            totalPrice = selectedService.price * nights;
+                        }
+                        
                         options = { 
                             bookingStart: window.selectedBookingStart,
                             bookingEnd: window.selectedBookingEnd,
-                            nights: window.selectedBookingNights,
-                            totalPrice: selectedService.price * window.selectedBookingNights
+                            nights: nights,
+                            totalPrice: totalPrice,
+                            isFixedDuration: !!(selectedService.fixed_duration || (selectedService.settings && selectedService.settings.fixed_duration))
                         };
                     }
                     else if (selectedService.requires_booking) {
@@ -1568,6 +1607,8 @@
                             nights: nights,
                             totalPrice: selectedService.price * nights
                         };
+                    } else {
+                        quantity = selectedQuantity;
                     }
                     
                     addToCart(selectedService, quantity, options);
