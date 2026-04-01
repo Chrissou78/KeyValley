@@ -14,4 +14,4 @@ jobs:
       
       - name: Push to OC-Labs repo
         run: |
-          git push --mirror https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/OC-Labs/kea-valley.git
+          git push --mirror https://x-access-token:${{ secrets.ORG_SYNC_TOKEN }}@github.com/OC-Labs/kea-valley.git

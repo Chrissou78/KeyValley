@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html class="dark" lang="en">
-<!-- VERSION: 2026-03-30 - Fixed WalletTwo URLs + Matching Header -->
+<!-- VERSION: 2026-04-01-v2 - Fixed login cancel/reset -->
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -53,7 +53,7 @@
         }
         .wallet-iframe {
             width: 100%;
-            height: 600px;
+            height: 700px;
             border: none;
             display: block;
         }
@@ -137,7 +137,6 @@
             border-bottom: none;
         }
 
-        /* Header User Dropdown */
         .user-dropdown {
             position: relative;
         }
@@ -192,16 +191,21 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+
+        .toast-notification {
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translate(-50%, 20px); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
     </style>
 </head>
 <body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
 
-    <!-- ============================================ -->
-    <!-- HEADER - Matching Main Page Style -->
-    <!-- ============================================ -->
+    <!-- HEADER -->
     <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5 transition-all duration-300">
         <div class="max-w-[1400px] mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
-            <!-- Logo -->
             <a href="/" class="flex items-center gap-4 group cursor-pointer">
                 <img src="/images/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
                 <div>
@@ -209,7 +213,6 @@
                 </div>
             </a>
             
-            <!-- Desktop Navigation -->
             <nav class="hidden lg:flex items-center gap-8 xl:gap-12">
                 <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/package">Summer<br/>Season 2026</a>
                 <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://keanaissance.com" target="_blank" rel="noopener noreferrer">Keanaissance</a>
@@ -218,9 +221,7 @@
                 <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/marketplace">Marketplace</a>
             </nav>
 
-            <!-- User Section in Header -->
             <div class="flex items-center gap-4">
-                <!-- Connected State - Header Widget -->
                 <div id="headerConnected" class="hidden">
                     <div class="user-dropdown">
                         <button class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors">
@@ -234,7 +235,6 @@
                         </button>
                         
                         <div class="user-dropdown-menu">
-                            <!-- Balance Display -->
                             <div class="px-4 py-3 border-b border-white/10 mb-2">
                                 <p class="text-xs text-slate-400 mb-1">Buying Power</p>
                                 <p class="text-2xl font-bold text-primary">€<span id="dropdownBalance">0</span></p>
@@ -264,7 +264,6 @@
                     </div>
                 </div>
 
-                <!-- Disconnected State -->
                 <div id="headerDisconnected" class="hidden items-center gap-3">
                     <button onclick="showLoginModal()" class="hidden sm:flex border border-primary/50 text-primary px-5 py-2.5 rounded-lg hover:bg-primary hover:text-black font-bold uppercase text-xs tracking-wide transition-all">
                         Login
@@ -274,14 +273,12 @@
                     </button>
                 </div>
 
-                <!-- Mobile menu button -->
                 <button id="mobileMenuBtn" class="lg:hidden text-white/70 hover:text-white p-2">
                     <span class="material-symbols-outlined text-2xl">menu</span>
                 </button>
             </div>
         </div>
 
-        <!-- Mobile Menu -->
         <div id="mobileMenu" class="hidden lg:hidden border-t border-white/5 bg-surface">
             <nav class="px-6 py-4 space-y-4">
                 <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="/package">Summer Season 2026</a>
@@ -290,7 +287,6 @@
                 <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="https://villacarpediemkea.com" target="_blank">Kea Valley History</a>
                 <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="/marketplace">Marketplace</a>
                 
-                <!-- Mobile User Section -->
                 <div id="mobileUserSection" class="hidden border-t border-white/10 mt-4 pt-4">
                     <div class="px-2 py-2 mb-2">
                         <p class="text-xs text-slate-400">Buying Power</p>
@@ -352,9 +348,7 @@
             <!-- Profile Container -->
             <div id="profileContainer" class="hidden">
                 
-                <!-- ROW 1: Profile Header + Buying Power -->
                 <div class="grid lg:grid-cols-3 gap-6 mb-6">
-                    <!-- Profile Info (2 cols) -->
                     <div class="lg:col-span-2 bg-surface border border-white/5 rounded-xl p-6 lg:p-8">
                         <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
                             <div class="size-20 lg:size-24 rounded-full bg-primary/20 border-2 border-primary/30 flex items-center justify-center flex-shrink-0">
@@ -373,7 +367,6 @@
                         </div>
                     </div>
 
-                    <!-- Buying Power (1 col) -->
                     <div class="bg-surface border border-white/5 rounded-xl p-6 lg:p-8 flex flex-col justify-center">
                         <div class="flex items-center gap-2 text-slate-500 text-xs font-bold uppercase tracking-widest mb-3">
                             <span class="material-symbols-outlined text-primary text-lg">account_balance_wallet</span>
@@ -392,7 +385,6 @@
                     </div>
                 </div>
 
-                <!-- ROW 2: Marketplace + Add Power -->
                 <div class="grid grid-cols-2 gap-4 mb-6">
                     <a href="/marketplace" class="bg-surface border border-white/5 rounded-xl p-5 lg:p-6 card-hover flex items-center gap-4 group">
                         <div class="w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors flex-shrink-0">
@@ -415,9 +407,7 @@
                     </a>
                 </div>
 
-                <!-- ROW 3: Vouchers + Orders -->
                 <div class="grid lg:grid-cols-2 gap-6 mb-6">
-                    <!-- Vouchers -->
                     <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
                         <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
                             <div class="flex items-center gap-2">
@@ -435,13 +425,10 @@
                                 <p class="text-slate-500 text-sm">No vouchers yet</p>
                                 <a href="/marketplace" class="text-primary text-sm hover:underline">Browse marketplace →</a>
                             </div>
-                            <div id="vouchersList" class="hidden space-y-1">
-                                <!-- Vouchers will be populated here -->
-                            </div>
+                            <div id="vouchersList" class="hidden space-y-1"></div>
                         </div>
                     </div>
 
-                    <!-- Orders -->
                     <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
                         <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
                             <div class="flex items-center gap-2">
@@ -459,16 +446,12 @@
                                 <p class="text-slate-500 text-sm">No orders yet</p>
                                 <a href="/marketplace" class="text-primary text-sm hover:underline">Start shopping →</a>
                             </div>
-                            <div id="ordersList" class="hidden space-y-1">
-                                <!-- Orders will be populated here -->
-                            </div>
+                            <div id="ordersList" class="hidden space-y-1"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- ROW 4: Referral Program -->
                 <div class="grid lg:grid-cols-2 gap-6 mb-6">
-                    <!-- Left: Were you referred + Your Code -->
                     <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
                         <div class="px-6 py-4 border-b border-white/5 flex items-center gap-2">
                             <span class="material-symbols-outlined text-primary">share</span>
@@ -485,7 +468,6 @@
                             </div>
                             
                             <div id="referralContent" class="hidden space-y-6">
-                                <!-- Were you referred? -->
                                 <div id="setReferrerSection">
                                     <p class="text-white font-medium mb-2 text-sm">Were you referred by someone?</p>
                                     <div class="flex gap-2">
@@ -507,7 +489,6 @@
                                     <p id="setReferrerSuccess" class="text-green-400 text-xs mt-2 hidden"></p>
                                 </div>
                                 
-                                <!-- Referrer Already Set -->
                                 <div id="referrerSetSection" class="hidden">
                                     <div class="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
                                         <div class="flex items-center gap-2 text-green-400">
@@ -517,10 +498,8 @@
                                     </div>
                                 </div>
 
-                                <!-- Divider -->
                                 <div class="border-t border-white/10"></div>
                                 
-                                <!-- Your Referral Code -->
                                 <div>
                                     <p class="text-white font-medium mb-3 text-sm">Your Referral Code</p>
                                     
@@ -549,9 +528,7 @@
                         </div>
                     </div>
 
-                    <!-- Right: Referrals List + Bonuses -->
                     <div class="grid grid-rows-2 gap-4">
-                        <!-- Referrals List -->
                         <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
                             <div class="px-5 py-3 border-b border-white/5 flex items-center justify-between">
                                 <div class="flex items-center gap-2">
@@ -567,13 +544,10 @@
                                 <div id="referralsListEmpty" class="text-center py-3">
                                     <p class="text-slate-500 text-xs">No referrals yet. Share your code!</p>
                                 </div>
-                                <div id="referralsList" class="hidden space-y-1 text-sm">
-                                    <!-- Referrals will be populated here -->
-                                </div>
+                                <div id="referralsList" class="hidden space-y-1 text-sm"></div>
                             </div>
                         </div>
 
-                        <!-- Referral Bonuses -->
                         <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
                             <div class="px-5 py-3 border-b border-white/5 flex items-center justify-between">
                                 <div class="flex items-center gap-2">
@@ -589,15 +563,12 @@
                                 <div id="bonusesListEmpty" class="text-center py-3">
                                     <p class="text-slate-500 text-xs">No bonuses earned yet</p>
                                 </div>
-                                <div id="bonusesList" class="hidden space-y-1 text-sm">
-                                    <!-- Bonuses will be populated here -->
-                                </div>
+                                <div id="bonusesList" class="hidden space-y-1 text-sm"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- ROW 5: Preferences (Full Width) -->
                 <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
                     <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
                         <div class="flex items-center gap-2">
@@ -633,7 +604,6 @@
 
             </div>
 
-            <!-- Disconnecting Container -->
             <div id="disconnectingContainer" class="hidden">
                 <div class="flex flex-col items-center justify-center min-h-[60vh]">
                     <div class="w-14 h-14 border-2 border-primary border-t-transparent rounded-full animate-spin mb-6"></div>
@@ -644,24 +614,24 @@
         </div>
     </main>
 
-    <!-- Login Modal (for header button) -->
+    <!-- Login Modal -->
     <div id="loginModal" class="fixed inset-0 z-[100] hidden">
         <div class="modal-overlay absolute inset-0" onclick="closeLoginModal()"></div>
-        <div class="absolute inset-4 md:inset-8 lg:inset-16 flex items-center justify-center">
-            <div class="modal-content bg-surface border border-white/10 rounded-lg w-full max-w-md">
-                <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
+        <div class="absolute inset-4 md:inset-6 flex items-center justify-center">
+            <div class="modal-content bg-surface border border-white/10 rounded-lg w-full max-w-md flex flex-col" style="max-height: 90vh;">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-white/10 flex-shrink-0">
                     <h2 class="text-lg font-serif text-white">Login with WalletTwo</h2>
                     <button onclick="closeLoginModal()" class="text-slate-500 hover:text-white transition-colors">
                         <span class="material-symbols-outlined text-2xl">close</span>
                     </button>
                 </div>
-                <div class="p-4">
-                    <div class="wallet-iframe-container">
+                <div class="p-4 flex-1 overflow-hidden">
+                    <div class="wallet-iframe-container h-full">
                         <iframe 
                             id="modalWalletIframe"
                             src=""
                             class="wallet-iframe"
-                            style="height: 500px;"
+                            style="height: 650px;"
                             allow="clipboard-write"
                         ></iframe>
                     </div>
@@ -826,12 +796,10 @@
 
     <script>
         // ============================================
-        // VERSION: 2026-03-30 - Fixed WalletTwo URLs + Matching Header
+        // VERSION: 2026-04-01-v2 - Fixed login cancel/reset
         // ============================================
         
-        // ============================================
         // Configuration
-        // ============================================
         let CONFIG = {
             VIP_TOKEN_ADDRESS: '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F',
             POLYGON_RPC: 'https://polygon-rpc.com',
@@ -844,9 +812,7 @@
 
         const ERC20_ABI = ['function balanceOf(address owner) view returns (uint256)'];
 
-        // ============================================
         // State
-        // ============================================
         let currentUser = null;
         let currentBalance = 0;
         let acceptMessages = true;
@@ -855,9 +821,7 @@
         let referralStatus = null;
         let questionnaireData = null;
 
-        // ============================================
         // DOM Elements
-        // ============================================
         const loginContainer = document.getElementById('loginContainer');
         const loadingContainer = document.getElementById('loadingContainer');
         const profileContainer = document.getElementById('profileContainer');
@@ -865,16 +829,37 @@
         const logoutIframe = document.getElementById('logoutIframe');
         const walletIframe = document.getElementById('walletIframe');
 
-        // ============================================
+        // Toast Notification
+        function showToast(message, type = 'info') {
+            const existing = document.getElementById('toast-notification');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.id = 'toast-notification';
+            toast.className = `toast-notification fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-xl z-[200] flex items-center gap-3 ${
+                type === 'error' ? 'bg-red-500/95 text-white' : 
+                type === 'success' ? 'bg-green-500/95 text-white' : 
+                'bg-surface border border-white/20 text-white'
+            }`;
+            
+            const icon = type === 'error' ? 'error' : type === 'success' ? 'check_circle' : 'info';
+            toast.innerHTML = `<span class="material-symbols-outlined text-xl">${icon}</span><span class="text-sm font-medium">${message}</span>`;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
         // Mobile Menu
-        // ============================================
         document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
             document.getElementById('mobileMenu').classList.toggle('hidden');
         });
 
-        // ============================================
-        // Load Config from Server
-        // ============================================
+        // Load Config
         async function loadConfig() {
             try {
                 console.log('📥 Loading config...');
@@ -885,22 +870,18 @@
                     CONFIG.WALLETTWO_COMPANY_ID = config.walletTwoCompanyId;
                     console.log('✅ Config loaded, companyId:', CONFIG.WALLETTWO_COMPANY_ID);
                     return true;
-                } else {
-                    console.error('❌ No companyId in config response');
-                    return false;
                 }
+                console.error('❌ No companyId in config response');
+                return false;
             } catch (error) {
                 console.error('❌ Failed to load config:', error);
                 return false;
             }
         }
 
-        // ============================================
-        // Build WalletTwo URL Helper
-        // CORRECT: /action/auth and /action/logout
-        // ============================================
+        // Build WalletTwo URL
         function buildWalletTwoUrl(action, extraParams = {}) {
-            let url = `${CONFIG.WALLETTWO_ORIGIN}/action/${action}?iframe=true`;
+            let url = `${CONFIG.WALLETTWO_ORIGIN}/action/${action}?iframe=true&auto-accept=true`;
             
             if (CONFIG.WALLETTWO_COMPANY_ID) {
                 url += `&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
@@ -910,13 +891,14 @@
                 url += `&${key}=${encodeURIComponent(value)}`;
             }
             
+            // Add cache buster to force reload
+            url += `&_t=${Date.now()}`;
+            
             console.log('🔗 Built URL:', url);
             return url;
         }
 
-        // ============================================
         // Initialize WalletTwo Iframe
-        // ============================================
         function initWalletIframe() {
             if (!CONFIG.WALLETTWO_COMPANY_ID) {
                 console.error('Cannot init iframe: missing companyId');
@@ -927,9 +909,7 @@
             walletIframe.src = iframeSrc;
         }
 
-        // ============================================
-        // Login Modal Functions
-        // ============================================
+        // Login Modal
         function showLoginModal() {
             const modal = document.getElementById('loginModal');
             const iframe = document.getElementById('modalWalletIframe');
@@ -950,9 +930,7 @@
             document.body.style.overflow = '';
         }
 
-        // ============================================
         // Session Management
-        // ============================================
         function getStoredSession() {
             try {
                 const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
@@ -985,9 +963,7 @@
             localStorage.removeItem(CONFIG.STORAGE_KEY);
         }
 
-        // ============================================
         // Database Save
-        // ============================================
         async function saveToDatabase(wallet, email, name) {
             if (savedToDatabase || !wallet) return;
             try {
@@ -1008,9 +984,7 @@
             }
         }
 
-        // ============================================
         // Header UI Updates
-        // ============================================
         function updateHeaderUI(user, balance) {
             const headerConnected = document.getElementById('headerConnected');
             const headerDisconnected = document.getElementById('headerDisconnected');
@@ -1055,9 +1029,7 @@
             }
         }
 
-        // ============================================
         // UI State Functions
-        // ============================================
         function showLogin() {
             loginContainer.classList.remove('hidden');
             loadingContainer.classList.add('hidden');
@@ -1090,7 +1062,6 @@
             currentUser = user;
             acceptMessages = false;
             
-            // Close login modal if open
             closeLoginModal();
             
             if (!currentUser.email || !currentUser.name) {
@@ -1150,9 +1121,7 @@
             ]);
         }
 
-        // ============================================
-        // Fetch Vouchers (handles 404 gracefully)
-        // ============================================
+        // Fetch Vouchers
         async function fetchVouchers(wallet) {
             const loading = document.getElementById('vouchersLoading');
             const empty = document.getElementById('vouchersEmpty');
@@ -1174,7 +1143,6 @@
                 }
                 
                 const data = await response.json();
-                
                 loading.classList.add('hidden');
                 
                 if (data.success && data.vouchers && data.vouchers.length > 0) {
@@ -1207,9 +1175,7 @@
             }
         }
 
-        // ============================================
-        // Fetch Orders (handles 404 gracefully)
-        // ============================================
+        // Fetch Orders
         async function fetchOrders(wallet) {
             const loading = document.getElementById('ordersLoading');
             const empty = document.getElementById('ordersEmpty');
@@ -1231,7 +1197,6 @@
                 }
                 
                 const data = await response.json();
-                
                 loading.classList.add('hidden');
                 
                 if (data.success && data.orders && data.orders.length > 0) {
@@ -1264,9 +1229,7 @@
             }
         }
 
-        // ============================================
-        // PREFERENCES / QUESTIONNAIRE
-        // ============================================
+        // Preferences / Questionnaire
         async function loadPreferences() {
             if (!currentUser?.wallet) return;
             
@@ -1289,7 +1252,6 @@
                 }
                 
                 const result = await response.json();
-                
                 loadingEl.classList.add('hidden');
                 
                 if (result.success && result.exists && result.data) {
@@ -1333,13 +1295,11 @@
             if (questionnaireData) {
                 const d = questionnaireData;
                 
-                const propOwnerYes = document.querySelector('input[name="modal_is_property_owner"][value="yes"]');
-                const propOwnerNo = document.querySelector('input[name="modal_is_property_owner"][value="no"]');
                 if (d.is_property_owner) {
-                    propOwnerYes.checked = true;
+                    document.querySelector('input[name="modal_is_property_owner"][value="yes"]').checked = true;
                     toggleModalPropertyLocation(true);
                 } else {
-                    propOwnerNo.checked = true;
+                    document.querySelector('input[name="modal_is_property_owner"][value="no"]').checked = true;
                 }
                 document.querySelector('input[name="modal_property_location"]').value = d.property_location || '';
                 
@@ -1347,16 +1307,14 @@
                 document.querySelector(`input[name="modal_interested_property_tour"][value="${d.interested_property_tour ? 'yes' : 'no'}"]`).checked = true;
                 document.querySelector(`input[name="modal_interested_members_club"][value="${d.interested_members_club ? 'yes' : 'no'}"]`).checked = true;
                 
-                const boatYes = document.querySelector('input[name="modal_owns_boat"][value="yes"]');
-                const boatNo = document.querySelector('input[name="modal_owns_boat"][value="no"]');
                 if (d.owns_boat) {
-                    boatYes.checked = true;
+                    document.querySelector('input[name="modal_owns_boat"][value="yes"]').checked = true;
                     toggleModalYachtClub(true);
                     if (d.interested_yacht_club !== null) {
                         document.querySelector(`input[name="modal_interested_yacht_club"][value="${d.interested_yacht_club ? 'yes' : 'no'}"]`).checked = true;
                     }
                 } else {
-                    boatNo.checked = true;
+                    document.querySelector('input[name="modal_owns_boat"][value="no"]').checked = true;
                 }
                 
                 document.querySelector(`input[name="modal_interested_restaurant_review"][value="${d.interested_restaurant_review ? 'yes' : 'no'}"]`).checked = true;
@@ -1364,8 +1322,7 @@
         }
 
         function closeQuestionnaireModal() {
-            const modal = document.getElementById('questionnaireModal');
-            modal.classList.add('hidden');
+            document.getElementById('questionnaireModal').classList.add('hidden');
             document.body.style.overflow = '';
             document.getElementById('modalStatus').classList.add('hidden');
         }
@@ -1434,9 +1391,7 @@
             }
         }
 
-        // ============================================
-        // Balance - Uses RPC directly (no WalletTwo API)
-        // ============================================
+        // Balance
         async function fetchBalance(address) {
             const balanceLoading = document.getElementById('balanceLoading');
             const balanceDisplay = document.getElementById('balanceDisplay');
@@ -1467,9 +1422,7 @@
             });
         }
 
-        // ============================================
-        // REFERRAL SYSTEM (handles 404 gracefully)
-        // ============================================
+        // Referral System
         async function loadReferralStatus() {
             if (!currentUser?.wallet) return;
 
@@ -1492,7 +1445,6 @@
                 }
                 
                 referralStatus = await response.json();
-                
                 referralLoading.classList.add('hidden');
 
                 if (!referralStatus.programEnabled) {
@@ -1503,28 +1455,19 @@
 
                 referralContent.classList.remove('hidden');
 
-                const setReferrerSection = document.getElementById('setReferrerSection');
-                const referrerSetSection = document.getElementById('referrerSetSection');
-
                 if (referralStatus.hasReferrer) {
-                    setReferrerSection.classList.add('hidden');
-                    referrerSetSection.classList.remove('hidden');
-                    
+                    document.getElementById('setReferrerSection').classList.add('hidden');
+                    document.getElementById('referrerSetSection').classList.remove('hidden');
                     const wallet = referralStatus.referrerWallet || '';
-                    const shortWallet = wallet ? `${wallet.slice(0, 6)}...${wallet.slice(-4)}` : 'Unknown';
-                    document.getElementById('referrerDisplay').textContent = shortWallet;
+                    document.getElementById('referrerDisplay').textContent = wallet ? `${wallet.slice(0, 6)}...${wallet.slice(-4)}` : 'Unknown';
                 } else {
-                    setReferrerSection.classList.remove('hidden');
-                    referrerSetSection.classList.add('hidden');
+                    document.getElementById('setReferrerSection').classList.remove('hidden');
+                    document.getElementById('referrerSetSection').classList.add('hidden');
                 }
 
-                const generateCodeSection = document.getElementById('generateCodeSection');
-                const myCodeSection = document.getElementById('myCodeSection');
-
                 if (referralStatus.myCode) {
-                    generateCodeSection.classList.add('hidden');
-                    myCodeSection.classList.remove('hidden');
-                    
+                    document.getElementById('generateCodeSection').classList.add('hidden');
+                    document.getElementById('myCodeSection').classList.remove('hidden');
                     document.getElementById('myReferralCode').textContent = referralStatus.myCode;
 
                     const info = referralStatus.bonusInfo || {};
@@ -1536,8 +1479,8 @@
                     }
                     document.getElementById('referralBonusInfo').textContent = bonusText || 'Share & earn rewards!';
                 } else {
-                    generateCodeSection.classList.remove('hidden');
-                    myCodeSection.classList.add('hidden');
+                    document.getElementById('generateCodeSection').classList.remove('hidden');
+                    document.getElementById('myCodeSection').classList.add('hidden');
                 }
 
                 await loadReferralsList();
@@ -1579,7 +1522,6 @@
                 }
                 
                 const data = await response.json();
-                
                 loading.classList.add('hidden');
                 
                 if (data.success && data.referrals && data.referrals.length > 0) {
@@ -1624,7 +1566,6 @@
                 }
                 
                 const data = await response.json();
-                
                 loading.classList.add('hidden');
                 
                 if (data.success && data.bonuses && data.bonuses.length > 0) {
@@ -1741,9 +1682,7 @@
             });
         }
 
-        // ============================================
         // Disconnect
-        // ============================================
         function disconnect() {
             if (isDisconnecting) return;
             isDisconnecting = true;
@@ -1768,19 +1707,108 @@
         }
 
         // ============================================
-        // WalletTwo Message Handler
-        // Supports both wallet_login AND wallet_session
-        // Supports both 'code' and 'token' fields
+        // LOGIN CANCELLED STATE FUNCTIONS (GLOBAL)
         // ============================================
-        window.addEventListener('message', (event) => {
+        function showLoginCancelledState() {
+            console.log('🛑 Showing login cancelled state');
+            const container = document.getElementById('loginContainer');
+            if (container) {
+                container.innerHTML = `
+                    <div class="max-w-lg mx-auto">
+                        <div class="text-center mb-8">
+                            <div class="flex items-center justify-center gap-4 mb-4">
+                                <div class="h-[1px] w-8 bg-primary"></div>
+                                <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Member Area</span>
+                                <div class="h-[1px] w-8 bg-primary"></div>
+                            </div>
+                            <h1 class="text-3xl md:text-4xl font-serif italic font-medium text-white mb-3">Login Cancelled</h1>
+                            <p class="text-slate-400 font-light mb-8">Would you like to try again?</p>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                            <button onclick="resetIframeToLogin()" class="bg-primary hover:bg-primary-light text-black font-semibold px-8 py-3 rounded-lg transition-colors">
+                                Try Again
+                            </button>
+                            <button onclick="logoutAndResetIframe()" class="bg-surface hover:bg-gray-700 text-white px-8 py-3 rounded-lg transition-colors border border-white/20">
+                                Use Different Account
+                            </button>
+                        </div>
+                        <p class="text-center text-slate-500 text-sm mt-6">
+                            Not a member yet? <a href="/package" class="text-primary hover:underline">Join the Club</a>
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        function resetIframeToLogin() {
+            console.log('🔄 Resetting iframe to login...');
+            const container = document.getElementById('loginContainer');
+            if (container) {
+                container.innerHTML = `
+                    <div class="max-w-lg mx-auto">
+                        <div class="text-center mb-8">
+                            <div class="flex items-center justify-center gap-4 mb-4">
+                                <div class="h-[1px] w-8 bg-primary"></div>
+                                <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Member Area</span>
+                                <div class="h-[1px] w-8 bg-primary"></div>
+                            </div>
+                            <h1 class="text-3xl md:text-4xl font-serif italic font-medium text-white mb-3">Welcome Back</h1>
+                            <p class="text-slate-400 font-light">Login to access your profile</p>
+                        </div>
+                        <div class="bg-surface border border-white/5 rounded-lg overflow-hidden">
+                            <div class="wallet-iframe-container">
+                                <iframe 
+                                    id="walletIframe"
+                                    src="${buildWalletTwoUrl('auth')}"
+                                    class="wallet-iframe"
+                                    allow="clipboard-write"
+                                ></iframe>
+                            </div>
+                        </div>
+                        <p class="text-center text-slate-500 text-sm mt-6">
+                            Not a member yet? <a href="/package" class="text-primary hover:underline">Join the Club</a>
+                        </p>
+                    </div>
+                `;
+            }
+            acceptMessages = true;
+        }
+
+        function logoutAndResetIframe() {
+            console.log('🔄 Logging out and resetting...');
+            const container = document.getElementById('loginContainer');
+            if (container) {
+                container.innerHTML = `
+                    <div class="max-w-lg mx-auto text-center py-12">
+                        <div class="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p class="text-slate-400">Switching account...</p>
+                    </div>
+                    <iframe 
+                        id="walletIframe" 
+                        src="${buildWalletTwoUrl('logout')}"
+                        style="display: none;"
+                        allow="clipboard-write"
+                    ></iframe>
+                `;
+                
+                setTimeout(function() {
+                    resetIframeToLogin();
+                }, 1500);
+            }
+        }
+
+        // ============================================
+        // WALLETTWO MESSAGE HANDLER
+        // ============================================
+        window.addEventListener('message', function(event) {
             console.log('📨 Message from:', event.origin);
             
             if (!event.origin.includes('wallettwo.com')) return;
-            if (!acceptMessages || isDisconnecting) return;
 
             const data = event.data;
-            console.log('🔔 WalletTwo message:', data);
+            console.log('🔔 WalletTwo event:', data);
 
+            // SUCCESS: Login events
             const isLoginEvent = data && (
                 data.type === 'wallet_login' ||
                 data.event === 'wallet_login' ||
@@ -1788,7 +1816,7 @@
                 data.event === 'wallet_session'
             );
 
-            if (isLoginEvent) {
+            if (isLoginEvent && !isDisconnecting && acceptMessages) {
                 const wallet = data.wallet || data.wlt || data.address;
                 const code = data.code || data.token;
                 
@@ -1796,21 +1824,61 @@
                 
                 if (wallet) {
                     acceptMessages = false;
+                    closeLoginModal();
+                    
                     if (code) {
                         console.log('🚀 Exchanging code...');
                         exchangeCode(code, wallet, data.user);
                     } else {
-                        const userData = { wallet, userId: data.user || data.usr, timestamp: Date.now() };
+                        const userData = { wallet: wallet, userId: data.user || data.usr, timestamp: Date.now() };
                         saveSession(userData);
                         showProfile(userData);
                     }
                 }
+                return;
+            }
+
+            // ERROR / CANCEL events
+            const isErrorEvent = data && (
+                data.type === 'wallet_error' ||
+                data.event === 'wallet_error' ||
+                data.type === 'auth_error' ||
+                data.event === 'auth_error' ||
+                data.type === 'auth_cancelled' ||
+                data.event === 'auth_cancelled' ||
+                data.type === 'wallet_cancelled' ||
+                data.event === 'wallet_cancelled' ||
+                data.type === 'close' ||
+                data.event === 'close' ||
+                data.type === 'cancel' ||
+                data.event === 'cancel' ||
+                data.type === 'error' ||
+                data.event === 'error'
+            );
+
+            if (isErrorEvent) {
+                const errorMessage = data.error || data.message || data.reason || 'Login cancelled';
+                console.log('❌ Auth error/cancel:', errorMessage);
+                
+                showToast(errorMessage, 'error');
+                showLoginCancelledState();
+                return;
+            }
+
+            // LOGOUT confirmation
+            if (data && (data.type === 'wallet_logout' || data.event === 'wallet_logout' || data.type === 'logout' || data.event === 'logout')) {
+                console.log('👋 Logout confirmed by WalletTwo');
+                return;
+            }
+
+            // READY event
+            if (data && (data.type === 'wallet_ready' || data.event === 'wallet_ready' || data.type === 'ready' || data.event === 'ready')) {
+                console.log('✅ WalletTwo iframe ready');
+                return;
             }
         });
 
-        // ============================================
-        // Token Exchange - SERVER SIDE
-        // ============================================
+        // Token Exchange
         async function exchangeCode(code, wallet, userId) {
             showLoading();
             console.log('🔄 Exchanging code via server...');
@@ -1819,7 +1887,7 @@
                 const tokenResponse = await fetch('/api/wallettwo/exchange', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code })
+                    body: JSON.stringify({ code: code })
                 });
                 
                 const tokenData = await tokenResponse.json();
@@ -1827,7 +1895,7 @@
                 
                 if (!tokenData.success && !tokenData.access_token) {
                     console.warn('⚠️ Token exchange failed');
-                    const userData = { wallet, userId, timestamp: Date.now() };
+                    const userData = { wallet: wallet, userId: userId, timestamp: Date.now() };
                     saveSession(userData);
                     showProfile(userData);
                     return;
@@ -1861,12 +1929,12 @@
                 }
 
                 const userData = {
-                    wallet,
+                    wallet: wallet,
                     userId: userId || tokenData.user?.sub || tokenData.user?.id,
                     email: userEmail,
                     name: userName,
-                    firstName,
-                    lastName,
+                    firstName: firstName,
+                    lastName: lastName,
                     accessToken: accessToken,
                     timestamp: Date.now()
                 };
@@ -1880,15 +1948,13 @@
                 
             } catch (error) {
                 console.error('❌ Exchange failed:', error);
-                const userData = { wallet, userId, timestamp: Date.now() };
+                const userData = { wallet: wallet, userId: userId, timestamp: Date.now() };
                 saveSession(userData);
                 showProfile(userData);
             }
         }
 
-        // ============================================
         // Event Listeners
-        // ============================================
         document.getElementById('disconnectBtn').addEventListener('click', disconnect);
         document.getElementById('setReferrerBtn').addEventListener('click', setReferrer);
         document.getElementById('generateCodeBtn').addEventListener('click', generateReferralCode);
@@ -1896,13 +1962,11 @@
         document.getElementById('updatePreferencesBtn').addEventListener('click', openQuestionnaireModal);
         document.getElementById('setPreferencesBtn').addEventListener('click', openQuestionnaireModal);
         
-        document.getElementById('referralCodeInput').addEventListener('input', (e) => {
+        document.getElementById('referralCodeInput').addEventListener('input', function(e) {
             e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
         });
 
-        // ============================================
         // Questionnaire Check
-        // ============================================
         async function checkQuestionnaireRequired(wallet) {
             try {
                 const response = await fetch(`/api/questionnaire/status/${wallet}`);
@@ -1931,11 +1995,9 @@
             }
         }
 
-        // ============================================
         // Initialize
-        // ============================================
         async function init() {
-            console.log('🚀 Profile page initializing... (v2026-03-30)');
+            console.log('🚀 Profile page initializing... (v2026-04-01-v2)');
             
             const configLoaded = await loadConfig();
             if (!configLoaded) {
@@ -1972,7 +2034,7 @@
                     showProfile(stored);
                     return;
                 }
-                const userData = { wallet, timestamp: Date.now() };
+                const userData = { wallet: wallet, timestamp: Date.now() };
                 saveSession(userData);
                 showProfile(userData);
                 return;

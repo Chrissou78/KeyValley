@@ -113,6 +113,26 @@
         .user-dropdown-menu button:hover {
             background: rgba(255, 255, 255, 0.05);
         }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            z-index: 9999;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .toast.success { background: #10b981; color: white; }
+        .toast.error { background: #ef4444; color: white; }
+        .toast.info { background: #3b82f6; color: white; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -485,14 +505,14 @@
 
     <!-- Login Modal -->
     <div id="login-modal" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-card rounded-2xl max-w-md w-full">
+        <div class="glass-card rounded-2xl max-w-md w-full max-h-[90vh] overflow-hidden">
             <div class="p-6 border-b border-white/10 flex items-center justify-between">
                 <h2 class="font-serif text-xl font-bold text-white">Login to Continue</h2>
                 <button onclick="closeLoginModal()" class="text-gray-400 hover:text-white transition-colors">
                     <span class="material-symbols-outlined text-2xl">close</span>
                 </button>
             </div>
-            <div class="p-6">
+            <div id="loginModalContent" class="p-6">
                 <p class="text-gray-400 text-sm mb-6">Login to purchase membership packages.</p>
                 <div class="wallet-iframe-container">
                     <iframe id="login-wallet-iframe" src="" class="wallet-iframe" allow="clipboard-write"></iframe>
@@ -583,14 +603,17 @@
         </div>
     </div>
 
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
     <!-- Logout Iframe -->
     <iframe id="logoutIframe" style="display:none;"></iframe>
 
     <script>
     // ============================================
-    // VERSION: 2026-03-30 - Fixed header visibility
+    // VERSION: 2026-04-01 - Fixed login cancel handling
     // ============================================
-    console.log('🚀 Package page initializing... (v2026-03-30-header-fix)');
+    console.log('🚀 Package page initializing... (v2026-04-01)');
 
     // ============================================
     // Configuration
@@ -638,6 +661,7 @@
     let stripe = null;
     let cardElement = null;
     let acceptMessages = true;
+    let isResetting = false; // Prevent event loops
 
     // ============================================
     // Helper: Build WalletTwo URL
@@ -654,6 +678,103 @@
         }
         console.log('🔗 Built WalletTwo URL:', base);
         return base;
+    }
+
+    // ============================================
+    // Toast Notification
+    // ============================================
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        if (!container) {
+            const newContainer = document.createElement('div');
+            newContainer.id = 'toast-container';
+            document.body.appendChild(newContainer);
+        }
+        
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        
+        (document.getElementById('toast-container') || document.body).appendChild(toast);
+        
+        setTimeout(() => toast.classList.add('show'), 10);
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+
+    // ============================================
+    // Login State Management (GLOBAL SCOPE)
+    // ============================================
+    function showLoginCancelledState() {
+        console.log('🔄 Showing login cancelled state...');
+        const modalContent = document.getElementById('loginModalContent');
+        if (modalContent) {
+            modalContent.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="mb-6">
+                        <svg class="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <p class="text-gray-400 mb-6 text-lg">Login was cancelled</p>
+                    <div class="flex flex-col sm:flex-row justify-center gap-4">
+                        <button onclick="resetIframeToLogin()" class="btn-primary px-6 py-3 rounded-lg font-semibold">
+                            Try Again
+                        </button>
+                        <button onclick="logoutAndResetIframe()" class="bg-surface hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold border border-white/20 transition-colors">
+                            Use Different Account
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        isResetting = false;
+    }
+
+    function resetIframeToLogin() {
+        console.log('🔄 Resetting iframe to login...');
+        const modalContent = document.getElementById('loginModalContent');
+        if (modalContent) {
+            const iframeSrc = buildWalletTwoUrl('auth') + '&t=' + Date.now();
+            modalContent.innerHTML = `
+                <p class="text-gray-400 text-sm mb-6">Login to purchase membership packages.</p>
+                <div class="wallet-iframe-container">
+                    <iframe id="login-wallet-iframe" src="${iframeSrc}" class="wallet-iframe" allow="clipboard-write"></iframe>
+                </div>
+            `;
+        }
+        acceptMessages = true;
+        isResetting = false;
+    }
+
+    function logoutAndResetIframe() {
+        console.log('🔄 Logging out and resetting...');
+        const modalContent = document.getElementById('loginModalContent');
+        if (modalContent) {
+            modalContent.innerHTML = `
+                <div class="text-center py-12">
+                    <div class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p class="text-gray-400">Logging out...</p>
+                </div>
+                <iframe id="logout-iframe" src="${buildWalletTwoUrl('logout')}" style="display:none;" allow="clipboard-write"></iframe>
+            `;
+            
+            setTimeout(() => {
+                const iframeSrc = buildWalletTwoUrl('auth') + '&t=' + Date.now();
+                modalContent.innerHTML = `
+                    <p class="text-gray-400 text-sm mb-6">Login to purchase membership packages.</p>
+                    <div class="wallet-iframe-container">
+                        <iframe id="login-wallet-iframe" src="${iframeSrc}" class="wallet-iframe" allow="clipboard-write"></iframe>
+                    </div>
+                `;
+                acceptMessages = true;
+                isResetting = false;
+                console.log('✅ Logged out, iframe reset to auth');
+            }, 1500);
+        }
     }
 
     // ============================================
@@ -910,13 +1031,44 @@
         console.log('👂 Setting up WalletTwo message listener...');
         
         window.addEventListener('message', (event) => {
+            console.log('📨 Message from:', event.origin);
+            
             if (!event.origin.includes('wallettwo.com')) return;
-            if (!acceptMessages) return;
+            if (!acceptMessages) {
+                console.log('⏸️ Messages paused, ignoring');
+                return;
+            }
 
             const data = event.data;
-            console.log('📨 Message received from WalletTwo:', data);
-            
-            // Handle both wallet_login AND wallet_session events
+            console.log('📨 Message data:', data);
+
+            // ---- ERROR / CANCEL events ----
+            const isErrorEvent = data && (
+                data.type === 'wallet_error' || data.event === 'wallet_error' ||
+                data.type === 'auth_error' || data.event === 'auth_error' ||
+                data.type === 'auth_cancelled' || data.event === 'auth_cancelled' ||
+                data.type === 'wallet_cancelled' || data.event === 'wallet_cancelled' ||
+                data.type === 'close' || data.event === 'close' ||
+                data.type === 'cancel' || data.event === 'cancel' ||
+                data.type === 'error' || data.event === 'error'
+            );
+
+            if (isErrorEvent) {
+                if (isResetting) {
+                    console.log('⏸️ Already resetting, ignoring duplicate event');
+                    return;
+                }
+                isResetting = true;
+                acceptMessages = false;
+                
+                const errorMessage = data.error || data.message || data.reason || 'Login cancelled';
+                console.log('❌ Auth error/cancel:', errorMessage);
+                showToast(errorMessage, 'error');
+                showLoginCancelledState();
+                return;
+            }
+
+            // ---- LOGIN events ----
             if (data && (data.type === 'wallet_login' || data.event === 'wallet_login' ||
                          data.type === 'wallet_session' || data.event === 'wallet_session')) {
                 
@@ -926,6 +1078,8 @@
                 console.log('🔐 Login event - wallet:', wallet, 'code/token present:', !!code);
                 
                 if (wallet) {
+                    acceptMessages = false; // Prevent duplicate processing
+                    
                     if (code) {
                         exchangeCode(code, wallet, data.user);
                     } else {
@@ -935,7 +1089,24 @@
                         onWalletConnected();
                     }
                 }
+                return;
             }
+
+            // ---- LOGOUT events ----
+            if (data && (data.type === 'wallet_logout' || data.event === 'wallet_logout')) {
+                console.log('🚪 Logout event received');
+                return;
+            }
+
+            // ---- READY events ----
+            if (data && (data.type === 'wallet_ready' || data.event === 'wallet_ready' ||
+                         data.type === 'ready' || data.event === 'ready')) {
+                console.log('✅ WalletTwo iframe ready');
+                return;
+            }
+
+            // Log unhandled events for debugging
+            console.log('❓ Unhandled event:', data);
         });
     }
 
@@ -978,10 +1149,22 @@
     function showLoginModal() {
         const iframe = document.getElementById('login-wallet-iframe');
         if (CONFIG.WALLETTWO_COMPANY_ID) {
-            iframe.src = buildWalletTwoUrl('auth');
+            const iframeSrc = buildWalletTwoUrl('auth') + '&t=' + Date.now();
+            iframe.src = iframeSrc;
         } else {
             console.warn('⚠️ No WalletTwo Company ID configured');
         }
+        
+        // Reset state
+        acceptMessages = true;
+        isResetting = false;
+        
+        // Reset modal content if it was showing cancelled state
+        const modalContent = document.getElementById('loginModalContent');
+        if (modalContent && !modalContent.querySelector('.wallet-iframe-container')) {
+            resetIframeToLogin();
+        }
+        
         document.getElementById('login-modal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
@@ -989,6 +1172,10 @@
     function closeLoginModal() {
         document.getElementById('login-modal').classList.add('hidden');
         document.body.style.overflow = '';
+        
+        // Reset state for next open
+        acceptMessages = true;
+        isResetting = false;
     }
 
     // ============================================
