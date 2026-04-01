@@ -1,0 +1,19 @@
+name: Sync to OC-Labs
+
+on:
+  workflow_dispatch:  # Allows manual trigger from Actions tab
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Push to OC-Labs repo
+        run: |
+          git push --mirror https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/OC-Labs/kea-valley.git
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
