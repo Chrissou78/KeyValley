@@ -178,7 +178,7 @@
             let url = `${CONFIG.WALLETTWO_ORIGIN}/action/${action}?iframe=true`;
             
             if (CONFIG.WALLETTWO_COMPANY_ID) {
-                url += `&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
+                url += `&auto_accept=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
             }
             
             for (const [key, value] of Object.entries(extraParams)) {

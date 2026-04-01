@@ -82,7 +82,7 @@ const Auth = {
         // Trigger WalletTwo logout (same as profile)
         const logoutIframe = document.getElementById('walletTwoLogoutIframe');
         if (logoutIframe) {
-            logoutIframe.src = `${this.WALLETTWO_ORIGIN}/action/logout?iframe=true&companyId=${this.WALLETTWO_COMPANY_ID}`;
+            logoutIframe.src = `${this.WALLETTWO_ORIGIN}/action/logout?iframe=true&auto_accept=true&companyId=${this.WALLETTWO_COMPANY_ID}`;
             console.log('WalletTwo logout triggered');
         }
         

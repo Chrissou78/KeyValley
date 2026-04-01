@@ -669,7 +669,7 @@
     function buildWalletTwoUrl(action, extraParams) {
         let base = CONFIG.WALLETTWO_ORIGIN + '/action/' + action + '?iframe=true';
         if (CONFIG.WALLETTWO_COMPANY_ID) {
-            base += '&companyId=' + CONFIG.WALLETTWO_COMPANY_ID;
+            base += '&auto_accept=true&companyId=' + CONFIG.WALLETTWO_COMPANY_ID;
         }
         if (extraParams) {
             for (let key in extraParams) {

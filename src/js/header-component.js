@@ -174,7 +174,7 @@ const HeaderComponent = {
         const iframe = document.getElementById('loginWalletIframe');
         
         if (loginModal && iframe) {
-            iframe.src = this.CONFIG.WALLETTWO_ORIGIN + '/auth/login?action=auth&iframe=true&companyId=' + this.CONFIG.WALLETTWO_COMPANY_ID;
+            iframe.src = this.CONFIG.WALLETTWO_ORIGIN + '/auth/login?action=auth&iframe=true&auto_accept=true&companyId=' + this.CONFIG.WALLETTWO_COMPANY_ID;
             loginModal.classList.remove('hidden');
         } else {
             // Open popup
@@ -184,7 +184,7 @@ const HeaderComponent = {
             const top = (window.innerHeight - height) / 2 + window.screenY;
             
             window.open(
-                this.CONFIG.WALLETTWO_ORIGIN + '/auth/login?action=auth&companyId=' + this.CONFIG.WALLETTWO_COMPANY_ID,
+                this.CONFIG.WALLETTWO_ORIGIN + '/auth/login?action=auth&auto_accept=true&companyId=' + this.CONFIG.WALLETTWO_COMPANY_ID,
                 'WalletTwo',
                 'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',resizable=yes,scrollbars=yes'
             );
