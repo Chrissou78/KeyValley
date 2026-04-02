@@ -1748,55 +1748,67 @@
             
             console.log('🚪 Starting disconnect...');
             
-            // Clear all local data FIRST
-            clearSession();
-            localStorage.removeItem(CONFIG.STORAGE_KEY);
-            localStorage.removeItem('keavalley_profile');
-            localStorage.removeItem('userEmail');
-            sessionStorage.clear();
+            // Create hidden logout iframe (matching SDK pattern)
+            const iframe = document.createElement("iframe");
+            iframe.style.display = "none";
+            iframe.src = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true&auto_accept=true${CONFIG.WALLETTWO_COMPANY_ID ? `&companyId=${CONFIG.WALLETTWO_COMPANY_ID}` : ''}`;
+            iframe.id = "wallettwo-headless-logout-iframe";
+            document.body.appendChild(iframe);
             
-            // Reset state
-            currentUser = null;
-            currentBalance = 0;
-            acceptMessages = false;
-            savedToDatabase = false;
+            console.log('🚪 Logout iframe URL:', iframe.src);
             
-            // Build logout URL for IFRAME (not redirect) with auto_accept=true
-            const logoutUrl = buildWalletTwoUrl('logout', { auto_accept: 'true' });
-            console.log('🚪 Loading logout iframe:', logoutUrl);
-            
-            // Get or create logout iframe
-            let logoutIframe = document.getElementById('walletTwoLogoutIframe');
-            if (!logoutIframe) {
-                logoutIframe = document.createElement('iframe');
-                logoutIframe.id = 'walletTwoLogoutIframe';
-                logoutIframe.style.display = 'none';
-                document.body.appendChild(logoutIframe);
-            }
-            
-            // Set up a listener for logout confirmation
-            const logoutTimeout = setTimeout(() => {
-                console.log('🚪 Logout timeout, redirecting anyway...');
-                window.location.href = '/';
-            }, 3000);
-            
-            // Listen for logout message from iframe
             const handleLogoutMessage = (event) => {
                 if (event.origin !== CONFIG.WALLETTWO_ORIGIN) return;
                 
-                const data = event.data;
-                if (data.type === 'wallet_logout' || data.action === 'logout') {
-                    console.log('🚪 Logout confirmed by WalletTwo');
-                    clearTimeout(logoutTimeout);
-                    window.removeEventListener('message', handleLogoutMessage);
+                console.log('🚪 Received message:', event.data);
+                
+                if (event.data.type === "wallet_logout") {
+                    console.log('🚪 Logout confirmed!');
+                    
+                    // Clear all storage (matching SDK: removes wallettwo_token)
+                    localStorage.removeItem("wallettwo_token");
+                    localStorage.removeItem(CONFIG.STORAGE_KEY);
+                    localStorage.removeItem('keavalley_profile');
+                    localStorage.removeItem('userEmail');
+                    sessionStorage.clear();
+                    clearSession();
+                    
+                    // Reset state
+                    currentUser = null;
+                    currentBalance = 0;
+                    acceptMessages = false;
+                    savedToDatabase = false;
+                    
+                    // Cleanup
+                    window.removeEventListener("message", handleLogoutMessage);
+                    if (iframe.parentNode === document.body) {
+                        document.body.removeChild(iframe);
+                    }
+                    clearTimeout(timeoutId);
+                    
+                    // Redirect to home
                     window.location.href = '/';
                 }
             };
             
-            window.addEventListener('message', handleLogoutMessage);
+            const timeoutId = setTimeout(() => {
+                console.log('🚪 Logout timeout, redirecting anyway...');
+                window.removeEventListener("message", handleLogoutMessage);
+                if (iframe.parentNode === document.body) {
+                    document.body.removeChild(iframe);
+                }
+                
+                // Clear storage anyway
+                localStorage.removeItem("wallettwo_token");
+                localStorage.removeItem(CONFIG.STORAGE_KEY);
+                localStorage.removeItem('keavalley_profile');
+                localStorage.removeItem('userEmail');
+                sessionStorage.clear();
+                
+                window.location.href = '/';
+            }, 1000);
             
-            // Load the logout URL in the iframe
-            logoutIframe.src = logoutUrl;
+            window.addEventListener("message", handleLogoutMessage);
         }
 
         // ============================================
