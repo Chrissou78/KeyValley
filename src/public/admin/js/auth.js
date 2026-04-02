@@ -1,13 +1,28 @@
 // src/public/admin/js/auth.js
+// VERSION: 2026-04-02 - Fixed WalletTwo logout
 const Auth = {
     admin: null,
     STORAGE_KEY: 'keavalley_admin',
     WALLETTWO_ORIGIN: 'https://wallet.wallettwo.com',
-    WALLETTWO_COMPANY_ID: '6a27c2f8-894c-46c7-bf9f-f5af11d4e092',
+    WALLETTWO_COMPANY_ID: null, // Will be loaded from server
     isLoggingOut: false,
 
     async init() {
         console.log('Auth.init() called');
+        
+        // Load company ID from server config
+        try {
+            const configRes = await fetch('/api/config/public');
+            const configData = await configRes.json();
+            if (configData.walletTwoCompanyId) {
+                this.WALLETTWO_COMPANY_ID = configData.walletTwoCompanyId;
+                console.log('✅ WalletTwo Company ID loaded:', this.WALLETTWO_COMPANY_ID);
+            }
+        } catch (e) {
+            console.error('Failed to load config:', e);
+            // Fallback to hardcoded value
+            this.WALLETTWO_COMPANY_ID = '6a27c2f8-894c-46c7-bf9f-f5af11d4e092';
+        }
         
         try {
             const response = await fetch('/api/admin/session', { credentials: 'include' });
@@ -60,7 +75,7 @@ const Auth = {
         if (this.isLoggingOut) return;
         this.isLoggingOut = true;
         
-        console.log('Logging out...');
+        console.log('🚪 Logging out...');
         
         // Update button
         const logoutBtn = document.getElementById('logoutBtn');
@@ -71,6 +86,9 @@ const Auth = {
         
         // Clear local storage
         localStorage.removeItem(this.STORAGE_KEY);
+        localStorage.removeItem('keavalley_profile');
+        localStorage.removeItem('userEmail');
+        sessionStorage.clear();
         this.admin = null;
         
         // Clear server session
@@ -79,17 +97,11 @@ const Auth = {
             credentials: 'include' 
         }).catch(e => console.error('Logout error:', e));
         
-        // Trigger WalletTwo logout (same as profile)
-        const logoutIframe = document.getElementById('walletTwoLogoutIframe');
-        if (logoutIframe) {
-            logoutIframe.src = `${this.WALLETTWO_ORIGIN}/action/logout?iframe=true&auto_accept=true&companyId=${this.WALLETTWO_COMPANY_ID}`;
-            console.log('WalletTwo logout triggered');
-        }
-        
-        // Wait 2 seconds then redirect (same as profile)
-        setTimeout(() => {
-            window.location.href = '/';
-        }, 2000);
+        // Use FULL PAGE REDIRECT for WalletTwo logout (not iframe)
+        // This properly clears the httpOnly session cookie
+        const logoutUrl = `${this.WALLETTWO_ORIGIN}/action/logout?companyId=${this.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/admin/login.html')}`;
+        console.log('🚪 Redirecting to WalletTwo logout:', logoutUrl);
+        window.location.href = logoutUrl;
     },
 
     isSuper() {
