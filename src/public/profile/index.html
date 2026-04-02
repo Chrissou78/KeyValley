@@ -816,7 +816,7 @@
         // State
         let currentUser = null;
         let currentBalance = 0;
-        let acceptMessages = true;
+        let acceptMessages = false;
         let isDisconnecting = false;
         let isProcessingLogin = false;
         let savedToDatabase = false;
@@ -1745,6 +1745,7 @@
         function disconnect() {
             if (isDisconnecting) return;
             isDisconnecting = true;
+            acceptMessages = false;
             
             // Clear local storage first
             localStorage.removeItem("wallettwo_token");
