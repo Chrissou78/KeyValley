@@ -893,28 +893,28 @@
         function buildWalletTwoUrl(action, extraParams = {}) {
             let url;
             
-            if (action === 'auth') {
-                // Login: /auth/login?action=session
-                url = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=session&iframe=true`;
-            } else if (action === 'logout') {
-                // Logout: /auth/login?action=logout  
-                url = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?auto_accept=true&iframe=true`;
+            if (action === 'logout') {
+                // Logout uses /action/logout with iframe=true
+                url = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true`;
             } else {
-                // Other actions (transaction, signature, etc.)
-                url = `${CONFIG.WALLETTWO_ORIGIN}/action/${action}?iframe=true`;
+                // Auth uses /auth/login
+                url = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=session&iframe=true`;
             }
             
+            // Add companyId
             if (CONFIG.WALLETTWO_COMPANY_ID) {
                 url += `&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
             }
             
+            // Add extra params (including auto_accept)
             for (const [key, value] of Object.entries(extraParams)) {
                 url += `&${key}=${encodeURIComponent(value)}`;
             }
             
+            // Cache buster
             url += `&_t=${Date.now()}`;
             
-            console.log('🔗 Built URL:', url);
+            console.log(`🔗 Built ${action} URL:`, url);
             return url;
         }
 
@@ -1747,11 +1747,11 @@
             isDisconnecting = true;
             
             console.log('🚪 Starting disconnect...');
-
-            // Clear ALL local storage FIRST
+            
+            // Clear all local data FIRST
             clearSession();
             localStorage.removeItem(CONFIG.STORAGE_KEY);
-            localStorage.removeItem('keavalley_profile');  
+            localStorage.removeItem('keavalley_profile');
             localStorage.removeItem('userEmail');
             sessionStorage.clear();
             
@@ -1760,10 +1760,45 @@
             currentBalance = 0;
             acceptMessages = false;
             savedToDatabase = false;
-
-            // Just go directly to home - WalletTwo session will expire or user re-auths
-            window.location.href = '/';
+            
+            // Build logout URL for IFRAME (not redirect) with auto_accept=true
+            const logoutUrl = buildWalletTwoUrl('logout', { auto_accept: 'true' });
+            console.log('🚪 Loading logout iframe:', logoutUrl);
+            
+            // Get or create logout iframe
+            let logoutIframe = document.getElementById('walletTwoLogoutIframe');
+            if (!logoutIframe) {
+                logoutIframe = document.createElement('iframe');
+                logoutIframe.id = 'walletTwoLogoutIframe';
+                logoutIframe.style.display = 'none';
+                document.body.appendChild(logoutIframe);
+            }
+            
+            // Set up a listener for logout confirmation
+            const logoutTimeout = setTimeout(() => {
+                console.log('🚪 Logout timeout, redirecting anyway...');
+                window.location.href = '/';
+            }, 3000);
+            
+            // Listen for logout message from iframe
+            const handleLogoutMessage = (event) => {
+                if (event.origin !== CONFIG.WALLETTWO_ORIGIN) return;
+                
+                const data = event.data;
+                if (data.type === 'wallet_logout' || data.action === 'logout') {
+                    console.log('🚪 Logout confirmed by WalletTwo');
+                    clearTimeout(logoutTimeout);
+                    window.removeEventListener('message', handleLogoutMessage);
+                    window.location.href = '/';
+                }
+            };
+            
+            window.addEventListener('message', handleLogoutMessage);
+            
+            // Load the logout URL in the iframe
+            logoutIframe.src = logoutUrl;
         }
+
         // ============================================
         // LOGIN CANCELLED STATE FUNCTIONS (GLOBAL)
         // ============================================
