@@ -1748,15 +1748,7 @@
             
             console.log('🚪 Starting disconnect...');
 
-            // FIRST: Clear/remove all WalletTwo iframes to prevent interference
-            const walletIframe = document.getElementById('walletIframe');
-            const modalIframe = document.getElementById('modalWalletIframe');
-            const logoutIframe = document.getElementById('logoutIframe');
-            if (walletIframe) walletIframe.remove();
-            if (modalIframe) modalIframe.remove();
-            if (logoutIframe) logoutIframe.remove();
-
-            // Clear ALL local storage
+            // Clear ALL local storage FIRST
             clearSession();
             localStorage.removeItem(CONFIG.STORAGE_KEY);
             localStorage.removeItem('keavalley_profile');  
@@ -1769,10 +1761,13 @@
             acceptMessages = false;
             savedToDatabase = false;
 
-            // Redirect to WalletTwo logout with auto_accept=true
-            const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?auto_accept=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/')}`;
+            // Build logout URL - redirect to homepage
+            const redirectUrl = window.location.protocol + '//' + window.location.host + '/';
+            const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?auto_accept=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(redirectUrl)}`;
             
-            console.log('🚪 Redirecting to logout:', logoutUrl);
+            console.log('🚪 Redirect URL:', redirectUrl);
+            console.log('🚪 Full logout URL:', logoutUrl);
+            
             window.location.href = logoutUrl;
         }
         // ============================================
