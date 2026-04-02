@@ -1748,7 +1748,15 @@
             
             console.log('🚪 Starting disconnect...');
 
-            // Clear ALL local storage FIRST
+            // FIRST: Clear/remove all WalletTwo iframes to prevent interference
+            const walletIframe = document.getElementById('walletIframe');
+            const modalIframe = document.getElementById('modalWalletIframe');
+            const logoutIframe = document.getElementById('logoutIframe');
+            if (walletIframe) walletIframe.remove();
+            if (modalIframe) modalIframe.remove();
+            if (logoutIframe) logoutIframe.remove();
+
+            // Clear ALL local storage
             clearSession();
             localStorage.removeItem(CONFIG.STORAGE_KEY);
             localStorage.removeItem('keavalley_profile');  
@@ -1761,13 +1769,12 @@
             acceptMessages = false;
             savedToDatabase = false;
 
-            // Use /action/logout with redirect - per WalletTwo docs this logs out immediately
+            // Redirect to WalletTwo logout with auto_accept=true
             const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?auto_accept=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/')}`;
             
             console.log('🚪 Redirecting to logout:', logoutUrl);
             window.location.href = logoutUrl;
         }
-
         // ============================================
         // LOGIN CANCELLED STATE FUNCTIONS (GLOBAL)
         // ============================================
