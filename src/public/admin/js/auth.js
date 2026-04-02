@@ -97,7 +97,7 @@ const Auth = {
         }).catch(e => console.error('Logout error:', e));
         
         // Full page redirect to WalletTwo logout, then back to MAIN PAGE
-        const logoutUrl = `${this.WALLETTWO_ORIGIN}/action/logout?companyId=${this.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/')}`;
+        const logoutUrl = `${this.WALLETTWO_ORIGIN}/action/logout?auto_accept=true&companyId=${this.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/')}`;
         console.log('🚪 Redirecting to WalletTwo logout:', logoutUrl);
         window.location.href = logoutUrl;
     },

@@ -182,7 +182,7 @@
                 url = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=session&iframe=true`;
             } else if (action === 'logout') {
                 // Use /action/logout for instant logout
-                url = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true`;
+                url = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true&auto_accept=true`;
             } else {
                 url = `${CONFIG.WALLETTWO_ORIGIN}/action/${action}?iframe=true`;
             }
@@ -225,7 +225,7 @@
             fetch('/api/admin/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
             
             // Use full-page redirect for proper session clearing
-            const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/')}`;
+            const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?auto_accept=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/')}`;
             console.log('🚪 Redirecting to logout:', logoutUrl);
             window.location.href = logoutUrl;
         }

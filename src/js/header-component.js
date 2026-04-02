@@ -199,7 +199,7 @@ const HeaderComponent = {
         // Logout from WalletTwo via iframe
         const iframe = document.getElementById('walletTwoLogoutIframe');
         if (iframe && this.CONFIG.WALLETTWO_COMPANY_ID) {
-            iframe.src = this.CONFIG.WALLETTWO_ORIGIN + '/auth/logout?companyId=' + this.CONFIG.WALLETTWO_COMPANY_ID;
+            iframe.src = this.CONFIG.WALLETTWO_ORIGIN + '/auth/logout?auto_accept=true&companyId=' + this.CONFIG.WALLETTWO_COMPANY_ID;
         }
         
         this.updateUI();

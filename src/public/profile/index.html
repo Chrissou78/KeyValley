@@ -898,7 +898,7 @@
                 url = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=session&iframe=true`;
             } else if (action === 'logout') {
                 // Logout: /auth/login?action=logout  
-                url = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=logout&iframe=true`;
+                url = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?auto_accept=true&iframe=true`;
             } else {
                 // Other actions (transaction, signature, etc.)
                 url = `${CONFIG.WALLETTWO_ORIGIN}/action/${action}?iframe=true`;
@@ -1762,7 +1762,7 @@
             savedToDatabase = false;
 
             // Use /action/logout with redirect - per WalletTwo docs this logs out immediately
-            const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/')}`;
+            const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?/action/logout?auto_accept=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/')}`;
             
             console.log('🚪 Redirecting to logout:', logoutUrl);
             window.location.href = logoutUrl;

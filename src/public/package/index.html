@@ -675,7 +675,7 @@
             url = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=session&iframe=true`;
         } else if (action === 'logout') {
             // Use /action/logout for instant logout
-            url = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true`;
+            url = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?auto_accept=true&iframe=true`;
         } else {
             url = `${CONFIG.WALLETTWO_ORIGIN}/action/${action}?iframe=true`;
         }
@@ -1020,7 +1020,7 @@
         updateBuyButton();
         
         // Use /action/logout with redirect for proper session clearing
-        const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/package/')}`;
+        const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?auto_accept=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/package/')}`;
         console.log('🚪 Redirecting to logout:', logoutUrl);
         window.location.href = logoutUrl;
     }
