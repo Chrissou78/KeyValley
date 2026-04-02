@@ -4,7 +4,7 @@ const Auth = {
     admin: null,
     STORAGE_KEY: 'keavalley_admin',
     WALLETTWO_ORIGIN: 'https://wallet.wallettwo.com',
-    WALLETTWO_COMPANY_ID: null, // Will be loaded from server
+    WALLETTWO_COMPANY_ID: null,
     isLoggingOut: false,
 
     async init() {
@@ -20,7 +20,6 @@ const Auth = {
             }
         } catch (e) {
             console.error('Failed to load config:', e);
-            // Fallback to hardcoded value
             this.WALLETTWO_COMPANY_ID = '6a27c2f8-894c-46c7-bf9f-f5af11d4e092';
         }
         
@@ -84,7 +83,7 @@ const Auth = {
             logoutBtn.textContent = 'Logging out...';
         }
         
-        // Clear local storage
+        // Clear all storage
         localStorage.removeItem(this.STORAGE_KEY);
         localStorage.removeItem('keavalley_profile');
         localStorage.removeItem('userEmail');
@@ -97,9 +96,8 @@ const Auth = {
             credentials: 'include' 
         }).catch(e => console.error('Logout error:', e));
         
-        // Use FULL PAGE REDIRECT for WalletTwo logout (not iframe)
-        // This properly clears the httpOnly session cookie
-        const logoutUrl = `${this.WALLETTWO_ORIGIN}/action/logout?companyId=${this.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/admin/login.html')}`;
+        // Full page redirect to WalletTwo logout, then back to MAIN PAGE
+        const logoutUrl = `${this.WALLETTWO_ORIGIN}/action/logout?companyId=${this.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/')}`;
         console.log('🚪 Redirecting to WalletTwo logout:', logoutUrl);
         window.location.href = logoutUrl;
     },
