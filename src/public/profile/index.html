@@ -1762,7 +1762,7 @@
             savedToDatabase = false;
 
             // Use /action/logout with redirect - per WalletTwo docs this logs out immediately
-            const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?/action/logout?auto_accept=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/')}`;
+            const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?auto_accept=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/')}`;
             
             console.log('🚪 Redirecting to logout:', logoutUrl);
             window.location.href = logoutUrl;
