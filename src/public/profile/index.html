@@ -1761,14 +1761,8 @@
             acceptMessages = false;
             savedToDatabase = false;
 
-            // Build logout URL - redirect to homepage
-            const redirectUrl = window.location.protocol + '//' + window.location.host + '/';
-            const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?auto_accept=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(redirectUrl)}`;
-            
-            console.log('🚪 Redirect URL:', redirectUrl);
-            console.log('🚪 Full logout URL:', logoutUrl);
-            
-            window.location.href = logoutUrl;
+            // Just go directly to home - WalletTwo session will expire or user re-auths
+            window.location.href = '/';
         }
         // ============================================
         // LOGIN CANCELLED STATE FUNCTIONS (GLOBAL)
