@@ -1748,67 +1748,50 @@
             
             console.log('🚪 Starting disconnect...');
             
-            // Create hidden logout iframe (matching SDK pattern)
+            // Use /auth/login?action=logout (like LogoutAction component)
+            const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=logout&iframe=true&auto_accept=true${CONFIG.WALLETTWO_COMPANY_ID ? `&companyId=${CONFIG.WALLETTWO_COMPANY_ID}` : ''}`;
+            
+            console.log('🚪 Logout URL:', logoutUrl);
+            
             const iframe = document.createElement("iframe");
             iframe.style.display = "none";
-            iframe.src = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true&auto_accept=true${CONFIG.WALLETTWO_COMPANY_ID ? `&companyId=${CONFIG.WALLETTWO_COMPANY_ID}` : ''}`;
-            iframe.id = "wallettwo-headless-logout-iframe";
+            iframe.src = logoutUrl;
+            iframe.id = "wallettwo-logout-iframe";
             document.body.appendChild(iframe);
-            
-            console.log('🚪 Logout iframe URL:', iframe.src);
             
             const handleLogoutMessage = (event) => {
                 if (event.origin !== CONFIG.WALLETTWO_ORIGIN) return;
-                
-                console.log('🚪 Received message:', event.data);
+                console.log('🚪 Message received:', event.data);
                 
                 if (event.data.type === "wallet_logout") {
                     console.log('🚪 Logout confirmed!');
                     
-                    // Clear all storage (matching SDK: removes wallettwo_token)
+                    // Clear ALL storage
                     localStorage.removeItem("wallettwo_token");
                     localStorage.removeItem(CONFIG.STORAGE_KEY);
                     localStorage.removeItem('keavalley_profile');
                     localStorage.removeItem('userEmail');
                     sessionStorage.clear();
-                    clearSession();
                     
-                    // Reset state
-                    currentUser = null;
-                    currentBalance = 0;
-                    acceptMessages = false;
-                    savedToDatabase = false;
-                    
-                    // Cleanup
                     window.removeEventListener("message", handleLogoutMessage);
-                    if (iframe.parentNode === document.body) {
-                        document.body.removeChild(iframe);
-                    }
-                    clearTimeout(timeoutId);
+                    document.body.removeChild(iframe);
                     
-                    // Redirect to home
                     window.location.href = '/';
                 }
             };
             
-            const timeoutId = setTimeout(() => {
-                console.log('🚪 Logout timeout, redirecting anyway...');
-                window.removeEventListener("message", handleLogoutMessage);
-                if (iframe.parentNode === document.body) {
-                    document.body.removeChild(iframe);
-                }
-                
-                // Clear storage anyway
+            window.addEventListener("message", handleLogoutMessage);
+            
+            // Timeout fallback
+            setTimeout(() => {
+                console.log('🚪 Timeout - forcing redirect');
                 localStorage.removeItem("wallettwo_token");
                 localStorage.removeItem(CONFIG.STORAGE_KEY);
                 localStorage.removeItem('keavalley_profile');
                 localStorage.removeItem('userEmail');
                 sessionStorage.clear();
-                
                 window.location.href = '/';
-            }, 1000);
-            
-            window.addEventListener("message", handleLogoutMessage);
+            }, 10000);
         }
 
         // ============================================
