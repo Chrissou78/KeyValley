@@ -2140,7 +2140,7 @@
                     const signature = params.get('signature') || params.get('sig');
                     const userId = params.get('usr') || params.get('user');
                     
-                    let questionnaireUrl = `/claim/questionnaire.html?wallet=${encodeURIComponent(wallet)}`;
+                    let questionnaireUrl = `/profile/questionnaire.html?wallet=${encodeURIComponent(wallet)}`;
                     if (signature) questionnaireUrl += `&signature=${encodeURIComponent(signature)}`;
                     if (userId) questionnaireUrl += `&usr=${encodeURIComponent(userId)}`;
                     questionnaireUrl += `&returnTo=profile`;
