@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html class="dark" lang="en">
-<!-- VERSION: 2026-04-01-v2 - Fixed login cancel/reset -->
+<!-- VERSION: 2026-04-02 - Fixed login flow for credentials -->
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -796,13 +796,14 @@
 
     <script>
         // ============================================
-        // VERSION: 2026-04-01-v2 - Fixed login cancel/reset
+        // VERSION: 2026-04-02 - Fixed login flow for credentials
         // ============================================
+        console.log('🚀 Profile page initializing... (v2026-04-02)');
         
         // Configuration
         let CONFIG = {
             VIP_TOKEN_ADDRESS: '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F',
-            POLYGON_RPC: 'https://polygon-rpc.com',
+            POLYGON_RPC: 'https://polygon-mainnet.g.alchemy.com/v2/IoufBRdGO6MKWC6pxqbZW',
             POLYGON_EXPLORER: 'https://polygonscan.com',
             WALLETTWO_ORIGIN: 'https://wallet.wallettwo.com',
             WALLETTWO_COMPANY_ID: null,
@@ -817,6 +818,7 @@
         let currentBalance = 0;
         let acceptMessages = true;
         let isDisconnecting = false;
+        let isProcessingLogin = false;
         let savedToDatabase = false;
         let referralStatus = null;
         let questionnaireData = null;
@@ -829,7 +831,9 @@
         const logoutIframe = document.getElementById('logoutIframe');
         const walletIframe = document.getElementById('walletIframe');
 
-        // Toast Notification
+        // ============================================
+        // TOAST NOTIFICATION
+        // ============================================
         function showToast(message, type = 'info') {
             const existing = document.getElementById('toast-notification');
             if (existing) existing.remove();
@@ -854,12 +858,16 @@
             }, 4000);
         }
 
-        // Mobile Menu
+        // ============================================
+        // MOBILE MENU
+        // ============================================
         document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
             document.getElementById('mobileMenu').classList.toggle('hidden');
         });
 
-        // Load Config
+        // ============================================
+        // LOAD CONFIG
+        // ============================================
         async function loadConfig() {
             try {
                 console.log('📥 Loading config...');
@@ -879,26 +887,41 @@
             }
         }
 
-        // Build WalletTwo URL
+        // ============================================
+        // BUILD WALLETTWO URL
+        // ============================================
         function buildWalletTwoUrl(action, extraParams = {}) {
-            let url = `${CONFIG.WALLETTWO_ORIGIN}/action/${action}?iframe=true&auto-accept=true`;
+            let url;
+            
+            if (action === 'auth') {
+                // Login: /auth/login?action=session
+                url = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=session&iframe=true`;
+            } else if (action === 'logout') {
+                // Logout: /auth/login?action=logout  
+                url = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=logout&iframe=true`;
+            } else {
+                // Other actions (transaction, signature, etc.)
+                url = `${CONFIG.WALLETTWO_ORIGIN}/action/${action}?iframe=true`;
+            }
             
             if (CONFIG.WALLETTWO_COMPANY_ID) {
-                url += `&auto_accept=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
+                url += `&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
             }
             
             for (const [key, value] of Object.entries(extraParams)) {
                 url += `&${key}=${encodeURIComponent(value)}`;
             }
             
-            // Add cache buster to force reload
             url += `&_t=${Date.now()}`;
             
             console.log('🔗 Built URL:', url);
             return url;
         }
 
-        // Initialize WalletTwo Iframe
+
+        // ============================================
+        // INITIALIZE WALLETTWO IFRAME
+        // ============================================
         function initWalletIframe() {
             if (!CONFIG.WALLETTWO_COMPANY_ID) {
                 console.error('Cannot init iframe: missing companyId');
@@ -909,7 +932,9 @@
             walletIframe.src = iframeSrc;
         }
 
-        // Login Modal
+        // ============================================
+        // LOGIN MODAL
+        // ============================================
         function showLoginModal() {
             const modal = document.getElementById('loginModal');
             const iframe = document.getElementById('modalWalletIframe');
@@ -917,6 +942,9 @@
             if (CONFIG.WALLETTWO_COMPANY_ID) {
                 iframe.src = buildWalletTwoUrl('auth');
             }
+            
+            acceptMessages = true;
+            isProcessingLogin = false;
             
             modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
@@ -930,7 +958,9 @@
             document.body.style.overflow = '';
         }
 
-        // Session Management
+        // ============================================
+        // SESSION MANAGEMENT
+        // ============================================
         function getStoredSession() {
             try {
                 const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
@@ -963,7 +993,9 @@
             localStorage.removeItem(CONFIG.STORAGE_KEY);
         }
 
-        // Database Save
+        // ============================================
+        // DATABASE SAVE
+        // ============================================
         async function saveToDatabase(wallet, email, name) {
             if (savedToDatabase || !wallet) return;
             try {
@@ -984,7 +1016,9 @@
             }
         }
 
-        // Header UI Updates
+        // ============================================
+        // HEADER UI UPDATES
+        // ============================================
         function updateHeaderUI(user, balance) {
             const headerConnected = document.getElementById('headerConnected');
             const headerDisconnected = document.getElementById('headerDisconnected');
@@ -1029,19 +1063,23 @@
             }
         }
 
-        // UI State Functions
+        // ============================================
+        // UI STATE FUNCTIONS
+        // ============================================
         function showLogin() {
+            console.log('📺 Showing login container');
             loginContainer.classList.remove('hidden');
             loadingContainer.classList.add('hidden');
             profileContainer.classList.add('hidden');
             disconnectingContainer.classList.add('hidden');
             acceptMessages = true;
             isDisconnecting = false;
+            isProcessingLogin = false;
             updateHeaderUI(null, 0);
-            console.log('✅ Login shown, acceptMessages =', acceptMessages);
         }
 
         function showLoading() {
+            console.log('📺 Showing loading container');
             loginContainer.classList.add('hidden');
             loadingContainer.classList.remove('hidden');
             profileContainer.classList.add('hidden');
@@ -1049,6 +1087,7 @@
         }
 
         function showDisconnecting() {
+            console.log('📺 Showing disconnecting container');
             loginContainer.classList.add('hidden');
             loadingContainer.classList.add('hidden');
             profileContainer.classList.add('hidden');
@@ -1056,14 +1095,19 @@
         }
 
         async function showProfile(user) {
+            console.log('📺 Showing profile for:', user.wallet);
+            
             const canProceed = await checkQuestionnaireRequired(user.wallet);
             if (!canProceed) return;
             
             currentUser = user;
             acceptMessages = false;
+            isProcessingLogin = false;
             
+            // Close modal if open
             closeLoginModal();
             
+            // Fetch additional user info if needed
             if (!currentUser.email || !currentUser.name) {
                 try {
                     const response = await fetch(`/api/wallet/info/${user.wallet}`);
@@ -1080,11 +1124,13 @@
                 }
             }
             
+            // IMPORTANT: Hide login, show profile
             loginContainer.classList.add('hidden');
             loadingContainer.classList.add('hidden');
             profileContainer.classList.remove('hidden');
             disconnectingContainer.classList.add('hidden');
             
+            // Update profile UI
             const firstName = currentUser.firstName || '';
             const lastName = currentUser.lastName || '';
             const fullName = currentUser.name || `${firstName} ${lastName}`.trim();
@@ -1112,6 +1158,7 @@
             
             await saveToDatabase(user.wallet, currentUser.email, fullName);
             
+            // Load all profile data
             await Promise.all([
                 fetchBalance(user.wallet),
                 fetchVouchers(user.wallet),
@@ -1121,7 +1168,9 @@
             ]);
         }
 
-        // Fetch Vouchers
+        // ============================================
+        // FETCH VOUCHERS
+        // ============================================
         async function fetchVouchers(wallet) {
             const loading = document.getElementById('vouchersLoading');
             const empty = document.getElementById('vouchersEmpty');
@@ -1175,7 +1224,9 @@
             }
         }
 
-        // Fetch Orders
+        // ============================================
+        // FETCH ORDERS
+        // ============================================
         async function fetchOrders(wallet) {
             const loading = document.getElementById('ordersLoading');
             const empty = document.getElementById('ordersEmpty');
@@ -1229,7 +1280,9 @@
             }
         }
 
-        // Preferences / Questionnaire
+        // ============================================
+        // PREFERENCES / QUESTIONNAIRE
+        // ============================================
         async function loadPreferences() {
             if (!currentUser?.wallet) return;
             
@@ -1391,7 +1444,9 @@
             }
         }
 
-        // Balance
+        // ============================================
+        // BALANCE
+        // ============================================
         async function fetchBalance(address) {
             const balanceLoading = document.getElementById('balanceLoading');
             const balanceDisplay = document.getElementById('balanceDisplay');
@@ -1422,7 +1477,9 @@
             });
         }
 
-        // Referral System
+        // ============================================
+        // REFERRAL SYSTEM
+        // ============================================
         async function loadReferralStatus() {
             if (!currentUser?.wallet) return;
 
@@ -1682,28 +1739,33 @@
             });
         }
 
-        // Disconnect
+        // ============================================
+        // DISCONNECT
+        // ============================================
         function disconnect() {
             if (isDisconnecting) return;
             isDisconnecting = true;
+            
+            console.log('🚪 Starting disconnect...');
 
+            // Clear ALL local storage FIRST
             clearSession();
+            localStorage.removeItem(CONFIG.STORAGE_KEY);
+            localStorage.removeItem('keavalley_profile');  
+            localStorage.removeItem('userEmail');
+            sessionStorage.clear();
+            
+            // Reset state
             currentUser = null;
             currentBalance = 0;
             acceptMessages = false;
             savedToDatabase = false;
-            referralStatus = null;
-            questionnaireData = null;
 
-            showDisconnecting();
-            updateHeaderUI(null, 0);
-
-            logoutIframe.src = buildWalletTwoUrl('logout');
-            console.log('🚪 Logout iframe:', logoutIframe.src);
-
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 2000);
+            // Use /action/logout with redirect - per WalletTwo docs this logs out immediately
+            const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/')}`;
+            
+            console.log('🚪 Redirecting to logout:', logoutUrl);
+            window.location.href = logoutUrl;
         }
 
         // ============================================
@@ -1711,6 +1773,8 @@
         // ============================================
         function showLoginCancelledState() {
             console.log('🛑 Showing login cancelled state');
+            isProcessingLogin = false;
+            
             const container = document.getElementById('loginContainer');
             if (container) {
                 container.innerHTML = `
@@ -1738,10 +1802,18 @@
                     </div>
                 `;
             }
+            
+            // Ensure login container is visible
+            loginContainer.classList.remove('hidden');
+            loadingContainer.classList.add('hidden');
+            profileContainer.classList.add('hidden');
         }
 
         function resetIframeToLogin() {
             console.log('🔄 Resetting iframe to login...');
+            isProcessingLogin = false;
+            acceptMessages = true;
+            
             const container = document.getElementById('loginContainer');
             if (container) {
                 container.innerHTML = `
@@ -1771,29 +1843,67 @@
                     </div>
                 `;
             }
-            acceptMessages = true;
         }
 
         function logoutAndResetIframe() {
             console.log('🔄 Logging out and resetting...');
+            isProcessingLogin = false;
+            acceptMessages = false;
+            
             const container = document.getElementById('loginContainer');
             if (container) {
+                // Show loading state
                 container.innerHTML = `
                     <div class="max-w-lg mx-auto text-center py-12">
                         <div class="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                         <p class="text-slate-400">Switching account...</p>
                     </div>
-                    <iframe 
-                        id="walletIframe" 
-                        src="${buildWalletTwoUrl('logout')}"
-                        style="display: none;"
-                        allow="clipboard-write"
-                    ></iframe>
                 `;
                 
+                // Clear any existing session
+                clearSession();
+                
+                // Create logout iframe
+                const logoutIframe = document.createElement('iframe');
+                logoutIframe.style.display = 'none';
+                logoutIframe.src = buildWalletTwoUrl('logout');
+                container.appendChild(logoutIframe);
+                
+                // After logout completes, show fresh login
                 setTimeout(function() {
-                    resetIframeToLogin();
-                }, 1500);
+                    acceptMessages = true;
+                    isProcessingLogin = false;
+                    
+                    // Remove logout iframe and show login
+                    container.innerHTML = `
+                        <div class="max-w-lg mx-auto">
+                            <div class="text-center mb-8">
+                                <div class="flex items-center justify-center gap-4 mb-4">
+                                    <div class="h-[1px] w-8 bg-primary"></div>
+                                    <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Member Area</span>
+                                    <div class="h-[1px] w-8 bg-primary"></div>
+                                </div>
+                                <h1 class="text-3xl md:text-4xl font-serif italic font-medium text-white mb-3">Welcome Back</h1>
+                                <p class="text-slate-400 font-light">Login to access your profile</p>
+                            </div>
+                            <div class="bg-surface border border-white/5 rounded-lg overflow-hidden">
+                                <div class="wallet-iframe-container">
+                                    <iframe 
+                                        id="walletIframe"
+                                        src="${buildWalletTwoUrl('auth')}"
+                                        class="wallet-iframe"
+                                        allow="clipboard-write"
+                                    ></iframe>
+                                </div>
+                            </div>
+                            <p class="text-center text-slate-500 text-sm mt-6">
+                                Not a member yet? <a href="/package" class="text-primary hover:underline">Join the Club</a>
+                            </p>
+                        </div>
+                    `;
+                    
+                    console.log('✅ Logged out, fresh login iframe ready');
+                }, 2000);
             }
         }
 
@@ -1806,34 +1916,74 @@
             if (!event.origin.includes('wallettwo.com')) return;
 
             const data = event.data;
-            console.log('🔔 WalletTwo event:', data);
+            console.log('🔔 WalletTwo event:', JSON.stringify(data));
+
+            // Skip if disconnecting
+            if (isDisconnecting) {
+                console.log('⏸️ Ignoring - disconnecting');
+                return;
+            }
+
+            // Skip if already processing a login
+            if (isProcessingLogin) {
+                console.log('⏸️ Ignoring - already processing login');
+                return;
+            }
+
+            // Skip if not accepting messages
+            if (!acceptMessages) {
+                console.log('⏸️ Ignoring - acceptMessages is false');
+                return;
+            }
 
             // SUCCESS: Login events
             const isLoginEvent = data && (
                 data.type === 'wallet_login' ||
                 data.event === 'wallet_login' ||
                 data.type === 'wallet_session' ||
-                data.event === 'wallet_session'
+                data.event === 'wallet_session' ||
+                data.type === 'login_success' ||
+                data.event === 'login_success' ||
+                data.type === 'auth_success' ||
+                data.event === 'auth_success'
             );
 
-            if (isLoginEvent && !isDisconnecting && acceptMessages) {
-                const wallet = data.wallet || data.wlt || data.address;
-                const code = data.code || data.token;
+            if (isLoginEvent) {
+                const wallet = data.wallet || data.wlt || data.address || data.walletAddress;
+                const code = data.code || data.token || data.authorization_code;
                 
                 console.log('🔐 Login event - wallet:', wallet, 'code:', code ? 'present' : 'missing');
                 
                 if (wallet) {
+                    // Prevent duplicate processing
+                    isProcessingLogin = true;
                     acceptMessages = false;
+                    
+                    // Show loading IMMEDIATELY
+                    showLoading();
+                    
+                    // Close modal if open
                     closeLoginModal();
                     
                     if (code) {
                         console.log('🚀 Exchanging code...');
-                        exchangeCode(code, wallet, data.user);
+                        exchangeCode(code, wallet, data.user || data.usr || data.userId);
                     } else {
-                        const userData = { wallet: wallet, userId: data.user || data.usr, timestamp: Date.now() };
+                        console.log('🚀 Direct login (no code)...');
+                        const userData = { 
+                            wallet: wallet, 
+                            userId: data.user || data.usr, 
+                            email: data.email,
+                            name: data.name,
+                            firstName: data.firstName || data.given_name,
+                            lastName: data.lastName || data.family_name,
+                            timestamp: Date.now() 
+                        };
                         saveSession(userData);
                         showProfile(userData);
                     }
+                } else {
+                    console.warn('⚠️ Login event received but no wallet address');
                 }
                 return;
             }
@@ -1876,12 +2026,17 @@
                 console.log('✅ WalletTwo iframe ready');
                 return;
             }
+            
+            // Log unhandled events
+            console.log('❓ Unhandled WalletTwo event:', data);
         });
 
-        // Token Exchange
+        // ============================================
+        // TOKEN EXCHANGE
+        // ============================================
         async function exchangeCode(code, wallet, userId) {
+            console.log('🔄 exchangeCode called - showing loading');
             showLoading();
-            console.log('🔄 Exchanging code via server...');
             
             try {
                 const tokenResponse = await fetch('/api/wallettwo/exchange', {
@@ -1894,7 +2049,7 @@
                 console.log('📥 Exchange response:', tokenData);
                 
                 if (!tokenData.success && !tokenData.access_token) {
-                    console.warn('⚠️ Token exchange failed');
+                    console.warn('⚠️ Token exchange failed, proceeding with wallet only');
                     const userData = { wallet: wallet, userId: userId, timestamp: Date.now() };
                     saveSession(userData);
                     showProfile(userData);
@@ -1907,6 +2062,7 @@
                 let firstName = tokenData.user?.given_name || tokenData.firstName;
                 let lastName = tokenData.user?.family_name || tokenData.lastName;
 
+                // Fetch additional user info if needed
                 if (accessToken && !userEmail) {
                     try {
                         const userInfoResponse = await fetch('/api/wallettwo/userinfo', {
@@ -1954,7 +2110,9 @@
             }
         }
 
-        // Event Listeners
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
         document.getElementById('disconnectBtn').addEventListener('click', disconnect);
         document.getElementById('setReferrerBtn').addEventListener('click', setReferrer);
         document.getElementById('generateCodeBtn').addEventListener('click', generateReferralCode);
@@ -1966,7 +2124,9 @@
             e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
         });
 
-        // Questionnaire Check
+        // ============================================
+        // QUESTIONNAIRE CHECK
+        // ============================================
         async function checkQuestionnaireRequired(wallet) {
             try {
                 const response = await fetch(`/api/questionnaire/status/${wallet}`);
@@ -1995,9 +2155,11 @@
             }
         }
 
-        // Initialize
+        // ============================================
+        // INITIALIZE
+        // ============================================
         async function init() {
-            console.log('🚀 Profile page initializing... (v2026-04-01-v2)');
+            console.log('🚀 Profile page initializing... (v2026-04-02)');
             
             const configLoaded = await loadConfig();
             if (!configLoaded) {
@@ -2011,9 +2173,12 @@
             const wallet = params.get('wlt') || params.get('wallet');
             const code = params.get('code');
 
+            // URL has code and wallet - exchange
             if (code && wallet) {
                 window.history.replaceState({}, '', '/profile');
                 showLoading();
+                isProcessingLogin = true;
+                acceptMessages = false;
                 
                 const canProceed = await checkQuestionnaireRequired(wallet);
                 if (!canProceed) return;
@@ -2022,9 +2187,12 @@
                 return;
             }
 
+            // URL has wallet only - direct login
             if (wallet) {
                 window.history.replaceState({}, '', '/profile');
                 showLoading();
+                isProcessingLogin = true;
+                acceptMessages = false;
                 
                 const canProceed = await checkQuestionnaireRequired(wallet);
                 if (!canProceed) return;
@@ -2040,18 +2208,21 @@
                 return;
             }
 
+            // Check stored session
             const stored = getStoredSession();
             if (stored?.wallet) {
                 showLoading();
+                isProcessingLogin = true;
+                acceptMessages = false;
                 
                 const canProceed = await checkQuestionnaireRequired(stored.wallet);
                 if (!canProceed) return;
                 
-                acceptMessages = false;
                 showProfile(stored);
                 return;
             }
 
+            // No session - show login
             showLogin();
         }
 

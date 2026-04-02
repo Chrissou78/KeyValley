@@ -606,14 +606,14 @@
     <!-- Toast Container -->
     <div id="toast-container"></div>
 
-    <!-- Logout Iframe -->
+    <!-- Logout Iframe (hidden) -->
     <iframe id="logoutIframe" style="display:none;"></iframe>
 
     <script>
     // ============================================
-    // VERSION: 2026-04-01 - Fixed login cancel handling
+    // VERSION: 2026-04-02 - Fixed WalletTwo URLs + logout
     // ============================================
-    console.log('🚀 Package page initializing... (v2026-04-01)');
+    console.log('🚀 Package page initializing... (v2026-04-02)');
 
     // ============================================
     // Configuration
@@ -661,23 +661,37 @@
     let stripe = null;
     let cardElement = null;
     let acceptMessages = true;
-    let isResetting = false; // Prevent event loops
+    let isResetting = false;
+    let isDisconnecting = false;
 
     // ============================================
-    // Helper: Build WalletTwo URL
+    // Helper: Build WalletTwo URL (UPDATED)
     // ============================================
-    function buildWalletTwoUrl(action, extraParams) {
-        let base = CONFIG.WALLETTWO_ORIGIN + '/action/' + action + '?iframe=true';
+    function buildWalletTwoUrl(action, extraParams = {}) {
+        let url;
+        
+        if (action === 'auth') {
+            // CORRECT: Use /auth/login?action=session for authentication
+            url = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=session&iframe=true`;
+        } else if (action === 'logout') {
+            // Use /action/logout for instant logout
+            url = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true`;
+        } else {
+            url = `${CONFIG.WALLETTWO_ORIGIN}/action/${action}?iframe=true`;
+        }
+        
         if (CONFIG.WALLETTWO_COMPANY_ID) {
-            base += '&auto_accept=true&companyId=' + CONFIG.WALLETTWO_COMPANY_ID;
+            url += `&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
         }
-        if (extraParams) {
-            for (let key in extraParams) {
-                base += '&' + key + '=' + encodeURIComponent(extraParams[key]);
-            }
+        
+        for (const [key, value] of Object.entries(extraParams)) {
+            url += `&${key}=${encodeURIComponent(value)}`;
         }
-        console.log('🔗 Built WalletTwo URL:', base);
-        return base;
+        
+        // Cache buster
+        url += `&_t=${Date.now()}`;
+        console.log('🔗 Built WalletTwo URL:', url);
+        return url;
     }
 
     // ============================================
@@ -706,7 +720,7 @@
     }
 
     // ============================================
-    // Login State Management (GLOBAL SCOPE)
+    // Login State Management
     // ============================================
     function showLoginCancelledState() {
         console.log('🔄 Showing login cancelled state...');
@@ -738,7 +752,7 @@
         console.log('🔄 Resetting iframe to login...');
         const modalContent = document.getElementById('loginModalContent');
         if (modalContent) {
-            const iframeSrc = buildWalletTwoUrl('auth') + '&t=' + Date.now();
+            const iframeSrc = buildWalletTwoUrl('auth');
             modalContent.innerHTML = `
                 <p class="text-gray-400 text-sm mb-6">Login to purchase membership packages.</p>
                 <div class="wallet-iframe-container">
@@ -763,7 +777,7 @@
             `;
             
             setTimeout(() => {
-                const iframeSrc = buildWalletTwoUrl('auth') + '&t=' + Date.now();
+                const iframeSrc = buildWalletTwoUrl('auth');
                 modalContent.innerHTML = `
                     <p class="text-gray-400 text-sm mb-6">Login to purchase membership packages.</p>
                     <div class="wallet-iframe-container">
@@ -783,10 +797,7 @@
     document.addEventListener('DOMContentLoaded', async () => {
         console.log('📄 DOM loaded, checking session...');
         
-        // Check session FIRST - this updates the header immediately
         checkSession();
-        
-        // Then load config and setup
         await loadConfig();
         updatePackageSelection();
         updateSummary();
@@ -872,11 +883,8 @@
                     currentWallet = data.wallet;
                     console.log('✅ Session restored for wallet:', currentWallet);
                     
-                    // Update UI immediately
                     updateHeaderUI(currentUser, 0);
                     updateBuyButton();
-                    
-                    // Fetch balance in background
                     fetchUserBalance();
                     return;
                 } else {
@@ -914,22 +922,18 @@
         console.log('🎨 Updating header - user:', user?.wallet ? 'connected' : 'disconnected', 'balance:', balance);
         
         if (user && user.wallet) {
-            // Show connected state, hide disconnected
             headerConnected.classList.remove('hidden');
             headerDisconnected.classList.add('hidden');
             
-            // Set name
             const firstName = user.firstName || '';
             const lastName = user.lastName || '';
             const fullName = user.name || `${firstName} ${lastName}`.trim() || 'Member';
             document.getElementById('headerUserName').textContent = fullName;
             
-            // Set email (full, lowercase)
             const email = user.email ? user.email.toLowerCase() : '';
             document.getElementById('headerUserEmail').textContent = email;
             document.getElementById('dropdownEmail').textContent = email;
             
-            // Set initials
             let initials = '--';
             if (firstName && lastName) {
                 initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
@@ -943,13 +947,11 @@
             }
             document.getElementById('headerAvatarInitials').textContent = initials;
             
-            // Set balance
             const balanceStr = Math.floor(balance).toLocaleString();
             document.getElementById('headerUserBalance').textContent = balanceStr;
             const dropdownBalance = document.getElementById('dropdownBalance');
             if (dropdownBalance) dropdownBalance.textContent = balanceStr;
         } else {
-            // Show disconnected state, hide connected
             headerConnected.classList.add('hidden');
             headerDisconnected.classList.remove('hidden');
         }
@@ -964,14 +966,9 @@
             document.getElementById('contact-email').value = currentUser.email;
         }
         
-        // Update header immediately
         updateHeaderUI(currentUser, userBalance);
         updateBuyButton();
-        
-        // Fetch balance
         fetchUserBalance();
-        
-        // Close modal
         closeLoginModal();
     }
 
@@ -995,33 +992,37 @@
             userBalance = 0;
         }
         
-        // Update UI with new balance
         updateHeaderUI(currentUser, userBalance);
     }
 
     // ============================================
-    // Disconnect
+    // Disconnect (UPDATED - Full page redirect)
     // ============================================
     function disconnect() {
-        console.log('🔌 Disconnecting...');
+        if (isDisconnecting) return;
+        isDisconnecting = true;
+        console.log('🚪 Starting disconnect...');
         
+        // Clear all storage
         localStorage.removeItem(CONFIG.STORAGE_KEY);
+        localStorage.removeItem('keavalley_profile');
+        localStorage.removeItem('userEmail');
+        sessionStorage.clear();
+        
+        // Reset state
         currentWallet = null;
         currentUser = null;
         userBalance = 0;
+        acceptMessages = false;
         
-        // Logout from WalletTwo
-        const logoutIframe = document.getElementById('logoutIframe');
-        if (logoutIframe && CONFIG.WALLETTWO_COMPANY_ID) {
-            logoutIframe.src = buildWalletTwoUrl('logout');
-        }
-        
+        // Update UI immediately
         updateHeaderUI(null, 0);
         updateBuyButton();
         
-        setTimeout(() => {
-            window.location.href = '/';
-        }, 1500);
+        // Use /action/logout with redirect for proper session clearing
+        const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/package/')}`;
+        console.log('🚪 Redirecting to logout:', logoutUrl);
+        window.location.href = logoutUrl;
     }
 
     // ============================================
@@ -1078,7 +1079,7 @@
                 console.log('🔐 Login event - wallet:', wallet, 'code/token present:', !!code);
                 
                 if (wallet) {
-                    acceptMessages = false; // Prevent duplicate processing
+                    acceptMessages = false;
                     
                     if (code) {
                         exchangeCode(code, wallet, data.user);
@@ -1105,7 +1106,6 @@
                 return;
             }
 
-            // Log unhandled events for debugging
             console.log('❓ Unhandled event:', data);
         });
     }
@@ -1149,17 +1149,15 @@
     function showLoginModal() {
         const iframe = document.getElementById('login-wallet-iframe');
         if (CONFIG.WALLETTWO_COMPANY_ID) {
-            const iframeSrc = buildWalletTwoUrl('auth') + '&t=' + Date.now();
+            const iframeSrc = buildWalletTwoUrl('auth');
             iframe.src = iframeSrc;
         } else {
             console.warn('⚠️ No WalletTwo Company ID configured');
         }
         
-        // Reset state
         acceptMessages = true;
         isResetting = false;
         
-        // Reset modal content if it was showing cancelled state
         const modalContent = document.getElementById('loginModalContent');
         if (modalContent && !modalContent.querySelector('.wallet-iframe-container')) {
             resetIframeToLogin();
@@ -1173,7 +1171,6 @@
         document.getElementById('login-modal').classList.add('hidden');
         document.body.style.overflow = '';
         
-        // Reset state for next open
         acceptMessages = true;
         isResetting = false;
     }

@@ -620,20 +620,30 @@
         }
 
         // Build WalletTwo URL with cache buster
-        function buildWalletTwoUrl(action, extraParams) {
-            var base = CONFIG.WALLETTWO_ORIGIN + '/action/' + action + '?iframe=true&auto-accept=true';
+        function buildWalletTwoUrl(action, extraParams = {}) {
+            let url;
+            if (action === 'auth') {
+                // CORRECT: Use /auth/login?action=session for authentication
+                url = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=session&iframe=true`;
+            } else if (action === 'logout') {
+                // Use /action/logout for instant logout without confirmation
+                url = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true`;
+            } else {
+                url = `${CONFIG.WALLETTWO_ORIGIN}/action/${action}?iframe=true`;
+            }
+            
             if (CONFIG.WALLETTWO_COMPANY_ID) {
-                base += '&auto_accept=true&companyId=' + CONFIG.WALLETTWO_COMPANY_ID;
+                url += `&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
             }
-            if (extraParams) {
-                for (var key in extraParams) {
-                    base += '&' + key + '=' + encodeURIComponent(extraParams[key]);
-                }
+            
+            for (const [key, value] of Object.entries(extraParams)) {
+                url += `&${key}=${encodeURIComponent(value)}`;
             }
-            // Add cache buster
-            base += '&_t=' + Date.now();
-            console.log('🔗 Built WalletTwo URL:', base);
-            return base;
+            
+            // Cache buster
+            url += `&_t=${Date.now()}`;
+            console.log('🔗 Built WalletTwo URL:', url);
+            return url;
         }
 
         // Initialize
@@ -722,22 +732,30 @@
         }
 
         function disconnect() {
-            console.log('🔌 Disconnecting...');
-            currentUser = null;
+            if (isDisconnecting) return;
+            isDisconnecting = true;
+            console.log('🚪 Starting disconnect...');
+            
+            // Clear all storage
+            clearSession();
             localStorage.removeItem(CONFIG.STORAGE_KEY);
+            localStorage.removeItem(CONFIG.CART_KEY);
+            localStorage.removeItem('keavalley_profile');
+            localStorage.removeItem('userEmail');
+            sessionStorage.clear();
             
-            var iframe = document.getElementById('walletTwoLogoutIframe');
-            if (iframe && CONFIG.WALLETTWO_COMPANY_ID) {
-                iframe.src = buildWalletTwoUrl('logout');
-            }
+            // Reset state
+            currentUser = null;
+            currentBalance = 0;
+            acceptMessages = false;
             
-            document.getElementById('headerConnected').classList.add('hidden');
-            document.getElementById('headerConnected').style.display = '';
-            document.getElementById('headerDisconnected').classList.remove('hidden');
-            document.getElementById('buyingPowerBanner').classList.add('hidden');
+            // Update UI immediately
+            updateHeaderUI(null, 0);
             
-            userBalance = 0;
-            updateTokenPaymentOption();
+            // Use /action/logout with redirect
+            const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/marketplace/')}`;
+            console.log('🚪 Redirecting to logout:', logoutUrl);
+            window.location.href = logoutUrl;
         }
 
         async function fetchUserBalance(wallet) {

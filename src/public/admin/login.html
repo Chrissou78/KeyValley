@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html class="dark" lang="en">
-<!-- VERSION: 2026-03-30 - Fixed WalletTwo URLs -->
+<!-- VERSION: 2026-04-02 - Fixed WalletTwo URLs + logout -->
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -100,7 +100,7 @@
 
     <script>
         // ============================================
-        // VERSION: 2026-03-30 - Fixed WalletTwo URLs
+        // VERSION: 2026-04-02 - Fixed WalletTwo URLs + logout
         // ============================================
         
         // ============================================
@@ -170,20 +170,33 @@
         }
 
         // ============================================
-        // Build WalletTwo URL with companyId
-        // CORRECT: /action/auth and /action/logout
+        // Build WalletTwo URL (UPDATED)
+        // Auth: /auth/login?action=session
+        // Logout: /action/logout
         // ============================================
         function buildWalletTwoUrl(action, extraParams = {}) {
-            // CORRECT URL format: /action/auth or /action/logout
-            let url = `${CONFIG.WALLETTWO_ORIGIN}/action/${action}?iframe=true`;
+            let url;
+            
+            if (action === 'auth') {
+                // CORRECT: Use /auth/login?action=session for authentication
+                url = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=session&iframe=true`;
+            } else if (action === 'logout') {
+                // Use /action/logout for instant logout
+                url = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true`;
+            } else {
+                url = `${CONFIG.WALLETTWO_ORIGIN}/action/${action}?iframe=true`;
+            }
             
             if (CONFIG.WALLETTWO_COMPANY_ID) {
-                url += `&auto_accept=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
+                url += `&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
             }
             
             for (const [key, value] of Object.entries(extraParams)) {
                 url += `&${key}=${encodeURIComponent(value)}`;
             }
+            
+            // Cache buster
+            url += `&_t=${Date.now()}`;
             
             console.log('🔗 Built URL:', url);
             return url;
@@ -199,7 +212,7 @@
         }
 
         // ============================================
-        // Logout
+        // Logout (UPDATED - Full page redirect)
         // ============================================
         function performLogout() {
             if (isLoggingOut) return;
@@ -211,11 +224,10 @@
             
             fetch('/api/admin/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
             
-            logoutIframe.src = buildWalletTwoUrl('logout');
-            
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 2000);
+            // Use full-page redirect for proper session clearing
+            const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/')}`;
+            console.log('🚪 Redirecting to logout:', logoutUrl);
+            window.location.href = logoutUrl;
         }
 
         // ============================================
@@ -232,11 +244,12 @@
             localStorage.removeItem(CONFIG.ADMIN_STORAGE_KEY);
             fetch('/api/admin/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
             
+            // Use iframe for logout then reload auth iframe
             logoutIframe.src = buildWalletTwoUrl('logout');
             
             setTimeout(() => {
                 isLoggingOut = false;
-                walletIframe.src = buildWalletTwoUrl('auth', { t: Date.now() });
+                walletIframe.src = buildWalletTwoUrl('auth');
                 setTimeout(() => showLogin(), 500);
             }, 1500);
         }
@@ -330,8 +343,6 @@
 
         // ============================================
         // WalletTwo Message Handler
-        // Supports both wallet_login and wallet_session
-        // Supports both code and token fields
         // ============================================
         window.addEventListener('message', (event) => {
             console.log('📨 Message from:', event.origin);
@@ -391,7 +402,7 @@
         // Initialize - Load config first
         // ============================================
         async function init() {
-            console.log('🚀 Admin login page initializing... (v2026-03-30)');
+            console.log('🚀 Admin login page initializing... (v2026-04-02)');
             showLoading('Loading...');
             
             // Load companyId from server
