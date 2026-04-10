@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const db = require('../db-postgres');
+const { pool } = require('../db-postgres');
 const { sendEmail } = require('../services/email');
 
 const PLATFORM_FEE_PERCENT = 10; // 10% platform fee on NET amount (after Stripe fees)
@@ -18,7 +18,7 @@ console.log(`   Platform Fee: ${PLATFORM_FEE_PERCENT}% of NET (after Stripe fees
 // ============================================
 async function getPackage(id) {
     try {
-        const result = await db.query(
+        const result = await pool.query(
             'SELECT * FROM membership_packages WHERE id = $1 AND active = true',
             [id]
         );
@@ -51,7 +51,7 @@ router.get('/packages', async (req, res) => {
     try {
         const isProduction = process.env.NODE_ENV === 'production';
         
-        const result = await db.query(`
+        const result = await pool.query(`
             SELECT id, name, description, price, currency, buying_power, bonus,
                    CASE WHEN price > 0 THEN ROUND((bonus / price) * 100) ELSE 0 END as bonus_percent,
                    tier, icon, features, popular
@@ -171,7 +171,7 @@ router.post('/create-payment-intent', async (req, res) => {
         }
 
         // Create order in database
-        const orderResult = await db.query(`
+        const orderResult = await pool.query(`
             INSERT INTO membership_purchases 
             (wallet_address, email, phone, package_key, package_name, amount_paid, buying_power_granted, bonus_amount, status)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending_payment')
@@ -201,7 +201,7 @@ router.post('/create-payment-intent', async (req, res) => {
         });
 
         // Update order with payment intent ID
-        await db.query(
+        await pool.query(
             'UPDATE membership_purchases SET payment_intent_id = $1 WHERE id = $2',
             [paymentIntent.id, order.id]
         );
@@ -232,7 +232,7 @@ router.get('/purchase-status/:paymentIntentId', async (req, res) => {
     try {
         const { paymentIntentId } = req.params;
 
-        const result = await db.query(
+        const result = await pool.query(
             'SELECT * FROM membership_purchases WHERE payment_intent_id = $1',
             [paymentIntentId]
         );
@@ -294,7 +294,7 @@ async function handleMembershipPaymentSuccess(paymentIntent) {
 
     try {
         // Check if already processed
-        const existingCheck = await db.query(
+        const existingCheck = await pool.query(
             'SELECT status FROM membership_purchases WHERE id = $1',
             [order_id]
         );
@@ -343,7 +343,7 @@ async function handleMembershipPaymentSuccess(paymentIntent) {
         console.log(`   Connected (${100-PLATFORM_FEE_PERCENT}% of NET): €${transferAmount.toFixed(2)}`);
 
         // Update order status
-        await db.query(`
+        await pool.query(`
             UPDATE membership_purchases 
             SET status = 'completed',
                 payment_status = 'paid',
@@ -357,14 +357,14 @@ async function handleMembershipPaymentSuccess(paymentIntent) {
 
         // Credit buying power to user's account
         const buyingPowerAmount = parseInt(buying_power);
-        await db.query(`
+        await pool.query(`
             INSERT INTO token_transactions 
             (wallet_address, amount, type, reference_type, reference_id, description)
             VALUES ($1, $2, 'credit', 'membership_purchase', $3, $4)
         `, [wallet_address, buyingPowerAmount, order_id, `${pkg?.name || 'Membership'} purchase`]);
 
         // Update or create member balance
-        await db.query(`
+        await pool.query(`
             INSERT INTO member_balances (wallet_address, balance, total_credited)
             VALUES ($1, $2, $2)
             ON CONFLICT (wallet_address) 
@@ -396,7 +396,7 @@ async function handleMembershipPaymentSuccess(paymentIntent) {
                     }
                 });
 
-                await db.query(
+                await pool.query(
                     'UPDATE membership_purchases SET transfer_id = $1 WHERE id = $2',
                     [transfer.id, order_id]
                 );
@@ -404,7 +404,7 @@ async function handleMembershipPaymentSuccess(paymentIntent) {
                 console.log(`✅ Transfer created: ${transfer.id} → €${transferAmount.toFixed(2)} to connected account`);
             } catch (transferError) {
                 console.error('❌ Transfer failed:', transferError.message);
-                await db.query(`
+                await pool.query(`
                     INSERT INTO failed_transfers 
                     (order_id, payment_intent_id, error_message, amount)
                     VALUES ($1, $2, $3, $4)
@@ -436,7 +436,7 @@ async function handleMembershipPaymentSuccess(paymentIntent) {
         
         // Update order with error
         try {
-            await db.query(
+            await pool.query(
                 "UPDATE membership_purchases SET status = 'error', error_message = $1 WHERE id = $2",
                 [error.message, order_id]
             );
@@ -452,7 +452,7 @@ async function handleMembershipPaymentFailed(paymentIntent) {
     console.log(`❌ Payment failed for order ${order_id}: ${paymentIntent.last_payment_error?.message}`);
 
     try {
-        await db.query(
+        await pool.query(
             "UPDATE membership_purchases SET status = 'failed', payment_status = 'failed', error_message = $1 WHERE id = $2",
             [paymentIntent.last_payment_error?.message || 'Payment failed', order_id]
         );
