@@ -281,6 +281,33 @@
 
             <!-- Package Selection -->
             <div class="grid md:grid-cols-3 gap-6 mb-10">
+
+                <div id="package-test-10" class="glass-card package-card rounded-2xl p-6 border-2 border-yellow-500/50" onclick="selectPackage('test-10')">
+    <div class="absolute -top-3 left-4">
+        <span class="bg-yellow-500 text-black text-[10px] font-bold px-2 py-1 rounded">TEST</span>
+    </div>
+    <div class="text-center mb-4 mt-2">
+        <span class="material-symbols-outlined text-4xl text-yellow-500 mb-2">science</span>
+        <h2 class="font-serif text-xl font-bold text-white">Test</h2>
+        <p class="text-gray-400 text-xs">For testing only</p>
+    </div>
+    
+    <div class="bg-surface-light rounded-xl p-3 mb-4">
+        <div class="text-center">
+            <span class="text-2xl font-bold gold-text">€10</span>
+        </div>
+        <div class="text-center mt-2">
+            <span class="text-lg font-bold text-green-400">€10</span>
+            <span class="text-gray-400 text-sm">buying power</span>
+        </div>
+    </div>
+    
+    <div id="test-10-check" class="hidden text-center">
+        <span class="inline-flex items-center text-primary font-semibold">
+            <span class="material-symbols-outlined mr-1">check_circle</span>Selected
+        </span>
+    </div>
+</div>
                 
                 <!-- Silver Package -->
                 <div id="package-silver" class="glass-card package-card rounded-2xl p-6 border-2 tier-silver" onclick="selectPackage('silver')">
@@ -628,6 +655,13 @@
     };
 
     const PACKAGES = {
+        'test-10': {
+            name: 'Test Package',
+            price: 10,
+            buyingPower: 10,
+            bonus: 0,
+            bonusPercent: 0
+        },
         silver: {
             name: 'Silver Membership',
             price: 3000,
