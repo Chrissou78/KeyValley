@@ -122,6 +122,10 @@ const packagesRoutes = require('./routes/packages');
 app.use('/api/packages', packagesRoutes);
 app.use('/api/membership/packages', packagesRoutes);
 
+// Membership routes (create-payment-intent, verify-connect, etc.)
+const membershipRoutes = require('./routes/membership');
+app.use('/api/membership', membershipRoutes);
+
 // Admin packages route (should be after admin auth middleware)
 const adminPackagesRoutes = require('./routes/admin/packages');
 app.use('/api/admin/packages', adminPackagesRoutes);
