@@ -1,14 +1,14 @@
 // src/routes/admin/packages.js
 const express = require('express');
 const router = express.Router();
-const db = require('../../db-postgres');
+const { pool } = require('../../db-postgres');
 
 // ============================================
 // GET /api/admin/packages - List all packages (including inactive)
 // ============================================
 router.get('/', async (req, res) => {
     try {
-        const result = await db.query(`
+        const result = await pool.query(`
             SELECT * FROM membership_packages 
             ORDER BY sort_order ASC, created_at ASC
         `);
@@ -56,12 +56,12 @@ router.post('/', async (req, res) => {
         }
 
         // Check if ID already exists
-        const existing = await db.query('SELECT id FROM membership_packages WHERE id = $1', [id]);
+        const existing = await pool.query('SELECT id FROM membership_packages WHERE id = $1', [id]);
         if (existing.rows.length > 0) {
             return res.status(400).json({ success: false, error: 'Package ID already exists' });
         }
 
-        const result = await db.query(`
+        const result = await pool.query(`
             INSERT INTO membership_packages 
             (id, name, description, price, currency, buying_power, bonus, tier, icon, features, popular, sort_order, active, test_only)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
@@ -102,7 +102,7 @@ router.put('/:id', async (req, res) => {
             tier, icon, features, popular, sortOrder, active, testOnly 
         } = req.body;
 
-        const result = await db.query(`
+        const result = await pool.query(`
             UPDATE membership_packages SET
                 name = COALESCE($1, name),
                 description = COALESCE($2, description),
@@ -157,14 +157,14 @@ router.delete('/:id', async (req, res) => {
         const { id } = req.params;
 
         // Check if package has been used in purchases
-        const purchasesCheck = await db.query(
+        const purchasesCheck = await pool.query(
             'SELECT COUNT(*) FROM membership_purchases WHERE package = $1',
             [id]
         );
 
         if (parseInt(purchasesCheck.rows[0].count) > 0) {
             // Soft delete - just deactivate
-            await db.query(
+            await pool.query(
                 'UPDATE membership_packages SET active = false, updated_at = NOW() WHERE id = $1',
                 [id]
             );
@@ -173,7 +173,7 @@ router.delete('/:id', async (req, res) => {
         }
 
         // Hard delete
-        const result = await db.query('DELETE FROM membership_packages WHERE id = $1 RETURNING id', [id]);
+        const result = await pool.query('DELETE FROM membership_packages WHERE id = $1 RETURNING id', [id]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ success: false, error: 'Package not found' });
@@ -194,7 +194,7 @@ router.post('/:id/toggle', async (req, res) => {
     try {
         const { id } = req.params;
 
-        const result = await db.query(`
+        const result = await pool.query(`
             UPDATE membership_packages 
             SET active = NOT active, updated_at = NOW()
             WHERE id = $1

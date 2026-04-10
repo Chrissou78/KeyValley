@@ -1,7 +1,7 @@
 // src/routes/packages.js
 const express = require('express');
 const router = express.Router();
-const db = require('../db-postgres');
+const { pool } = require('../db-postgres');
 
 // ============================================
 // GET /api/packages - Public list of active packages
@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
     try {
         const isProduction = process.env.NODE_ENV === 'production';
         
-        const result = await db.query(`
+        const result = await pool.query(`
             SELECT id, name, description, price, currency, buying_power, bonus, 
                    CASE WHEN price > 0 THEN ROUND((bonus / price) * 100) ELSE 0 END as bonus_percent,
                    tier, icon, features, popular, sort_order
@@ -48,7 +48,7 @@ router.get('/', async (req, res) => {
 // ============================================
 router.get('/:id', async (req, res) => {
     try {
-        const result = await db.query(
+        const result = await pool.query(
             'SELECT * FROM membership_packages WHERE id = $1 AND active = true',
             [req.params.id]
         );
