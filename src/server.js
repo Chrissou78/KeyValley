@@ -120,6 +120,7 @@ app.use('/api/referral', referralRoutes);
 // Public packages route
 const packagesRoutes = require('./routes/packages');
 app.use('/api/packages', packagesRoutes);
+app.use('/api/membership/packages', packagesRoutes);
 
 // Admin packages route (should be after admin auth middleware)
 const adminPackagesRoutes = require('./routes/admin/packages');
