@@ -4,8 +4,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize authentication (your existing auth.js)
     Auth.init();
-        // Initialize modules
+    
+    // Initialize modules
     Marketplace.init();
+    Packages.init(); // Add packages initialization
     
     // Tab navigation
     document.querySelectorAll('[data-tab]').forEach(btn => {
@@ -31,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'referrals': Referrals.load(); break;
                 case 'admins': Admins.load(); break;
                 case 'settings': Settings.load(); break;
+                case 'packages': Packages.load(); break; // Add packages case
             }
         });
     });
@@ -67,6 +70,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('savePlatformSettingsBtn')?.addEventListener('click', () => Settings.savePlatform());
     document.getElementById('refreshReferralsBtn')?.addEventListener('click', () => Referrals.load());
     
+    // Package action buttons
+    document.getElementById('addPackageBtn')?.addEventListener('click', () => Packages.openModal());
+    document.getElementById('packageForm')?.addEventListener('submit', (e) => Packages.save(e));
+    
     // Referral settings change handlers
     document.getElementById('refBonusType')?.addEventListener('change', () => Referrals.updateExplanations());
     document.getElementById('refBonusAmount')?.addEventListener('input', () => Referrals.updateExplanations());
@@ -89,4 +96,14 @@ document.addEventListener('DOMContentLoaded', () => {
     
     document.getElementById('closeMemberModal')?.addEventListener('click', () => Members.closeModal());
     document.getElementById('memberModalBackdrop')?.addEventListener('click', () => Members.closeModal());
+    
+    // Package modal close handlers
+    document.getElementById('closePackageModal')?.addEventListener('click', () => Packages.closeModal());
+    document.getElementById('cancelPackageBtn')?.addEventListener('click', () => Packages.closeModal());
+    document.getElementById('cancelDeletePackage')?.addEventListener('click', () => Packages.closeDeleteModal());
+    document.getElementById('confirmDeletePackage')?.addEventListener('click', () => Packages.confirmDelete());
+    
+    // Package auto-calculate bonus
+    document.getElementById('packagePrice')?.addEventListener('input', () => Packages.calculateBonus());
+    document.getElementById('packageBuyingPower')?.addEventListener('input', () => Packages.calculateBonus());
 });

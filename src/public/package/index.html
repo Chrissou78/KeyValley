@@ -47,89 +47,49 @@
         .animate-spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .bonus-badge { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-        .popular-badge {
-            background: linear-gradient(135deg, #ee9d2b, #fbdea6);
-            line-height: 1.5;
-            padding: 0.35em 1em;
-            display: inline-block;
-        }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+        .popular-badge { background: linear-gradient(135deg, #ee9d2b, #fbdea6); line-height: 1.5; padding: 0.35em 1em; display: inline-block; }
         .wallet-iframe-container { background: #ffffff; border-radius: 8px; overflow: hidden; }
         .wallet-iframe { width: 100%; height: 500px; border: none; }
         
         /* Tier colors */
+        .tier-test { border-color: #eab308; }
+        .tier-test .tier-icon { color: #eab308; }
         .tier-silver { border-color: #9ca3af; }
         .tier-silver .tier-icon { color: #9ca3af; }
         .tier-gold { border-color: #ee9d2b; }
         .tier-gold .tier-icon { color: #ee9d2b; }
         .tier-platinum { border-color: #a78bfa; }
         .tier-platinum .tier-icon { color: #a78bfa; }
+        .tier-standard { border-color: #60a5fa; }
+        .tier-standard .tier-icon { color: #60a5fa; }
 
         /* Header User Dropdown */
         .user-dropdown { position: relative; }
         .user-dropdown-menu {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            margin-top: 0.5rem;
-            min-width: 260px;
-            background: rgba(26, 26, 26, 0.98);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1rem;
-            padding: 0.5rem;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.2s ease;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
+            position: absolute; top: 100%; right: 0; margin-top: 0.5rem; min-width: 260px;
+            background: rgba(26, 26, 26, 0.98); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; padding: 0.5rem;
+            opacity: 0; visibility: hidden; transform: translateY(-10px);
+            transition: all 0.2s ease; z-index: 100; display: flex; flex-direction: column;
         }
-        .user-dropdown:hover .user-dropdown-menu,
-        .user-dropdown-menu:hover {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
+        .user-dropdown:hover .user-dropdown-menu, .user-dropdown-menu:hover {
+            opacity: 1; visibility: visible; transform: translateY(0);
         }
-        .user-dropdown-menu a,
-        .user-dropdown-menu button {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            color: #fff;
-            text-decoration: none;
-            transition: background 0.2s;
-            border: none;
-            background: none;
-            cursor: pointer;
-            text-align: left;
-            font-size: 0.875rem;
+        .user-dropdown-menu a, .user-dropdown-menu button {
+            display: flex; align-items: center; gap: 0.75rem; width: 100%;
+            padding: 0.75rem 1rem; border-radius: 0.5rem; color: #fff;
+            text-decoration: none; transition: background 0.2s; border: none;
+            background: none; cursor: pointer; text-align: left; font-size: 0.875rem;
         }
-        .user-dropdown-menu a:hover,
-        .user-dropdown-menu button:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
+        .user-dropdown-menu a:hover, .user-dropdown-menu button:hover { background: rgba(255, 255, 255, 0.05); }
 
         /* Toast notification */
         .toast {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            padding: 1rem 1.5rem;
-            border-radius: 0.75rem;
-            z-index: 9999;
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.3s ease;
+            position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem;
+            border-radius: 0.75rem; z-index: 9999; transform: translateY(100px);
+            opacity: 0; transition: all 0.3s ease;
         }
-        .toast.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
+        .toast.show { transform: translateY(0); opacity: 1; }
         .toast.success { background: #10b981; color: white; }
         .toast.error { background: #ef4444; color: white; }
         .toast.info { background: #3b82f6; color: white; }
@@ -155,54 +115,38 @@
             </nav>
             
             <div class="flex items-center gap-4">
-                <!-- Connected State - starts HIDDEN -->
+                <!-- Connected State -->
                 <div id="headerConnected" class="hidden">
                     <div class="user-dropdown">
                         <button class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors">
-                            <!-- Round avatar FIRST (before text) -->
                             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center flex-shrink-0">
                                 <span id="headerAvatarInitials" class="text-black font-bold text-sm">--</span>
                             </div>
-                            <!-- Name and email AFTER the avatar -->
                             <div class="text-left hidden lg:block">
                                 <p class="text-sm font-medium" id="headerUserName">Member</p>
                                 <p class="text-xs text-slate-400 lowercase" id="headerUserEmail"></p>
                             </div>
                         </button>
                         
-                        <!-- Dropdown Menu -->
                         <div class="user-dropdown-menu">
                             <div class="px-4 py-3 border-b border-white/10">
                                 <p class="text-xs text-slate-400">Buying Power</p>
                                 <p class="text-lg font-semibold text-primary">€<span id="headerUserBalance">0</span></p>
                                 <p class="text-xs text-slate-500 mt-1 lowercase" id="dropdownEmail"></p>
                             </div>
-                            <a href="/profile">
-                                <span class="material-symbols-outlined text-primary">account_circle</span>
-                                <span class="text-sm">My Profile</span>
-                            </a>
-                            <a href="/marketplace">
-                                <span class="material-symbols-outlined text-primary">storefront</span>
-                                <span class="text-sm">Marketplace</span>
-                            </a>
-                            <a href="/package">
-                                <span class="material-symbols-outlined text-primary">add_card</span>
-                                <span class="text-sm">Add Buying Power</span>
-                            </a>
+                            <a href="/profile"><span class="material-symbols-outlined text-primary">account_circle</span><span class="text-sm">My Profile</span></a>
+                            <a href="/marketplace"><span class="material-symbols-outlined text-primary">storefront</span><span class="text-sm">Marketplace</span></a>
+                            <a href="/package"><span class="material-symbols-outlined text-primary">add_card</span><span class="text-sm">Add Buying Power</span></a>
                             <div class="border-t border-white/10 my-2"></div>
-                            <button onclick="disconnect()">
-                                <span class="material-symbols-outlined text-red-400">logout</span>
-                                <span class="text-sm text-red-400">Disconnect</span>
-                            </button>
+                            <button onclick="disconnect()"><span class="material-symbols-outlined text-red-400">logout</span><span class="text-sm text-red-400">Disconnect</span></button>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Disconnected State - starts VISIBLE -->
+                <!-- Disconnected State -->
                 <div id="headerDisconnected" class="flex items-center gap-4">
                     <button onclick="showLoginModal()" class="hidden sm:flex items-center gap-2 px-5 py-2.5 border border-primary/50 text-primary text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-primary hover:text-background-dark transition-all">
-                        <span class="material-symbols-outlined text-lg">account_circle</span>
-                        Login
+                        <span class="material-symbols-outlined text-lg">account_circle</span>Login
                     </button>
                     <button onclick="showLoginModal()" class="sm:hidden flex items-center justify-center w-10 h-10 border border-primary/50 text-primary rounded-lg hover:bg-primary hover:text-background-dark transition-all">
                         <span class="material-symbols-outlined">account_circle</span>
@@ -279,154 +223,22 @@
                 </div>
             </div>
 
-            <!-- Package Selection -->
-            <div class="grid md:grid-cols-3 gap-6 mb-10">
-
-                <div id="package-test-10" class="glass-card package-card rounded-2xl p-6 border-2 border-yellow-500/50" onclick="selectPackage('test-10')">
-    <div class="absolute -top-3 left-4">
-        <span class="bg-yellow-500 text-black text-[10px] font-bold px-2 py-1 rounded">TEST</span>
-    </div>
-    <div class="text-center mb-4 mt-2">
-        <span class="material-symbols-outlined text-4xl text-yellow-500 mb-2">science</span>
-        <h2 class="font-serif text-xl font-bold text-white">Test</h2>
-        <p class="text-gray-400 text-xs">For testing only</p>
-    </div>
-    
-    <div class="bg-surface-light rounded-xl p-3 mb-4">
-        <div class="text-center">
-            <span class="text-2xl font-bold gold-text">€10</span>
-        </div>
-        <div class="text-center mt-2">
-            <span class="text-lg font-bold text-green-400">€10</span>
-            <span class="text-gray-400 text-sm">buying power</span>
-        </div>
-    </div>
-    
-    <div id="test-10-check" class="hidden text-center">
-        <span class="inline-flex items-center text-primary font-semibold">
-            <span class="material-symbols-outlined mr-1">check_circle</span>Selected
-        </span>
-    </div>
-</div>
-                
-                <!-- Silver Package -->
-                <div id="package-silver" class="glass-card package-card rounded-2xl p-6 border-2 tier-silver" onclick="selectPackage('silver')">
-                    <div class="text-center mb-6">
-                        <span class="material-symbols-outlined text-5xl tier-icon mb-2">workspace_premium</span>
-                        <h2 class="font-serif text-2xl font-bold text-white">Silver</h2>
-                        <p class="text-gray-400 text-sm">Perfect for trying out</p>
-                    </div>
-                    
-                    <div class="bg-surface-light rounded-xl p-4 mb-6">
-                        <div class="text-center mb-4">
-                            <span class="text-4xl font-bold gold-text">€3,000</span>
-                        </div>
-                        <div class="flex items-center justify-center gap-2 mb-2">
-                            <span class="material-symbols-outlined text-green-400">arrow_upward</span>
-                            <span class="text-2xl font-bold text-green-400">€3,500</span>
-                            <span class="text-gray-400">buying power</span>
-                        </div>
-                        <div class="text-center">
-                            <span class="bonus-badge text-white text-xs font-bold px-3 py-1 rounded-full">+17% BONUS</span>
-                        </div>
-                    </div>
-                    
-                    <ul class="text-gray-300 text-sm space-y-3 mb-6">
-                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>€500 bonus value</li>
-                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>Access to marketplace</li>
-                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>Member benefits</li>
-                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>Valid for 2026 season</li>
-                    </ul>
-                    
-                    <div id="silver-check" class="hidden text-center">
-                        <span class="inline-flex items-center text-primary font-semibold">
-                            <span class="material-symbols-outlined mr-1">check_circle</span>Selected
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Gold Package (Popular) -->
-                <div id="package-gold" class="glass-card package-card rounded-2xl p-6 border-2 tier-gold selected relative" onclick="selectPackage('gold')">
-                    <div class="absolute -top-4 left-1/2 -translate-x-1/2">
-                        <span class="popular-badge text-background-dark text-xs font-bold px-4 py-1.5 rounded-full leading-normal inline-block">MOST POPULAR</span>
-                    </div>
-                    
-                    <div class="text-center mb-6 mt-2">
-                        <span class="material-symbols-outlined text-5xl tier-icon mb-2">diamond</span>
-                        <h2 class="font-serif text-2xl font-bold text-white">Gold</h2>
-                        <p class="text-gray-400 text-sm">Best value for members</p>
-                    </div>
-                    
-                    <div class="bg-surface-light rounded-xl p-4 mb-6">
-                        <div class="text-center mb-4">
-                            <span class="text-4xl font-bold gold-text">€8,000</span>
-                        </div>
-                        <div class="flex items-center justify-center gap-2 mb-2">
-                            <span class="material-symbols-outlined text-green-400">arrow_upward</span>
-                            <span class="text-2xl font-bold text-green-400">€10,000</span>
-                            <span class="text-gray-400">buying power</span>
-                        </div>
-                        <div class="text-center">
-                            <span class="bonus-badge text-white text-xs font-bold px-3 py-1 rounded-full">+25% BONUS</span>
-                        </div>
-                    </div>
-                    
-                    <ul class="text-gray-300 text-sm space-y-3 mb-6">
-                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>€2,000 bonus value</li>
-                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>Priority booking</li>
-                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>Exclusive experiences</li>
-                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>Concierge support</li>
-                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>Valid for 2026 season</li>
-                    </ul>
-                    
-                    <div id="gold-check" class="text-center">
-                        <span class="inline-flex items-center text-primary font-semibold">
-                            <span class="material-symbols-outlined mr-1">check_circle</span>Selected
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Platinum Package -->
-                <div id="package-platinum" class="glass-card package-card rounded-2xl p-6 border-2 tier-platinum" onclick="selectPackage('platinum')">
-                    <div class="text-center mb-6">
-                        <span class="material-symbols-outlined text-5xl tier-icon mb-2">stars</span>
-                        <h2 class="font-serif text-2xl font-bold text-white">Platinum</h2>
-                        <p class="text-gray-400 text-sm">Ultimate experience</p>
-                    </div>
-                    
-                    <div class="bg-surface-light rounded-xl p-4 mb-6">
-                        <div class="text-center mb-4">
-                            <span class="text-4xl font-bold gold-text">€20,000</span>
-                        </div>
-                        <div class="flex items-center justify-center gap-2 mb-2">
-                            <span class="material-symbols-outlined text-green-400">arrow_upward</span>
-                            <span class="text-2xl font-bold text-green-400">€30,000</span>
-                            <span class="text-gray-400">buying power</span>
-                        </div>
-                        <div class="text-center">
-                            <span class="bonus-badge text-white text-xs font-bold px-3 py-1 rounded-full">+50% BONUS</span>
-                        </div>
-                    </div>
-                    
-                    <ul class="text-gray-300 text-sm space-y-3 mb-6">
-                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>€10,000 bonus value</li>
-                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>VIP priority everything</li>
-                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>Summit invitations</li>
-                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>Dedicated concierge</li>
-                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>Property tour access</li>
-                        <li class="flex items-center"><span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>Valid for 2026 season</li>
-                    </ul>
-                    
-                    <div id="platinum-check" class="hidden text-center">
-                        <span class="inline-flex items-center text-primary font-semibold">
-                            <span class="material-symbols-outlined mr-1">check_circle</span>Selected
-                        </span>
-                    </div>
-                </div>
+            <!-- Package Selection - Dynamic -->
+            <div id="packages-loading" class="text-center py-12">
+                <div class="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p class="text-gray-400">Loading packages...</p>
             </div>
+            
+            <div id="packages-error" class="hidden text-center py-12">
+                <span class="material-symbols-outlined text-red-400 text-5xl mb-4">error</span>
+                <p class="text-red-400 mb-4">Failed to load packages</p>
+                <button onclick="loadPackages()" class="btn-primary px-6 py-2 rounded-lg">Retry</button>
+            </div>
+            
+            <div id="packages-container" class="hidden grid gap-6 mb-10"></div>
 
             <!-- Purchase Section -->
-            <div class="glass-card rounded-2xl p-8">
+            <div id="purchase-section" class="hidden glass-card rounded-2xl p-8">
                 <h2 class="font-serif text-xl font-bold text-white mb-6 flex items-center gap-2">
                     <span class="material-symbols-outlined text-primary">shopping_cart</span>
                     Complete Your Purchase
@@ -437,34 +249,19 @@
                     <div class="space-y-3">
                         <div class="flex justify-between text-gray-400">
                             <span>Package</span>
-                            <span id="summary-package" class="text-white font-semibold">Gold Membership</span>
+                            <span id="summary-package" class="text-white font-semibold">-</span>
                         </div>
                         <div class="flex justify-between text-gray-400">
                             <span>You Pay</span>
-                            <span id="summary-price" class="text-white">€8,000</span>
+                            <span id="summary-price" class="text-white">-</span>
                         </div>
                         <div class="flex justify-between text-gray-400">
                             <span>Bonus</span>
-                            <span id="summary-bonus" class="text-green-400">+€2,000</span>
+                            <span id="summary-bonus" class="text-green-400">-</span>
                         </div>
                         <div class="flex justify-between text-lg font-semibold border-t border-white/10 pt-3">
                             <span class="gold-text">You Get (Buying Power)</span>
-                            <span id="summary-total" class="gold-text">€10,000</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Contact Info (if not logged in) -->
-                <div id="contact-section" class="mb-6 hidden">
-                    <h3 class="text-white font-semibold mb-3">Contact Information</h3>
-                    <div class="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-gray-400 text-sm mb-1">Email *</label>
-                            <input type="email" id="contact-email" class="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary focus:outline-none" placeholder="your@email.com">
-                        </div>
-                        <div>
-                            <label class="block text-gray-400 text-sm mb-1">Phone (optional)</label>
-                            <input type="tel" id="contact-phone" class="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary focus:outline-none" placeholder="+30 ...">
+                            <span id="summary-total" class="gold-text">-</span>
                         </div>
                     </div>
                 </div>
@@ -558,25 +355,23 @@
                 </button>
             </div>
             <div class="p-6">
-                <!-- Order Summary -->
                 <div class="bg-surface-light rounded-xl p-4 mb-6">
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
                             <span class="text-gray-400">Package</span>
-                            <span id="stripe-package" class="text-white font-semibold">Gold Membership</span>
+                            <span id="stripe-package" class="text-white font-semibold">-</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-400">Buying Power</span>
-                            <span id="stripe-buying-power" class="text-green-400">€10,000</span>
+                            <span id="stripe-buying-power" class="text-green-400">-</span>
                         </div>
                         <div class="flex justify-between font-semibold border-t border-white/10 pt-2 mt-2">
                             <span class="gold-text">Total</span>
-                            <span id="stripe-total" class="gold-text">€8,000</span>
+                            <span id="stripe-total" class="gold-text">-</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Card Form -->
                 <form id="stripe-form">
                     <div class="mb-4">
                         <label class="block text-gray-400 text-sm mb-2">Card Details</label>
@@ -585,7 +380,7 @@
                     </div>
                     <button type="submit" id="stripe-submit" class="btn-primary w-full py-4 rounded-xl font-semibold flex items-center justify-center gap-2" disabled>
                         <span class="material-symbols-outlined">lock</span>
-                        Pay €<span id="stripe-amount">8,000</span>
+                        Pay €<span id="stripe-amount">0</span>
                     </button>
                 </form>
             </div>
@@ -638,9 +433,9 @@
 
     <script>
     // ============================================
-    // VERSION: 2026-04-02 - Fixed WalletTwo URLs + logout
+    // VERSION: 2026-04-10 - Dynamic packages from API
     // ============================================
-    console.log('🚀 Package page initializing... (v2026-04-02)');
+    console.log('🚀 Package page initializing... (v2026-04-10)');
 
     // ============================================
     // Configuration
@@ -654,77 +449,39 @@
         SESSION_DURATION: 24 * 60 * 60 * 1000
     };
 
-    const PACKAGES = {
-        'test-10': {
-            name: 'Test Package',
-            price: 10,
-            buyingPower: 10,
-            bonus: 0,
-            bonusPercent: 0
-        },
-        silver: {
-            name: 'Silver Membership',
-            price: 3000,
-            buyingPower: 3500,
-            bonus: 500,
-            bonusPercent: 17
-        },
-        gold: {
-            name: 'Gold Membership',
-            price: 8000,
-            buyingPower: 10000,
-            bonus: 2000,
-            bonusPercent: 25
-        },
-        platinum: {
-            name: 'Platinum Membership',
-            price: 20000,
-            buyingPower: 30000,
-            bonus: 10000,
-            bonusPercent: 50
-        }
-    };
-
     // ============================================
-    // State
+    // State - Packages loaded from API
     // ============================================
+    let PACKAGES = {};
     let currentWallet = null;
     let currentUser = null;
     let userBalance = 0;
-    let selectedPackage = 'gold';
+    let selectedPackage = null;
     let stripe = null;
     let cardElement = null;
-    let acceptMessages = true;
+    let acceptMessages = false;
     let isResetting = false;
     let isDisconnecting = false;
 
     // ============================================
-    // Helper: Build WalletTwo URL (UPDATED)
+    // Helper: Build WalletTwo URL
     // ============================================
     function buildWalletTwoUrl(action, extraParams = {}) {
         let url;
-        
         if (action === 'auth') {
-            // CORRECT: Use /auth/login?action=session for authentication
             url = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=session&iframe=true`;
         } else if (action === 'logout') {
-            // Use /action/logout for instant logout
             url = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?auto_accept=true&iframe=true`;
         } else {
             url = `${CONFIG.WALLETTWO_ORIGIN}/action/${action}?iframe=true`;
         }
-        
         if (CONFIG.WALLETTWO_COMPANY_ID) {
             url += `&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
         }
-        
         for (const [key, value] of Object.entries(extraParams)) {
             url += `&${key}=${encodeURIComponent(value)}`;
         }
-        
-        // Cache buster
         url += `&_t=${Date.now()}`;
-        console.log('🔗 Built WalletTwo URL:', url);
         return url;
     }
 
@@ -732,21 +489,12 @@
     // Toast Notification
     // ============================================
     function showToast(message, type = 'info') {
-        const container = document.getElementById('toast-container');
-        if (!container) {
-            const newContainer = document.createElement('div');
-            newContainer.id = 'toast-container';
-            document.body.appendChild(newContainer);
-        }
-        
+        const container = document.getElementById('toast-container') || document.body;
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.textContent = message;
-        
-        (document.getElementById('toast-container') || document.body).appendChild(toast);
-        
+        container.appendChild(toast);
         setTimeout(() => toast.classList.add('show'), 10);
-        
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 300);
@@ -754,491 +502,165 @@
     }
 
     // ============================================
-    // Login State Management
+    // Load Packages from API
     // ============================================
-    function showLoginCancelledState() {
-        console.log('🔄 Showing login cancelled state...');
-        const modalContent = document.getElementById('loginModalContent');
-        if (modalContent) {
-            modalContent.innerHTML = `
-                <div class="text-center py-8">
-                    <div class="mb-6">
-                        <svg class="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        </svg>
-                    </div>
-                    <p class="text-gray-400 mb-6 text-lg">Login was cancelled</p>
-                    <div class="flex flex-col sm:flex-row justify-center gap-4">
-                        <button onclick="resetIframeToLogin()" class="btn-primary px-6 py-3 rounded-lg font-semibold">
-                            Try Again
-                        </button>
-                        <button onclick="logoutAndResetIframe()" class="bg-surface hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold border border-white/20 transition-colors">
-                            Use Different Account
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-        isResetting = false;
-    }
+    async function loadPackages() {
+        const loadingEl = document.getElementById('packages-loading');
+        const errorEl = document.getElementById('packages-error');
+        const containerEl = document.getElementById('packages-container');
+        const purchaseEl = document.getElementById('purchase-section');
 
-    function resetIframeToLogin() {
-        console.log('🔄 Resetting iframe to login...');
-        const modalContent = document.getElementById('loginModalContent');
-        if (modalContent) {
-            const iframeSrc = buildWalletTwoUrl('auth');
-            modalContent.innerHTML = `
-                <p class="text-gray-400 text-sm mb-6">Login to purchase membership packages.</p>
-                <div class="wallet-iframe-container">
-                    <iframe id="login-wallet-iframe" src="${iframeSrc}" class="wallet-iframe" allow="clipboard-write"></iframe>
-                </div>
-            `;
-        }
-        acceptMessages = true;
-        isResetting = false;
-    }
+        loadingEl.classList.remove('hidden');
+        errorEl.classList.add('hidden');
+        containerEl.classList.add('hidden');
+        purchaseEl.classList.add('hidden');
 
-    function logoutAndResetIframe() {
-        console.log('🔄 Logging out and resetting...');
-        const modalContent = document.getElementById('loginModalContent');
-        if (modalContent) {
-            modalContent.innerHTML = `
-                <div class="text-center py-12">
-                    <div class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                    <p class="text-gray-400">Logging out...</p>
-                </div>
-                <iframe id="logout-iframe" src="${buildWalletTwoUrl('logout')}" style="display:none;" allow="clipboard-write"></iframe>
-            `;
-            
-            setTimeout(() => {
-                const iframeSrc = buildWalletTwoUrl('auth');
-                modalContent.innerHTML = `
-                    <p class="text-gray-400 text-sm mb-6">Login to purchase membership packages.</p>
-                    <div class="wallet-iframe-container">
-                        <iframe id="login-wallet-iframe" src="${iframeSrc}" class="wallet-iframe" allow="clipboard-write"></iframe>
-                    </div>
-                `;
-                acceptMessages = true;
-                isResetting = false;
-                console.log('✅ Logged out, iframe reset to auth');
-            }, 1500);
-        }
-    }
-
-    // ============================================
-    // Initialization
-    // ============================================
-    document.addEventListener('DOMContentLoaded', async () => {
-        console.log('📄 DOM loaded, checking session...');
-        
-        checkSession();
-        await loadConfig();
-        updatePackageSelection();
-        updateSummary();
-        setupWalletListener();
-    });
-
-    async function loadConfig() {
         try {
-            const response = await fetch('/api/config/public');
-            const config = await response.json();
-            console.log('📦 Config loaded:', config);
-            
-            if (config.walletTwoCompanyId) {
-                CONFIG.WALLETTWO_COMPANY_ID = config.walletTwoCompanyId;
-                console.log('✅ WalletTwo Company ID:', CONFIG.WALLETTWO_COMPANY_ID);
-            }
-            if (config.stripePublicKey) {
-                CONFIG.STRIPE_PUBLIC_KEY = config.stripePublicKey;
-                initStripe();
-            }
-        } catch (error) {
-            console.error('Failed to load config:', error);
-        }
-    }
-
-    function initStripe() {
-        if (!CONFIG.STRIPE_PUBLIC_KEY || typeof Stripe === 'undefined') return;
-        
-        stripe = Stripe(CONFIG.STRIPE_PUBLIC_KEY);
-        const elements = stripe.elements();
-        
-        cardElement = elements.create('card', {
-            hidePostalCode: true,
-            style: {
-                base: {
-                    color: '#ffffff',
-                    fontFamily: 'Manrope, sans-serif',
-                    fontSize: '16px',
-                    '::placeholder': { color: '#6b7280' }
-                },
-                invalid: { color: '#ef4444' }
-            }
-        });
-        
-        cardElement.mount('#card-element');
-        
-        cardElement.on('change', (e) => {
-            const btn = document.getElementById('stripe-submit');
-            const err = document.getElementById('card-errors');
-            
-            if (e.error) {
-                err.textContent = e.error.message;
-                err.classList.remove('hidden');
-                btn.disabled = true;
-            } else {
-                err.classList.add('hidden');
-                btn.disabled = !e.complete;
-            }
-        });
-        
-        document.getElementById('stripe-form')?.addEventListener('submit', handleStripeSubmit);
-    }
-
-    // ============================================
-    // Session Management
-    // ============================================
-    function checkSession() {
-        console.log('🔍 Checking session...');
-        
-        try {
-            const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
-            console.log('📦 Stored session data:', stored ? 'found' : 'not found');
-            
-            if (stored) {
-                const data = JSON.parse(stored);
-                const age = Date.now() - (data.timestamp || 0);
-                
-                console.log('⏱️ Session age:', Math.round(age / 1000 / 60), 'minutes');
-                console.log('📋 Session wallet:', data.wallet);
-                
-                if (data.wallet && age < CONFIG.SESSION_DURATION) {
-                    currentUser = data;
-                    currentWallet = data.wallet;
-                    console.log('✅ Session restored for wallet:', currentWallet);
-                    
-                    updateHeaderUI(currentUser, 0);
-                    updateBuyButton();
-                    fetchUserBalance();
-                    return;
-                } else {
-                    console.log('⚠️ Session expired or invalid, clearing...');
-                    localStorage.removeItem(CONFIG.STORAGE_KEY);
-                }
-            }
-        } catch (e) {
-            console.error('❌ Session check error:', e);
-        }
-        
-        console.log('ℹ️ No valid session - showing login state');
-        currentUser = null;
-        currentWallet = null;
-        updateHeaderUI(null, 0);
-        updateBuyButton();
-    }
-
-    function saveSession(data) {
-        const sessionData = {
-            ...data,
-            timestamp: Date.now()
-        };
-        console.log('💾 Saving session:', sessionData.wallet);
-        localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(sessionData));
-    }
-
-    // ============================================
-    // Header UI Updates
-    // ============================================
-    function updateHeaderUI(user, balance) {
-        const headerConnected = document.getElementById('headerConnected');
-        const headerDisconnected = document.getElementById('headerDisconnected');
-        
-        console.log('🎨 Updating header - user:', user?.wallet ? 'connected' : 'disconnected', 'balance:', balance);
-        
-        if (user && user.wallet) {
-            headerConnected.classList.remove('hidden');
-            headerDisconnected.classList.add('hidden');
-            
-            const firstName = user.firstName || '';
-            const lastName = user.lastName || '';
-            const fullName = user.name || `${firstName} ${lastName}`.trim() || 'Member';
-            document.getElementById('headerUserName').textContent = fullName;
-            
-            const email = user.email ? user.email.toLowerCase() : '';
-            document.getElementById('headerUserEmail').textContent = email;
-            document.getElementById('dropdownEmail').textContent = email;
-            
-            let initials = '--';
-            if (firstName && lastName) {
-                initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
-            } else if (fullName && fullName !== 'Member') {
-                const parts = fullName.split(' ');
-                initials = parts.length > 1 
-                    ? `${parts[0][0]}${parts[parts.length-1][0]}`.toUpperCase()
-                    : fullName.slice(0, 2).toUpperCase();
-            } else if (user.wallet) {
-                initials = user.wallet.slice(2, 4).toUpperCase();
-            }
-            document.getElementById('headerAvatarInitials').textContent = initials;
-            
-            const balanceStr = Math.floor(balance).toLocaleString();
-            document.getElementById('headerUserBalance').textContent = balanceStr;
-            const dropdownBalance = document.getElementById('dropdownBalance');
-            if (dropdownBalance) dropdownBalance.textContent = balanceStr;
-        } else {
-            headerConnected.classList.add('hidden');
-            headerDisconnected.classList.remove('hidden');
-        }
-    }
-
-    function onWalletConnected() {
-        console.log('🔗 Wallet connected, updating UI...');
-        
-        document.getElementById('contact-section').classList.add('hidden');
-        
-        if (currentUser?.email) {
-            document.getElementById('contact-email').value = currentUser.email;
-        }
-        
-        updateHeaderUI(currentUser, userBalance);
-        updateBuyButton();
-        fetchUserBalance();
-        closeLoginModal();
-    }
-
-    async function fetchUserBalance() {
-        if (!currentWallet) return;
-        
-        console.log('💰 Fetching balance for:', currentWallet);
-        
-        try {
-            const response = await fetch(`https://api.wallettwo.com/blockchain/balance/137/${currentWallet}/${CONFIG.VIP_TOKEN_ADDRESS}`);
-            if (response.ok) {
-                const data = await response.json();
-                userBalance = typeof data === 'number' ? data : (data.balance || 0);
-                console.log('💰 Balance fetched:', userBalance);
-            } else {
-                console.log('⚠️ Balance API returned:', response.status);
-                userBalance = 0;
-            }
-        } catch (e) {
-            console.error('❌ Failed to fetch balance:', e);
-            userBalance = 0;
-        }
-        
-        updateHeaderUI(currentUser, userBalance);
-    }
-
-    // ============================================
-    // Disconnect (UPDATED - Full page redirect)
-    // ============================================
-    function disconnect() {
-        if (isDisconnecting) return;
-        isDisconnecting = true;
-        console.log('🚪 Starting disconnect...');
-        
-        // Clear all storage
-        localStorage.removeItem(CONFIG.STORAGE_KEY);
-        localStorage.removeItem('keavalley_profile');
-        localStorage.removeItem('userEmail');
-        sessionStorage.clear();
-        
-        // Reset state
-        currentWallet = null;
-        currentUser = null;
-        userBalance = 0;
-        acceptMessages = false;
-        
-        // Update UI immediately
-        updateHeaderUI(null, 0);
-        updateBuyButton();
-        
-        // Use /action/logout with redirect for proper session clearing
-        const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?auto_accept=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/package/')}`;
-        console.log('🚪 Redirecting to logout:', logoutUrl);
-        window.location.href = logoutUrl;
-    }
-
-    // ============================================
-    // Wallet Connection
-    // ============================================
-    function setupWalletListener() {
-        console.log('👂 Setting up WalletTwo message listener...');
-        
-        window.addEventListener('message', (event) => {
-            console.log('📨 Message from:', event.origin);
-            
-            if (!event.origin.includes('wallettwo.com')) return;
-            if (!acceptMessages) {
-                console.log('⏸️ Messages paused, ignoring');
-                return;
-            }
-
-            const data = event.data;
-            console.log('📨 Message data:', data);
-
-            // ---- ERROR / CANCEL events ----
-            const isErrorEvent = data && (
-                data.type === 'wallet_error' || data.event === 'wallet_error' ||
-                data.type === 'auth_error' || data.event === 'auth_error' ||
-                data.type === 'auth_cancelled' || data.event === 'auth_cancelled' ||
-                data.type === 'wallet_cancelled' || data.event === 'wallet_cancelled' ||
-                data.type === 'close' || data.event === 'close' ||
-                data.type === 'cancel' || data.event === 'cancel' ||
-                data.type === 'error' || data.event === 'error'
-            );
-
-            if (isErrorEvent) {
-                if (isResetting) {
-                    console.log('⏸️ Already resetting, ignoring duplicate event');
-                    return;
-                }
-                isResetting = true;
-                acceptMessages = false;
-                
-                const errorMessage = data.error || data.message || data.reason || 'Login cancelled';
-                console.log('❌ Auth error/cancel:', errorMessage);
-                showToast(errorMessage, 'error');
-                showLoginCancelledState();
-                return;
-            }
-
-            // ---- LOGIN events ----
-            if (data && (data.type === 'wallet_login' || data.event === 'wallet_login' ||
-                         data.type === 'wallet_session' || data.event === 'wallet_session')) {
-                
-                const wallet = data.wallet || data.wlt || data.address;
-                const code = data.code || data.token;
-                
-                console.log('🔐 Login event - wallet:', wallet, 'code/token present:', !!code);
-                
-                if (wallet) {
-                    acceptMessages = false;
-                    
-                    if (code) {
-                        exchangeCode(code, wallet, data.user);
-                    } else {
-                        currentWallet = wallet.toLowerCase();
-                        currentUser = { wallet: currentWallet, timestamp: Date.now() };
-                        saveSession(currentUser);
-                        onWalletConnected();
-                    }
-                }
-                return;
-            }
-
-            // ---- LOGOUT events ----
-            if (data && (data.type === 'wallet_logout' || data.event === 'wallet_logout')) {
-                console.log('🚪 Logout event received');
-                return;
-            }
-
-            // ---- READY events ----
-            if (data && (data.type === 'wallet_ready' || data.event === 'wallet_ready' ||
-                         data.type === 'ready' || data.event === 'ready')) {
-                console.log('✅ WalletTwo iframe ready');
-                return;
-            }
-
-            console.log('❓ Unhandled event:', data);
-        });
-    }
-
-    async function exchangeCode(code, wallet, userId) {
-        console.log('🔄 Exchanging code for wallet:', wallet);
-        
-        try {
-            const response = await fetch('/api/wallettwo/exchange', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code })
-            });
-            
+            const response = await fetch('/api/membership/packages');
             const data = await response.json();
-            console.log('📦 Exchange response:', data);
-            
-            currentWallet = wallet.toLowerCase();
-            currentUser = {
-                wallet: currentWallet,
-                userId: userId || data.user?.sub,
-                email: data.email || data.user?.email,
-                name: data.name || data.user?.name,
-                firstName: data.user?.given_name || data.firstName,
-                lastName: data.user?.family_name || data.lastName,
-                accessToken: data.access_token,
-                timestamp: Date.now()
-            };
-            
-            saveSession(currentUser);
-            onWalletConnected();
+
+            if (!data.success || !data.packages || data.packages.length === 0) {
+                throw new Error('No packages available');
+            }
+
+            // Store packages
+            PACKAGES = {};
+            data.packages.forEach(pkg => {
+                PACKAGES[pkg.id] = pkg;
+            });
+
+            console.log('✅ Packages loaded:', Object.keys(PACKAGES));
+
+            // Render package cards
+            renderPackageCards(data.packages);
+
+            // Select default package (first popular, or first non-test)
+            const defaultPkg = data.packages.find(p => p.popular) || data.packages.find(p => p.tier !== 'test') || data.packages[0];
+            if (defaultPkg) {
+                selectPackage(defaultPkg.id);
+            }
+
+            loadingEl.classList.add('hidden');
+            containerEl.classList.remove('hidden');
+            purchaseEl.classList.remove('hidden');
+
         } catch (error) {
-            console.error('❌ Exchange failed:', error);
-            currentWallet = wallet.toLowerCase();
-            currentUser = { wallet: currentWallet, timestamp: Date.now() };
-            saveSession(currentUser);
-            onWalletConnected();
+            console.error('Failed to load packages:', error);
+            loadingEl.classList.add('hidden');
+            errorEl.classList.remove('hidden');
         }
     }
 
-    function showLoginModal() {
-        const iframe = document.getElementById('login-wallet-iframe');
-        if (CONFIG.WALLETTWO_COMPANY_ID) {
-            const iframeSrc = buildWalletTwoUrl('auth');
-            iframe.src = iframeSrc;
-        } else {
-            console.warn('⚠️ No WalletTwo Company ID configured');
-        }
+    // ============================================
+    // Render Package Cards
+    // ============================================
+    function renderPackageCards(packages) {
+        const container = document.getElementById('packages-container');
         
-        acceptMessages = true;
-        isResetting = false;
+        // Determine grid columns based on package count
+        const count = packages.length;
+        let gridClass = 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3';
+        if (count === 4) gridClass = 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4';
+        if (count === 2) gridClass = 'grid-cols-1 md:grid-cols-2';
+        if (count === 1) gridClass = 'grid-cols-1 max-w-md mx-auto';
         
-        const modalContent = document.getElementById('loginModalContent');
-        if (modalContent && !modalContent.querySelector('.wallet-iframe-container')) {
-            resetIframeToLogin();
-        }
-        
-        document.getElementById('login-modal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
+        container.className = `grid ${gridClass} gap-6 mb-10`;
 
-    function closeLoginModal() {
-        document.getElementById('login-modal').classList.add('hidden');
-        document.body.style.overflow = '';
-        
-        acceptMessages = true;
-        isResetting = false;
+        container.innerHTML = packages.map(pkg => {
+            const tierClass = `tier-${pkg.tier || 'standard'}`;
+            const isTest = pkg.tier === 'test';
+            
+            return `
+                <div id="package-${pkg.id}" 
+                     class="glass-card package-card rounded-2xl p-6 border-2 ${tierClass} relative" 
+                     onclick="selectPackage('${pkg.id}')">
+                    
+                    ${pkg.popular ? `
+                        <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+                            <span class="popular-badge text-background-dark text-xs font-bold px-4 py-1.5 rounded-full">MOST POPULAR</span>
+                        </div>
+                    ` : ''}
+                    
+                    ${isTest ? `
+                        <div class="absolute -top-3 left-4">
+                            <span class="bg-yellow-500 text-black text-[10px] font-bold px-2 py-1 rounded">TEST</span>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="text-center mb-6 ${pkg.popular || isTest ? 'mt-2' : ''}">
+                        <span class="material-symbols-outlined text-5xl tier-icon mb-2">${pkg.icon || 'card_membership'}</span>
+                        <h2 class="font-serif text-2xl font-bold text-white">${pkg.name.replace(' Membership', '').replace(' Package', '')}</h2>
+                        <p class="text-gray-400 text-sm">${pkg.description || ''}</p>
+                    </div>
+                    
+                    <div class="bg-surface-light rounded-xl p-4 mb-6">
+                        <div class="text-center mb-4">
+                            <span class="text-4xl font-bold gold-text">€${pkg.price.toLocaleString()}</span>
+                        </div>
+                        <div class="flex items-center justify-center gap-2 mb-2">
+                            <span class="material-symbols-outlined text-green-400">arrow_upward</span>
+                            <span class="text-2xl font-bold text-green-400">€${pkg.buyingPower.toLocaleString()}</span>
+                            <span class="text-gray-400">buying power</span>
+                        </div>
+                        ${pkg.bonusPercent > 0 ? `
+                            <div class="text-center">
+                                <span class="bonus-badge text-white text-xs font-bold px-3 py-1 rounded-full">+${pkg.bonusPercent}% BONUS</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    ${pkg.features && pkg.features.length > 0 ? `
+                        <ul class="text-gray-300 text-sm space-y-3 mb-6">
+                            ${pkg.features.map(f => `
+                                <li class="flex items-center">
+                                    <span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>
+                                    ${f}
+                                </li>
+                            `).join('')}
+                        </ul>
+                    ` : ''}
+                    
+                    <div id="${pkg.id}-check" class="hidden text-center">
+                        <span class="inline-flex items-center text-primary font-semibold">
+                            <span class="material-symbols-outlined mr-1">check_circle</span>Selected
+                        </span>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
     // ============================================
     // Package Selection
     // ============================================
-    function selectPackage(pkg) {
-        selectedPackage = pkg;
-        updatePackageSelection();
-        updateSummary();
-    }
-
-    function updatePackageSelection() {
-        ['silver', 'gold', 'platinum'].forEach(pkg => {
-            const card = document.getElementById('package-' + pkg);
-            const check = document.getElementById(pkg + '-check');
-            
-            if (pkg === selectedPackage) {
-                card?.classList.add('selected');
-                check?.classList.remove('hidden');
-            } else {
-                card?.classList.remove('selected');
-                check?.classList.add('hidden');
-            }
+    function selectPackage(pkgId) {
+        if (!PACKAGES[pkgId]) return;
+        
+        selectedPackage = pkgId;
+        
+        // Update visual selection
+        Object.keys(PACKAGES).forEach(id => {
+            const card = document.getElementById(`package-${id}`);
+            const check = document.getElementById(`${id}-check`);
+            if (card) card.classList.remove('selected');
+            if (check) check.classList.add('hidden');
         });
+        
+        const selectedCard = document.getElementById(`package-${pkgId}`);
+        const selectedCheck = document.getElementById(`${pkgId}-check`);
+        if (selectedCard) selectedCard.classList.add('selected');
+        if (selectedCheck) selectedCheck.classList.remove('hidden');
+        
+        updateSummary();
     }
 
     function updateSummary() {
         const pkg = PACKAGES[selectedPackage];
+        if (!pkg) return;
         
         document.getElementById('summary-package').textContent = pkg.name;
         document.getElementById('summary-price').textContent = '€' + pkg.price.toLocaleString();
-        document.getElementById('summary-bonus').textContent = '+€' + pkg.bonus.toLocaleString();
+        document.getElementById('summary-bonus').textContent = pkg.bonus > 0 ? '+€' + pkg.bonus.toLocaleString() : '€0';
         document.getElementById('summary-total').textContent = '€' + pkg.buyingPower.toLocaleString();
         
         updateBuyButton();
@@ -1249,6 +671,8 @@
         const btnText = document.getElementById('buy-button-text');
         const pkg = PACKAGES[selectedPackage];
         
+        if (!pkg) return;
+        
         if (!currentWallet) {
             btnText.textContent = 'Login to Purchase';
             btn.onclick = showLoginModal;
@@ -1256,6 +680,256 @@
             btnText.textContent = 'Pay €' + pkg.price.toLocaleString();
             btn.onclick = startPurchase;
         }
+    }
+
+    // ============================================
+    // Session Management
+    // ============================================
+    function checkSession() {
+        try {
+            const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
+            if (stored) {
+                const data = JSON.parse(stored);
+                const age = Date.now() - (data.timestamp || 0);
+                if (data.wallet && age < CONFIG.SESSION_DURATION) {
+                    currentUser = data;
+                    currentWallet = data.wallet;
+                    updateHeaderUI(currentUser, 0);
+                    updateBuyButton();
+                    fetchUserBalance();
+                    return;
+                }
+                localStorage.removeItem(CONFIG.STORAGE_KEY);
+            }
+        } catch (e) {
+            console.error('Session check error:', e);
+        }
+        
+        currentUser = null;
+        currentWallet = null;
+        updateHeaderUI(null, 0);
+        updateBuyButton();
+    }
+
+    function saveSession(data) {
+        localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify({ ...data, timestamp: Date.now() }));
+    }
+
+    // ============================================
+    // Header UI Updates
+    // ============================================
+    function updateHeaderUI(user, balance) {
+        const headerConnected = document.getElementById('headerConnected');
+        const headerDisconnected = document.getElementById('headerDisconnected');
+        
+        if (user && user.wallet) {
+            headerConnected.classList.remove('hidden');
+            headerDisconnected.classList.add('hidden');
+            
+            const fullName = user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Member';
+            document.getElementById('headerUserName').textContent = fullName;
+            
+            const email = user.email ? user.email.toLowerCase() : '';
+            document.getElementById('headerUserEmail').textContent = email;
+            document.getElementById('dropdownEmail').textContent = email;
+            
+            let initials = '--';
+            if (user.firstName && user.lastName) {
+                initials = `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+            } else if (fullName !== 'Member') {
+                const parts = fullName.split(' ');
+                initials = parts.length > 1 ? `${parts[0][0]}${parts[parts.length-1][0]}`.toUpperCase() : fullName.slice(0, 2).toUpperCase();
+            } else if (user.wallet) {
+                initials = user.wallet.slice(2, 4).toUpperCase();
+            }
+            document.getElementById('headerAvatarInitials').textContent = initials;
+            document.getElementById('headerUserBalance').textContent = Math.floor(balance).toLocaleString();
+        } else {
+            headerConnected.classList.add('hidden');
+            headerDisconnected.classList.remove('hidden');
+        }
+    }
+
+    async function fetchUserBalance() {
+        if (!currentWallet) return;
+        try {
+            const response = await fetch(`https://api.wallettwo.com/blockchain/balance/137/${currentWallet}/${CONFIG.VIP_TOKEN_ADDRESS}`);
+            if (response.ok) {
+                const data = await response.json();
+                userBalance = typeof data === 'number' ? data : (data.balance || 0);
+            }
+        } catch (e) {
+            userBalance = 0;
+        }
+        updateHeaderUI(currentUser, userBalance);
+    }
+
+    // ============================================
+    // Disconnect
+    // ============================================
+    function disconnect() {
+        if (isDisconnecting) return;
+        isDisconnecting = true;
+        acceptMessages = false;
+        
+        localStorage.removeItem(CONFIG.STORAGE_KEY);
+        localStorage.removeItem('keavalley_profile');
+        localStorage.removeItem('userEmail');
+        sessionStorage.clear();
+        
+        currentWallet = null;
+        currentUser = null;
+        userBalance = 0;
+        
+        updateHeaderUI(null, 0);
+        updateBuyButton();
+        
+        const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?auto_accept=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/package/')}`;
+        window.location.href = logoutUrl;
+    }
+
+    // ============================================
+    // Login Modal
+    // ============================================
+    function showLoginModal() {
+        const iframe = document.getElementById('login-wallet-iframe');
+        if (CONFIG.WALLETTWO_COMPANY_ID) {
+            iframe.src = buildWalletTwoUrl('auth');
+        }
+        acceptMessages = true;
+        isResetting = false;
+        document.getElementById('login-modal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeLoginModal() {
+        document.getElementById('login-modal').classList.add('hidden');
+        document.body.style.overflow = '';
+        acceptMessages = true;
+        isResetting = false;
+    }
+
+    function showLoginCancelledState() {
+        const modalContent = document.getElementById('loginModalContent');
+        if (modalContent) {
+            modalContent.innerHTML = `
+                <div class="text-center py-8">
+                    <span class="material-symbols-outlined text-gray-400 text-5xl mb-4">warning</span>
+                    <p class="text-gray-400 mb-6 text-lg">Login was cancelled</p>
+                    <div class="flex flex-col sm:flex-row justify-center gap-4">
+                        <button onclick="resetIframeToLogin()" class="btn-primary px-6 py-3 rounded-lg font-semibold">Try Again</button>
+                        <button onclick="logoutAndResetIframe()" class="bg-surface hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold border border-white/20">Use Different Account</button>
+                    </div>
+                </div>
+            `;
+        }
+        isResetting = false;
+    }
+
+    function resetIframeToLogin() {
+        const modalContent = document.getElementById('loginModalContent');
+        if (modalContent) {
+            modalContent.innerHTML = `
+                <p class="text-gray-400 text-sm mb-6">Login to purchase membership packages.</p>
+                <div class="wallet-iframe-container">
+                    <iframe id="login-wallet-iframe" src="${buildWalletTwoUrl('auth')}" class="wallet-iframe" allow="clipboard-write"></iframe>
+                </div>
+            `;
+        }
+        acceptMessages = true;
+        isResetting = false;
+    }
+
+    function logoutAndResetIframe() {
+        const modalContent = document.getElementById('loginModalContent');
+        if (modalContent) {
+            modalContent.innerHTML = `
+                <div class="text-center py-12">
+                    <div class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p class="text-gray-400">Logging out...</p>
+                </div>
+                <iframe src="${buildWalletTwoUrl('logout')}" style="display:none;"></iframe>
+            `;
+            setTimeout(() => {
+                resetIframeToLogin();
+            }, 1500);
+        }
+    }
+
+    // ============================================
+    // Wallet Connection Listener
+    // ============================================
+    function setupWalletListener() {
+        window.addEventListener('message', (event) => {
+            if (!event.origin.includes('wallettwo.com')) return;
+            if (!acceptMessages) return;
+
+            const data = event.data;
+
+            // Error/Cancel events
+            if (data && ['wallet_error', 'auth_error', 'auth_cancelled', 'wallet_cancelled', 'close', 'cancel', 'error'].includes(data.type || data.event)) {
+                if (isResetting) return;
+                isResetting = true;
+                acceptMessages = false;
+                showToast(data.error || data.message || 'Login cancelled', 'error');
+                showLoginCancelledState();
+                return;
+            }
+
+            // Login events
+            if (data && ['wallet_login', 'wallet_session'].includes(data.type || data.event)) {
+                const wallet = data.wallet || data.wlt || data.address;
+                const code = data.code || data.token;
+                
+                if (wallet) {
+                    acceptMessages = false;
+                    if (code) {
+                        exchangeCode(code, wallet, data.user);
+                    } else {
+                        currentWallet = wallet.toLowerCase();
+                        currentUser = { wallet: currentWallet, timestamp: Date.now() };
+                        saveSession(currentUser);
+                        onWalletConnected();
+                    }
+                }
+            }
+        });
+    }
+
+    async function exchangeCode(code, wallet, userId) {
+        try {
+            const response = await fetch('/api/wallettwo/exchange', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            });
+            const data = await response.json();
+            
+            currentWallet = wallet.toLowerCase();
+            currentUser = {
+                wallet: currentWallet,
+                userId: userId || data.user?.sub,
+                email: data.email || data.user?.email,
+                name: data.name || data.user?.name,
+                firstName: data.user?.given_name,
+                lastName: data.user?.family_name,
+                timestamp: Date.now()
+            };
+            saveSession(currentUser);
+            onWalletConnected();
+        } catch (error) {
+            currentWallet = wallet.toLowerCase();
+            currentUser = { wallet: currentWallet, timestamp: Date.now() };
+            saveSession(currentUser);
+            onWalletConnected();
+        }
+    }
+
+    function onWalletConnected() {
+        updateHeaderUI(currentUser, userBalance);
+        updateBuyButton();
+        fetchUserBalance();
+        closeLoginModal();
     }
 
     // ============================================
@@ -1268,6 +942,7 @@
         }
         
         const pkg = PACKAGES[selectedPackage];
+        if (!pkg) return;
         
         document.getElementById('stripe-package').textContent = pkg.name;
         document.getElementById('stripe-buying-power').textContent = '€' + pkg.buyingPower.toLocaleString();
@@ -1285,16 +960,12 @@
 
     async function createPaymentIntent(pkg) {
         try {
-            const email = currentUser?.email || document.getElementById('contact-email')?.value || '';
-            const phone = document.getElementById('contact-phone')?.value || '';
-            
             const response = await fetch('/api/membership/create-payment-intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     wallet: currentWallet,
-                    email,
-                    phone,
+                    email: currentUser?.email || '',
                     package: selectedPackage,
                     price: pkg.price,
                     buyingPower: pkg.buyingPower
@@ -1314,8 +985,7 @@
                 closeStripeModal();
             }
         } catch (error) {
-            console.error('Failed to create payment intent:', error);
-            showResult('error', 'Error', 'Failed to initialize payment. Please try again.');
+            showResult('error', 'Error', 'Failed to initialize payment');
             closeStripeModal();
         }
     }
@@ -1328,9 +998,8 @@
         btn.innerHTML = '<span class="animate-spin inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full mr-2"></span>Processing...';
         
         const paymentData = window.currentPaymentIntent;
-        
         if (!paymentData?.clientSecret) {
-            showResult('error', 'Error', 'Session expired. Please try again.');
+            showResult('error', 'Error', 'Session expired');
             closeStripeModal();
             return;
         }
@@ -1351,11 +1020,9 @@
             if (paymentIntent.status === 'succeeded') {
                 closeStripeModal();
                 showProcessing('Payment successful! Processing your membership...');
-                
                 await pollPurchaseStatus(paymentIntent.id, paymentData);
             }
         } catch (err) {
-            console.error('Payment error:', err);
             showResult('error', 'Payment Failed', err.message);
             closeStripeModal();
         }
@@ -1369,12 +1036,11 @@
                 
                 if (data.status === 'completed') {
                     hideProcessing();
-                    showResult('success', 'Welcome to Kea Valley!', 'Your membership has been activated and buying power added to your account.', {
+                    showResult('success', 'Welcome to Kea Valley!', 'Your membership has been activated.', {
                         package: paymentData.name,
                         buyingPower: paymentData.buyingPower,
                         orderId: data.orderId || paymentData.orderId
                     });
-                    
                     fetchUserBalance();
                     return;
                 }
@@ -1390,7 +1056,7 @@
         }
         
         hideProcessing();
-        showResult('info', 'Processing', 'Your payment was received. Your membership will be activated shortly.');
+        showResult('info', 'Processing', 'Your payment was received. Membership will be activated shortly.');
     }
 
     function closeStripeModal() {
@@ -1399,9 +1065,11 @@
         window.currentPaymentIntent = null;
         
         const pkg = PACKAGES[selectedPackage];
-        const btn = document.getElementById('stripe-submit');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="material-symbols-outlined">lock</span> Pay €' + pkg.price.toLocaleString();
+        if (pkg) {
+            const btn = document.getElementById('stripe-submit');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined">lock</span> Pay €' + pkg.price.toLocaleString();
+        }
     }
 
     // ============================================
@@ -1440,6 +1108,78 @@
     function closeResultOverlay() {
         document.getElementById('result-overlay').classList.add('hidden');
     }
+
+    // ============================================
+    // Initialize Stripe
+    // ============================================
+    function initStripe() {
+        if (!CONFIG.STRIPE_PUBLIC_KEY || typeof Stripe === 'undefined') return;
+        
+        stripe = Stripe(CONFIG.STRIPE_PUBLIC_KEY);
+        const elements = stripe.elements();
+        
+        cardElement = elements.create('card', {
+            hidePostalCode: true,
+            style: {
+                base: {
+                    color: '#ffffff',
+                    fontFamily: 'Manrope, sans-serif',
+                    fontSize: '16px',
+                    '::placeholder': { color: '#6b7280' }
+                },
+                invalid: { color: '#ef4444' }
+            }
+        });
+        
+        cardElement.mount('#card-element');
+        
+        cardElement.on('change', (e) => {
+            const btn = document.getElementById('stripe-submit');
+            const err = document.getElementById('card-errors');
+            if (e.error) {
+                err.textContent = e.error.message;
+                err.classList.remove('hidden');
+                btn.disabled = true;
+            } else {
+                err.classList.add('hidden');
+                btn.disabled = !e.complete;
+            }
+        });
+        
+        document.getElementById('stripe-form')?.addEventListener('submit', handleStripeSubmit);
+    }
+
+    // ============================================
+    // Load Config
+    // ============================================
+    async function loadConfig() {
+        try {
+            const response = await fetch('/api/config/public');
+            const config = await response.json();
+            
+            if (config.walletTwoCompanyId) {
+                CONFIG.WALLETTWO_COMPANY_ID = config.walletTwoCompanyId;
+            }
+            if (config.stripePublicKey) {
+                CONFIG.STRIPE_PUBLIC_KEY = config.stripePublicKey;
+                initStripe();
+            }
+        } catch (error) {
+            console.error('Failed to load config:', error);
+        }
+    }
+
+    // ============================================
+    // Initialize
+    // ============================================
+    document.addEventListener('DOMContentLoaded', async () => {
+        console.log('📄 DOM loaded, initializing...');
+        
+        setupWalletListener();
+        await loadConfig();
+        checkSession();
+        await loadPackages();
+    });
     </script>
 </body>
 </html>

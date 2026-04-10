@@ -117,6 +117,12 @@ app.use('/api/member', memberRoutes);
 const referralRoutes = require('./routes/referral');
 app.use('/api/referral', referralRoutes);
 
+const packagesRoutes = require('./routes/packages');
+const adminPackagesRoutes = require('./routes/admin/packages');
+
+app.use('/api/packages', packagesRoutes);
+app.use('/api/admin/packages', adminPackagesRoutes); // Protected by admin auth middleware
+
 // ========================================
 // ROUTES
 // ========================================

@@ -122,6 +122,10 @@
                         <span class="material-symbols-outlined">receipt_long</span>
                         <span class="hidden sm:inline">Orders</span>
                     </button>
+                    <button data-tab="packages" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold">
+                        <span class="material-symbols-outlined">inventory_2</span>
+                        <span class="hidden sm:inline">Packages</span>
+                    </button>
                     <button data-tab="marketplace" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold">
                         <span class="material-symbols-outlined">storefront</span>
                         <span class="hidden sm:inline">Marketplace</span>
@@ -389,6 +393,56 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+
+            <!-- Packages Panel -->
+            <div data-panel="packages" class="hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h2 class="text-2xl font-bold">Membership Packages</h2>
+                    <button id="addPackageBtn" class="bg-primary hover:bg-primary-light hover:text-black px-4 py-2 rounded-lg text-sm font-medium text-black transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined text-lg">add</span>
+                        Add Package
+                    </button>
+                </div>
+                
+                <!-- Stripe Connect Status -->
+                <div id="stripeConnectStatus" class="glass rounded-xl p-4 mb-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-2xl text-primary">account_balance</span>
+                            <div>
+                                <h3 class="font-semibold">Stripe Connect</h3>
+                                <p class="text-gray-400 text-sm">Payment split: <span id="splitConfig">Loading...</span></p>
+                            </div>
+                        </div>
+                        <span id="stripeConnectBadge" class="px-3 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400">Checking...</span>
+                    </div>
+                </div>
+                
+                <!-- Package Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold" id="packagesTotal">0</div>
+                        <div class="text-sm text-gray-400 mt-1">Total Packages</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-green-400" id="packagesActive">0</div>
+                        <div class="text-sm text-gray-400 mt-1">Active</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-yellow-400" id="packagesTest">0</div>
+                        <div class="text-sm text-gray-400 mt-1">Test Only</div>
+                    </div>
+                    <div class="glass rounded-xl p-5">
+                        <div class="text-3xl font-bold text-primary" id="packagesTotalRevenue">€0</div>
+                        <div class="text-sm text-gray-400 mt-1">Total Revenue</div>
+                    </div>
+                </div>
+                
+                <!-- Packages Grid -->
+                <div id="packagesGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <p class="text-gray-500 col-span-full text-center py-8">Loading packages...</p>
                 </div>
             </div>
 
@@ -940,6 +994,115 @@
         </div>
     </div>
 
+    <!-- Package Modal -->
+    <div id="packageModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-800 flex justify-between items-center">
+                <h3 id="packageModalTitle" class="text-xl font-semibold">Add Package</h3>
+                <button id="closePackageModal" class="text-gray-400 hover:text-white"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <form id="packageForm" class="p-6 space-y-4">
+                <input type="hidden" id="packageEditMode" value="false">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Package ID *</label>
+                        <input type="text" id="packageId" required pattern="[a-z0-9-]+" placeholder="e.g., gold-2026" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none font-mono">
+                        <p class="text-gray-500 text-xs mt-1">Lowercase letters, numbers, hyphens only</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Name *</label>
+                        <input type="text" id="packageName" required placeholder="e.g., Gold Membership" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm text-gray-400 mb-1">Description</label>
+                        <textarea id="packageDescription" rows="2" placeholder="Package description..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Price (€) *</label>
+                        <input type="number" id="packagePrice" required min="0" step="0.01" placeholder="0.00" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Buying Power (€) *</label>
+                        <input type="number" id="packageBuyingPower" required min="0" step="0.01" placeholder="0.00" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Bonus (€)</label>
+                        <input type="number" id="packageBonus" min="0" step="0.01" value="0" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
+                        <p class="text-gray-500 text-xs mt-1">Auto-calculated: Buying Power - Price</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Tier</label>
+                        <select id="packageTier" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
+                            <option value="standard">Standard</option>
+                            <option value="test">Test</option>
+                            <option value="silver">Silver</option>
+                            <option value="gold">Gold</option>
+                            <option value="platinum">Platinum</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Icon</label>
+                        <select id="packageIcon" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
+                            <option value="card_membership">card_membership</option>
+                            <option value="workspace_premium">workspace_premium</option>
+                            <option value="diamond">diamond</option>
+                            <option value="stars">stars</option>
+                            <option value="science">science</option>
+                            <option value="verified">verified</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Sort Order</label>
+                        <input type="number" id="packageSortOrder" min="0" value="0" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm text-gray-400 mb-1">Features (one per line)</label>
+                        <textarea id="packageFeatures" rows="4" placeholder="€500 bonus value&#10;Access to marketplace&#10;Member benefits" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none"></textarea>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="packageActive" checked class="w-5 h-5 rounded bg-gray-800 border-gray-700 text-primary">
+                            <span class="text-sm">Active</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="packagePopular" class="w-5 h-5 rounded bg-gray-800 border-gray-700 text-primary">
+                            <span class="text-sm">Popular (featured)</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="packageTestOnly" class="w-5 h-5 rounded bg-gray-800 border-gray-700 text-primary">
+                            <span class="text-sm">Test Only</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-4 border-t border-gray-700">
+                    <button type="button" id="cancelPackageBtn" class="flex-1 px-4 py-2 border border-gray-700 rounded-lg hover:bg-gray-800">Cancel</button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-primary text-black font-semibold rounded-lg hover:bg-yellow-500">Save Package</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Package Confirmation Modal -->
+    <div id="deletePackageModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass rounded-2xl max-w-md w-full">
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="material-symbols-outlined text-3xl text-red-400">warning</span>
+                    <h3 class="text-xl font-semibold">Delete Package</h3>
+                </div>
+                <p class="text-gray-400 mb-2">Are you sure you want to delete this package?</p>
+                <p id="deletePackageName" class="font-semibold text-white mb-4"></p>
+                <p class="text-yellow-400 text-sm mb-6">Note: Packages with existing purchases will be deactivated instead of deleted.</p>
+                <div class="flex gap-3">
+                    <button id="cancelDeletePackage" class="flex-1 px-4 py-2 border border-gray-700 rounded-lg hover:bg-gray-800">Cancel</button>
+                    <button id="confirmDeletePackage" class="flex-1 px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Logout iframe for WalletTwo -->
     <iframe id="walletTwoLogoutIframe" style="display:none;"></iframe>
 
@@ -956,7 +1119,9 @@
     <script src="/admin/js/referrals.js"></script>
     <script src="/admin/js/admins.js"></script>
     <script src="/admin/js/settings.js"></script>
+    <script src="/admin/js/packages.js"></script>
     <script src="/admin/js/main.js"></script>
+    
 
 </body>
 </html>

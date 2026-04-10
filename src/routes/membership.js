@@ -1,5 +1,5 @@
 // src/routes/membership.js
-// VERSION: 2026-04-10 - Added test package + fixed 90/10 split on NET
+// VERSION: 2026-04-10 - Packages from DB + 90/10 split on NET
 const express = require('express');
 const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -9,60 +9,96 @@ const { sendEmail } = require('../services/email');
 const PLATFORM_FEE_PERCENT = 10; // 10% platform fee on NET amount (after Stripe fees)
 const CONNECTED_ACCOUNT_ID = process.env.STRIPE_CONNECTED_ACCOUNT_ID;
 
-// ============================================
-// PACKAGES - Must match frontend
-// ============================================
-const PACKAGES = {
-    'test-10': { 
-        name: 'Test Package', 
-        price: 10, 
-        buyingPower: 10, 
-        bonus: 0,
-        description: 'Test package for €10'
-    },
-    silver: { 
-        name: 'Silver Membership', 
-        price: 3000, 
-        buyingPower: 3500, 
-        bonus: 500,
-        description: 'Perfect for trying out'
-    },
-    gold: { 
-        name: 'Gold Membership', 
-        price: 8000,  // Fixed: was 6000, should match frontend
-        buyingPower: 10000, 
-        bonus: 2000,
-        description: 'Best value for members'
-    },
-    platinum: { 
-        name: 'Platinum Membership', 
-        price: 20000, 
-        buyingPower: 30000, 
-        bonus: 10000,
-        description: 'Ultimate experience'
-    }
-};
-
 console.log('✅ Membership routes initialized');
 console.log(`   Connected Account: ${CONNECTED_ACCOUNT_ID || 'NOT CONFIGURED'}`);
 console.log(`   Platform Fee: ${PLATFORM_FEE_PERCENT}% of NET (after Stripe fees)`);
-console.log(`   Packages: ${Object.keys(PACKAGES).join(', ')}`);
+
+// ============================================
+// Helper: Get package from database
+// ============================================
+async function getPackage(id) {
+    try {
+        const result = await pool.query(
+            'SELECT * FROM membership_packages WHERE id = $1 AND active = true',
+            [id]
+        );
+        
+        if (result.rows.length === 0) return null;
+        
+        const p = result.rows[0];
+        return {
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            price: parseFloat(p.price),
+            currency: p.currency || 'eur',
+            buyingPower: parseFloat(p.buying_power),
+            bonus: parseFloat(p.bonus || 0),
+            tier: p.tier,
+            icon: p.icon,
+            features: p.features || []
+        };
+    } catch (error) {
+        console.error('Error fetching package:', error);
+        return null;
+    }
+}
 
 // ============================================
 // GET /api/membership/packages - List available packages
 // ============================================
-router.get('/packages', (req, res) => {
-    const packages = Object.entries(PACKAGES).map(([key, pkg]) => ({
-        id: key,
-        name: pkg.name,
-        description: pkg.description,
-        price: pkg.price,
-        buyingPower: pkg.buyingPower,
-        bonus: pkg.bonus,
-        bonusPercent: pkg.bonus > 0 ? Math.round((pkg.bonus / pkg.price) * 100) : 0
-    }));
-    
-    res.json({ success: true, packages });
+router.get('/packages', async (req, res) => {
+    try {
+        const isProduction = process.env.NODE_ENV === 'production';
+        
+        const result = await pool.query(`
+            SELECT id, name, description, price, currency, buying_power, bonus,
+                   CASE WHEN price > 0 THEN ROUND((bonus / price) * 100) ELSE 0 END as bonus_percent,
+                   tier, icon, features, popular
+            FROM membership_packages 
+            WHERE active = true 
+              AND ($1 = false OR test_only = false)
+            ORDER BY sort_order ASC
+        `, [isProduction]);
+
+        const packages = result.rows.map(p => ({
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            price: parseFloat(p.price),
+            currency: (p.currency || 'eur').toUpperCase(),
+            buyingPower: parseFloat(p.buying_power),
+            bonus: parseFloat(p.bonus || 0),
+            bonusPercent: parseInt(p.bonus_percent || 0),
+            tier: p.tier,
+            icon: p.icon,
+            features: p.features || [],
+            popular: p.popular || false
+        }));
+
+        res.json({ success: true, packages });
+    } catch (error) {
+        console.error('Error fetching packages:', error);
+        res.status(500).json({ success: false, error: 'Failed to load packages' });
+    }
+});
+
+// ============================================
+// GET /api/membership/packages/:id - Get single package
+// ============================================
+router.get('/packages/:id', async (req, res) => {
+    try {
+        const pkg = await getPackage(req.params.id);
+        
+        if (!pkg) {
+            return res.status(404).json({ success: false, error: 'Package not found' });
+        }
+
+        res.json({ success: true, package: pkg });
+    } catch (error) {
+        console.error('Error fetching package:', error);
+        res.status(500).json({ success: false, error: 'Failed to load package' });
+    }
 });
 
 // ============================================
@@ -122,15 +158,16 @@ router.post('/create-payment-intent', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Missing required fields' });
         }
 
-        const pkg = PACKAGES[packageKey];
+        // Get package from database
+        const pkg = await getPackage(packageKey);
         if (!pkg) {
-            return res.status(400).json({ success: false, error: 'Invalid package' });
+            return res.status(400).json({ success: false, error: 'Invalid or inactive package' });
         }
 
         // Verify price matches (allow for minor discrepancies)
         if (Math.abs(pkg.price - price) > 1) {
             console.warn(`Price mismatch for ${packageKey}: expected ${pkg.price}, got ${price}`);
-            return res.status(400).json({ success: false, error: 'Price mismatch' });
+            return res.status(400).json({ success: false, error: 'Price mismatch - please refresh the page' });
         }
 
         // Create order in database
@@ -148,7 +185,7 @@ router.post('/create-payment-intent', async (req, res) => {
 
         const paymentIntent = await stripe.paymentIntents.create({
             amount: amountCents,
-            currency: 'eur',
+            currency: pkg.currency,
             metadata: {
                 order_id: order.id.toString(),
                 order_number: order.order_number,
@@ -267,6 +304,9 @@ async function handleMembershipPaymentSuccess(paymentIntent) {
             return;
         }
 
+        // Get package from database for email templates
+        const pkg = await getPackage(package_key);
+
         // Get the charge and balance transaction
         const charges = await stripe.charges.list({
             payment_intent: paymentIntent.id,
@@ -321,7 +361,7 @@ async function handleMembershipPaymentSuccess(paymentIntent) {
             INSERT INTO token_transactions 
             (wallet_address, amount, type, reference_type, reference_id, description)
             VALUES ($1, $2, 'credit', 'membership_purchase', $3, $4)
-        `, [wallet_address, buyingPowerAmount, order_id, `${PACKAGES[package_key]?.name || 'Membership'} purchase`]);
+        `, [wallet_address, buyingPowerAmount, order_id, `${pkg?.name || 'Membership'} purchase`]);
 
         // Update or create member balance
         await pool.query(`
@@ -376,7 +416,7 @@ async function handleMembershipPaymentSuccess(paymentIntent) {
 
         // Send confirmation email
         try {
-            await sendMembershipConfirmationEmail(email, wallet_address, package_key, buyingPowerAmount);
+            await sendMembershipConfirmationEmail(email, wallet_address, pkg, buyingPowerAmount);
             console.log(`📧 Confirmation email sent to ${email}`);
         } catch (emailError) {
             console.error('⚠️ Failed to send confirmation email:', emailError.message);
@@ -384,7 +424,7 @@ async function handleMembershipPaymentSuccess(paymentIntent) {
 
         // Send admin notification
         try {
-            await sendAdminMembershipNotification(order_id, email, wallet_address, package_key, chargedAmount, buyingPowerAmount);
+            await sendAdminMembershipNotification(order_id, email, wallet_address, pkg, chargedAmount, buyingPowerAmount);
         } catch (adminEmailError) {
             console.error('⚠️ Failed to send admin notification:', adminEmailError.message);
         }
@@ -421,8 +461,11 @@ async function handleMembershipPaymentFailed(paymentIntent) {
     }
 }
 
-async function sendMembershipConfirmationEmail(email, wallet, packageKey, buyingPower) {
-    const pkg = PACKAGES[packageKey] || { name: 'Membership' };
+// ============================================
+// Email Functions
+// ============================================
+async function sendMembershipConfirmationEmail(email, wallet, pkg, buyingPower) {
+    const packageName = pkg?.name || 'Membership';
 
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -430,7 +473,7 @@ async function sendMembershipConfirmationEmail(email, wallet, packageKey, buying
             <p>Your membership has been activated and your buying power is ready to use.</p>
             
             <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="margin-top: 0; color: #333;">${pkg.name}</h3>
+                <h3 style="margin-top: 0; color: #333;">${packageName}</h3>
                 <p style="font-size: 24px; color: #10b981; margin: 10px 0;"><strong>€${buyingPower.toLocaleString()}</strong> Buying Power</p>
                 <p style="color: #666;">Connected wallet: ${wallet.slice(0, 6)}...${wallet.slice(-4)}</p>
             </div>
@@ -448,20 +491,20 @@ async function sendMembershipConfirmationEmail(email, wallet, packageKey, buying
 
     await sendEmail({
         to: email,
-        subject: `Welcome to Kea Valley - ${pkg.name} Activated`,
+        subject: `Welcome to Kea Valley - ${packageName} Activated`,
         html
     });
 }
 
-async function sendAdminMembershipNotification(orderId, email, wallet, packageKey, amount, buyingPower) {
-    const pkg = PACKAGES[packageKey] || { name: 'Membership' };
+async function sendAdminMembershipNotification(orderId, email, wallet, pkg, amount, buyingPower) {
+    const packageName = pkg?.name || 'Membership';
 
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h1 style="color: #ee9d2b;">New Membership Purchase!</h1>
             
             <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="margin-top: 0;">${pkg.name}</h3>
+                <h3 style="margin-top: 0;">${packageName}</h3>
                 <p><strong>Order ID:</strong> ${orderId}</p>
                 <p><strong>Customer:</strong> ${email}</p>
                 <p><strong>Wallet:</strong> ${wallet}</p>
@@ -469,15 +512,17 @@ async function sendAdminMembershipNotification(orderId, email, wallet, packageKe
                 <p><strong>Buying Power Granted:</strong> €${buyingPower.toLocaleString()}</p>
             </div>
             
-            <a href="${process.env.ADMIN_URL || process.env.APP_URL}/admin/memberships/${orderId}" style="display: inline-block; background: #ee9d2b; color: #000; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">View in Admin</a>
+            <a href="${process.env.ADMIN_URL || process.env.APP_URL || 'https://keavalley.com'}/admin/memberships/${orderId}" style="display: inline-block; background: #ee9d2b; color: #000; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">View in Admin</a>
         </div>
     `;
 
-    await sendEmail({
-        to: process.env.ADMIN_EMAIL,
-        subject: `[NEW MEMBERSHIP] ${pkg.name} - €${amount.toLocaleString()}`,
-        html
-    });
+    if (process.env.ADMIN_EMAIL) {
+        await sendEmail({
+            to: process.env.ADMIN_EMAIL,
+            subject: `[NEW MEMBERSHIP] ${packageName} - €${amount.toLocaleString()}`,
+            html
+        });
+    }
 }
 
 module.exports = router;
