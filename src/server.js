@@ -117,12 +117,13 @@ app.use('/api/member', memberRoutes);
 const referralRoutes = require('./routes/referral');
 app.use('/api/referral', referralRoutes);
 
+// Public packages route
 const packagesRoutes = require('./routes/packages');
-const adminPackagesRoutes = require('./routes/admin/packages');
-
 app.use('/api/packages', packagesRoutes);
-app.use('/api/admin/packages', adminPackagesRoutes); // Protected by admin auth middleware
 
+// Admin packages route (should be after admin auth middleware)
+const adminPackagesRoutes = require('./routes/admin/packages');
+app.use('/api/admin/packages', adminPackagesRoutes);
 // ========================================
 // ROUTES
 // ========================================

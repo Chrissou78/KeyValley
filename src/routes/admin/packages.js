@@ -1,14 +1,14 @@
 // src/routes/admin/packages.js
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../../config/database');
+const db = require('../../db-postgres');
 
 // ============================================
 // GET /api/admin/packages - List all packages (including inactive)
 // ============================================
 router.get('/', async (req, res) => {
     try {
-        const result = await pool.query(`
+        const result = await db.query(`
             SELECT * FROM membership_packages 
             ORDER BY sort_order ASC, created_at ASC
         `);
@@ -16,10 +16,23 @@ router.get('/', async (req, res) => {
         res.json({ 
             success: true, 
             packages: result.rows.map(p => ({
-                ...p,
+                id: p.id,
+                name: p.name,
+                description: p.description,
                 price: parseFloat(p.price),
-                buying_power: parseFloat(p.buying_power),
-                bonus: parseFloat(p.bonus)
+                currency: (p.currency || 'eur').toUpperCase(),
+                buyingPower: parseFloat(p.buying_power),
+                bonus: parseFloat(p.bonus),
+                bonusPercent: p.price > 0 ? Math.round((p.bonus / p.price) * 100) : 0,
+                tier: p.tier,
+                icon: p.icon,
+                features: p.features || [],
+                popular: p.popular,
+                sortOrder: p.sort_order,
+                active: p.active,
+                testOnly: p.test_only,
+                createdAt: p.created_at,
+                updatedAt: p.updated_at
             }))
         });
     } catch (error) {
@@ -34,29 +47,40 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const { 
-            id, name, description, price, currency, buying_power, bonus,
-            tier, icon, features, popular, sort_order, active, test_only 
+            id, name, description, price, currency, buyingPower, bonus,
+            tier, icon, features, popular, sortOrder, active, testOnly 
         } = req.body;
 
-        if (!id || !name || !price || !buying_power) {
-            return res.status(400).json({ success: false, error: 'Missing required fields' });
+        if (!id || !name || price === undefined || buyingPower === undefined) {
+            return res.status(400).json({ success: false, error: 'Missing required fields: id, name, price, buyingPower' });
         }
 
         // Check if ID already exists
-        const existing = await pool.query('SELECT id FROM membership_packages WHERE id = $1', [id]);
+        const existing = await db.query('SELECT id FROM membership_packages WHERE id = $1', [id]);
         if (existing.rows.length > 0) {
             return res.status(400).json({ success: false, error: 'Package ID already exists' });
         }
 
-        const result = await pool.query(`
+        const result = await db.query(`
             INSERT INTO membership_packages 
             (id, name, description, price, currency, buying_power, bonus, tier, icon, features, popular, sort_order, active, test_only)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             RETURNING *
         `, [
-            id, name, description || '', price, currency || 'eur', buying_power, bonus || 0,
-            tier || 'standard', icon || 'card_membership', JSON.stringify(features || []),
-            popular || false, sort_order || 0, active !== false, test_only || false
+            id, 
+            name, 
+            description || '', 
+            price, 
+            currency || 'eur', 
+            buyingPower, 
+            bonus || 0,
+            tier || 'standard', 
+            icon || 'card_membership', 
+            JSON.stringify(features || []),
+            popular || false, 
+            sortOrder || 0, 
+            active !== false, 
+            testOnly || false
         ]);
 
         console.log(`✅ Package created: ${id}`);
@@ -74,11 +98,11 @@ router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const { 
-            name, description, price, currency, buying_power, bonus,
-            tier, icon, features, popular, sort_order, active, test_only 
+            name, description, price, currency, buyingPower, bonus,
+            tier, icon, features, popular, sortOrder, active, testOnly 
         } = req.body;
 
-        const result = await pool.query(`
+        const result = await db.query(`
             UPDATE membership_packages SET
                 name = COALESCE($1, name),
                 description = COALESCE($2, description),
@@ -97,8 +121,20 @@ router.put('/:id', async (req, res) => {
             WHERE id = $14
             RETURNING *
         `, [
-            name, description, price, currency, buying_power, bonus,
-            tier, icon, features ? JSON.stringify(features) : null, popular, sort_order, active, test_only, id
+            name, 
+            description, 
+            price, 
+            currency, 
+            buyingPower, 
+            bonus,
+            tier, 
+            icon, 
+            features ? JSON.stringify(features) : null, 
+            popular, 
+            sortOrder, 
+            active, 
+            testOnly, 
+            id
         ]);
 
         if (result.rows.length === 0) {
@@ -121,23 +157,23 @@ router.delete('/:id', async (req, res) => {
         const { id } = req.params;
 
         // Check if package has been used in purchases
-        const purchasesCheck = await pool.query(
-            'SELECT COUNT(*) FROM membership_purchases WHERE package_key = $1',
+        const purchasesCheck = await db.query(
+            'SELECT COUNT(*) FROM membership_purchases WHERE package = $1',
             [id]
         );
 
         if (parseInt(purchasesCheck.rows[0].count) > 0) {
             // Soft delete - just deactivate
-            await pool.query(
+            await db.query(
                 'UPDATE membership_packages SET active = false, updated_at = NOW() WHERE id = $1',
                 [id]
             );
             console.log(`⚠️ Package deactivated (has purchases): ${id}`);
-            return res.json({ success: true, message: 'Package deactivated (has existing purchases)' });
+            return res.json({ success: true, softDeleted: true, message: 'Package deactivated (has existing purchases)' });
         }
 
         // Hard delete
-        const result = await pool.query('DELETE FROM membership_packages WHERE id = $1 RETURNING id', [id]);
+        const result = await db.query('DELETE FROM membership_packages WHERE id = $1 RETURNING id', [id]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ success: false, error: 'Package not found' });
@@ -158,7 +194,7 @@ router.post('/:id/toggle', async (req, res) => {
     try {
         const { id } = req.params;
 
-        const result = await pool.query(`
+        const result = await db.query(`
             UPDATE membership_packages 
             SET active = NOT active, updated_at = NOW()
             WHERE id = $1
@@ -171,7 +207,7 @@ router.post('/:id/toggle', async (req, res) => {
 
         const pkg = result.rows[0];
         console.log(`✅ Package ${pkg.active ? 'activated' : 'deactivated'}: ${id}`);
-        res.json({ success: true, package: pkg });
+        res.json({ success: true, active: pkg.active });
     } catch (error) {
         console.error('Error toggling package:', error);
         res.status(500).json({ success: false, error: 'Failed to toggle package' });
