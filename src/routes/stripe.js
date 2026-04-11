@@ -1,13 +1,12 @@
 // src/routes/stripe.js
-// Stripe webhook handler with payment distribution (no DB for distributions)
+// Stripe webhook handler for membership purchases - MINTS BUYING POWER
 
 const express = require('express');
 const router = express.Router();
-const db = require('../db-postgres');
+const { pool } = require('../db-postgres');
 const minter = require('../minter');
-const { DEFAULT_REFERRER_WALLET, PRESALE_CONFIG, EXPLORER_URL } = require('../config/constants');
 
-// Initialize Stripe only if secret key exists
+// Initialize Stripe
 let stripe = null;
 if (process.env.STRIPE_SECRET_KEY) {
   stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -18,131 +17,20 @@ if (process.env.STRIPE_SECRET_KEY) {
 
 // Connected account for distribution
 const CONNECTED_ACCOUNT_ID = process.env.STRIPE_CONNECTED_ACCOUNT_ID;
+const PLATFORM_FEE_PERCENT = 10;
 
 if (CONNECTED_ACCOUNT_ID) {
   console.log('Stripe Connect distribution enabled');
+  console.log(`Platform fee: ${PLATFORM_FEE_PERCENT}% of NET`);
 } else {
-  console.log('Stripe Connect not configured - STRIPE_CONNECTED_ACCOUNT_ID missing');
-}
-
-// Helper function to calculate fees
-function calculateFees(amountEUR, paymentMethod) {
-  const feePercent = paymentMethod === 'crypto' 
-    ? PRESALE_CONFIG.cryptoFeePercent 
-    : PRESALE_CONFIG.cardFeePercent;
-  const feeAmount = amountEUR * feePercent;
-  const netAmount = amountEUR - feeAmount;
-  return { feePercent, feeAmount, netAmount };
+  console.log('Stripe Connect not configured');
 }
 
 // ============================================
-// PAYMENT DISTRIBUTION LOGIC (No DB required)
+// Stripe Webhook Endpoint
 // ============================================
-async function distributePayment(paymentIntent) {
-  if (!CONNECTED_ACCOUNT_ID) {
-    console.log('⚠️ No connected account configured - skipping distribution');
-    return null;
-  }
-
-  try {
-    const chargedAmount = parseFloat(paymentIntent.metadata.amount_eur) || (paymentIntent.amount / 100);
-    
-    // Get the charge to find balance transaction
-    const charges = await stripe.charges.list({
-      payment_intent: paymentIntent.id,
-      limit: 1
-    });
-
-    if (!charges.data.length) {
-      console.error('No charge found for payment intent:', paymentIntent.id);
-      return null;
-    }
-
-    const charge = charges.data[0];
-    
-    // Get balance transaction to find actual net amount (after Stripe fees)
-    const balanceTransaction = await stripe.balanceTransactions.retrieve(
-      charge.balance_transaction
-    );
-
-    const netAmountCents = balanceTransaction.net;
-    const netAmount = netAmountCents / 100;
-    
-    // Calculate threshold: 97% of charged amount
-    const threshold = chargedAmount * 0.97;
-    
-    let transferAmount;
-    let feeType;
-
-    if (netAmount >= threshold) {
-      // Net is within 3% of charged: send charged - 4% to connected account
-      transferAmount = chargedAmount * 0.96;
-      feeType = 'standard';
-      console.log(`✅ Standard distribution: Net €${netAmount.toFixed(2)} >= threshold €${threshold.toFixed(2)}`);
-    } else {
-      // Net is less than 97%: send net - 1% to connected account
-      transferAmount = netAmount * 0.99;
-      feeType = 'reduced';
-      console.log(`⚠️ Reduced distribution: Net €${netAmount.toFixed(2)} < threshold €${threshold.toFixed(2)}`);
-    }
-
-    const transferAmountCents = Math.round(transferAmount * 100);
-    const platformKeeps = netAmount - transferAmount;
-
-    console.log('💰 Payment Distribution:', {
-      paymentIntentId: paymentIntent.id,
-      charged: `€${chargedAmount.toFixed(2)}`,
-      stripeFees: `€${(chargedAmount - netAmount).toFixed(2)}`,
-      netReceived: `€${netAmount.toFixed(2)}`,
-      toConnectedAccount: `€${transferAmount.toFixed(2)}`,
-      platformKeeps: `€${platformKeeps.toFixed(2)}`,
-      feeType: feeType,
-      wallet: paymentIntent.metadata.wallet_address
-    });
-
-    // Create transfer to connected account
-    const transfer = await stripe.transfers.create({
-      amount: transferAmountCents,
-      currency: paymentIntent.currency || 'eur',
-      destination: CONNECTED_ACCOUNT_ID,
-      transfer_group: paymentIntent.id,
-      metadata: {
-        payment_intent: paymentIntent.id,
-        charged_amount: chargedAmount.toFixed(2),
-        net_amount: netAmount.toFixed(2),
-        transfer_amount: transferAmount.toFixed(2),
-        platform_fee: platformKeeps.toFixed(2),
-        fee_type: feeType,
-        wallet_address: paymentIntent.metadata.wallet_address
-      }
-    });
-
-    console.log('✅ Transfer created:', transfer.id);
-
-    return {
-      success: true,
-      transferId: transfer.id,
-      transferAmount,
-      platformKeeps,
-      feeType
-    };
-
-  } catch (error) {
-    console.error('❌ Distribution failed:', {
-      paymentIntentId: paymentIntent.id,
-      error: error.message,
-      wallet: paymentIntent.metadata.wallet_address
-    });
-
-    return { success: false, error: error.message };
-  }
-}
-
-// Stripe webhook endpoint
-// Note: This needs raw body, so it should be registered BEFORE json middleware
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   if (!stripe) {
-    console.log('Stripe webhook received but Stripe not configured');
     return res.status(400).json({ error: 'Stripe not configured' });
   }
 
@@ -158,18 +46,14 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  console.log('Stripe webhook received:', event.type);
+  console.log('📥 Stripe webhook received:', event.type);
 
-  // Handle the event
   switch (event.type) {
     case 'payment_intent.succeeded':
       await handlePaymentSuccess(event.data.object);
       break;
     case 'payment_intent.payment_failed':
       await handlePaymentFailed(event.data.object);
-      break;
-    case 'checkout.session.completed':
-      await handleCheckoutComplete(event.data.object);
       break;
     default:
       console.log(`Unhandled event type: ${event.type}`);
@@ -178,177 +62,189 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
   res.json({ received: true });
 });
 
-// Handle successful payment
+// ============================================
+// Handle Successful Payment - MINT BUYING POWER
+// ============================================
 async function handlePaymentSuccess(paymentIntent) {
-  console.log('Payment succeeded:', paymentIntent.id);
-  
+  const { order_id, wallet_address, email, package_key, package_name, buying_power } = paymentIntent.metadata || {};
+
+  console.log(`\n💳 Processing membership payment: ${paymentIntent.id}`);
+  console.log(`   Order: ${order_id}, Package: ${package_key}`);
+  console.log(`   Wallet: ${wallet_address}`);
+  console.log(`   Buying Power: €${buying_power}`);
+
+  if (!order_id || !wallet_address) {
+    console.error('❌ Missing order_id or wallet_address in metadata');
+    return;
+  }
+
   try {
-    const { wallet_address, amount_eur, tokens_to_mint, referral_code } = paymentIntent.metadata || {};
-    
-    if (!wallet_address) {
-      console.error('No wallet address in payment metadata');
-      return;
-    }
-
-    // Check for duplicate processing
-    const existingResult = await db.pool.query(
-      'SELECT id, status FROM presale_purchases WHERE payment_intent_id = $1',
-      [paymentIntent.id]
+    // Check if already processed
+    const existingCheck = await pool.query(
+      'SELECT status FROM membership_purchases WHERE id = $1',
+      [order_id]
     );
-
-    if (existingResult.rows.length > 0 && existingResult.rows[0].status === 'completed') {
-      console.log('Payment already processed:', paymentIntent.id);
+    
+    if (existingCheck.rows.length > 0 && existingCheck.rows[0].status === 'completed') {
+      console.log('⚠️ Payment already processed, skipping');
       return;
     }
 
-    const amountEUR = parseFloat(amount_eur) || (paymentIntent.amount / 100);
-    const tokensToMint = parseFloat(tokens_to_mint) || (amountEUR / PRESALE_CONFIG.tokenPrice);
+    // Get charge details for fee calculation
+    const charges = await stripe.charges.list({
+      payment_intent: paymentIntent.id,
+      limit: 1
+    });
 
-    // Calculate fees
-    const { feeAmount, netAmount } = calculateFees(amountEUR, 'card');
+    let stripeFee = 0;
+    let netAmount = paymentIntent.amount / 100;
+    const chargedAmount = paymentIntent.amount / 100;
 
-    // ============================================
-    // DISTRIBUTE PAYMENT TO CONNECTED ACCOUNT
-    // ============================================
-    const distributionResult = await distributePayment(paymentIntent);
-    if (distributionResult?.success) {
-      console.log('✅ Distribution completed:', distributionResult.transferId);
-    } else if (distributionResult) {
-      console.error('❌ Distribution failed - check Stripe dashboard');
+    if (charges.data.length > 0) {
+      const charge = charges.data[0];
+      const balanceTransaction = await stripe.balanceTransactions.retrieve(charge.balance_transaction);
+      stripeFee = balanceTransaction.fee / 100;
+      netAmount = balanceTransaction.net / 100;
     }
 
-    // Process referral bonus if applicable
-    let referralBonus = 0;
-    let referrerWallet = null;
-    
-    if (referral_code) {
+    // Calculate 90/10 split on NET
+    const platformFee = netAmount * (PLATFORM_FEE_PERCENT / 100);
+    const transferAmount = netAmount - platformFee;
+
+    console.log(`💰 Payment Distribution:`);
+    console.log(`   Charged:        €${chargedAmount.toFixed(2)}`);
+    console.log(`   Stripe Fee:     €${stripeFee.toFixed(2)}`);
+    console.log(`   NET:            €${netAmount.toFixed(2)}`);
+    console.log(`   Platform (10%): €${platformFee.toFixed(2)}`);
+    console.log(`   Transfer (90%): €${transferAmount.toFixed(2)}`);
+
+    // ============================================
+    // MINT BUYING POWER TO USER'S WALLET
+    // ============================================
+    const buyingPowerAmount = parseFloat(buying_power) || 0;
+    let mintTxHash = null;
+    let mintSuccess = false;
+
+    if (buyingPowerAmount > 0) {
+      console.log(`\n🪙 Minting €${buyingPowerAmount} buying power to ${wallet_address}...`);
+      
       try {
-        // Look up referral code
-        const referralResult = await db.pool.query(
-          'SELECT wallet_address FROM referral_codes WHERE code = $1 AND enabled = true',
-          [referral_code.toUpperCase()]
-        );
+        // skipBalanceCheck = true → always mint, even if user already has buying power
+        const mintResult = await minter.mintToAddress(wallet_address, buyingPowerAmount, true);
         
-        if (referralResult.rows.length > 0) {
-          referrerWallet = referralResult.rows[0].wallet_address;
-          
-          // Get referral settings
-          const settingsResult = await db.pool.query(
-            "SELECT value FROM app_settings WHERE key = 'referral_settings'"
-          );
-          
-          if (settingsResult.rows.length > 0) {
-            const settings = settingsResult.rows[0].value;
-            if (settings.enabled && amountEUR >= (settings.minPurchaseForBonus || 10)) {
-              if (settings.presaleBonusType === 'percentage') {
-                referralBonus = tokensToMint * (settings.presaleBonusAmount / 100);
-              } else {
-                referralBonus = settings.presaleBonusAmount || 0;
-              }
-            }
-          }
+        if (mintResult.skipped) {
+          console.log(`⚠️ Mint skipped: ${mintResult.reason}`);
+        } else if (mintResult.receipt) {
+          mintTxHash = mintResult.receipt.hash;
+          mintSuccess = true;
+          console.log(`✅ Buying power minted! TX: ${mintTxHash}`);
         }
-      } catch (refError) {
-        console.error('Error processing referral:', refError);
+      } catch (mintError) {
+        console.error('❌ Minting failed:', mintError.message);
       }
     }
 
-    // Update or insert purchase record
-    if (existingResult.rows.length > 0) {
-      await db.pool.query(
-        `UPDATE presale_purchases 
-         SET status = 'completed', 
-             tokens_amount = $1,
-             fee_amount = $2,
-             net_amount = $3,
-             referral_bonus = $4,
-             referrer_wallet = $5,
-             completed_at = NOW()
-         WHERE payment_intent_id = $6`,
-        [tokensToMint, feeAmount, netAmount, referralBonus, referrerWallet, paymentIntent.id]
-      );
-    } else {
-      await db.pool.query(
-        `INSERT INTO presale_purchases 
-         (wallet_address, payment_intent_id, amount_eur, tokens_amount, status, fee_amount, net_amount, referral_code, referral_bonus, referrer_wallet, completed_at)
-         VALUES ($1, $2, $3, $4, 'completed', $5, $6, $7, $8, $9, NOW())`,
-        [wallet_address, paymentIntent.id, amountEUR, tokensToMint, feeAmount, netAmount, referral_code, referralBonus, referrerWallet]
-      );
+    // ============================================
+    // UPDATE ORDER IN DATABASE
+    // ============================================
+    const status = mintSuccess ? 'completed' : 'pending_mint';
+    
+    await pool.query(`
+      UPDATE membership_purchases 
+      SET status = $1,
+          stripe_fee = $2,
+          net_amount = $3,
+          platform_fee = $4,
+          transfer_amount = $5,
+          metadata = COALESCE(metadata, '{}'::jsonb) || $6::jsonb
+      WHERE id = $7
+    `, [
+      status,
+      stripeFee, 
+      netAmount, 
+      platformFee, 
+      transferAmount,
+      JSON.stringify({
+        buying_power_minted: mintSuccess ? buyingPowerAmount : 0,
+        mint_tx_hash: mintTxHash,
+        mint_status: mintSuccess ? 'completed' : 'pending',
+        minted_at: mintSuccess ? new Date().toISOString() : null
+      }),
+      order_id
+    ]);
+
+    console.log(`✅ Order ${order_id} updated: ${status}`);
+
+    // ============================================
+    // TRANSFER TO CONNECTED ACCOUNT
+    // ============================================
+    if (CONNECTED_ACCOUNT_ID && transferAmount > 0) {
+      try {
+        const transfer = await stripe.transfers.create({
+          amount: Math.round(transferAmount * 100),
+          currency: 'eur',
+          destination: CONNECTED_ACCOUNT_ID,
+          transfer_group: paymentIntent.id,
+          metadata: {
+            order_id: order_id,
+            type: 'membership_purchase',
+            package: package_key,
+            buying_power: buyingPowerAmount.toString()
+          }
+        });
+
+        await pool.query(
+          'UPDATE membership_purchases SET transfer_id = $1 WHERE id = $2',
+          [transfer.id, order_id]
+        );
+
+        console.log(`✅ Transfer created: ${transfer.id} → €${transferAmount.toFixed(2)}`);
+      } catch (transferError) {
+        console.error('❌ Transfer failed:', transferError.message);
+      }
     }
 
-    // Mint tokens to buyer
-    const totalTokens = tokensToMint + referralBonus;
-    console.log(`Minting ${totalTokens} tokens to ${wallet_address}`);
+    console.log(`\n✅ Payment complete for order ${order_id}`);
+    console.log(`   Buying power: ${mintSuccess ? '€' + buyingPowerAmount + ' minted' : 'PENDING'}`);
+    if (mintTxHash) console.log(`   TX: ${mintTxHash}`);
+    console.log('');
+
+  } catch (error) {
+    console.error('❌ Error handling payment success:', error);
     
     try {
-      const mintResult = await minter.mintTokens(wallet_address, totalTokens);
-      console.log('Mint result:', mintResult);
-      
-      // Update purchase with tx hash
-      if (mintResult.tx_hash) {
-        await db.pool.query(
-          `UPDATE presale_purchases 
-           SET tx_hash = $1, minted = true, minted_at = NOW()
-           WHERE payment_intent_id = $2`,
-          [mintResult.tx_hash, paymentIntent.id]
-        );
-      }
-    } catch (mintError) {
-      console.error('Error minting tokens:', mintError);
-      // Mark as pending mint
-      await db.pool.query(
-        `UPDATE presale_purchases SET mint_status = 'pending' WHERE payment_intent_id = $1`,
-        [paymentIntent.id]
+      await pool.query(
+        "UPDATE membership_purchases SET status = 'error', metadata = COALESCE(metadata, '{}'::jsonb) || $1::jsonb WHERE id = $2",
+        [JSON.stringify({ error: error.message, error_at: new Date().toISOString() }), order_id]
       );
+    } catch (e) {
+      console.error('Failed to update order with error:', e);
     }
-
-    // Mint referral bonus to referrer if applicable
-    if (referralBonus > 0 && referrerWallet) {
-      console.log(`Minting ${referralBonus} referral bonus to ${referrerWallet}`);
-      try {
-        await minter.mintTokens(referrerWallet, referralBonus);
-        
-        // Record referral transaction
-        await db.pool.query(
-          `INSERT INTO referral_transactions 
-           (referrer_wallet, referee_wallet, bonus_amount, bonus_type, source, created_at)
-           VALUES ($1, $2, $3, 'presale', 'presale', NOW())`,
-          [referrerWallet, wallet_address, referralBonus]
-        );
-      } catch (refMintError) {
-        console.error('Error minting referral bonus:', refMintError);
-      }
-    }
-
-    console.log('Payment processing complete for:', paymentIntent.id);
-    
-  } catch (error) {
-    console.error('Error handling payment success:', error);
   }
 }
 
-// Handle failed payment
+// ============================================
+// Handle Failed Payment
+// ============================================
 async function handlePaymentFailed(paymentIntent) {
-  console.log('Payment failed:', paymentIntent.id);
+  const { order_id } = paymentIntent.metadata || {};
   
+  console.log(`❌ Payment failed: ${paymentIntent.id}`);
+  
+  if (!order_id) {
+    console.error('No order_id in failed payment metadata');
+    return;
+  }
+
   try {
-    await db.pool.query(
-      `UPDATE presale_purchases 
-       SET status = 'failed', 
-           error_message = $1,
-           updated_at = NOW()
-       WHERE payment_intent_id = $2`,
-      [paymentIntent.last_payment_error?.message || 'Payment failed', paymentIntent.id]
+    await pool.query(
+      "UPDATE membership_purchases SET status = 'failed' WHERE id = $1",
+      [order_id]
     );
+    console.log(`Order ${order_id} marked as failed`);
   } catch (error) {
     console.error('Error updating failed payment:', error);
   }
-}
-
-// Handle checkout session complete
-async function handleCheckoutComplete(session) {
-  console.log('Checkout session completed:', session.id);
-  // Additional handling if using Checkout Sessions
 }
 
 module.exports = router;
