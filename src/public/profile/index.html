@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html class="dark" lang="en">
-<!-- VERSION: 2026-04-10 - Referral code disabled -->
+<!-- VERSION: 2026-04-11 - Using shared header -->
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -70,18 +70,6 @@
         .balance-glow {
             text-shadow: 0 0 40px rgba(218, 165, 32, 0.4);
         }
-
-        /* REFERRAL STYLES COMMENTED OUT
-        .referral-code-box {
-            background: linear-gradient(135deg, rgba(218, 165, 32, 0.1) 0%, rgba(212, 165, 67, 0.05) 100%);
-            border: 2px dashed rgba(218, 165, 32, 0.4);
-        }
-        
-        .referral-input {
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-        }
-        */
 
         .modal-overlay {
             background: rgba(0, 0, 0, 0.8);
@@ -453,126 +441,6 @@
                     </div>
                 </div>
 
-                <!-- REFERRAL SECTION COMMENTED OUT
-                <div class="grid lg:grid-cols-2 gap-6 mb-6">
-                    <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
-                        <div class="px-6 py-4 border-b border-white/5 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary">share</span>
-                            <h3 class="text-xs font-bold uppercase tracking-widest text-white">Referral Program</h3>
-                        </div>
-                        <div class="p-6">
-                            <div id="referralLoading" class="text-center py-4">
-                                <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                                <p class="text-slate-500 text-xs">Loading...</p>
-                            </div>
-                            
-                            <div id="referralDisabled" class="hidden text-center py-4">
-                                <p class="text-slate-500 text-sm">Referral program is currently inactive.</p>
-                            </div>
-                            
-                            <div id="referralContent" class="hidden space-y-6">
-                                <div id="setReferrerSection">
-                                    <p class="text-white font-medium mb-2 text-sm">Were you referred by someone?</p>
-                                    <div class="flex gap-2">
-                                        <input 
-                                            type="text" 
-                                            id="referralCodeInput" 
-                                            class="referral-input flex-1 bg-background-dark border border-white/10 rounded-lg px-4 py-2.5 text-primary text-center font-mono text-sm focus:border-primary focus:outline-none"
-                                            placeholder="XXXXXXXX"
-                                            maxlength="8"
-                                        >
-                                        <button 
-                                            id="setReferrerBtn"
-                                            class="bg-primary text-background-dark px-4 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider hover:opacity-90 transition-opacity"
-                                        >
-                                            Apply
-                                        </button>
-                                    </div>
-                                    <p id="setReferrerError" class="text-red-400 text-xs mt-2 hidden"></p>
-                                    <p id="setReferrerSuccess" class="text-green-400 text-xs mt-2 hidden"></p>
-                                </div>
-                                
-                                <div id="referrerSetSection" class="hidden">
-                                    <div class="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                                        <div class="flex items-center gap-2 text-green-400">
-                                            <span class="material-symbols-outlined text-lg">check_circle</span>
-                                            <span class="text-sm">Referred by: <span id="referrerDisplay" class="font-mono text-white"></span></span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="border-t border-white/10"></div>
-                                
-                                <div>
-                                    <p class="text-white font-medium mb-3 text-sm">Your Referral Code</p>
-                                    
-                                    <div id="generateCodeSection" class="text-center">
-                                        <button 
-                                            id="generateCodeBtn"
-                                            class="bg-primary/20 text-primary px-6 py-3 rounded-lg font-bold uppercase tracking-widest text-xs hover:bg-primary/30 transition-colors border border-primary/30 w-full"
-                                        >
-                                            Generate My Code
-                                        </button>
-                                    </div>
-                                    
-                                    <div id="myCodeSection" class="hidden">
-                                        <div class="referral-code-box rounded-lg p-4 text-center">
-                                            <div class="flex items-center justify-center gap-3">
-                                                <span id="myReferralCode" class="text-primary text-2xl font-mono font-bold tracking-widest"></span>
-                                                <button id="copyCodeBtn" class="text-slate-500 hover:text-primary transition-colors" title="Copy code">
-                                                    <span class="material-symbols-outlined text-xl">content_copy</span>
-                                                </button>
-                                            </div>
-                                            <p id="referralBonusInfo" class="text-xs text-slate-500 mt-2"></p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-rows-2 gap-4">
-                        <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
-                            <div class="px-5 py-3 border-b border-white/5 flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-green-400 text-lg">group_add</span>
-                                    <h3 class="text-xs font-bold uppercase tracking-widest text-white">My Referrals</h3>
-                                </div>
-                                <span id="referralCount" class="text-primary font-bold">0</span>
-                            </div>
-                            <div class="p-3 max-h-32 overflow-y-auto">
-                                <div id="referralsListLoading" class="hidden text-center py-2">
-                                    <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-                                </div>
-                                <div id="referralsListEmpty" class="text-center py-3">
-                                    <p class="text-slate-500 text-xs">No referrals yet. Share your code!</p>
-                                </div>
-                                <div id="referralsList" class="hidden space-y-1 text-sm"></div>
-                            </div>
-                        </div>
-
-                        <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
-                            <div class="px-5 py-3 border-b border-white/5 flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-amber-400 text-lg">monetization_on</span>
-                                    <h3 class="text-xs font-bold uppercase tracking-widest text-white">Referral Bonuses</h3>
-                                </div>
-                                <span id="referralEarned" class="text-primary font-bold">€0</span>
-                            </div>
-                            <div class="p-3 max-h-32 overflow-y-auto">
-                                <div id="bonusesListLoading" class="hidden text-center py-2">
-                                    <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-                                </div>
-                                <div id="bonusesListEmpty" class="text-center py-3">
-                                    <p class="text-slate-500 text-xs">No bonuses earned yet</p>
-                                </div>
-                                <div id="bonusesList" class="hidden space-y-1 text-sm"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                -->
-
                 <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
                     <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
                         <div class="flex items-center gap-2">
@@ -798,41 +666,35 @@
 
     <iframe id="logoutIframe" style="display:none;"></iframe>
 
+    <!-- Shared Header Script -->
+    <script src="/js/shared-header.js"></script>
+
     <script>
         // ============================================
-        // VERSION: 2026-04-10 - Referral code disabled
+        // VERSION: 2026-04-11 - Profile page with shared header
         // ============================================
-        console.log('🚀 Profile page initializing... (v2026-04-10)');
+        console.log('🚀 Profile page initializing... (v2026-04-11)');
         
-        // Configuration
-        let CONFIG = {
-            VIP_TOKEN_ADDRESS: '0x6860c34db140DB7B589DaDA38859a1d3736bbE3F',
+        // Profile-specific config (extends HeaderManager.CONFIG)
+        const PROFILE_CONFIG = {
             POLYGON_RPC: 'https://polygon-mainnet.g.alchemy.com/v2/IoufBRdGO6MKWC6pxqbZW',
-            POLYGON_EXPLORER: 'https://polygonscan.com',
-            WALLETTWO_ORIGIN: 'https://wallet.wallettwo.com',
-            WALLETTWO_COMPANY_ID: null,
-            STORAGE_KEY: 'keavalley_profile',
-            SESSION_DURATION: 24 * 60 * 60 * 1000
+            POLYGON_EXPLORER: 'https://polygonscan.com'
         };
 
         const ERC20_ABI = ['function balanceOf(address owner) view returns (uint256)'];
 
-        // State
-        let currentUser = null;
+        // Profile state
         let currentBalance = 0;
-        let acceptMessages = false;
-        let isDisconnecting = false;
-        let isProcessingLogin = false;
         let savedToDatabase = false;
-        // let referralStatus = null;  // REFERRAL DISABLED
         let questionnaireData = null;
+        let isProcessingLogin = false;
+        let profileInitialized = false;
 
         // DOM Elements
         const loginContainer = document.getElementById('loginContainer');
         const loadingContainer = document.getElementById('loadingContainer');
         const profileContainer = document.getElementById('profileContainer');
         const disconnectingContainer = document.getElementById('disconnectingContainer');
-        const logoutIframe = document.getElementById('logoutIframe');
         const walletIframe = document.getElementById('walletIframe');
 
         // ============================================
@@ -863,132 +725,16 @@
         }
 
         // ============================================
-        // MOBILE MENU
-        // ============================================
-        document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
-            document.getElementById('mobileMenu').classList.toggle('hidden');
-        });
-
-        // ============================================
-        // LOAD CONFIG
-        // ============================================
-        async function loadConfig() {
-            try {
-                console.log('📥 Loading config...');
-                const response = await fetch('/api/config/public');
-                const config = await response.json();
-                
-                if (config.walletTwoCompanyId) {
-                    CONFIG.WALLETTWO_COMPANY_ID = config.walletTwoCompanyId;
-                    console.log('✅ Config loaded, companyId:', CONFIG.WALLETTWO_COMPANY_ID);
-                    return true;
-                }
-                console.error('❌ No companyId in config response');
-                return false;
-            } catch (error) {
-                console.error('❌ Failed to load config:', error);
-                return false;
-            }
-        }
-
-        // ============================================
-        // BUILD WALLETTWO URL
-        // ============================================
-        function buildWalletTwoUrl(action, extraParams = {}) {
-            let url;
-            
-            if (action === 'logout') {
-                url = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true`;
-            } else {
-                url = `${CONFIG.WALLETTWO_ORIGIN}/auth/login?action=session&iframe=true`;
-            }
-            
-            if (CONFIG.WALLETTWO_COMPANY_ID) {
-                url += `&companyId=${CONFIG.WALLETTWO_COMPANY_ID}`;
-            }
-            
-            for (const [key, value] of Object.entries(extraParams)) {
-                url += `&${key}=${encodeURIComponent(value)}`;
-            }
-            
-            url += `&_t=${Date.now()}`;
-            
-            console.log(`🔗 Built ${action} URL:`, url);
-            return url;
-        }
-
-        // ============================================
         // INITIALIZE WALLETTWO IFRAME
         // ============================================
         function initWalletIframe() {
-            if (!CONFIG.WALLETTWO_COMPANY_ID) {
+            if (!HeaderManager.CONFIG.WALLETTWO_COMPANY_ID) {
                 console.error('Cannot init iframe: missing companyId');
                 return;
             }
-            const iframeSrc = buildWalletTwoUrl('auth');
+            const iframeSrc = HeaderManager.buildWalletTwoUrl('auth');
             console.log('🖼️ Initializing iframe:', iframeSrc);
             walletIframe.src = iframeSrc;
-        }
-
-        // ============================================
-        // LOGIN MODAL
-        // ============================================
-        function showLoginModal() {
-            const modal = document.getElementById('loginModal');
-            const iframe = document.getElementById('modalWalletIframe');
-            
-            if (CONFIG.WALLETTWO_COMPANY_ID) {
-                iframe.src = buildWalletTwoUrl('auth');
-            }
-            
-            acceptMessages = true;
-            isProcessingLogin = false;
-            
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeLoginModal() {
-            const modal = document.getElementById('loginModal');
-            const iframe = document.getElementById('modalWalletIframe');
-            iframe.src = '';
-            modal.classList.add('hidden');
-            document.body.style.overflow = '';
-        }
-
-        // ============================================
-        // SESSION MANAGEMENT
-        // ============================================
-        function getStoredSession() {
-            try {
-                const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
-                if (stored) {
-                    const data = JSON.parse(stored);
-                    const age = Date.now() - (data.timestamp || 0);
-                    if (data.wallet && age < CONFIG.SESSION_DURATION) {
-                        return data;
-                    }
-                    localStorage.removeItem(CONFIG.STORAGE_KEY);
-                }
-            } catch (e) {
-                console.error('Error reading session:', e);
-            }
-            return null;
-        }
-
-        function saveSession(data) {
-            try {
-                localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify({
-                    ...data,
-                    timestamp: Date.now()
-                }));
-            } catch (e) {
-                console.error('Error saving session:', e);
-            }
-        }
-
-        function clearSession() {
-            localStorage.removeItem(CONFIG.STORAGE_KEY);
         }
 
         // ============================================
@@ -1015,53 +761,6 @@
         }
 
         // ============================================
-        // HEADER UI UPDATES
-        // ============================================
-        function updateHeaderUI(user, balance) {
-            const headerConnected = document.getElementById('headerConnected');
-            const headerDisconnected = document.getElementById('headerDisconnected');
-            const mobileUserSection = document.getElementById('mobileUserSection');
-            const mobileConnectSection = document.getElementById('mobileConnectSection');
-            
-            if (user && user.wallet) {
-                headerConnected.classList.remove('hidden');
-                headerDisconnected.classList.add('hidden');
-                headerDisconnected.classList.remove('flex');
-                mobileUserSection.classList.remove('hidden');
-                mobileConnectSection.classList.add('hidden');
-                
-                const firstName = user.firstName || '';
-                const lastName = user.lastName || '';
-                const fullName = user.name || `${firstName} ${lastName}`.trim() || 'Member';
-                document.getElementById('headerUserName').textContent = fullName;
-                
-                let initials = '--';
-                if (firstName && lastName) {
-                    initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
-                } else if (fullName && fullName !== 'Member') {
-                    const parts = fullName.split(' ');
-                    initials = parts.length > 1 
-                        ? `${parts[0][0]}${parts[parts.length-1][0]}`.toUpperCase()
-                        : fullName.slice(0, 2).toUpperCase();
-                }
-                document.getElementById('headerAvatarInitials').textContent = initials;
-                
-                const balanceStr = balance.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-                document.getElementById('headerUserBalance').textContent = balanceStr;
-                document.getElementById('dropdownBalance').textContent = balanceStr;
-                document.getElementById('mobileBalance').textContent = balanceStr;
-                
-                document.getElementById('dropdownEmail').textContent = user.email || '';
-            } else {
-                headerConnected.classList.add('hidden');
-                headerDisconnected.classList.remove('hidden');
-                headerDisconnected.classList.add('flex');
-                mobileUserSection.classList.add('hidden');
-                mobileConnectSection.classList.remove('hidden');
-            }
-        }
-
-        // ============================================
         // UI STATE FUNCTIONS
         // ============================================
         function showLogin() {
@@ -1070,10 +769,7 @@
             loadingContainer.classList.add('hidden');
             profileContainer.classList.add('hidden');
             disconnectingContainer.classList.add('hidden');
-            acceptMessages = true;
-            isDisconnecting = false;
             isProcessingLogin = false;
-            updateHeaderUI(null, 0);
         }
 
         function showLoading() {
@@ -1098,22 +794,25 @@
             const canProceed = await checkQuestionnaireRequired(user.wallet);
             if (!canProceed) return;
             
-            currentUser = user;
-            acceptMessages = false;
+            // Update HeaderManager with this user
+            HeaderManager.currentUser = user;
             isProcessingLogin = false;
             
             closeLoginModal();
             
-            if (!currentUser.email || !currentUser.name) {
+            // Fetch additional user info if needed
+            if (!user.email || !user.name) {
                 try {
                     const response = await fetch(`/api/wallet/info/${user.wallet}`);
                     const data = await response.json();
                     if (data.success) {
-                        if (data.email) currentUser.email = data.email;
-                        if (data.name) currentUser.name = data.name;
-                        if (data.firstName) currentUser.firstName = data.firstName;
-                        if (data.lastName) currentUser.lastName = data.lastName;
+                        if (data.email) user.email = data.email;
+                        if (data.name) user.name = data.name;
+                        if (data.firstName) user.firstName = data.firstName;
+                        if (data.lastName) user.lastName = data.lastName;
                         localStorage.setItem('userEmail', data.email || '');
+                        HeaderManager.currentUser = user;
+                        HeaderManager.saveSession();
                     }
                 } catch (error) {
                     console.error('Error fetching user data:', error);
@@ -1125,9 +824,10 @@
             profileContainer.classList.remove('hidden');
             disconnectingContainer.classList.add('hidden');
             
-            const firstName = currentUser.firstName || '';
-            const lastName = currentUser.lastName || '';
-            const fullName = currentUser.name || `${firstName} ${lastName}`.trim();
+            // Update profile display
+            const firstName = user.firstName || '';
+            const lastName = user.lastName || '';
+            const fullName = user.name || `${firstName} ${lastName}`.trim();
             
             let initials = '--';
             if (firstName && lastName) {
@@ -1139,27 +839,28 @@
                     : fullName.slice(0, 2).toUpperCase();
             }
             document.getElementById('avatarInitials').textContent = initials;
-            
             document.getElementById('displayName').textContent = fullName || 'Member';
             
             const emailEl = document.getElementById('displayEmail');
-            if (currentUser.email) {
-                emailEl.textContent = currentUser.email;
+            if (user.email) {
+                emailEl.textContent = user.email;
                 emailEl.classList.remove('hidden');
             } else {
                 emailEl.classList.add('hidden');
             }
             
-            await saveToDatabase(user.wallet, currentUser.email, fullName);
+            await saveToDatabase(user.wallet, user.email, fullName);
             
-            // Load profile data (referral removed)
+            // Load profile data
             await Promise.all([
                 fetchBalance(user.wallet),
                 fetchVouchers(user.wallet),
                 fetchOrders(user.wallet),
                 loadPreferences()
-                // loadReferralStatus()  // REFERRAL DISABLED
             ]);
+            
+            // Update header with balance
+            HeaderManager.onUserConnected();
         }
 
         // ============================================
@@ -1278,7 +979,8 @@
         // PREFERENCES / QUESTIONNAIRE
         // ============================================
         async function loadPreferences() {
-            if (!currentUser?.wallet) return;
+            const user = HeaderManager.getUser();
+            if (!user?.wallet) return;
             
             const loadingEl = document.getElementById('preferencesLoading');
             const contentEl = document.getElementById('preferencesContent');
@@ -1290,7 +992,7 @@
             emptyEl.classList.add('hidden');
             
             try {
-                const response = await fetch(`/api/questionnaire/${currentUser.wallet}`);
+                const response = await fetch(`/api/questionnaire/${user.wallet}`);
                 
                 if (!response.ok) {
                     loadingEl.classList.add('hidden');
@@ -1383,7 +1085,8 @@
         }
 
         async function saveQuestionnaireUpdates() {
-            if (!currentUser?.wallet) return;
+            const user = HeaderManager.getUser();
+            if (!user?.wallet) return;
             
             const btn = document.getElementById('savePreferencesBtn');
             const statusEl = document.getElementById('modalStatus');
@@ -1392,10 +1095,10 @@
             btn.textContent = 'Saving...';
             statusEl.classList.add('hidden');
             
-            const userEmail = localStorage.getItem('userEmail') || currentUser.email || null;
+            const userEmail = localStorage.getItem('userEmail') || user.email || null;
             
             const formData = {
-                wallet_address: currentUser.wallet,
+                wallet_address: user.wallet,
                 email: userEmail,
                 is_property_owner: document.querySelector('input[name="modal_is_property_owner"]:checked')?.value === 'yes',
                 property_location: document.querySelector('input[name="modal_property_location"]')?.value || null,
@@ -1439,7 +1142,7 @@
         }
 
         // ============================================
-        // BALANCE
+        // BALANCE (uses ethers.js for direct blockchain read)
         // ============================================
         async function fetchBalance(address) {
             const balanceLoading = document.getElementById('balanceLoading');
@@ -1449,16 +1152,18 @@
             balanceDisplay.classList.add('hidden');
 
             try {
-                const provider = new ethers.JsonRpcProvider(CONFIG.POLYGON_RPC);
-                const contract = new ethers.Contract(CONFIG.VIP_TOKEN_ADDRESS, ERC20_ABI, provider);
+                const provider = new ethers.JsonRpcProvider(PROFILE_CONFIG.POLYGON_RPC);
+                const contract = new ethers.Contract(HeaderManager.CONFIG.VIP_TOKEN_ADDRESS, ERC20_ABI, provider);
                 const balance = await contract.balanceOf(address);
                 currentBalance = parseFloat(ethers.formatUnits(balance, 18));
                 displayBalance(currentBalance);
-                updateHeaderUI(currentUser, currentBalance);
+                
+                // Update HeaderManager balance
+                HeaderManager.userBalance = currentBalance;
+                HeaderManager.updateBalanceDisplays();
             } catch (e) {
                 console.error('RPC balance fetch failed:', e);
                 displayBalance(0);
-                updateHeaderUI(currentUser, 0);
             }
         }
 
@@ -1472,322 +1177,36 @@
         }
 
         // ============================================
-        // REFERRAL SYSTEM - DISABLED
-        // ============================================
-        /*
-        async function loadReferralStatus() {
-            if (!currentUser?.wallet) return;
-
-            const referralLoading = document.getElementById('referralLoading');
-            const referralDisabled = document.getElementById('referralDisabled');
-            const referralContent = document.getElementById('referralContent');
-            
-            referralLoading.classList.remove('hidden');
-            referralDisabled.classList.add('hidden');
-            referralContent.classList.add('hidden');
-
-            try {
-                const response = await fetch(`/api/referral/status/${currentUser.wallet}`);
-                
-                if (!response.ok) {
-                    referralLoading.classList.add('hidden');
-                    referralDisabled.classList.remove('hidden');
-                    hideReferralLists();
-                    return;
-                }
-                
-                referralStatus = await response.json();
-                referralLoading.classList.add('hidden');
-
-                if (!referralStatus.programEnabled) {
-                    referralDisabled.classList.remove('hidden');
-                    hideReferralLists();
-                    return;
-                }
-
-                referralContent.classList.remove('hidden');
-
-                if (referralStatus.hasReferrer) {
-                    document.getElementById('setReferrerSection').classList.add('hidden');
-                    document.getElementById('referrerSetSection').classList.remove('hidden');
-                    const wallet = referralStatus.referrerWallet || '';
-                    document.getElementById('referrerDisplay').textContent = wallet ? `${wallet.slice(0, 6)}...${wallet.slice(-4)}` : 'Unknown';
-                } else {
-                    document.getElementById('setReferrerSection').classList.remove('hidden');
-                    document.getElementById('referrerSetSection').classList.add('hidden');
-                }
-
-                if (referralStatus.myCode) {
-                    document.getElementById('generateCodeSection').classList.add('hidden');
-                    document.getElementById('myCodeSection').classList.remove('hidden');
-                    document.getElementById('myReferralCode').textContent = referralStatus.myCode;
-
-                    const info = referralStatus.bonusInfo || {};
-                    let bonusText = '';
-                    if (info.signupAmount > 0) {
-                        bonusText = info.signupType === 'fixed' 
-                            ? `Earn €${info.signupAmount} per friend` 
-                            : `Earn ${info.signupAmount}% of friend's purchase`;
-                    }
-                    document.getElementById('referralBonusInfo').textContent = bonusText || 'Share & earn rewards!';
-                } else {
-                    document.getElementById('generateCodeSection').classList.remove('hidden');
-                    document.getElementById('myCodeSection').classList.add('hidden');
-                }
-
-                await loadReferralsList();
-                await loadReferralBonuses();
-
-            } catch (error) {
-                console.error('Failed to load referral status:', error);
-                referralLoading.classList.add('hidden');
-                referralDisabled.classList.remove('hidden');
-                hideReferralLists();
-            }
-        }
-
-        function hideReferralLists() {
-            document.getElementById('referralsListLoading').classList.add('hidden');
-            document.getElementById('referralsListEmpty').classList.remove('hidden');
-            document.getElementById('bonusesListLoading').classList.add('hidden');
-            document.getElementById('bonusesListEmpty').classList.remove('hidden');
-        }
-
-        async function loadReferralsList() {
-            const loading = document.getElementById('referralsListLoading');
-            const empty = document.getElementById('referralsListEmpty');
-            const list = document.getElementById('referralsList');
-            const count = document.getElementById('referralCount');
-            
-            loading.classList.remove('hidden');
-            empty.classList.add('hidden');
-            list.classList.add('hidden');
-            
-            try {
-                const response = await fetch(`/api/referral/list/${currentUser.wallet}`);
-                
-                if (!response.ok) {
-                    loading.classList.add('hidden');
-                    count.textContent = referralStatus?.stats?.totalReferrals || '0';
-                    empty.classList.remove('hidden');
-                    return;
-                }
-                
-                const data = await response.json();
-                loading.classList.add('hidden');
-                
-                if (data.success && data.referrals && data.referrals.length > 0) {
-                    count.textContent = data.referrals.length;
-                    list.classList.remove('hidden');
-                    list.innerHTML = data.referrals.map(r => `
-                        <div class="list-item flex items-center justify-between py-1.5">
-                            <span class="text-slate-400 font-mono text-xs">${r.wallet ? `${r.wallet.slice(0,6)}...${r.wallet.slice(-4)}` : 'User'}</span>
-                            <span class="text-slate-500 text-xs">${r.date ? new Date(r.date).toLocaleDateString() : ''}</span>
-                        </div>
-                    `).join('');
-                } else {
-                    count.textContent = referralStatus?.stats?.totalReferrals || '0';
-                    empty.classList.remove('hidden');
-                }
-            } catch (error) {
-                console.error('Error fetching referrals list:', error);
-                loading.classList.add('hidden');
-                count.textContent = referralStatus?.stats?.totalReferrals || '0';
-                empty.classList.remove('hidden');
-            }
-        }
-
-        async function loadReferralBonuses() {
-            const loading = document.getElementById('bonusesListLoading');
-            const empty = document.getElementById('bonusesListEmpty');
-            const list = document.getElementById('bonusesList');
-            const earned = document.getElementById('referralEarned');
-            
-            loading.classList.remove('hidden');
-            empty.classList.add('hidden');
-            list.classList.add('hidden');
-            
-            try {
-                const response = await fetch(`/api/referral/bonuses/${currentUser.wallet}`);
-                
-                if (!response.ok) {
-                    loading.classList.add('hidden');
-                    earned.textContent = `€${referralStatus?.stats?.totalBonusEarned || 0}`;
-                    empty.classList.remove('hidden');
-                    return;
-                }
-                
-                const data = await response.json();
-                loading.classList.add('hidden');
-                
-                if (data.success && data.bonuses && data.bonuses.length > 0) {
-                    const total = data.bonuses.reduce((sum, b) => sum + (b.amount || 0), 0);
-                    earned.textContent = `€${total}`;
-                    list.classList.remove('hidden');
-                    list.innerHTML = data.bonuses.map(b => `
-                        <div class="list-item flex items-center justify-between py-1.5">
-                            <span class="text-slate-400 text-xs">${b.type || 'Referral bonus'}</span>
-                            <span class="text-primary text-xs font-medium">+€${b.amount || 0}</span>
-                        </div>
-                    `).join('');
-                } else {
-                    earned.textContent = `€${referralStatus?.stats?.totalBonusEarned || 0}`;
-                    empty.classList.remove('hidden');
-                }
-            } catch (error) {
-                console.error('Error fetching referral bonuses:', error);
-                loading.classList.add('hidden');
-                earned.textContent = `€${referralStatus?.stats?.totalBonusEarned || 0}`;
-                empty.classList.remove('hidden');
-            }
-        }
-
-        async function setReferrer() {
-            const input = document.getElementById('referralCodeInput');
-            const errorEl = document.getElementById('setReferrerError');
-            const successEl = document.getElementById('setReferrerSuccess');
-            const btn = document.getElementById('setReferrerBtn');
-            
-            const code = input.value.trim().toUpperCase();
-            
-            errorEl.classList.add('hidden');
-            successEl.classList.add('hidden');
-            
-            if (!code || code.length < 6) {
-                errorEl.textContent = 'Please enter a valid code';
-                errorEl.classList.remove('hidden');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.textContent = 'Applying...';
-
-            try {
-                const response = await fetch('/api/referral/set', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        walletAddress: currentUser.wallet,
-                        referralCode: code
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    successEl.textContent = 'Referrer linked successfully!';
-                    successEl.classList.remove('hidden');
-                    setTimeout(() => loadReferralStatus(), 1000);
-                } else {
-                    errorEl.textContent = data.error || 'Failed to set referrer';
-                    errorEl.classList.remove('hidden');
-                }
-            } catch (error) {
-                console.error('Error setting referrer:', error);
-                errorEl.textContent = 'Network error. Please try again.';
-                errorEl.classList.remove('hidden');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Apply';
-            }
-        }
-
-        async function generateReferralCode() {
-            if (!currentUser?.wallet) return;
-
-            const btn = document.getElementById('generateCodeBtn');
-            btn.disabled = true;
-            btn.textContent = 'Generating...';
-
-            try {
-                const response = await fetch('/api/referral/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ walletAddress: currentUser.wallet })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    await loadReferralStatus();
-                } else {
-                    alert(data.error || 'Failed to generate code');
-                    btn.disabled = false;
-                    btn.textContent = 'Generate My Code';
-                }
-            } catch (error) {
-                console.error('Error generating code:', error);
-                alert('Network error. Please try again.');
-                btn.disabled = false;
-                btn.textContent = 'Generate My Code';
-            }
-        }
-
-        function copyReferralCode() {
-            const code = document.getElementById('myReferralCode').textContent;
-            navigator.clipboard.writeText(code).then(() => {
-                const btn = document.getElementById('copyCodeBtn');
-                btn.innerHTML = '<span class="material-symbols-outlined text-xl text-green-400">check</span>';
-                setTimeout(() => {
-                    btn.innerHTML = '<span class="material-symbols-outlined text-xl">content_copy</span>';
-                }, 1000);
-            });
-        }
-        */
-
-        // ============================================
-        // DISCONNECT
-        // ============================================
-        function disconnect() {
-            if (isDisconnecting) return;
-            isDisconnecting = true;
-            acceptMessages = false;
-            
-            localStorage.removeItem("wallettwo_token");
-            localStorage.removeItem(CONFIG.STORAGE_KEY);
-            localStorage.removeItem('keavalley_profile');
-            localStorage.removeItem('userEmail');
-            sessionStorage.clear();
-            
-            const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?auto_accept=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/')}`;
-            
-            window.location.href = logoutUrl;
-        }
-
-        // ============================================
-        // LOGIN CANCELLED STATE FUNCTIONS (GLOBAL)
+        // LOGIN CANCELLED STATE
         // ============================================
         function showLoginCancelledState() {
             console.log('🛑 Showing login cancelled state');
             isProcessingLogin = false;
             
-            const container = document.getElementById('loginContainer');
-            if (container) {
-                container.innerHTML = `
-                    <div class="max-w-lg mx-auto">
-                        <div class="text-center mb-8">
-                            <div class="flex items-center justify-center gap-4 mb-4">
-                                <div class="h-[1px] w-8 bg-primary"></div>
-                                <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Member Area</span>
-                                <div class="h-[1px] w-8 bg-primary"></div>
-                            </div>
-                            <h1 class="text-3xl md:text-4xl font-serif italic font-medium text-white mb-3">Login Cancelled</h1>
-                            <p class="text-slate-400 font-light mb-8">Would you like to try again?</p>
+            loginContainer.innerHTML = `
+                <div class="max-w-lg mx-auto">
+                    <div class="text-center mb-8">
+                        <div class="flex items-center justify-center gap-4 mb-4">
+                            <div class="h-[1px] w-8 bg-primary"></div>
+                            <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Member Area</span>
+                            <div class="h-[1px] w-8 bg-primary"></div>
                         </div>
-                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                            <button onclick="resetIframeToLogin()" class="bg-primary hover:bg-primary-light text-black font-semibold px-8 py-3 rounded-lg transition-colors">
-                                Try Again
-                            </button>
-                            <button onclick="logoutAndResetIframe()" class="bg-surface hover:bg-gray-700 text-white px-8 py-3 rounded-lg transition-colors border border-white/20">
-                                Use Different Account
-                            </button>
-                        </div>
-                        <p class="text-center text-slate-500 text-sm mt-6">
-                            Not a member yet? <a href="/package" class="text-primary hover:underline">Join the Club</a>
-                        </p>
+                        <h1 class="text-3xl md:text-4xl font-serif italic font-medium text-white mb-3">Login Cancelled</h1>
+                        <p class="text-slate-400 font-light mb-8">Would you like to try again?</p>
                     </div>
-                `;
-            }
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <button onclick="resetIframeToLogin()" class="bg-primary hover:bg-primary-light text-black font-semibold px-8 py-3 rounded-lg transition-colors">
+                            Try Again
+                        </button>
+                        <button onclick="logoutAndResetIframe()" class="bg-surface hover:bg-gray-700 text-white px-8 py-3 rounded-lg transition-colors border border-white/20">
+                            Use Different Account
+                        </button>
+                    </div>
+                    <p class="text-center text-slate-500 text-sm mt-6">
+                        Not a member yet? <a href="/package" class="text-primary hover:underline">Join the Club</a>
+                    </p>
+                </div>
+            `;
             
             loginContainer.classList.remove('hidden');
             loadingContainer.classList.add('hidden');
@@ -1797,207 +1216,90 @@
         function resetIframeToLogin() {
             console.log('🔄 Resetting iframe to login...');
             isProcessingLogin = false;
-            acceptMessages = true;
             
-            const container = document.getElementById('loginContainer');
-            if (container) {
-                container.innerHTML = `
-                    <div class="max-w-lg mx-auto">
-                        <div class="text-center mb-8">
-                            <div class="flex items-center justify-center gap-4 mb-4">
-                                <div class="h-[1px] w-8 bg-primary"></div>
-                                <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Member Area</span>
-                                <div class="h-[1px] w-8 bg-primary"></div>
-                            </div>
-                            <h1 class="text-3xl md:text-4xl font-serif italic font-medium text-white mb-3">Welcome Back</h1>
-                            <p class="text-slate-400 font-light">Login to access your profile</p>
+            loginContainer.innerHTML = `
+                <div class="max-w-lg mx-auto">
+                    <div class="text-center mb-8">
+                        <div class="flex items-center justify-center gap-4 mb-4">
+                            <div class="h-[1px] w-8 bg-primary"></div>
+                            <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Member Area</span>
+                            <div class="h-[1px] w-8 bg-primary"></div>
                         </div>
-                        <div class="bg-surface border border-white/5 rounded-lg overflow-hidden">
-                            <div class="wallet-iframe-container">
-                                <iframe 
-                                    id="walletIframe"
-                                    src="${buildWalletTwoUrl('auth')}"
-                                    class="wallet-iframe"
-                                    allow="clipboard-write"
-                                ></iframe>
-                            </div>
-                        </div>
-                        <p class="text-center text-slate-500 text-sm mt-6">
-                            Not a member yet? <a href="/package" class="text-primary hover:underline">Join the Club</a>
-                        </p>
+                        <h1 class="text-3xl md:text-4xl font-serif italic font-medium text-white mb-3">Welcome Back</h1>
+                        <p class="text-slate-400 font-light">Login to access your profile</p>
                     </div>
-                `;
-            }
+                    <div class="bg-surface border border-white/5 rounded-lg overflow-hidden">
+                        <div class="wallet-iframe-container">
+                            <iframe 
+                                id="walletIframe"
+                                src="${HeaderManager.buildWalletTwoUrl('auth')}"
+                                class="wallet-iframe"
+                                allow="clipboard-write"
+                            ></iframe>
+                        </div>
+                    </div>
+                    <p class="text-center text-slate-500 text-sm mt-6">
+                        Not a member yet? <a href="/package" class="text-primary hover:underline">Join the Club</a>
+                    </p>
+                </div>
+            `;
         }
 
         function logoutAndResetIframe() {
             console.log('🔄 Logging out and resetting...');
             isProcessingLogin = false;
-            acceptMessages = false;
             
-            const container = document.getElementById('loginContainer');
-            if (container) {
-                container.innerHTML = `
-                    <div class="max-w-lg mx-auto text-center py-12">
-                        <div class="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                        <p class="text-slate-400">Switching account...</p>
-                    </div>
-                `;
-                
-                clearSession();
-                
-                const logoutIframe = document.createElement('iframe');
-                logoutIframe.style.display = 'none';
-                logoutIframe.src = buildWalletTwoUrl('logout');
-                container.appendChild(logoutIframe);
-                
-                setTimeout(function() {
-                    acceptMessages = true;
-                    isProcessingLogin = false;
-                    
-                    container.innerHTML = `
-                        <div class="max-w-lg mx-auto">
-                            <div class="text-center mb-8">
-                                <div class="flex items-center justify-center gap-4 mb-4">
-                                    <div class="h-[1px] w-8 bg-primary"></div>
-                                    <span class="text-primary tracking-[0.3em] uppercase text-xs font-bold">Member Area</span>
-                                    <div class="h-[1px] w-8 bg-primary"></div>
-                                </div>
-                                <h1 class="text-3xl md:text-4xl font-serif italic font-medium text-white mb-3">Welcome Back</h1>
-                                <p class="text-slate-400 font-light">Login to access your profile</p>
-                            </div>
-                            <div class="bg-surface border border-white/5 rounded-lg overflow-hidden">
-                                <div class="wallet-iframe-container">
-                                    <iframe 
-                                        id="walletIframe"
-                                        src="${buildWalletTwoUrl('auth')}"
-                                        class="wallet-iframe"
-                                        allow="clipboard-write"
-                                    ></iframe>
-                                </div>
-                            </div>
-                            <p class="text-center text-slate-500 text-sm mt-6">
-                                Not a member yet? <a href="/package" class="text-primary hover:underline">Join the Club</a>
-                            </p>
-                        </div>
-                    `;
-                    
-                    console.log('✅ Logged out, fresh login iframe ready');
-                }, 2000);
-            }
+            loginContainer.innerHTML = `
+                <div class="max-w-lg mx-auto text-center py-12">
+                    <div class="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p class="text-slate-400">Switching account...</p>
+                </div>
+            `;
+            
+            HeaderManager.currentUser = null;
+            localStorage.removeItem(HeaderManager.CONFIG.STORAGE_KEY);
+            
+            const logoutIframe = document.createElement('iframe');
+            logoutIframe.style.display = 'none';
+            logoutIframe.src = HeaderManager.buildWalletTwoUrl('logout');
+            loginContainer.appendChild(logoutIframe);
+            
+            setTimeout(function() {
+                isProcessingLogin = false;
+                resetIframeToLogin();
+            }, 2000);
         }
 
         // ============================================
-        // WALLETTWO MESSAGE HANDLER
+        // QUESTIONNAIRE CHECK
         // ============================================
-        window.addEventListener('message', function(event) {
-            console.log('📨 Message from:', event.origin);
-            
-            if (!event.origin.includes('wallettwo.com')) return;
-
-            const data = event.data;
-            console.log('🔔 WalletTwo event:', JSON.stringify(data));
-
-            if (isDisconnecting) {
-                console.log('⏸️ Ignoring - disconnecting');
-                return;
-            }
-
-            if (isProcessingLogin) {
-                console.log('⏸️ Ignoring - already processing login');
-                return;
-            }
-
-            if (!acceptMessages) {
-                console.log('⏸️ Ignoring - acceptMessages is false');
-                return;
-            }
-
-            const isLoginEvent = data && (
-                data.type === 'wallet_login' ||
-                data.event === 'wallet_login' ||
-                data.type === 'wallet_session' ||
-                data.event === 'wallet_session' ||
-                data.type === 'login_success' ||
-                data.event === 'login_success' ||
-                data.type === 'auth_success' ||
-                data.event === 'auth_success'
-            );
-
-            if (isLoginEvent) {
-                const wallet = data.wallet || data.wlt || data.address || data.walletAddress;
-                const code = data.code || data.token || data.authorization_code;
+        async function checkQuestionnaireRequired(wallet) {
+            try {
+                const response = await fetch(`/api/questionnaire/status/${wallet}`);
                 
-                console.log('🔐 Login event - wallet:', wallet, 'code:', code ? 'present' : 'missing');
+                if (!response.ok) return true;
                 
-                if (wallet) {
-                    isProcessingLogin = true;
-                    acceptMessages = false;
+                const result = await response.json();
+                
+                if (result.success && result.exists && !result.registration_complete) {
+                    const params = new URLSearchParams(window.location.search);
+                    const signature = params.get('signature') || params.get('sig');
+                    const userId = params.get('usr') || params.get('user');
                     
-                    showLoading();
-                    closeLoginModal();
+                    let questionnaireUrl = `/profile/questionnaire.html?wallet=${encodeURIComponent(wallet)}`;
+                    if (signature) questionnaireUrl += `&signature=${encodeURIComponent(signature)}`;
+                    if (userId) questionnaireUrl += `&usr=${encodeURIComponent(userId)}`;
+                    questionnaireUrl += `&returnTo=profile`;
                     
-                    if (code) {
-                        console.log('🚀 Exchanging code...');
-                        exchangeCode(code, wallet, data.user || data.usr || data.userId);
-                    } else {
-                        console.log('🚀 Direct login (no code)...');
-                        const userData = { 
-                            wallet: wallet, 
-                            userId: data.user || data.usr, 
-                            email: data.email,
-                            name: data.name,
-                            firstName: data.firstName || data.given_name,
-                            lastName: data.lastName || data.family_name,
-                            timestamp: Date.now() 
-                        };
-                        saveSession(userData);
-                        showProfile(userData);
-                    }
-                } else {
-                    console.warn('⚠️ Login event received but no wallet address');
+                    window.location.href = questionnaireUrl;
+                    return false;
                 }
-                return;
+                return true;
+            } catch (error) {
+                console.error('Error checking questionnaire status:', error);
+                return true;
             }
-
-            const isErrorEvent = data && (
-                data.type === 'wallet_error' ||
-                data.event === 'wallet_error' ||
-                data.type === 'auth_error' ||
-                data.event === 'auth_error' ||
-                data.type === 'auth_cancelled' ||
-                data.event === 'auth_cancelled' ||
-                data.type === 'wallet_cancelled' ||
-                data.event === 'wallet_cancelled' ||
-                data.type === 'close' ||
-                data.event === 'close' ||
-                data.type === 'cancel' ||
-                data.event === 'cancel' ||
-                data.type === 'error' ||
-                data.event === 'error'
-            );
-
-            if (isErrorEvent) {
-                const errorMessage = data.error || data.message || data.reason || 'Login cancelled';
-                console.log('❌ Auth error/cancel:', errorMessage);
-                
-                showToast(errorMessage, 'error');
-                showLoginCancelledState();
-                return;
-            }
-
-            if (data && (data.type === 'wallet_logout' || data.event === 'wallet_logout' || data.type === 'logout' || data.event === 'logout')) {
-                console.log('👋 Logout confirmed by WalletTwo');
-                return;
-            }
-
-            if (data && (data.type === 'wallet_ready' || data.event === 'wallet_ready' || data.type === 'ready' || data.event === 'ready')) {
-                console.log('✅ WalletTwo iframe ready');
-                return;
-            }
-            
-            console.log('❓ Unhandled WalletTwo event:', data);
-        });
+        }
 
         // ============================================
         // TOKEN EXCHANGE
@@ -2019,7 +1321,8 @@
                 if (!tokenData.success && !tokenData.access_token) {
                     console.warn('⚠️ Token exchange failed, proceeding with wallet only');
                     const userData = { wallet: wallet, userId: userId, timestamp: Date.now() };
-                    saveSession(userData);
+                    HeaderManager.currentUser = userData;
+                    HeaderManager.saveSession();
                     showProfile(userData);
                     return;
                 }
@@ -2066,78 +1369,137 @@
                     localStorage.setItem('userEmail', userData.email);
                 }
                 
-                saveSession(userData);
+                HeaderManager.currentUser = userData;
+                HeaderManager.saveSession();
                 showProfile(userData);
                 
             } catch (error) {
                 console.error('❌ Exchange failed:', error);
                 const userData = { wallet: wallet, userId: userId, timestamp: Date.now() };
-                saveSession(userData);
+                HeaderManager.currentUser = userData;
+                HeaderManager.saveSession();
                 showProfile(userData);
             }
         }
 
         // ============================================
-        // EVENT LISTENERS
+        // PROFILE-SPECIFIC WALLET LISTENER
         // ============================================
-        document.getElementById('disconnectBtn').addEventListener('click', disconnect);
-        // document.getElementById('setReferrerBtn').addEventListener('click', setReferrer);  // REFERRAL DISABLED
-        // document.getElementById('generateCodeBtn').addEventListener('click', generateReferralCode);  // REFERRAL DISABLED
-        // document.getElementById('copyCodeBtn').addEventListener('click', copyReferralCode);  // REFERRAL DISABLED
-        document.getElementById('updatePreferencesBtn').addEventListener('click', openQuestionnaireModal);
-        document.getElementById('setPreferencesBtn').addEventListener('click', openQuestionnaireModal);
-        
-        /*  REFERRAL DISABLED
-        document.getElementById('referralCodeInput').addEventListener('input', function(e) {
-            e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-        });
-        */
+        function setupProfileWalletListener() {
+            window.addEventListener('message', function(event) {
+                if (!event.origin.includes('wallettwo.com')) return;
+
+                const data = event.data;
+                console.log('🔔 Profile WalletTwo event:', JSON.stringify(data));
+
+                if (isProcessingLogin) {
+                    console.log('⏸️ Ignoring - already processing login');
+                    return;
+                }
+
+                // Handle login events
+                const isLoginEvent = data && (
+                    data.type === 'wallet_login' ||
+                    data.event === 'wallet_login' ||
+                    data.type === 'wallet_session' ||
+                    data.event === 'wallet_session' ||
+                    data.type === 'login_success' ||
+                    data.event === 'login_success' ||
+                    data.type === 'auth_success' ||
+                    data.event === 'auth_success'
+                );
+
+                if (isLoginEvent) {
+                    const wallet = data.wallet || data.wlt || data.address || data.walletAddress;
+                    const code = data.code || data.token || data.authorization_code;
+                    
+                    console.log('🔐 Login event - wallet:', wallet, 'code:', code ? 'present' : 'missing');
+                    
+                    if (wallet) {
+                        isProcessingLogin = true;
+                        showLoading();
+                        closeLoginModal();
+                        
+                        if (code) {
+                            console.log('🚀 Exchanging code...');
+                            exchangeCode(code, wallet, data.user || data.usr || data.userId);
+                        } else {
+                            console.log('🚀 Direct login (no code)...');
+                            const userData = { 
+                                wallet: wallet, 
+                                userId: data.user || data.usr, 
+                                email: data.email,
+                                name: data.name,
+                                firstName: data.firstName || data.given_name,
+                                lastName: data.lastName || data.family_name,
+                                timestamp: Date.now() 
+                            };
+                            HeaderManager.currentUser = userData;
+                            HeaderManager.saveSession();
+                            showProfile(userData);
+                        }
+                    }
+                    return;
+                }
+
+                // Handle error/cancel events
+                const isErrorEvent = data && (
+                    data.type === 'wallet_error' ||
+                    data.event === 'wallet_error' ||
+                    data.type === 'auth_error' ||
+                    data.event === 'auth_error' ||
+                    data.type === 'auth_cancelled' ||
+                    data.event === 'auth_cancelled' ||
+                    data.type === 'wallet_cancelled' ||
+                    data.event === 'wallet_cancelled' ||
+                    data.type === 'close' ||
+                    data.event === 'close' ||
+                    data.type === 'cancel' ||
+                    data.event === 'cancel' ||
+                    data.type === 'error' ||
+                    data.event === 'error'
+                );
+
+                if (isErrorEvent) {
+                    const errorMessage = data.error || data.message || data.reason || 'Login cancelled';
+                    console.log('❌ Auth error/cancel:', errorMessage);
+                    showToast(errorMessage, 'error');
+                    showLoginCancelledState();
+                }
+            });
+        }
 
         // ============================================
-        // QUESTIONNAIRE CHECK
+        // EVENT LISTENERS
         // ============================================
-        async function checkQuestionnaireRequired(wallet) {
-            try {
-                const response = await fetch(`/api/questionnaire/status/${wallet}`);
-                
-                if (!response.ok) return true;
-                
-                const result = await response.json();
-                
-                if (result.success && result.exists && !result.registration_complete) {
-                    const params = new URLSearchParams(window.location.search);
-                    const signature = params.get('signature') || params.get('sig');
-                    const userId = params.get('usr') || params.get('user');
-                    
-                    let questionnaireUrl = `/profile/questionnaire.html?wallet=${encodeURIComponent(wallet)}`;
-                    if (signature) questionnaireUrl += `&signature=${encodeURIComponent(signature)}`;
-                    if (userId) questionnaireUrl += `&usr=${encodeURIComponent(userId)}`;
-                    questionnaireUrl += `&returnTo=profile`;
-                    
-                    window.location.href = questionnaireUrl;
-                    return false;
-                }
-                return true;
-            } catch (error) {
-                console.error('Error checking questionnaire status:', error);
-                return true;
-            }
-        }
+        document.getElementById('disconnectBtn').addEventListener('click', function() {
+            HeaderManager.disconnect();
+            showLogin();
+            initWalletIframe();
+        });
+        
+        document.getElementById('updatePreferencesBtn').addEventListener('click', openQuestionnaireModal);
+        document.getElementById('setPreferencesBtn').addEventListener('click', openQuestionnaireModal);
 
         // ============================================
         // INITIALIZE
         // ============================================
-        async function init() {
-            console.log('🚀 Profile page initializing... (v2026-04-10)');
+        async function initProfile() {
+            if (profileInitialized) return;
+            profileInitialized = true;
             
-            const configLoaded = await loadConfig();
-            if (!configLoaded) {
-                console.error('Failed to load config - cannot initialize');
-                return;
-            }
+            console.log('🚀 Profile page initializing... (v2026-04-11)');
             
+            // Wait for HeaderManager to load config
+            await HeaderManager.init();
+            
+            // Setup profile-specific wallet listener
+            setupProfileWalletListener();
+            
+            // Initialize iframe
             initWalletIframe();
             
+            // Check URL params
             const params = new URLSearchParams(window.location.search);
             const wallet = params.get('wlt') || params.get('wallet');
             const code = params.get('code');
@@ -2146,7 +1508,6 @@
                 window.history.replaceState({}, '', '/profile');
                 showLoading();
                 isProcessingLogin = true;
-                acceptMessages = false;
                 
                 const canProceed = await checkQuestionnaireRequired(wallet);
                 if (!canProceed) return;
@@ -2159,27 +1520,22 @@
                 window.history.replaceState({}, '', '/profile');
                 showLoading();
                 isProcessingLogin = true;
-                acceptMessages = false;
                 
                 const canProceed = await checkQuestionnaireRequired(wallet);
                 if (!canProceed) return;
                 
-                const stored = getStoredSession();
-                if (stored?.wallet === wallet && (stored.email || stored.name)) {
-                    showProfile(stored);
-                    return;
-                }
                 const userData = { wallet: wallet, timestamp: Date.now() };
-                saveSession(userData);
+                HeaderManager.currentUser = userData;
+                HeaderManager.saveSession();
                 showProfile(userData);
                 return;
             }
 
-            const stored = getStoredSession();
+            // Check stored session
+            const stored = HeaderManager.getUser();
             if (stored?.wallet) {
                 showLoading();
                 isProcessingLogin = true;
-                acceptMessages = false;
                 
                 const canProceed = await checkQuestionnaireRequired(stored.wallet);
                 if (!canProceed) return;
@@ -2191,7 +1547,11 @@
             showLogin();
         }
 
-        init();
+        // Override HeaderManager init to not auto-run for profile page
+        HeaderManager.initialized = true;
+        
+        // Run profile init
+        document.addEventListener('DOMContentLoaded', initProfile);
     </script>
 </body>
 </html>
