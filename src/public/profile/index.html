@@ -916,8 +916,8 @@
                 const firstName = user.firstName || '';
                 const lastName = user.lastName || '';
                 const fullName = user.name || `${firstName} ${lastName}`.trim() || 'Member';
-                document.getElementById('headerUserName').textContent = fullName;
-                
+                const shortName = fullName.length > 15 ? fullName.substring(0, 12) + '...' : fullName;
+                document.getElementById('headerUserName').textContent = shortName;
                 let initials = '--';
                 if (firstName && lastName) {
                     initials = `${firstName[0]}${lastName[0]}`.toUpperCase();

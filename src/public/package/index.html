@@ -29,6 +29,7 @@
             }
         }
     </script>
+    <script src="/js/shared-header.js"></script>
     <style>
         body { background-color: #0a0a0a; color: #ffffff; font-family: 'Manrope', sans-serif; }
         h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
@@ -726,11 +727,19 @@
             headerConnected.classList.remove('hidden');
             headerDisconnected.classList.add('hidden');
             
-            const fullName = user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Member';
-            document.getElementById('headerUserName').textContent = fullName;
+            const fullName = user.name || `${firstName} ${lastName}`.trim() || 'Member';
+            const shortName = fullName.length > 15 ? fullName.substring(0, 12) + '...' : fullName;
+            document.getElementById('headerUserName').textContent = shortName;
             
-            const email = user.email ? user.email.toLowerCase() : '';
-            document.getElementById('headerUserEmail').textContent = email;
+            const email = user.email || '';
+            let shortEmail = email;
+            if (email && email.includes('@')) {
+                const [local, domain] = email.split('@');
+                if (local.length > 8) {
+                    shortEmail = local.substring(0, 5) + '...@' + domain;
+                }
+            }
+            document.getElementById('headerUserEmail').textContent = shortEmail;
             document.getElementById('dropdownEmail').textContent = email;
             
             let initials = '--';

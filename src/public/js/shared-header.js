@@ -30,7 +30,6 @@ var HeaderManager = {
       const r = await fetch('/api/config/public');
       const c = await r.json();
       
-      // Map backend config to frontend config
       if (c.walletTwoCompanyId) this.CONFIG.WALLETTWO_COMPANY_ID = c.walletTwoCompanyId;
       if (c.vipTokenAddress) this.CONFIG.VIP_TOKEN_ADDRESS = c.vipTokenAddress;
       if (c.polygonRpc) this.CONFIG.POLYGON_RPC = c.polygonRpc;
@@ -82,10 +81,14 @@ var HeaderManager = {
     this.setElementClass('mobileUserSection', 'remove', 'hidden');
     
     const name = this.getUserDisplayName();
-    this.setElementText('headerUserName', name);
+    const shortName = name.length > 15 ? name.substring(0, 12) + '...' : name;
+    const email = this.currentUser.email || '';
+    const shortEmail = this.getShortEmail(email);
+
+    this.setElementText('headerUserName', shortName);
     this.setElementText('headerAvatarInitials', this.getUserInitials(name));
-    this.setElementText('headerUserEmail', this.currentUser.email || '');
-    this.setElementText('dropdownEmail', this.currentUser.email || this.currentUser.wallet.slice(0, 6) + '...' + this.currentUser.wallet.slice(-4));
+    this.setElementText('headerUserEmail', shortEmail);
+    this.setElementText('dropdownEmail', email || this.currentUser.wallet.slice(0, 6) + '...' + this.currentUser.wallet.slice(-4));
     
     this.closeLoginModal();
     console.log('✅ User connected:', this.currentUser.wallet);
@@ -97,6 +100,23 @@ var HeaderManager = {
       return [this.currentUser.firstName, this.currentUser.lastName].filter(Boolean).join(' ');
     }
     return this.currentUser.name || 'Member';
+  },
+
+  // Get shortened email for header display (e.g., "chris...@domain.com")
+  getShortEmail(email) {
+    if (!email) return '';
+    
+    const atIndex = email.indexOf('@');
+    if (atIndex === -1) return email;
+    
+    const localPart = email.substring(0, atIndex);
+    const domain = email.substring(atIndex);
+    
+    // If local part is short enough, show full email
+    if (localPart.length <= 8) return email;
+    
+    // Otherwise, truncate: first 5 chars + ... + @domain
+    return localPart.substring(0, 5) + '...' + domain;
   },
 
   getUserInitials(name) {
@@ -112,7 +132,6 @@ var HeaderManager = {
     return '--';
   },
 
-  // Fetch balance directly from blockchain
   async fetchUserBalance(wallet) {
     if (!this.CONFIG.VIP_TOKEN_ADDRESS || !this.CONFIG.POLYGON_RPC) {
       console.warn('Config not loaded, cannot fetch balance');
@@ -120,7 +139,6 @@ var HeaderManager = {
     }
 
     try {
-      // Load ethers if needed
       if (typeof ethers === 'undefined') {
         await this.loadEthers();
       }

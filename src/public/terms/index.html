@@ -28,6 +28,7 @@
             },
         }
     </script>
+    <script src="/js/shared-header.js"></script>
     <style>
         body { font-family: 'Manrope', sans-serif; }
         h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
@@ -87,6 +88,31 @@
         .legal-content a:hover {
             color: #f4d03f;
         }
+        .user-dropdown {
+            position: relative;
+        }
+        .user-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: rgba(26, 26, 26, 0.98);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            min-width: 240px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            z-index: 100;
+        }
+        .user-dropdown:hover .user-dropdown-menu,
+        .user-dropdown-menu:hover {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased">
@@ -96,7 +122,6 @@
     <!-- ============================================ -->
     <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5 transition-all duration-300">
         <div class="max-w-[1400px] mx-auto px-6 lg:px-12 flex items-center justify-between h-20 lg:h-24">
-            <!-- Logo -->
             <a href="/" class="flex items-center gap-4 group cursor-pointer">
                 <img src="/images/logo.png" alt="Kea Valley" class="h-12 w-auto"/>
                 <div>
@@ -104,7 +129,6 @@
                 </div>
             </a>
             
-            <!-- Desktop Navigation -->
             <nav class="hidden lg:flex items-center gap-8 xl:gap-12">
                 <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/package">Summer<br/>Season 2026</a>
                 <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="https://keanaissance.com" target="_blank" rel="noopener noreferrer">Keanaissance</a>
@@ -113,18 +137,65 @@
                 <a class="text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase" href="/marketplace">Marketplace</a>
             </nav>
 
-            <!-- Right Side -->
             <div class="flex items-center gap-4">
-                <a href="/profile" class="hidden sm:flex border border-primary/50 text-primary px-5 py-2.5 rounded-lg hover:bg-primary hover:text-black font-bold uppercase text-xs tracking-wide transition-all">
-                    Profile
-                </a>
+                <div id="headerConnected" class="hidden items-center gap-4">
+                    <div class="user-dropdown">
+                        <button class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/5 transition-colors">
+                            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center">
+                                <span class="material-symbols-outlined text-background-dark text-lg">person</span>
+                            </div>
+                            <div class="hidden sm:block text-left">
+                                <div id="headerUserName" class="text-sm font-medium text-white">Member</div>
+                                <div id="headerUserEmail" class="text-xs text-gray-400 max-w-[150px] truncate"></div>
+                            </div>
+                            <span class="material-symbols-outlined text-gray-400 text-lg">expand_more</span>
+                        </button>
+                        
+                        <div class="user-dropdown-menu">
+                            <div class="p-2">
+                                <div class="px-4 py-3 border-b border-white/10">
+                                    <p class="text-xs text-slate-400">Buying Power</p>
+                                    <p class="text-lg font-semibold text-primary">€<span id="dropdownBalance">0</span></p>
+                                    <p class="text-xs text-slate-500 mt-1" id="dropdownEmail"></p>
+                                </div>
+                                <a href="/profile" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors">
+                                    <span class="material-symbols-outlined text-primary">account_circle</span>
+                                    <span class="text-sm">My Profile</span>
+                                </a>
+                                <a href="/marketplace" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors">
+                                    <span class="material-symbols-outlined text-primary">storefront</span>
+                                    <span class="text-sm">Marketplace</span>
+                                </a>
+                                <a href="/package" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors">
+                                    <span class="material-symbols-outlined text-primary">card_membership</span>
+                                    <span class="text-sm">Buy More</span>
+                                </a>
+                                <div class="border-t border-white/10 my-2"></div>
+                                <button onclick="HeaderManager.disconnect()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors">
+                                    <span class="material-symbols-outlined">logout</span>
+                                    <span class="text-sm">Disconnect</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="headerDisconnected" class="flex items-center gap-3">
+                    <button onclick="HeaderManager.showLoginModal()" class="hidden sm:flex items-center gap-2 px-5 py-2.5 border border-primary/50 text-primary text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-primary hover:text-background-dark transition-all">
+                        <span class="material-symbols-outlined text-lg">account_circle</span>
+                        Login
+                    </button>
+                    <button onclick="HeaderManager.showLoginModal()" class="sm:hidden flex items-center justify-center w-10 h-10 border border-primary/50 text-primary rounded-lg hover:bg-primary hover:text-background-dark transition-all">
+                        <span class="material-symbols-outlined">account_circle</span>
+                    </button>
+                </div>
+
                 <button class="lg:hidden text-white p-2" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
                     <span class="material-symbols-outlined text-2xl">menu</span>
                 </button>
             </div>
         </div>
         
-        <!-- Mobile Menu -->
         <div id="mobileMenu" class="hidden lg:hidden bg-surface border-t border-white/5">
             <nav class="px-6 py-4 space-y-4">
                 <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="/package">Summer Season 2026</a>
@@ -132,10 +203,20 @@
                 <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="https://kearising.net" target="_blank">Kea Rising</a>
                 <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="https://villacarpediemkea.com" target="_blank">Kea Valley History</a>
                 <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="/marketplace">Marketplace</a>
-                <div class="border-t border-white/10 pt-4 mt-4">
-                    <a href="/profile" class="block text-center py-3 px-4 bg-primary text-black font-bold text-sm uppercase tracking-widest rounded-lg">
-                        Profile
-                    </a>
+                <div id="mobileUserSection" class="hidden border-t border-white/10 pt-4 mt-4">
+                    <div class="px-2 py-2 mb-2">
+                        <p class="text-xs text-slate-400">Buying Power</p>
+                        <p class="text-xl font-bold text-primary">€<span id="mobileBalance">0</span></p>
+                    </div>
+                    <a href="/profile" class="block py-2 px-2 text-sm hover:text-primary">My Profile</a>
+                    <button onclick="HeaderManager.disconnect()" class="w-full text-left text-sm font-bold tracking-widest text-red-400 hover:text-red-300 py-3 px-2">
+                        Disconnect
+                    </button>
+                </div>
+                <div id="mobileConnectSection" class="border-t border-white/10 pt-4 mt-4">
+                    <button onclick="HeaderManager.showLoginModal()" class="block w-full text-center py-3 px-4 bg-primary text-black font-bold text-sm uppercase tracking-widest rounded-lg">
+                        Login
+                    </button>
                 </div>
             </nav>
         </div>
@@ -284,6 +365,30 @@
             </div>
         </div>
     </footer>
+    <div id="loginModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-filter backdrop-blur-sm" onclick="HeaderManager.closeLoginModal()"></div>
+        <div class="absolute inset-4 flex items-center justify-center">
+            <div class="bg-surface border border-white/10 rounded-2xl w-full max-w-md overflow-hidden">
+                <div class="p-6 border-b border-white/5 flex items-center justify-between">
+                    <h2 class="text-xl font-serif text-white">Login to Continue</h2>
+                    <button onclick="HeaderManager.closeLoginModal()" class="text-slate-400 hover:text-white transition-colors">
+                        <span class="material-symbols-outlined text-2xl">close</span>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <div class="bg-white rounded-lg overflow-hidden">
+                        <iframe 
+                            id="loginWalletIframe"
+                            src=""
+                            class="w-full h-[500px] border-none"
+                            allow="clipboard-write"
+                        ></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <iframe id="walletTwoLogoutIframe" style="display:none;"></iframe>
 </body>
 </html>

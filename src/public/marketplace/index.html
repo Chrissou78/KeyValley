@@ -672,10 +672,11 @@
             document.getElementById('buyingPowerBanner').classList.remove('hidden');
             
             var name = [currentUser.firstName, currentUser.lastName].filter(Boolean).join(' ') || 
-                       currentUser.name || 
-                       'Member';
-            document.getElementById('headerUserName').textContent = name;
-            document.getElementById('headerUserEmail').textContent = currentUser.email || '';
+           currentUser.name || 
+           'Member';
+            var shortName = name.length > 15 ? name.substring(0, 12) + '...' : name;
+            document.getElementById('headerUserName').textContent = shortName;
+            document.getElementById('headerUserEmail').textContent = HeaderManager.getShortEmail ? HeaderManager.getShortEmail(currentUser.email || '') : (currentUser.email || '');
             
             // Update balance displays
             updateBalanceDisplays();
