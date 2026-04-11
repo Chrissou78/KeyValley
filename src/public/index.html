@@ -4,674 +4,837 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <meta name="description" content="Kea Valley Private Members Club - Exclusive membership packages with bonus buying power"/>
+    <meta name="description" content="KEA Valley® - The Mediterranean's Premier Private Members Club for Luxury Experiences & Ultra-Premium Hospitality">
     <title>Kea Valley | Private Members Club</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com" rel="preconnect"/>
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Playfair+Display:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png"/>
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png"/>
     <script>
         tailwind.config = {
-            darkMode: 'class',
+            darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        primary: '#ee9d2b',
-                        'primary-dark': '#b97a1f',
-                        'primary-light': '#fbdea6',
-                        'background-dark': '#0a0a0a',
-                        surface: '#121212',
-                        'surface-light': '#1e1e1e'
+                        "primary": "#ee9d2b",
+                        "primary-light": "#fbdea6",
+                        "background-dark": "#0a0a0a",
+                        "surface": "#121212",
                     },
                     fontFamily: {
-                        sans: ['Manrope', 'system-ui', '-apple-system', 'sans-serif'],
-                        serif: ['Playfair Display', 'Georgia', 'serif']
-                    }
-                }
-            }
+                        "sans": ["Manrope", "sans-serif"],
+                        "serif": ["Playfair Display", "serif"],
+                    },
+                },
+            },
         }
     </script>
+    
+    <!-- Shared Header Script -->
+    <script src="/js/shared-header.js"></script>
+    
     <style>
-        /* Gold glow effect */
-        .gold-glow {
-            box-shadow: 0 0 30px rgba(238, 157, 43, 0.3);
+        body { font-family: 'Manrope', sans-serif; }
+        h1, h2, h3, h4, .font-serif { font-family: 'Playfair Display', serif; }
+        .gold-glow:hover {
+            box-shadow: 0 0 25px rgba(238, 157, 43, 0.3);
+            border-color: #ee9d2b;
+            transition: all 0.5s ease;
         }
-        
-        /* Glass navigation */
         .glass-nav {
-            background: rgba(18, 18, 18, 0.85);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background-color: rgba(26, 26, 26, 0.9);
         }
-        
-        /* Text reveal animation */
         .text-reveal {
-            background: linear-gradient(90deg, #ee9d2b 0%, #fbdea6 50%, #ee9d2b 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-size: 200% auto;
-            animation: textShine 3s linear infinite;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeIn 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
-        
-        @keyframes textShine {
-            to {
-                background-position: 200% center;
-            }
+        @keyframes fadeIn {
+            to { opacity: 1; transform: translateY(0); }
         }
-        
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0a0a0a;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #ee9d2b;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #fbdea6;
-        }
-        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ee9d2b; }
+
         /* User dropdown */
-        #userDropdown {
-            display: none;
-            position: absolute;
-            right: 0;
-            top: 100%;
-            margin-top: 0.5rem;
-            background: #1e1e1e;
-            border: 1px solid rgba(238, 157, 43, 0.3);
-            border-radius: 0.5rem;
-            width: 200px;
-            z-index: 50;
-        }
-        #userDropdownBtn:focus + #userDropdown,
-        #userDropdown:hover,
-        #userDropdownBtn:hover + #userDropdown {
-            display: block;
-        }
-        #userDropdownBtn:focus {
-            outline: none;
-        }
-        
-        /* Services Carousel */
-        .carousel-container {
+        .user-dropdown {
             position: relative;
-            height: 400px;
-            overflow: hidden;
         }
-        
-        .carousel-track {
+        .user-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: rgba(26, 26, 26, 0.98);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            min-width: 240px;
+            padding: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            z-index: 100;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        
-        .service-card {
+        .user-dropdown:hover .user-dropdown-menu,
+        .user-dropdown-menu:hover {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .user-dropdown-menu a,
+        .user-dropdown-menu button {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             width: 100%;
-            padding: 2rem;
-            background: linear-gradient(135deg, rgba(30, 30, 30, 0.9), rgba(18, 18, 18, 0.95));
-            border: 1px solid rgba(238, 157, 43, 0.2);
-            border-radius: 1rem;
-            flex-shrink: 0;
-            transition: all 0.4s ease;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: #fff;
+            text-decoration: none;
+            transition: background 0.2s;
+            border: none;
+            background: none;
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.875rem;
         }
-        
+        .user-dropdown-menu a:hover,
+        .user-dropdown-menu button:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Services Vertical Carousel */
+        .services-carousel-container {
+            position: relative;
+            height: 500px;
+            overflow: hidden;
+            mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+        }
+        .services-carousel-track {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            animation: scrollVertical 40s linear infinite;
+        }
+        .services-carousel-track:hover {
+            animation-play-state: paused;
+        }
+        @keyframes scrollVertical {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+        }
+        .service-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            min-width: 400px;
+            flex-shrink: 0;
+        }
         .service-card:hover {
             border-color: rgba(238, 157, 43, 0.5);
-            box-shadow: 0 10px 30px rgba(238, 157, 43, 0.15);
+            background: rgba(238, 157, 43, 0.05);
+            transform: translateX(10px);
         }
-        
-        .service-card.active {
-            border-color: #ee9d2b;
-            background: linear-gradient(135deg, rgba(238, 157, 43, 0.1), rgba(18, 18, 18, 0.95));
+        .service-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(238, 157, 43, 0.2) 0%, rgba(238, 157, 43, 0.05) 100%);
+            border: 1px solid rgba(238, 157, 43, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
-        
-        /* Package cards */
+        .service-icon .material-symbols-outlined {
+            font-size: 28px;
+            color: #ee9d2b;
+        }
+
+        /* Package Cards */
         .package-card {
-            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 40px;
+            position: relative;
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
         .package-card:hover {
             transform: translateY(-5px);
+            border-color: rgba(238, 157, 43, 0.3);
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
         }
-        
-        /* Benefit items */
-        .benefit-item {
+        .package-card.featured {
+            background: linear-gradient(145deg, rgba(238, 157, 43, 0.1) 0%, rgba(238, 157, 43, 0.02) 100%);
+            border-color: rgba(238, 157, 43, 0.4);
+        }
+        .package-badge {
+            position: absolute;
+            top: -12px;
+            left: 30px;
+            background: #ee9d2b;
+            color: #0a0a0a;
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+        .package-badge.popular {
+            background: linear-gradient(135deg, #ee9d2b 0%, #d4890f 100%);
+        }
+        .package-badge.best-value {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #fff;
+        }
+        .buying-power-highlight {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .package-cta {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            padding: 0.5rem 0;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 16px 30px;
+            background: transparent;
+            border: 2px solid #ee9d2b;
+            color: #ee9d2b;
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            margin-top: auto;
         }
-        
-        /* Login modal */
-        #loginModal {
-            z-index: 100;
+        .package-cta:hover {
+            background: #ee9d2b;
+            color: #0a0a0a;
         }
-        #loginModal > div {
-            animation: fadeIn 0.2s ease-out;
+        .package-card.featured .package-cta {
+            background: #ee9d2b;
+            color: #0a0a0a;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
+        .package-card.featured .package-cta:hover {
+            background: #fbdea6;
+            box-shadow: 0 10px 30px rgba(238, 157, 43, 0.3);
+        }
+
+        /* Membership Benefits */
+        .benefit-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .benefit-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Login Modal */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+        }
+        .wallet-iframe-container {
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .wallet-iframe {
+            width: 100%;
+            height: 500px;
+            border: none;
         }
     </style>
 </head>
-<body class="bg-background-dark text-white min-h-screen">
-    <!-- Header -->
-    <header class="glass-nav fixed w-full top-0 z-50 border-b border-primary/20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <!-- Logo -->
-                <a href="/" class="flex items-center space-x-2">
-                    <img src="/images/logo.png" alt="Kea Valley" class="h-10 w-auto">
+<body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased">
+
+    <!-- ============================================ -->
+    <!-- HEADER - Fixed Spacing & Layout -->
+    <!-- ============================================ -->
+    <header class="fixed top-0 w-full z-50 glass-nav border-b border-white/5 transition-all duration-300">
+        <div class="max-w-[1400px] mx-auto px-8 lg:px-16 flex items-center justify-between h-20 lg:h-24">
+            <!-- Logo -->
+            <a href="/" class="flex items-center gap-3 group cursor-pointer flex-shrink-0">
+                <img src="/images/logo.png" alt="Kea Valley" class="h-10 lg:h-12 w-auto"/>
+                <div class="hidden sm:block">
+                    <h2 class="text-base lg:text-lg font-serif font-bold tracking-widest uppercase text-white leading-tight">Kea<br/>Valley</h2>
+                </div>
+            </a>
+            
+            <!-- Desktop Navigation - Centered -->
+            <nav class="hidden xl:flex items-center justify-center gap-10 2xl:gap-14">
+                <a class="text-[10px] 2xl:text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase text-center whitespace-nowrap" href="/package">
+                    Summer<br/>Season 2026
                 </a>
+                <a class="text-[10px] 2xl:text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase text-center whitespace-nowrap" href="https://keanaissance.com" target="_blank" rel="noopener noreferrer">
+                    Keanaissance
+                </a>
+                <a class="text-[10px] 2xl:text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase text-center whitespace-nowrap" href="https://kearising.net" target="_blank" rel="noopener noreferrer">
+                    Kea<br/>Rising
+                </a>
+                <a class="text-[10px] 2xl:text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase text-center whitespace-nowrap" href="https://villacarpediemkea.com" target="_blank" rel="noopener noreferrer">
+                    Kea Valley<br/>History
+                </a>
+                <a class="text-[10px] 2xl:text-xs font-bold tracking-widest hover:text-primary transition-colors uppercase text-center whitespace-nowrap" href="/marketplace">
+                    Marketplace
+                </a>
+            </nav>
 
-                <!-- Desktop Navigation -->
-                <nav class="hidden md:flex items-center space-x-8">
-                    <a href="/package" class="text-gray-300 hover:text-primary transition-colors font-medium">Package</a>
-                    <a href="https://keanaissance.com" target="_blank" class="text-gray-300 hover:text-primary transition-colors font-medium">Keanaissance</a>
-                    <a href="https://kearising.net" target="_blank" class="text-gray-300 hover:text-primary transition-colors font-medium">Kea Rising</a>
-                    <a href="https://villacarpediemkea.com" target="_blank" class="text-gray-300 hover:text-primary transition-colors font-medium">History</a>
-                    <a href="/marketplace" class="text-gray-300 hover:text-primary transition-colors font-medium">Marketplace</a>
-                </nav>
-
-                <!-- User Section - Desktop -->
-                <div class="hidden md:flex items-center space-x-4">
-                    <!-- Disconnected State -->
-                    <div id="headerDisconnected" class="flex items-center">
-                        <button onclick="showLoginModal()" class="bg-primary hover:bg-primary-dark text-black font-semibold px-6 py-2 rounded-full transition-all">
-                            Connect
+            <!-- Right Side - User Section -->
+            <div class="flex items-center gap-4 flex-shrink-0">
+                <!-- Connected State -->
+                <div id="headerConnected" class="hidden">
+                    <div class="user-dropdown">
+                        <button class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors">
+                            <div class="text-right hidden lg:block">
+                                <p class="text-sm font-medium truncate max-w-[150px]" id="headerUserName">Member</p>
+                                <p class="text-xs text-primary font-semibold" id="headerUserEmail"></p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center">
+                                <span id="headerAvatarInitials" class="text-black font-bold text-sm">--</span>
+                            </div>
                         </button>
-                    </div>
-
-                    <!-- Connected State -->
-                    <div id="headerConnected" class="hidden items-center space-x-3 relative">
-                        <button id="userDropdownBtn" class="flex items-center space-x-3 px-3 py-2 rounded-full hover:bg-surface-light transition-colors">
-                            <div class="w-8 h-8 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center">
-                                <span id="headerAvatarInitials" class="text-primary text-sm font-bold">--</span>
+                        
+                        <div class="user-dropdown-menu">
+                            <!-- Balance Display -->
+                            <div class="px-4 py-3 border-b border-white/10 mb-2">
+                                <p class="text-xs text-slate-400 mb-1">Buying Power</p>
+                                <p class="text-2xl font-bold text-primary">€<span id="dropdownBalance">0</span></p>
+                                <p class="text-xs text-slate-500 mt-1 truncate" id="dropdownEmail"></p>
                             </div>
-                            <div class="text-left">
-                                <div id="headerUserName" class="text-sm font-medium text-white">Member</div>
-                                <div class="text-xs text-primary">€<span id="dropdownBalance">0</span> Buying Power</div>
-                            </div>
-                            <span class="material-symbols-outlined text-gray-400">expand_more</span>
-                        </button>
-                        <div id="userDropdown">
-                            <div class="p-3 border-b border-primary/20">
-                                <div id="dropdownEmail" class="text-sm text-gray-400 truncate"></div>
-                            </div>
-                            <a href="/profile" class="flex items-center space-x-2 px-3 py-2 hover:bg-surface transition-colors">
-                                <span class="material-symbols-outlined text-primary">person</span>
-                                <span class="text-sm">My Profile</span>
+                            
+                            <a href="/profile">
+                                <span class="material-symbols-outlined text-xl">account_circle</span>
+                                <span>My Profile</span>
                             </a>
-                            <a href="/marketplace" class="flex items-center space-x-2 px-3 py-2 hover:bg-surface transition-colors">
-                                <span class="material-symbols-outlined text-primary">storefront</span>
-                                <span class="text-sm">Marketplace</span>
+                            <a href="/marketplace">
+                                <span class="material-symbols-outlined text-xl">storefront</span>
+                                <span>Marketplace</span>
                             </a>
-                            <button onclick="disconnect()" class="w-full flex items-center space-x-2 px-3 py-2 hover:bg-surface transition-colors text-red-400">
-                                <span class="material-symbols-outlined">logout</span>
-                                <span class="text-sm">Disconnect</span>
-                            </button>
+                            <a href="/package">
+                                <span class="material-symbols-outlined text-xl">add_card</span>
+                                <span>Add Buying Power</span>
+                            </a>
+                            
+                            <div class="border-t border-white/10 mt-2 pt-2">
+                                <button onclick="HeaderManager.disconnect()" class="text-red-400 hover:text-red-300 w-full">
+                                    <span class="material-symbols-outlined text-xl">logout</span>
+                                    <span>Disconnect</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Mobile Menu Button -->
-                <button id="mobileMenuBtn" class="md:hidden p-2 text-gray-400 hover:text-primary">
+                <!-- Disconnected State -->
+                <div id="headerDisconnected" class="hidden items-center gap-3">
+                    <a href="/profile" class="hidden lg:flex border border-primary/50 text-primary px-5 py-2.5 rounded-lg hover:bg-primary hover:text-black font-bold uppercase text-[10px] tracking-wide transition-all whitespace-nowrap">
+                        Login
+                    </a>
+                    <a href="/profile" class="lg:hidden border border-primary/50 text-primary rounded-lg p-2">
+                        <span class="material-symbols-outlined">login</span>
+                    </a>
+                </div>
+
+                <!-- Mobile menu button -->
+                <button id="mobileMenuBtn" class="xl:hidden text-white/70 hover:text-white p-2">
                     <span class="material-symbols-outlined text-2xl">menu</span>
                 </button>
             </div>
         </div>
 
         <!-- Mobile Menu -->
-        <div id="mobileMenu" class="hidden md:hidden border-t border-primary/20 bg-surface">
-            <div class="px-4 py-3 space-y-2">
-                <a href="/package" class="block py-2 text-gray-300 hover:text-primary">Package</a>
-                <a href="https://keanaissance.com" target="_blank" class="block py-2 text-gray-300 hover:text-primary">Keanaissance</a>
-                <a href="https://kearising.net" target="_blank" class="block py-2 text-gray-300 hover:text-primary">Kea Rising</a>
-                <a href="https://villacarpediemkea.com" target="_blank" class="block py-2 text-gray-300 hover:text-primary">History</a>
-                <a href="/marketplace" class="block py-2 text-gray-300 hover:text-primary">Marketplace</a>
+        <div id="mobileMenu" class="hidden xl:hidden bg-surface border-t border-white/5">
+            <nav class="px-6 py-4 space-y-4">
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="/package">Summer Season 2026</a>
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="https://keanaissance.com" target="_blank">Keanaissance</a>
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="https://kearising.net" target="_blank">Kea Rising</a>
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="https://villacarpediemkea.com" target="_blank">Kea Valley History</a>
+                <a class="block text-sm font-bold tracking-widest uppercase hover:text-primary" href="/marketplace">Marketplace</a>
                 
                 <!-- Mobile User Section -->
-                <div id="mobileConnectSection" class="pt-3 border-t border-primary/20">
-                    <button onclick="showLoginModal()" class="w-full bg-primary hover:bg-primary-dark text-black font-semibold py-2 rounded-full">
-                        Connect Wallet
+                <div id="mobileUserSection" class="hidden border-t border-white/10 mt-4 pt-4">
+                    <div class="px-2 py-2 mb-2">
+                        <p class="text-xs text-slate-400">Buying Power</p>
+                        <p class="text-xl font-bold text-primary">€<span id="mobileBalance">0</span></p>
+                    </div>
+                    <a href="/profile" class="block text-sm font-bold tracking-widest text-primary py-3 px-2">My Profile</a>
+                    <button onclick="HeaderManager.disconnect()" class="w-full text-left text-sm font-bold tracking-widest text-red-400 hover:text-red-300 py-3 px-2">
+                        Disconnect
                     </button>
                 </div>
-                <div id="mobileUserSection" class="hidden pt-3 border-t border-primary/20">
-                    <div class="flex items-center justify-between py-2">
-                        <span class="text-gray-400">Buying Power</span>
-                        <span class="text-primary font-semibold">€<span id="mobileBalance">0</span></span>
-                    </div>
-                    <a href="/profile" class="block py-2 text-gray-300 hover:text-primary">My Profile</a>
-                    <button onclick="disconnect()" class="w-full text-left py-2 text-red-400">Disconnect</button>
+                <div id="mobileConnectSection" class="border-t border-white/10 mt-4 pt-4">
+                    <a href="/profile" class="block text-center py-3 px-4 bg-primary text-black font-bold text-sm uppercase tracking-widest rounded-lg">
+                        Login
+                    </a>
                 </div>
-            </div>
+            </nav>
         </div>
     </header>
 
     <!-- Login Modal -->
-    <div id="loginModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4">
-        <div class="bg-surface rounded-2xl w-full max-w-md overflow-hidden border border-primary/30">
-            <div class="flex items-center justify-between p-4 border-b border-primary/20">
-                <h3 class="text-lg font-semibold">Connect Your Wallet</h3>
-                <button onclick="closeLoginModal()" class="p-2 hover:bg-surface-light rounded-full">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-            <div class="h-[500px]">
-                <iframe id="loginWalletIframe" class="w-full h-full border-0" allow="clipboard-write"></iframe>
+    <div id="loginModal" class="fixed inset-0 z-[80] hidden">
+        <div class="modal-overlay absolute inset-0" onclick="HeaderManager.closeLoginModal()"></div>
+        <div class="absolute inset-4 flex items-center justify-center">
+            <div class="bg-surface border border-white/10 rounded-2xl w-full max-w-md overflow-hidden">
+                <div class="p-6 border-b border-white/5 flex items-center justify-between">
+                    <h2 class="text-xl font-serif text-white">Login to Kea Valley</h2>
+                    <button onclick="HeaderManager.closeLoginModal()" class="text-slate-400 hover:text-white transition-colors">
+                        <span class="material-symbols-outlined text-2xl">close</span>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <p class="text-slate-400 text-sm mb-6">Login to your account to access exclusive member benefits.</p>
+                    <div class="wallet-iframe-container">
+                        <iframe 
+                            id="loginWalletIframe"
+                            src=""
+                            class="wallet-iframe"
+                            allow="clipboard-write"
+                        ></iframe>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    
-    <!-- Logout iframe (hidden) -->
-    <iframe id="walletTwoLogoutIframe" style="display:none;"></iframe>
 
     <!-- Hero Section -->
-    <section class="relative min-h-screen flex items-center justify-center pt-16">
-        <!-- Background -->
-        <div class="absolute inset-0">
-            <div class="absolute inset-0 bg-gradient-to-b from-background-dark via-transparent to-background-dark z-10"></div>
-            <img src="/images/hero-bg.jpg" alt="" class="w-full h-full object-cover opacity-40" onerror="this.style.display='none'">
-            <div class="absolute inset-0 bg-gradient-radial from-primary/5 via-transparent to-transparent"></div>
+    <section class="relative min-h-screen w-full overflow-hidden flex flex-col">
+        <div class="absolute inset-0 z-0">
+            <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-background-dark z-10"></div>
+            <div class="w-full h-full bg-cover bg-center bg-no-repeat transform scale-105" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDb_ylzwt1JEbIeGZFhXrhxNxNambzL5Ne9LWo9j7DaH9Ryy8Hsd16PSX_ld9bfYoziEsrx0FwTVYv5bxWjjRTQYVS5xx1oH1PxgZjQo3xxVv7Ej10A8PnxrGcCLMlgvD5n6Ellk8WLmevdZW_nHaAm1klzDKw6d2Zs0urW-AxGMKuAFj34twQx6sSo5aZrFHVhKEvu8B9Fw7Pi9h-80foA99A8QZuqgwa25bo2RgA-Cy-DWo-tRyfmoyMqmVwzCmg49-_5-3MMAeA');"></div>
         </div>
-
-        <!-- Content -->
-        <div class="relative z-20 text-center px-4 max-w-4xl mx-auto">
-            <h1 class="font-serif text-4xl md:text-6xl lg:text-7xl font-bold mb-6">
-                Welcome to<br>
-                <span class="text-reveal">Kea Valley</span>
-            </h1>
-            <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-2xl mx-auto">
-                An exclusive private members club offering premium experiences and exceptional value
-            </p>
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="/package" class="w-full sm:w-auto bg-primary hover:bg-primary-dark text-black font-bold px-8 py-4 rounded-full transition-all transform hover:scale-105 gold-glow">
-                    View Packages
-                </a>
-                <a href="/profile" class="w-full sm:w-auto border-2 border-primary text-primary hover:bg-primary hover:text-black font-bold px-8 py-4 rounded-full transition-all">
-                    My Profile
-                </a>
+        
+        <div class="relative z-20 flex-1 flex items-center justify-center text-center px-6 pt-32 lg:pt-32">
+            <div class="max-w-6xl mx-auto flex flex-col items-center">
+                <div class="mb-8 flex items-center justify-center gap-4 text-reveal" style="animation-delay: 0.1s;">
+                    <div class="h-[1px] w-12 bg-primary"></div>
+                    <span class="text-primary tracking-[0.4em] uppercase text-xs font-bold">Private Members Club</span>
+                    <div class="h-[1px] w-12 bg-primary"></div>
+                </div>
+                <h1 class="text-5xl md:text-7xl lg:text-9xl font-serif italic font-medium tracking-tight text-white mb-8 leading-none text-reveal" style="animation-delay: 0.3s;">
+                    The Art <br/><span class="not-italic font-normal">of Living</span>
+                </h1>
+                <p class="text-slate-300 text-lg md:text-xl max-w-xl mx-auto font-light leading-relaxed text-reveal font-sans" style="animation-delay: 0.5s;">
+                    Exclusive access to luxury experiences, premium services, and extraordinary moments on Kea Island.
+                </p>
+                <div class="mt-12 flex flex-col sm:flex-row gap-4 text-reveal" style="animation-delay: 0.7s;">
+                    <a href="/package" class="px-10 py-4 bg-primary text-background-dark font-bold font-sans rounded-sm tracking-widest uppercase text-xs gold-glow hover:translate-y-[-2px] transition-transform">
+                        Join the Club
+                    </a>
+                    <a href="#services" class="px-10 py-4 border border-white/30 text-white font-bold font-sans rounded-sm tracking-widest uppercase text-xs hover:bg-white/10 transition-all">
+                        Explore Services
+                    </a>
+                </div>
             </div>
         </div>
-
-        <!-- Scroll indicator -->
-        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 animate-bounce">
-            <span class="material-symbols-outlined text-primary text-3xl">expand_more</span>
+        
+        <div class="relative z-20 pb-12 pt-8 text-reveal" style="animation-delay: 0.9s;">
+            <div class="max-w-4xl mx-auto text-center px-6">
+                <div class="w-10 h-10 mx-auto text-primary opacity-50 mb-6">
+                    <svg class="w-full h-full" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21L14.017 18C14.017 16.8954 14.8954 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H15.017C14.4647 8 14.017 8.44772 14.017 9V11C14.017 11.5523 13.5693 12 13.017 12H12.017V5H22.017V15C22.017 18.3137 19.3307 21 16.017 21H14.017ZM5.0166 21L5.0166 18C5.0166 16.8954 5.89503 16 7.0166 16H10.0166C10.5689 16 11.0166 15.5523 11.0166 15V9C11.0166 8.44772 10.5689 8 10.0166 8H6.0166C5.46432 8 5.0166 8.44772 5.0166 9V11C5.0166 11.5523 4.56889 12 4.0166 12H3.0166V5H13.0166V15C13.0166 18.3137 10.3303 21 7.0166 21H5.0166Z"></path></svg>
+                </div>
+                <p class="text-lg md:text-xl lg:text-2xl font-serif font-light leading-relaxed text-white/80 italic mb-8">
+                    "Live a Life That You Don't Want to Take a Holiday From"
+                </p>
+                <p class="text-sm text-slate-500">— Dr. Julie Meyer MBE</p>
+                <div class="w-16 h-[1px] bg-primary mx-auto my-8"></div>
+                <a class="inline-flex flex-col items-center gap-2 text-white/50 hover:text-primary transition-colors duration-300" href="#services">
+                    <span class="text-[0.6rem] uppercase tracking-widest">Discover</span>
+                    <span class="material-symbols-outlined text-3xl animate-bounce font-light">keyboard_arrow_down</span>
+                </a>
+            </div>
         </div>
     </section>
 
-    <!-- Services Section -->
-    <section class="py-20 px-4 bg-gradient-to-b from-background-dark to-surface">
-        <div class="max-w-7xl mx-auto">
-            <div class="text-center mb-16">
-                <h2 class="font-serif text-3xl md:text-5xl font-bold mb-4">
-                    Premium <span class="text-primary">Services</span>
-                </h2>
-                <p class="text-gray-400 text-lg max-w-2xl mx-auto">
-                    Discover the exclusive benefits and experiences available to our members
-                </p>
-            </div>
+    <!-- Main Content -->
+    <main class="relative z-10">
 
-            <div class="grid md:grid-cols-2 gap-8 items-center">
-                <!-- Carousel -->
-                <div class="carousel-container" id="servicesCarousel">
-                    <div class="carousel-track" id="carouselTrack">
-                        <!-- Services will be inserted here by JavaScript -->
-                    </div>
-                </div>
-
-                <!-- Active Service Details -->
-                <div id="serviceDetails" class="bg-surface-light rounded-2xl p-8 border border-primary/20">
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
-                            <span id="serviceIcon" class="material-symbols-outlined text-3xl text-primary">star</span>
+        <!-- SERVICES SECTION -->
+        <section class="py-24 md:py-32 bg-surface" id="services">
+            <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
+                <div class="grid lg:grid-cols-2 gap-16 items-center">
+                    
+                    <!-- Left: Text Content -->
+                    <div class="space-y-8">
+                        <div>
+                            <span class="inline-block text-xs font-bold tracking-[0.2em] text-primary uppercase mb-6 px-5 py-2 border border-primary/30 rounded-full">Exclusive Services</span>
+                            <h2 class="text-4xl md:text-5xl lg:text-6xl font-serif font-medium text-white mb-6">Your Gateway to<br/><span class="text-primary italic">Luxury</span></h2>
+                            <p class="text-slate-400 text-lg font-light leading-relaxed">
+                                As a Kea Valley member, unlock access to a curated collection of premium services and experiences across the island. From villa rentals to yacht charters, fine dining to wellness retreats.
+                            </p>
                         </div>
-                        <h3 id="serviceTitle" class="text-2xl font-bold">Select a Service</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-4 p-4 bg-white/5 rounded-lg border border-white/5">
+                                <div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-primary">verified</span>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-medium">Verified Partners</h4>
+                                    <p class="text-slate-500 text-sm">Hand-picked luxury providers</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4 p-4 bg-white/5 rounded-lg border border-white/5">
+                                <div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-primary">currency_exchange</span>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-medium">Bonus Buying Power</h4>
+                                    <p class="text-slate-500 text-sm">Get up to 50% extra with membership packages</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4 p-4 bg-white/5 rounded-lg border border-white/5">
+                                <div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-primary">redeem</span>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-medium">Digital Vouchers</h4>
+                                    <p class="text-slate-500 text-sm">Instant delivery to your account</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <a href="/marketplace" class="inline-flex items-center gap-3 px-8 py-4 bg-primary text-background-dark font-bold rounded-sm tracking-widest uppercase text-xs gold-glow hover:translate-y-[-2px] transition-transform">
+                            <span>Browse Marketplace</span>
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </a>
                     </div>
-                    <p id="serviceDescription" class="text-gray-400 text-lg leading-relaxed">
-                        Hover over a service to see more details about our exclusive offerings.
+                    
+                    <!-- Right: Vertical Carousel -->
+                    <div class="services-carousel-container">
+                        <div class="services-carousel-track" id="servicesTrack">
+                            <!-- Services will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </section>
+
+        <!-- MEMBERSHIP PACKAGES SECTION -->
+        <section class="py-24 md:py-32 bg-background-dark" id="membership">
+            <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
+                
+                <div class="text-center mb-16">
+                    <span class="inline-block text-xs font-bold tracking-[0.2em] text-primary uppercase mb-6 px-5 py-2 border border-primary/30 rounded-full">Membership</span>
+                    <h2 class="text-4xl md:text-5xl lg:text-6xl font-serif font-medium text-white mb-6">Choose Your<br/><span class="text-primary italic">Experience</span></h2>
+                    <p class="text-slate-400 text-lg font-light max-w-2xl mx-auto">
+                        Join the Kea Valley Private Members Club and unlock exclusive buying power for our marketplace of luxury services.
                     </p>
                 </div>
+
+                <div class="grid md:grid-cols-3 gap-8 mb-16">
+                    
+                    <!-- Silver Package -->
+                    <div class="package-card">
+                        <div class="package-badge">Starter</div>
+                        <div class="mb-6">
+                            <h3 class="text-2xl font-serif text-white mb-2">Silver</h3>
+                            <p class="text-slate-500 text-sm">Perfect for first-time visitors</p>
+                        </div>
+                        <div class="mb-4">
+                            <span class="text-4xl font-bold text-white">€3,000</span>
+                        </div>
+                        <div class="buying-power-highlight">
+                            <p class="text-sm text-slate-400 mb-1">Buying Power</p>
+                            <p class="text-3xl font-bold text-emerald-400">€3,500</p>
+                            <p class="text-xs text-emerald-400/80 mt-1">+17% bonus</p>
+                        </div>
+                        <div class="flex-1 space-y-3 mb-8">
+                            <div class="benefit-item">
+                                <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                <span class="text-slate-300 text-sm">Access to all marketplace services</span>
+                            </div>
+                            <div class="benefit-item">
+                                <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                <span class="text-slate-300 text-sm">Digital vouchers delivered instantly</span>
+                            </div>
+                            <div class="benefit-item">
+                                <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                <span class="text-slate-300 text-sm">Valid for 12 months</span>
+                            </div>
+                            <div class="benefit-item">
+                                <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                <span class="text-slate-300 text-sm">Member events access</span>
+                            </div>
+                        </div>
+                        <a href="/package" class="package-cta">
+                            <span>Get Started</span>
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </a>
+                    </div>
+
+                    <!-- Gold Package -->
+                    <div class="package-card featured">
+                        <div class="package-badge popular">Most Popular</div>
+                        <div class="mb-6">
+                            <h3 class="text-2xl font-serif text-white mb-2">Gold</h3>
+                            <p class="text-slate-500 text-sm">For the discerning traveler</p>
+                        </div>
+                        <div class="mb-4">
+                            <span class="text-4xl font-bold text-white">€8,000</span>
+                        </div>
+                        <div class="buying-power-highlight">
+                            <p class="text-sm text-slate-400 mb-1">Buying Power</p>
+                            <p class="text-3xl font-bold text-emerald-400">€10,000</p>
+                            <p class="text-xs text-emerald-400/80 mt-1">+25% bonus</p>
+                        </div>
+                        <div class="flex-1 space-y-3 mb-8">
+                            <div class="benefit-item">
+                                <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                <span class="text-slate-300 text-sm">Everything in Silver</span>
+                            </div>
+                            <div class="benefit-item">
+                                <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                <span class="text-slate-300 text-sm">Priority booking for villas</span>
+                            </div>
+                            <div class="benefit-item">
+                                <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                <span class="text-slate-300 text-sm">Dedicated concierge service</span>
+                            </div>
+                            <div class="benefit-item">
+                                <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                <span class="text-slate-300 text-sm">Exclusive experiences access</span>
+                            </div>
+                            <div class="benefit-item">
+                                <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                <span class="text-slate-300 text-sm">1 Summit access (Zurich or Kea)</span>
+                            </div>
+                        </div>
+                        <a href="/package" class="package-cta">
+                            <span>Get Started</span>
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </a>
+                    </div>
+
+                    <!-- Platinum Package -->
+                    <div class="package-card">
+                        <div class="package-badge best-value">Best Value</div>
+                        <div class="mb-6">
+                            <h3 class="text-2xl font-serif text-white mb-2">Platinum</h3>
+                            <p class="text-slate-500 text-sm">The ultimate experience</p>
+                        </div>
+                        <div class="mb-4">
+                            <span class="text-4xl font-bold text-white">€20,000</span>
+                        </div>
+                        <div class="buying-power-highlight">
+                            <p class="text-sm text-slate-400 mb-1">Buying Power</p>
+                            <p class="text-3xl font-bold text-emerald-400">€30,000</p>
+                            <p class="text-xs text-emerald-400/80 mt-1">+50% bonus</p>
+                        </div>
+                        <div class="flex-1 space-y-3 mb-8">
+                            <div class="benefit-item">
+                                <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                <span class="text-slate-300 text-sm">Everything in Gold</span>
+                            </div>
+                            <div class="benefit-item">
+                                <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                <span class="text-slate-300 text-sm">Personal relationship manager</span>
+                            </div>
+                            <div class="benefit-item">
+                                <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                <span class="text-slate-300 text-sm">VIP access to all summits</span>
+                            </div>
+                            <div class="benefit-item">
+                                <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                <span class="text-slate-300 text-sm">Custom villa design consultation</span>
+                            </div>
+                            <div class="benefit-item">
+                                <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                <span class="text-slate-300 text-sm">Investment opportunities access</span>
+                            </div>
+                            <div class="benefit-item">
+                                <span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                                <span class="text-slate-300 text-sm">Yacht club membership included</span>
+                            </div>
+                        </div>
+                        <a href="/package" class="package-cta">
+                            <span>Get Started</span>
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </a>
+                    </div>
+
+                </div>
+
+                <!-- How It Works -->
+                <div class="bg-surface rounded-2xl p-8 md:p-12 border border-white/5">
+                    <h3 class="text-2xl font-serif text-white text-center mb-8">How It Works</h3>
+                    <div class="grid md:grid-cols-4 gap-8">
+                        <div class="text-center">
+                            <div class="w-16 h-16 mx-auto rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center mb-4">
+                                <span class="text-2xl font-bold text-primary">1</span>
+                            </div>
+                            <h4 class="text-white font-medium mb-2">Choose Package</h4>
+                            <p class="text-slate-500 text-sm">Select the membership that fits your lifestyle</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-16 h-16 mx-auto rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center mb-4">
+                                <span class="text-2xl font-bold text-primary">2</span>
+                            </div>
+                            <h4 class="text-white font-medium mb-2">Complete Payment</h4>
+                            <p class="text-slate-500 text-sm">Secure checkout via card</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-16 h-16 mx-auto rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center mb-4">
+                                <span class="text-2xl font-bold text-primary">3</span>
+                            </div>
+                            <h4 class="text-white font-medium mb-2">Get Buying Power</h4>
+                            <p class="text-slate-500 text-sm">Credits added to your account instantly</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-16 h-16 mx-auto rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center mb-4">
+                                <span class="text-2xl font-bold text-primary">4</span>
+                            </div>
+                            <h4 class="text-white font-medium mb-2">Book & Enjoy</h4>
+                            <p class="text-slate-500 text-sm">Browse marketplace and redeem vouchers</p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
+        </section>
 
-            <!-- Carousel Controls -->
-            <div class="flex justify-center gap-4 mt-8">
-                <button onclick="prevService()" class="p-3 rounded-full bg-surface-light hover:bg-primary/20 border border-primary/30 transition-all">
-                    <span class="material-symbols-outlined text-primary">chevron_left</span>
-                </button>
-                <div id="carouselDots" class="flex items-center gap-2">
-                    <!-- Dots will be inserted here -->
-                </div>
-                <button onclick="nextService()" class="p-3 rounded-full bg-surface-light hover:bg-primary/20 border border-primary/30 transition-all">
-                    <span class="material-symbols-outlined text-primary">chevron_right</span>
-                </button>
-            </div>
-        </div>
-    </section>
-
-    <!-- Membership Packages Section -->
-    <section class="py-20 px-4">
-        <div class="max-w-7xl mx-auto">
-            <div class="text-center mb-16">
-                <h2 class="font-serif text-3xl md:text-5xl font-bold mb-4">
-                    Membership <span class="text-primary">Packages</span>
-                </h2>
-                <p class="text-gray-400 text-lg max-w-2xl mx-auto">
-                    Choose the package that best suits your needs and unlock exclusive benefits
-                </p>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-8">
-                <!-- Silver Package -->
-                <div class="package-card bg-surface rounded-2xl p-8 border border-gray-700 hover:border-gray-500">
-                    <div class="text-center mb-6">
-                        <span class="inline-block px-4 py-1 bg-gray-700/50 rounded-full text-sm text-gray-300 mb-4">Starter</span>
-                        <h3 class="font-serif text-2xl font-bold text-gray-200 mb-2">Silver</h3>
-                        <div class="text-4xl font-bold text-white mb-1">€3,000</div>
-                        <div class="text-primary text-lg">€3,500 Buying Power</div>
-                        <div class="text-sm text-green-400 mt-1">+17% Bonus</div>
-                    </div>
-                    <ul class="space-y-3 mb-8">
-                        <li class="benefit-item">
-                            <span class="material-symbols-outlined text-primary text-xl">check_circle</span>
-                            <span class="text-gray-300">Access to member events</span>
-                        </li>
-                        <li class="benefit-item">
-                            <span class="material-symbols-outlined text-primary text-xl">check_circle</span>
-                            <span class="text-gray-300">Marketplace access</span>
-                        </li>
-                        <li class="benefit-item">
-                            <span class="material-symbols-outlined text-primary text-xl">check_circle</span>
-                            <span class="text-gray-300">Priority support</span>
-                        </li>
-                    </ul>
-                    <a href="/package" class="block w-full text-center bg-surface-light hover:bg-primary hover:text-black text-white font-semibold py-3 rounded-full border border-gray-600 hover:border-primary transition-all">
-                        Get Started
-                    </a>
-                </div>
-
-                <!-- Gold Package -->
-                <div class="package-card bg-surface rounded-2xl p-8 border-2 border-primary gold-glow relative">
-                    <div class="absolute -top-4 left-1/2 -translate-x-1/2">
-                        <span class="bg-primary text-black font-bold px-4 py-1 rounded-full text-sm">Most Popular</span>
-                    </div>
-                    <div class="text-center mb-6 pt-2">
-                        <span class="inline-block px-4 py-1 bg-primary/20 rounded-full text-sm text-primary mb-4">Recommended</span>
-                        <h3 class="font-serif text-2xl font-bold text-primary mb-2">Gold</h3>
-                        <div class="text-4xl font-bold text-white mb-1">€8,000</div>
-                        <div class="text-primary text-lg">€10,000 Buying Power</div>
-                        <div class="text-sm text-green-400 mt-1">+25% Bonus</div>
-                    </div>
-                    <ul class="space-y-3 mb-8">
-                        <li class="benefit-item">
-                            <span class="material-symbols-outlined text-primary text-xl">check_circle</span>
-                            <span class="text-gray-300">All Silver benefits</span>
-                        </li>
-                        <li class="benefit-item">
-                            <span class="material-symbols-outlined text-primary text-xl">check_circle</span>
-                            <span class="text-gray-300">VIP event access</span>
-                        </li>
-                        <li class="benefit-item">
-                            <span class="material-symbols-outlined text-primary text-xl">check_circle</span>
-                            <span class="text-gray-300">Personal concierge</span>
-                        </li>
-                        <li class="benefit-item">
-                            <span class="material-symbols-outlined text-primary text-xl">check_circle</span>
-                            <span class="text-gray-300">Exclusive discounts</span>
-                        </li>
-                    </ul>
-                    <a href="/package" class="block w-full text-center bg-primary hover:bg-primary-dark text-black font-bold py-3 rounded-full transition-all">
-                        Select Gold
-                    </a>
-                </div>
-
-                <!-- Platinum Package -->
-                <div class="package-card bg-surface rounded-2xl p-8 border border-primary/50 hover:border-primary">
-                    <div class="text-center mb-6">
-                        <span class="inline-block px-4 py-1 bg-primary/10 rounded-full text-sm text-primary-light mb-4">Best Value</span>
-                        <h3 class="font-serif text-2xl font-bold text-primary-light mb-2">Platinum</h3>
-                        <div class="text-4xl font-bold text-white mb-1">€20,000</div>
-                        <div class="text-primary text-lg">€30,000 Buying Power</div>
-                        <div class="text-sm text-green-400 mt-1">+50% Bonus</div>
-                    </div>
-                    <ul class="space-y-3 mb-8">
-                        <li class="benefit-item">
-                            <span class="material-symbols-outlined text-primary text-xl">check_circle</span>
-                            <span class="text-gray-300">All Gold benefits</span>
-                        </li>
-                        <li class="benefit-item">
-                            <span class="material-symbols-outlined text-primary text-xl">check_circle</span>
-                            <span class="text-gray-300">Premium experiences</span>
-                        </li>
-                        <li class="benefit-item">
-                            <span class="material-symbols-outlined text-primary text-xl">check_circle</span>
-                            <span class="text-gray-300">Investment opportunities</span>
-                        </li>
-                        <li class="benefit-item">
-                            <span class="material-symbols-outlined text-primary text-xl">check_circle</span>
-                            <span class="text-gray-300">Founding member status</span>
-                        </li>
-                    </ul>
-                    <a href="/package" class="block w-full text-center bg-surface-light hover:bg-primary hover:text-black text-white font-semibold py-3 rounded-full border border-primary/50 hover:border-primary transition-all">
-                        Go Platinum
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- How It Works -->
-    <section class="py-20 px-4 bg-surface">
-        <div class="max-w-5xl mx-auto">
-            <div class="text-center mb-16">
-                <h2 class="font-serif text-3xl md:text-5xl font-bold mb-4">
-                    How It <span class="text-primary">Works</span>
-                </h2>
-            </div>
-
-            <div class="grid md:grid-cols-4 gap-8">
-                <div class="text-center">
-                    <div class="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-                        <span class="text-2xl font-bold text-primary">1</span>
-                    </div>
-                    <h3 class="font-semibold mb-2">Connect Wallet</h3>
-                    <p class="text-gray-400 text-sm">Create or connect your WalletTwo account</p>
-                </div>
-                <div class="text-center">
-                    <div class="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-                        <span class="text-2xl font-bold text-primary">2</span>
-                    </div>
-                    <h3 class="font-semibold mb-2">Choose Package</h3>
-                    <p class="text-gray-400 text-sm">Select the membership that suits you</p>
-                </div>
-                <div class="text-center">
-                    <div class="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-                        <span class="text-2xl font-bold text-primary">3</span>
-                    </div>
-                    <h3 class="font-semibold mb-2">Complete Payment</h3>
-                    <p class="text-gray-400 text-sm">Pay securely with card or crypto</p>
-                </div>
-                <div class="text-center">
-                    <div class="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-                        <span class="text-2xl font-bold text-primary">4</span>
-                    </div>
-                    <h3 class="font-semibold mb-2">Enjoy Benefits</h3>
-                    <p class="text-gray-400 text-sm">Start using your buying power</p>
-                </div>
-            </div>
-        </div>
-    </section>
+    </main>
 
     <!-- CTA Section -->
-    <section class="py-20 px-4">
-        <div class="max-w-4xl mx-auto text-center">
-            <h2 class="font-serif text-3xl md:text-5xl font-bold mb-6">
-                Ready to <span class="text-primary">Join</span>?
+    <section class="relative py-32 md:py-40 border-t border-white/10 overflow-hidden bg-background-dark">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 blur-[150px] rounded-full -z-10 pointer-events-none"></div>
+        <div class="max-w-4xl mx-auto px-6 text-center space-y-12">
+            <h2 class="text-4xl md:text-5xl lg:text-7xl font-serif font-medium tracking-tight text-white">
+                Ready to join <br/><span class="italic text-primary">the club?</span>
             </h2>
-            <p class="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
-                Become a member today and unlock exclusive experiences, premium services, and exceptional value.
+            <p class="text-slate-400 text-lg max-w-2xl mx-auto font-light">
+                Become a member today and unlock exclusive access to the most extraordinary experiences in the Mediterranean.
             </p>
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="/package" class="w-full sm:w-auto bg-primary hover:bg-primary-dark text-black font-bold px-8 py-4 rounded-full transition-all gold-glow">
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 pt-6">
+                <a href="/package" class="w-full sm:w-auto px-10 md:px-12 py-4 md:py-5 bg-primary text-background-dark font-bold font-sans rounded-sm tracking-widest uppercase text-xs gold-glow hover:translate-y-[-2px] transition-transform">
                     View Packages
                 </a>
-                <a href="/profile" class="w-full sm:w-auto border-2 border-primary/50 text-primary hover:border-primary font-semibold px-8 py-4 rounded-full transition-all">
-                    Go to Profile
+                <a href="/profile" class="w-full sm:w-auto px-10 md:px-12 py-4 md:py-5 border border-primary/30 text-primary font-bold font-sans rounded-sm tracking-widest uppercase hover:bg-primary hover:text-background-dark transition-all text-xs">
+                    My Profile
                 </a>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="bg-surface border-t border-primary/20 py-12 px-4">
-        <div class="max-w-7xl mx-auto">
-            <div class="grid md:grid-cols-4 gap-8 mb-8">
-                <div>
-                    <img src="/images/logo.png" alt="Kea Valley" class="h-10 mb-4">
-                    <p class="text-gray-400 text-sm">
-                        An exclusive private members club offering premium experiences and exceptional value.
-                    </p>
+    <footer class="py-12 md:py-16 border-t border-white/5" style="background-color: #1a1a1a;">
+        <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
+            <div class="flex flex-col gap-8">
+                <div class="flex flex-col lg:flex-row justify-between items-center gap-8">
+                    <a href="/" class="flex items-center gap-3">
+                        <img src="/images/logo.png" alt="Kea Valley" class="h-8 w-auto"/>
+                        <span class="text-sm font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
+                    </a>
+                    <div class="flex flex-wrap justify-center gap-6 md:gap-8 text-slate-500 text-[0.65rem] tracking-[0.2em] font-bold uppercase font-sans">
+                        <a class="hover:text-primary transition-colors" href="/profile">Profile</a>
+                        <a class="hover:text-primary transition-colors" href="/marketplace">Marketplace</a>
+                        <a class="hover:text-primary transition-colors" href="/package">Membership</a>
+                        <a class="hover:text-primary transition-colors" href="/privacy">Privacy Policy</a>
+                        <a class="hover:text-primary transition-colors" href="/terms">Terms</a>
+                    </div>
+                    <div class="flex flex-col items-center lg:items-end gap-2">
+                        <a href="tel:+41799446770" class="flex items-center gap-2 text-slate-400 hover:text-primary transition-colors text-sm font-light">
+                            <span class="material-symbols-outlined text-primary text-lg">phone</span>
+                            <span>+41 79 944 67 70</span>
+                        </a>
+                        <a href="mailto:julie.meyer@vivapartners.net" class="flex items-center gap-2 text-slate-400 hover:text-primary transition-colors text-sm font-light">
+                            <span class="material-symbols-outlined text-primary text-lg">mail</span>
+                            <span>julie.meyer@vivapartners.net</span>
+                        </a>
+                    </div>
                 </div>
-                <div>
-                    <h4 class="font-semibold mb-4">Quick Links</h4>
-                    <ul class="space-y-2 text-gray-400 text-sm">
-                        <li><a href="/profile" class="hover:text-primary">Profile</a></li>
-                        <li><a href="/marketplace" class="hover:text-primary">Marketplace</a></li>
-                        <li><a href="/package" class="hover:text-primary">Membership</a></li>
-                    </ul>
+                <div class="pt-6 border-t border-white/5 text-center">
+                    <div class="text-slate-600 text-xs font-light">
+                        © 2026 Kea Valley Private Members Club. All rights reserved.
+                    </div>
                 </div>
-                <div>
-                    <h4 class="font-semibold mb-4">Legal</h4>
-                    <ul class="space-y-2 text-gray-400 text-sm">
-                        <li><a href="/privacy" class="hover:text-primary">Privacy Policy</a></li>
-                        <li><a href="/terms" class="hover:text-primary">Terms of Service</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-semibold mb-4">Contact</h4>
-                    <ul class="space-y-2 text-gray-400 text-sm">
-                        <li><a href="tel:+41799446770" class="hover:text-primary">+41 79 944 67 70</a></li>
-                        <li><a href="mailto:julie.meyer@vivapartners.net" class="hover:text-primary">julie.meyer@vivapartners.net</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="border-t border-primary/20 pt-8 text-center text-gray-500 text-sm">
-                <p>&copy; 2026 Kea Valley. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
-    <!-- Shared Header Script -->
-    <script src="/js/shared-header.js"></script>
+    <!-- Logout iframe -->
+    <iframe id="walletTwoLogoutIframe" style="display:none;"></iframe>
 
-    <!-- Page-specific Scripts -->
+    <!-- JavaScript -->
     <script>
-        // VERSION: 2026-04-11 - Services carousel only (wallet logic moved to shared-header.js)
+        // ============================================
+        // VERSION: 2026-04-11 - Uses shared-header.js
+        // Page-specific: Services carousel only
+        // ============================================
         
-        // Services data
-        const services = [
-            { icon: 'villa', title: 'Luxury Villas', description: 'Access to exclusive villas in the most beautiful locations around the world. Perfect for unforgettable getaways with family and friends.' },
-            { icon: 'sailing', title: 'Yacht Charters', description: 'Premium yacht experiences in the Mediterranean, Caribbean, and beyond. From day trips to extended voyages.' },
-            { icon: 'flight', title: 'Private Aviation', description: 'Seamless private jet services for business or leisure. Travel in comfort and style on your schedule.' },
-            { icon: 'restaurant', title: 'Fine Dining', description: 'Reservations at the world\'s most exclusive restaurants. Experience culinary excellence from Michelin-starred chefs.' },
-            { icon: 'spa', title: 'Wellness & Spa', description: 'Access to premium wellness retreats and spa experiences. Rejuvenate your body and mind.' },
-            { icon: 'sports_golf', title: 'Golf Experiences', description: 'Play at the most prestigious golf courses worldwide. Includes membership access and tournament entries.' },
-            { icon: 'theater_comedy', title: 'Events & Entertainment', description: 'VIP access to concerts, premieres, fashion shows, and exclusive cultural events.' },
-            { icon: 'diamond', title: 'Luxury Shopping', description: 'Personal shopping experiences with access to limited editions and private sales from top brands.' },
-            { icon: 'wine_bar', title: 'Wine & Spirits', description: 'Curated wine experiences, vineyard tours, and access to rare vintage collections.' },
-            { icon: 'real_estate_agent', title: 'Investment Opportunities', description: 'Exclusive access to vetted investment opportunities in real estate, art, and emerging markets.' }
+        // Services data for carousel
+        var services = [
+            { icon: 'villa', title: 'Luxury Villa Rentals', desc: 'Private villas with stunning sea views', price: 'from €500/night' },
+            { icon: 'sailing', title: 'Yacht Charters', desc: 'Explore the Cyclades in style', price: 'from €2,000/day' },
+            { icon: 'restaurant', title: 'Private Chef', desc: 'Gourmet dining at your villa', price: 'from €300/event' },
+            { icon: 'spa', title: 'Wellness & Spa', desc: 'Rejuvenating treatments', price: 'from €150/session' },
+            { icon: 'directions_car', title: 'Airport Transfer', desc: 'Luxury vehicle pickup', price: 'from €200' },
+            { icon: 'scuba_diving', title: 'Diving Excursions', desc: 'Discover underwater treasures', price: 'from €180/dive' },
+            { icon: 'wine_bar', title: 'Wine Tasting', desc: 'Local vineyard experiences', price: 'from €120/person' },
+            { icon: 'helicopter', title: 'Helicopter Tours', desc: 'Aerial island exploration', price: 'from €800/flight' },
+            { icon: 'celebration', title: 'Private Events', desc: 'Exclusive venue bookings', price: 'from €5,000' },
+            { icon: 'fitness_center', title: 'Personal Training', desc: 'Fitness with a view', price: 'from €100/session' }
         ];
 
-        let currentServiceIndex = 0;
+        function createServiceCard(service) {
+            return '<div class="service-card">' +
+                '<div class="service-icon"><span class="material-symbols-outlined">' + service.icon + '</span></div>' +
+                '<div class="flex-1">' +
+                    '<h4 class="text-white font-medium mb-1">' + service.title + '</h4>' +
+                    '<p class="text-slate-500 text-sm">' + service.desc + '</p>' +
+                '</div>' +
+                '<span class="text-primary font-bold text-sm">' + service.price + '</span>' +
+            '</div>';
+        }
 
         function initCarousel() {
-            const track = document.getElementById('carouselTrack');
-            const dots = document.getElementById('carouselDots');
-            
-            if (!track || !dots) return;
+            var track = document.getElementById('servicesTrack');
+            if (!track) return;
 
-            // Build carousel items
-            track.innerHTML = services.map((service, index) => `
-                <div class="service-card ${index === 0 ? 'active' : ''}" 
-                     onclick="goToService(${index})"
-                     onmouseenter="showServiceDetails(${index})">
-                    <div class="flex items-center gap-4">
-                        <span class="material-symbols-outlined text-2xl text-primary">${service.icon}</span>
-                        <span class="font-semibold">${service.title}</span>
-                    </div>
-                </div>
-            `).join('');
-
-            // Build dots
-            dots.innerHTML = services.map((_, index) => `
-                <button onclick="goToService(${index})" 
-                        class="w-2 h-2 rounded-full transition-all ${index === 0 ? 'bg-primary w-4' : 'bg-gray-600'}">
-                </button>
-            `).join('');
-
-            // Show first service details
-            showServiceDetails(0);
+            var allServices = services.concat(services);
+            track.innerHTML = allServices.map(createServiceCard).join('');
         }
 
-        function showServiceDetails(index) {
-            const service = services[index];
-            document.getElementById('serviceIcon').textContent = service.icon;
-            document.getElementById('serviceTitle').textContent = service.title;
-            document.getElementById('serviceDescription').textContent = service.description;
-        }
-
-        function goToService(index) {
-            currentServiceIndex = index;
-            const cards = document.querySelectorAll('.service-card');
-            const dots = document.querySelectorAll('#carouselDots button');
-            
-            cards.forEach((card, i) => {
-                card.classList.toggle('active', i === index);
-            });
-            
-            dots.forEach((dot, i) => {
-                dot.classList.toggle('bg-primary', i === index);
-                dot.classList.toggle('w-4', i === index);
-                dot.classList.toggle('bg-gray-600', i !== index);
-                dot.classList.toggle('w-2', i !== index);
-            });
-
-            // Scroll the carousel
-            const track = document.getElementById('carouselTrack');
-            if (track) {
-                const cardHeight = 80; // Approximate height of each card
-                track.style.transform = `translateY(-${index * cardHeight}px)`;
-            }
-
-            showServiceDetails(index);
-        }
-
-        function nextService() {
-            goToService((currentServiceIndex + 1) % services.length);
-        }
-
-        function prevService() {
-            goToService((currentServiceIndex - 1 + services.length) % services.length);
-        }
-
-        // Initialize carousel on page load
+        // Initialize carousel on DOM ready
         document.addEventListener('DOMContentLoaded', function() {
             initCarousel();
-            
-            // Auto-rotate carousel every 5 seconds
-            setInterval(nextService, 5000);
         });
     </script>
+
 </body>
 </html>
