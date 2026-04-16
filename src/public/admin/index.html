@@ -383,7 +383,7 @@
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Member</th>
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Package</th>
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Amount Paid</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Buying Power</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Kea Euros</th>
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Status</th>
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Date</th>
                                 </tr>
@@ -467,11 +467,11 @@
                     </div>
                     <div class="glass rounded-xl p-5">
                         <div class="text-3xl font-bold text-green-400" id="membersWithBalance">0</div>
-                        <div class="text-sm text-gray-400 mt-1">With Buying Power</div>
+                        <div class="text-sm text-gray-400 mt-1">With Kea Euros</div>
                     </div>
                     <div class="glass rounded-xl p-5">
                         <div class="text-3xl font-bold text-primary" id="totalBuyingPower">€0</div>
-                        <div class="text-sm text-gray-400 mt-1">Total Buying Power</div>
+                        <div class="text-sm text-gray-400 mt-1">Total Kea Euros</div>
                     </div>
                     <div class="glass rounded-xl p-5">
                         <div class="text-3xl font-bold text-blue-400" id="membersThisMonth">0</div>
@@ -486,7 +486,7 @@
                                 <tr>
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Member</th>
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Email</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Buying Power</th>
+                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Kea Euros</th>
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Total Spent</th>
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Orders</th>
                                     <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Joined</th>
@@ -631,7 +631,7 @@
                                     <input type="number" id="refBonusAmount" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="5" step="0.01" min="0">
                                 </div>
                             </div>
-                            <p id="refBonusExplanation" class="text-gray-500 text-sm mt-2">Referrer receives 5% of referee's membership purchase as buying power</p>
+                            <p id="refBonusExplanation" class="text-gray-500 text-sm mt-2">Referrer receives 5% of referee's membership purchase as Kea Euros</p>
                         </div>
                         
                         <div class="pt-4 border-t border-gray-700">
@@ -771,7 +771,7 @@
                     <div class="glass rounded-xl p-6">
                         <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
                             <span class="material-symbols-outlined text-primary">token</span>
-                            VIP Token (Buying Power)
+                            VIP Token (Kea Euros)
                         </h3>
                         <div class="space-y-4">
                             <div>
@@ -1023,13 +1023,13 @@
                         <input type="number" id="packagePrice" required min="0" step="0.01" placeholder="0.00" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-400 mb-1">Buying Power (€) *</label>
+                        <label class="block text-sm text-gray-400 mb-1">Kea Euros (€) *</label>
                         <input type="number" id="packageBuyingPower" required min="0" step="0.01" placeholder="0.00" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">Bonus (€)</label>
                         <input type="number" id="packageBonus" min="0" step="0.01" value="0" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
-                        <p class="text-gray-500 text-xs mt-1">Auto-calculated: Buying Power - Price</p>
+                        <p class="text-gray-500 text-xs mt-1">Auto-calculated: Kea Euros - Price</p>
                     </div>
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">Tier</label>

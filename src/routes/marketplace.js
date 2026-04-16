@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db-postgres');
+const emailService = require('../services/email');
+const voucherRoutes = require('./vouchers');
 
 // GET all active services
 router.get('/services', async (req, res) => {
@@ -96,7 +98,7 @@ router.get('/services/:id/availability', async (req, res) => {
             available_days: service.available_days || '0,1,2,3,4,5,6',
             booking_start_time: service.booking_start_time || '09:00',
             booking_end_time: service.booking_end_time || '18:00',
-            fixed_duration: service.fixed_duration || null  // <-- ADD THIS
+            fixed_duration: service.fixed_duration || null
         };
         
         // If no booking required, return early
@@ -223,10 +225,10 @@ router.get('/order/:id', async (req, res) => {
     }
 });
 
-// POST checkout with tokens
+// POST checkout with tokens (Kea€)
 router.post('/checkout/tokens', async (req, res) => {
     console.log('📦 POST /api/marketplace/checkout/tokens called');
-    const { wallet_address, items, email, phone } = req.body;
+    const { wallet_address, items, email, phone, name } = req.body;
     
     if (!wallet_address || !items || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ success: false, error: 'Invalid request' });
@@ -248,14 +250,20 @@ router.post('/checkout/tokens', async (req, res) => {
             const serviceId = item.service_id || item.serviceId;
             const service = servicesMap[serviceId];
             if (!service) throw new Error(`Service ${serviceId} not found`);
-            const itemTotal = parseFloat(service.price) * (item.quantity || 1);
+            
+            // Use totalPrice from options if available (for bookings with nights)
+            const itemTotal = item.options?.totalPrice || (parseFloat(service.price) * (item.quantity || 1));
             totalAmount += itemTotal;
+            
             return {
                 service_id: serviceId,
                 service_name: service.name,
                 quantity: item.quantity || 1,
                 price: parseFloat(service.price),
                 total: itemTotal,
+                booking_start: item.options?.bookingStart || null,
+                booking_end: item.options?.bookingEnd || null,
+                nights: item.options?.nights || null,
                 booking_date: item.options?.bookingDate || null,
                 time_slot: item.options?.timeSlot || null
             };
@@ -271,7 +279,7 @@ router.post('/checkout/tokens', async (req, res) => {
         if (currentBalance < totalAmount) {
             return res.status(400).json({ 
                 success: false, 
-                error: 'Insufficient balance',
+                error: 'Insufficient Kea€ balance',
                 required: totalAmount,
                 available: currentBalance
             });
@@ -284,6 +292,8 @@ router.post('/checkout/tokens', async (req, res) => {
             RETURNING *
         `, [wallet_address, email || null, phone || null, JSON.stringify(orderItems), totalAmount]);
         
+        const orderId = orderResult.rows[0].id;
+        
         // Deduct balance
         await db.pool.query(`
             UPDATE member_balances 
@@ -295,27 +305,80 @@ router.post('/checkout/tokens', async (req, res) => {
         await db.pool.query(`
             INSERT INTO token_transactions (wallet_address, amount, type, reference_type, reference_id, description, status)
             VALUES ($1, $2, 'spend', 'order', $3, $4, 'completed')
-        `, [wallet_address, -totalAmount, orderResult.rows[0].id, `Marketplace purchase: ${orderItems.map(i => i.service_name).join(', ')}`]);
+        `, [wallet_address, -totalAmount, orderId, `Marketplace purchase: ${orderItems.map(i => i.service_name).join(', ')}`]);
         
-        // Create bookings for items with booking dates
+        // Create vouchers for each item
+        const createdVouchers = [];
+        
         for (const item of orderItems) {
-            if (item.booking_date) {
+            const voucherCode = voucherRoutes.generateVoucherCode();
+            
+            const voucherResult = await db.pool.query(`
+                INSERT INTO marketplace_vouchers (
+                    order_id, wallet_address, user_email, service_id, service_name, 
+                    code, value, status, valid_from, created_at,
+                    booking_start, booking_end, booking_date
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', CURRENT_DATE, NOW(), $8, $9, $10)
+                RETURNING *
+            `, [
+                orderId,
+                wallet_address,
+                email || null,
+                item.service_id,
+                item.service_name,
+                voucherCode,
+                item.total,
+                item.booking_start || null,
+                item.booking_end || null,
+                item.booking_date || null
+            ]);
+            
+            const voucher = voucherResult.rows[0];
+            createdVouchers.push(voucher);
+            
+            // Send email to buyer
+            if (email) {
                 try {
-                    await db.pool.query(`
-                        INSERT INTO service_bookings (service_id, wallet_address, email, booking_date, time_slot, order_id, status)
-                        VALUES ($1, $2, $3, $4, $5, $6, 'confirmed')
-                    `, [item.service_id, wallet_address, email, item.booking_date, item.time_slot || 'full_day', orderResult.rows[0].id]);
-                } catch (e) {
-                    console.log('Could not create booking (table may not exist):', e.message);
+                    const buyerEmailResult = await emailService.sendVoucherPurchaseEmail(voucher, email);
+                    await emailService.logEmail(
+                        db, 
+                        voucher.id, 
+                        'purchase_buyer', 
+                        email,
+                        `Your Kea Valley Voucher - ${voucher.service_name}`,
+                        buyerEmailResult.success ? 'sent' : 'failed',
+                        buyerEmailResult.error || null
+                    );
+                } catch (emailErr) {
+                    console.error('Failed to send buyer email:', emailErr.message);
                 }
+            }
+            
+            // Send notification to site owner
+            try {
+                const ownerEmailResult = await emailService.sendVoucherPurchaseNotificationToOwner(voucher, email, name);
+                await emailService.logEmail(
+                    db, 
+                    voucher.id, 
+                    'purchase_owner', 
+                    emailService.SITE_OWNER_EMAIL,
+                    `New Voucher Purchase - ${voucher.service_name}`,
+                    ownerEmailResult.success ? 'sent' : 'failed',
+                    ownerEmailResult.error || null
+                );
+            } catch (emailErr) {
+                console.error('Failed to send owner notification:', emailErr.message);
             }
         }
         
-        console.log('✅ Order created:', orderResult.rows[0].id);
+        console.log('✅ Order created with', createdVouchers.length, 'voucher(s):', orderId);
+        
         res.json({ 
             success: true, 
             order: orderResult.rows[0],
-            orderId: orderResult.rows[0].id,
+            orderId: orderId,
+            vouchers: createdVouchers,
             new_balance: currentBalance - totalAmount
         });
         
@@ -328,7 +391,7 @@ router.post('/checkout/tokens', async (req, res) => {
 // POST checkout with Stripe - create intent
 router.post('/checkout/create-intent', async (req, res) => {
     console.log('📦 POST /api/marketplace/checkout/create-intent called');
-    const { wallet_address, items, email, phone, notes } = req.body;
+    const { wallet_address, items, email, phone, notes, name } = req.body;
     
     if (!items || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ success: false, error: 'Invalid request' });
@@ -352,14 +415,19 @@ router.post('/checkout/create-intent', async (req, res) => {
             const serviceId = item.service_id || item.serviceId;
             const service = servicesMap[serviceId];
             if (!service) throw new Error(`Service ${serviceId} not found`);
-            const itemTotal = parseFloat(service.price) * (item.quantity || 1);
+            
+            const itemTotal = item.options?.totalPrice || (parseFloat(service.price) * (item.quantity || 1));
             totalAmount += itemTotal;
+            
             return {
                 service_id: serviceId,
                 service_name: service.name,
                 quantity: item.quantity || 1,
                 price: parseFloat(service.price),
                 total: itemTotal,
+                booking_start: item.options?.bookingStart || null,
+                booking_end: item.options?.bookingEnd || null,
+                nights: item.options?.nights || null,
                 booking_date: item.options?.bookingDate || null,
                 time_slot: item.options?.timeSlot || null
             };
@@ -378,7 +446,9 @@ router.post('/checkout/create-intent', async (req, res) => {
             currency: 'eur',
             metadata: {
                 order_id: orderResult.rows[0].id,
-                wallet_address: wallet_address || ''
+                wallet_address: wallet_address || '',
+                email: email || '',
+                name: name || ''
             }
         });
         
@@ -402,7 +472,6 @@ router.post('/checkout/create-intent', async (req, res) => {
 
 // POST checkout with Stripe (legacy endpoint)
 router.post('/checkout/stripe', async (req, res) => {
-    // Redirect to create-intent
     req.url = '/checkout/create-intent';
     return router.handle(req, res);
 });

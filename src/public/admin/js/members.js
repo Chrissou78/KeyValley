@@ -88,7 +88,7 @@ const Members = {
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="p-4 bg-gray-800/50 rounded-lg">
-                        <p class="text-gray-400 text-sm">Buying Power</p>
+                        <p class="text-gray-400 text-sm">Kea Euros</p>
                         <p class="text-2xl font-bold text-primary">${Utils.formatCurrency(member.balance)}</p>
                     </div>
                     <div class="p-4 bg-gray-800/50 rounded-lg">
@@ -97,7 +97,7 @@ const Members = {
                     </div>
                 </div>
                 <div>
-                    <h4 class="font-semibold mb-3">Adjust Buying Power</h4>
+                    <h4 class="font-semibold mb-3">Adjust Kea Euros</h4>
                     <div class="flex gap-2">
                         <input type="number" id="adjustAmount" class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2" placeholder="Amount (+ or -)">
                         <button onclick="Members.adjustBalance('${wallet}')" class="bg-primary hover:bg-primary-light text-black px-4 py-2 rounded-lg font-medium">Adjust</button>

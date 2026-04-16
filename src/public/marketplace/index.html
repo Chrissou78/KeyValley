@@ -161,7 +161,7 @@
                         <div class="user-dropdown-menu">
                             <div class="p-2">
                                 <div class="px-4 py-3 border-b border-white/10">
-                                    <p class="text-xs text-slate-400">Buying Power</p>
+                                    <p class="text-xs text-slate-400">Kea Euros</p>
                                     <p class="text-lg font-semibold text-primary">€<span data-user-balance>0</span></p>
                                 </div>
                                 <a href="/profile" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors">
@@ -230,7 +230,7 @@
                             <span class="material-symbols-outlined text-primary text-2xl">account_balance_wallet</span>
                         </div>
                         <div>
-                            <p class="text-slate-400 text-sm">Your Buying Power</p>
+                            <p class="text-slate-400 text-sm">Your Kea Euros</p>
                             <p class="text-2xl font-serif text-primary">€<span id="userBalance">0</span></p>
                         </div>
                     </div>
@@ -319,13 +319,18 @@
                 </div>
                 
                 <div class="space-y-3">
-                    <button id="payWithTokensBtn" class="w-full bg-primary text-background-dark py-4 rounded-xl font-bold uppercase tracking-wider hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <span class="material-symbols-outlined">account_balance_wallet</span>
-                        Pay with Buying Power
-                    </button>
-                    <button id="payWithStripeBtn" class="w-full bg-white/10 text-white py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-white/20 transition-colors flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined">credit_card</span>
-                        Pay with Card
+                    <div class="p-4 bg-primary/10 border border-primary/30 rounded-lg">
+                        <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary">account_balance_wallet</span>
+                        <div class="flex-1">
+                            <p class="font-medium text-white">Pay with Kea€</p>
+                            <p id="checkoutTokenBalance" class="text-sm text-slate-400">Balance: Kea€0</p>
+                        </div>
+                        </div>
+                    </div>
+                    <button id="payWithTokens" onclick="submitPayment('tokens')" 
+                        class="w-full py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        Complete Purchase
                     </button>
                 </div>
             </div>
@@ -466,7 +471,7 @@
                         <div id="checkoutItems" class="space-y-2 mb-4 max-h-40 overflow-y-auto"></div>
                         <div class="border-t border-white/10 pt-3 flex justify-between text-lg font-semibold">
                             <span class="text-white">Total</span>
-                            <span id="checkoutTotal" class="text-primary">€0</span>
+                            <span id="checkoutTotal" class="text-primary">Kea€0</span>
                         </div>
                     </div>
 
@@ -485,41 +490,24 @@
                         </div>
                     </div>
 
-                    <div id="checkoutPaymentMethod" class="mb-6">
-                        <h3 class="text-white font-semibold mb-3">Payment Method</h3>
-                        <div class="space-y-2">
-                            <label id="tokenPaymentOption" class="flex items-center gap-3 p-4 bg-background-dark rounded-xl border border-white/10 cursor-pointer hover:border-primary/50 transition-colors">
-                                <input type="radio" name="paymentMethod" value="tokens" class="w-4 h-4 text-primary bg-transparent border-white/30 focus:ring-primary">
-                                <span class="material-symbols-outlined text-primary">account_balance_wallet</span>
-                                <div class="flex-1">
-                                    <p class="text-white font-medium">Buying Power</p>
-                                    <p class="text-slate-500 text-xs">Balance: €<span id="checkoutBalance">0</span></p>
-                                </div>
-                            </label>
-                            <label class="flex items-center gap-3 p-4 bg-background-dark rounded-xl border border-white/10 cursor-pointer hover:border-primary/50 transition-colors">
-                                <input type="radio" name="paymentMethod" value="card" class="w-4 h-4 text-primary bg-transparent border-white/30 focus:ring-primary" checked>
-                                <span class="material-symbols-outlined text-blue-400">credit_card</span>
-                                <div class="flex-1">
-                                    <p class="text-white font-medium">Credit / Debit Card</p>
-                                    <p class="text-slate-500 text-xs">Secure payment via Stripe</p>
-                                </div>
-                            </label>
+                    <!-- Payment Method - Kea€ Only -->
+                    <div class="p-4 bg-primary/10 border border-primary/30 rounded-lg mb-4">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary text-2xl">account_balance_wallet</span>
+                            <div class="flex-1">
+                                <p class="font-medium text-white">Pay with Kea€</p>
+                                <p id="checkoutTokenBalance" class="text-sm text-slate-400">Balance: Kea€0</p>
+                            </div>
                         </div>
                     </div>
 
-                    <div id="cardElementContainer" class="mb-6">
-                        <label class="block text-slate-400 text-sm mb-2">Card Details</label>
-                        <div id="cardElement" class="bg-background-dark border border-white/10 rounded-lg p-4"></div>
-                        <p id="cardError" class="text-red-400 text-sm mt-2 hidden"></p>
-                    </div>
-
-                    <button id="submitPayment" class="w-full bg-primary text-background-dark py-4 rounded-xl font-bold uppercase tracking-wider hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <button id="payWithTokens" onclick="submitPayment('tokens')" class="w-full bg-primary text-background-dark py-4 rounded-xl font-bold uppercase tracking-wider hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                         <span class="material-symbols-outlined">lock</span>
                         Complete Purchase
                     </button>
 
                     <p class="text-slate-500 text-xs text-center mt-4">
-                        Your order will be sent to our team for validation. You'll receive a confirmation email shortly.
+                        Your voucher will be sent to your email after purchase.
                     </p>
                 </div>
             </div>
@@ -688,51 +676,31 @@
         }
 
         function updateBalanceDisplays() {
-            var balance = HeaderManager.userBalance || 0;
-            var balanceStr = Math.floor(balance).toLocaleString();
+            var currentUser = HeaderManager.currentUser;
+            var balance = currentUser ? (HeaderManager.userBalance || 0) : 0;
             
-            var userBalanceEl = document.getElementById('userBalance');
-            if (userBalanceEl) userBalanceEl.textContent = balanceStr;
-            
-            var checkoutBalanceEl = document.getElementById('checkoutBalance');
-            if (checkoutBalanceEl) checkoutBalanceEl.textContent = balanceStr;
-            
-            document.querySelectorAll('[data-user-balance]').forEach(function(el) {
-                el.textContent = balanceStr;
+            var balanceEls = ['userBalance', 'checkoutBalance'];
+            balanceEls.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) {el.textContent = balance.toLocaleString();}
             });
-            
+            document.querySelectorAll('[data-user-balance]').forEach(function(el) {el.textContent = balance.toLocaleString();});
             updateTokenPaymentOption();
         }
 
         function updateTokenPaymentOption() {
-            var cartTotalValue = getCartTotal();
-            var userBalance = HeaderManager.userBalance || 0;
-            var tokenOption = document.getElementById('tokenPaymentOption');
-            var payWithTokensBtn = document.getElementById('payWithTokensBtn');
+            var currentUser = HeaderManager.currentUser;
+            var balance = currentUser ? (HeaderManager.userBalance || 0) : 0;
+            var total = getCartTotal();
+            var canAfford = balance >= total;
+            var tokenBtn = document.getElementById('payWithTokens');
+            var tokenBalance = document.getElementById('checkoutTokenBalance');
             
-            var hasEnoughBalance = userBalance >= cartTotalValue && cartTotalValue > 0;
-            
-            if (tokenOption) {
-                if (hasEnoughBalance) {
-                    tokenOption.classList.remove('opacity-50', 'cursor-not-allowed');
-                    var input = tokenOption.querySelector('input');
-                    if (input) input.disabled = false;
-                } else {
-                    tokenOption.classList.add('opacity-50', 'cursor-not-allowed');
-                    var input = tokenOption.querySelector('input');
-                    if (input) input.disabled = true;
-                }
+            if (tokenBtn) {
+                tokenBtn.disabled = !canAfford || !currentUser;
+                tokenBtn.classList.toggle('opacity-50', !canAfford || !currentUser);
             }
-            
-            if (payWithTokensBtn) {
-                if (hasEnoughBalance) {
-                    payWithTokensBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    payWithTokensBtn.disabled = false;
-                } else {
-                    payWithTokensBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                    payWithTokensBtn.disabled = true;
-                }
-            }
+            if (tokenBalance) {tokenBalance.textContent = canAfford ? 'Balance: Kea€' + balance.toLocaleString() : 'Insufficient balance (Kea€' + balance.toLocaleString() + ')';}
         }
 
         // Services
@@ -1122,17 +1090,15 @@
         }
 
         // Checkout
-        function startCheckout(paymentMethod) {
-            paymentMethod = paymentMethod || 'card';
-            
+        function startCheckout() {
             if (!HeaderManager.currentUser) {
                 HeaderManager.showLoginModal();
-                pendingAction = function() { startCheckout(paymentMethod); };
+                pendingAction = function() { startCheckout(); };
                 return;
             }
             
             if (cart.length === 0) {
-                alert('Your cart is empty');
+                showToast('Your cart is empty', 'error');
                 return;
             }
             
@@ -1140,28 +1106,19 @@
             
             var checkoutItems = document.getElementById('checkoutItems');
             checkoutItems.innerHTML = cart.map(function(item) {
-                return '<div class="flex justify-between text-sm"><span class="text-slate-400">' + item.name + ' x' + item.quantity + '</span><span class="text-white">€' + (item.price * item.quantity).toLocaleString() + '</span></div>';
+                var itemTotal = item.options && item.options.totalPrice ? item.options.totalPrice : (item.price * item.quantity);
+                return '<div class="flex justify-between text-sm"><span class="text-slate-400">' + item.name + ' x' + item.quantity + '</span><span class="text-white">Kea€' + itemTotal.toLocaleString() + '</span></div>';
             }).join('');
             
             var total = getCartTotal();
-            document.getElementById('checkoutTotal').textContent = '€' + total.toLocaleString();
+            document.getElementById('checkoutTotal').textContent = 'Kea€' + total.toLocaleString();
             
             var currentUser = HeaderManager.currentUser;
             if (currentUser && currentUser.email) {
                 document.getElementById('checkoutEmail').value = currentUser.email;
             }
             
-            var userBalance = HeaderManager.userBalance || 0;
-            if (paymentMethod === 'tokens' && userBalance >= total) {
-                var tokenRadio = document.querySelector('input[name="paymentMethod"][value="tokens"]');
-                if (tokenRadio) tokenRadio.checked = true;
-                document.getElementById('cardElementContainer').classList.add('hidden');
-            } else {
-                var cardRadio = document.querySelector('input[name="paymentMethod"][value="card"]');
-                if (cardRadio) cardRadio.checked = true;
-                document.getElementById('cardElementContainer').classList.remove('hidden');
-                initStripeCard();
-            }
+            updateTokenPaymentOption();
             
             document.getElementById('checkoutModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
@@ -1200,110 +1157,114 @@
             });
         }
 
-        async function submitPayment() {
-            var submitBtn = document.getElementById('submitPayment');
-            var email = document.getElementById('checkoutEmail').value.trim();
-            var phone = document.getElementById('checkoutPhone').value.trim();
-            var notes = document.getElementById('checkoutNotes').value.trim();
-            var paymentMethodRadio = document.querySelector('input[name="paymentMethod"]:checked');
-            var paymentMethod = paymentMethodRadio ? paymentMethodRadio.value : 'card';
-            
-            if (!email) {
-                alert('Please enter your email address');
-                return;
-            }
-            
+        async function submitPayment(method) {
             var currentUser = HeaderManager.currentUser;
-            if (!currentUser) {
-                alert('Please login first');
+            
+            if (!currentUser || !currentUser.wallet) {
+                showToast('Please login first', 'error');
+                HeaderManager.showLoginModal();
                 return;
             }
             
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> Processing...';
+            var balance = HeaderManager.userBalance || 0;
+            var total = getCartTotal();
+            
+            if (balance < total) {
+                showToast('Insufficient Kea€ balance', 'error');
+                return;
+            }
+            
+            var email = document.getElementById('checkoutEmail').value;
+            if (!email) {
+                showToast('Please enter your email', 'error');
+                return;
+            }
             
             try {
-                var total = getCartTotal();
+                var btn = document.getElementById('payWithTokens');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = 'Processing...';
+                }
                 
-                if (paymentMethod === 'tokens') {
-                    var response = await fetch('/api/marketplace/checkout/tokens', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            wallet: currentUser.wallet,
-                            email: email,
-                            phone: phone,
-                            notes: notes,
-                            items: cart,
-                            total: total
-                        })
-                    });
-                    
-                    var result = await response.json();
-                    
-                    if (result.success) {
-                        onPaymentSuccess(result.orderId);
-                    } else {
-                        throw new Error(result.error || 'Payment failed');
-                    }
+                var response = await fetch('/api/marketplace/checkout/tokens', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        wallet_address: currentUser.wallet,
+                        items: cart,
+                        email: email,
+                        phone: document.getElementById('checkoutPhone').value || '',
+                        name: currentUser.name || currentUser.firstName || ''
+                    })
+                });
+                
+                var data = await response.json();
+                
+                if (data.success) {
+                    HeaderManager.userBalance = data.new_balance;
+                    updateBalanceDisplays();
+                    onPaymentSuccess(data.order, data.vouchers);
                 } else {
-                    var intentResponse = await fetch('/api/marketplace/checkout/create-intent', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            wallet: currentUser.wallet,
-                            email: email,
-                            phone: phone,
-                            notes: notes,
-                            items: cart,
-                            total: total
-                        })
-                    });
-                    
-                    var intentData = await intentResponse.json();
-                    
-                    if (!intentData.success) {
-                        throw new Error(intentData.error || 'Failed to create payment');
-                    }
-                    
-                    var stripeResult = await stripe.confirmCardPayment(intentData.clientSecret, {
-                        payment_method: {
-                            card: cardElement,
-                            billing_details: { email: email }
-                        }
-                    });
-                    
-                    if (stripeResult.error) {
-                        throw new Error(stripeResult.error.message);
-                    }
-                    
-                    if (stripeResult.paymentIntent.status === 'succeeded') {
-                        onPaymentSuccess(intentData.orderId);
-                    } else {
-                        throw new Error('Payment was not completed');
-                    }
+                    showToast(data.error || 'Payment failed', 'error');
                 }
             } catch (error) {
                 console.error('Payment error:', error);
-                alert(error.message || 'Payment failed. Please try again.');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<span class="material-symbols-outlined">lock</span> Complete Purchase';
+                showToast('Payment failed. Please try again.', 'error');
+            } finally {
+                var btn = document.getElementById('payWithTokens');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Complete Purchase';
+                }
             }
         }
 
-        function onPaymentSuccess(orderId) {
+        function closeCheckoutModal() {
+            document.getElementById('checkoutModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function onPaymentSuccess(order, vouchers) {
+            closeCheckoutModal();
+            
+            // Clear cart
             cart = [];
             saveCart();
             
-            document.getElementById('checkoutModal').classList.add('hidden');
-            
-            document.getElementById('successOrderId').textContent = orderId;
-            document.getElementById('successModal').classList.remove('hidden');
-            
-            // Refresh balance via HeaderManager
-            if (HeaderManager.currentUser && HeaderManager.currentUser.wallet) {
-                HeaderManager.fetchUserBalance(HeaderManager.currentUser.wallet);
+            // Build voucher display
+            var voucherHtml = '';
+            if (vouchers && vouchers.length > 0) {
+                voucherHtml = '<div class="mt-6 p-4 bg-surface rounded-lg border border-white/10 text-left">' +
+                    '<h4 class="font-medium text-white mb-3">Your Voucher' + (vouchers.length > 1 ? 's' : '') + '</h4>' +
+                    vouchers.map(function(v) {
+                        return '<div class="flex items-center justify-between py-2 border-b border-white/5 last:border-0">' +
+                            '<span class="text-slate-300">' + v.service_name + '</span>' +
+                            '<code class="text-primary font-mono font-bold">' + v.code + '</code>' +
+                        '</div>';
+                    }).join('') +
+                    '<p class="text-sm text-slate-400 mt-3">Voucher details have been sent to your email.</p>' +
+                '</div>';
             }
+            
+            // Show success modal
+            var modal = document.getElementById('successModal');
+            var modalContent = modal.querySelector('.bg-surface');
+            
+            modalContent.innerHTML = '<div class="p-6 text-center">' +
+                '<div class="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">' +
+                    '<span class="material-symbols-outlined text-4xl text-green-400">check_circle</span>' +
+                '</div>' +
+                '<h3 class="text-2xl font-serif text-white mb-2">Purchase Complete!</h3>' +
+                '<p class="text-slate-400">Order #' + order.id.slice(0,8).toUpperCase() + '</p>' +
+                '<p class="text-slate-400 mt-1">Total: Kea€' + order.total_amount.toLocaleString() + '</p>' +
+                voucherHtml +
+                '<button onclick="closeSuccessModal()" class="mt-6 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-light transition-colors">' +
+                    'Continue Shopping' +
+                '</button>' +
+            '</div>';
+            
+            modal.classList.remove('hidden');
         }
 
         function closeSuccessModal() {

@@ -102,7 +102,7 @@ const Referrals = {
         const el = document.getElementById('refBonusExplanation');
         if (el) {
             el.textContent = type === 'percentage' 
-                ? `Referrer receives ${amount}% of referee's membership purchase as buying power`
+                ? `Referrer receives ${amount}% of referee's membership purchase as Kea Euros`
                 : `Referrer receives €${amount} for each successful referral`;
         }
     },

@@ -129,6 +129,10 @@ app.use('/api/membership', membershipRoutes);
 // Admin packages route (should be after admin auth middleware)
 const adminPackagesRoutes = require('./routes/admin/packages');
 app.use('/api/admin/packages', adminPackagesRoutes);
+
+const voucherRoutes = require('./routes/vouchers');
+app.use('/api/vouchers', voucherRoutes);
+
 // ========================================
 // ROUTES
 // ========================================

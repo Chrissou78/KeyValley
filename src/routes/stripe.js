@@ -1,5 +1,5 @@
 // src/routes/stripe.js
-// Stripe webhook handler for membership purchases - MINTS BUYING POWER
+// Stripe webhook handler for membership purchases - MINTS Kea Euros
 
 const express = require('express');
 const router = express.Router();
@@ -63,7 +63,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 });
 
 // ============================================
-// Handle Successful Payment - MINT BUYING POWER
+// Handle Successful Payment - MINT Kea Euros
 // ============================================
 async function handlePaymentSuccess(paymentIntent) {
   const { order_id, wallet_address, email, package_key, package_name, buying_power } = paymentIntent.metadata || {};
@@ -71,7 +71,7 @@ async function handlePaymentSuccess(paymentIntent) {
   console.log(`\n💳 Processing membership payment: ${paymentIntent.id}`);
   console.log(`   Order: ${order_id}, Package: ${package_key}`);
   console.log(`   Wallet: ${wallet_address}`);
-  console.log(`   Buying Power: €${buying_power}`);
+  console.log(`   Kea Euros: €${buying_power}`);
 
   if (!order_id || !wallet_address) {
     console.error('❌ Missing order_id or wallet_address in metadata');
@@ -119,17 +119,17 @@ async function handlePaymentSuccess(paymentIntent) {
     console.log(`   Transfer (90%): €${transferAmount.toFixed(2)}`);
 
     // ============================================
-    // MINT BUYING POWER TO USER'S WALLET
+    // MINT Kea Euros TO USER'S WALLET
     // ============================================
     const buyingPowerAmount = parseFloat(buying_power) || 0;
     let mintTxHash = null;
     let mintSuccess = false;
 
     if (buyingPowerAmount > 0) {
-      console.log(`\n🪙 Minting €${buyingPowerAmount} buying power to ${wallet_address}...`);
+      console.log(`\n🪙 Minting €${buyingPowerAmount} Kea Euros to ${wallet_address}...`);
       
       try {
-        // skipBalanceCheck = true → always mint, even if user already has buying power
+        // skipBalanceCheck = true → always mint, even if user already has Kea Euros
         const mintResult = await minter.mintToAddress(wallet_address, buyingPowerAmount, true);
         
         if (mintResult.skipped) {
@@ -137,7 +137,7 @@ async function handlePaymentSuccess(paymentIntent) {
         } else if (mintResult.receipt) {
           mintTxHash = mintResult.receipt.hash;
           mintSuccess = true;
-          console.log(`✅ Buying power minted! TX: ${mintTxHash}`);
+          console.log(`✅ Kea Euros minted! TX: ${mintTxHash}`);
         }
       } catch (mintError) {
         console.error('❌ Minting failed:', mintError.message);
@@ -205,7 +205,7 @@ async function handlePaymentSuccess(paymentIntent) {
     }
 
     console.log(`\n✅ Payment complete for order ${order_id}`);
-    console.log(`   Buying power: ${mintSuccess ? '€' + buyingPowerAmount + ' minted' : 'PENDING'}`);
+    console.log(`   Kea Euros: ${mintSuccess ? '€' + buyingPowerAmount + ' minted' : 'PENDING'}`);
     if (mintTxHash) console.log(`   TX: ${mintTxHash}`);
     console.log('');
 

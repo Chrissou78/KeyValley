@@ -364,7 +364,7 @@ async function handleMembershipPaymentSuccess(paymentIntent) {
             WHERE id = $5
         `, [stripeFee, netAmount, platformFee, transferAmount, order_id]);
 
-        // Credit buying power to user's account
+        // Credit Kea Euros to user's account
         const buyingPowerAmount = parseFloat(buying_power);
         
         // Check if token_transactions table exists, if not just log
@@ -389,7 +389,7 @@ async function handleMembershipPaymentSuccess(paymentIntent) {
                     total_credited = member_balances.total_credited + $2,
                     updated_at = NOW()
             `, [wallet_address, buyingPowerAmount]);
-            console.log(`✅ Buying power credited: €${buyingPowerAmount} to ${wallet_address.slice(0, 10)}...`);
+            console.log(`✅ Kea Euros credited: €${buyingPowerAmount} to ${wallet_address.slice(0, 10)}...`);
         } catch (balanceError) {
             console.log('⚠️ member_balances table may not exist, skipping balance update');
         }
@@ -461,15 +461,15 @@ async function sendMembershipConfirmationEmail(email, wallet, pkg, buyingPower) 
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h1 style="color: #ee9d2b;">Welcome to Kea Valley!</h1>
-            <p>Your membership has been activated and your buying power is ready to use.</p>
+            <p>Your membership has been activated and your Kea Euros is ready to use.</p>
             
             <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h3 style="margin-top: 0; color: #333;">${packageName}</h3>
-                <p style="font-size: 24px; color: #10b981; margin: 10px 0;"><strong>€${buyingPower.toLocaleString()}</strong> Buying Power</p>
+                <p style="font-size: 24px; color: #10b981; margin: 10px 0;"><strong>€${buyingPower.toLocaleString()}</strong> Kea Euros</p>
                 <p style="color: #666;">Connected wallet: ${wallet.slice(0, 6)}...${wallet.slice(-4)}</p>
             </div>
             
-            <p>You can now browse our marketplace and book premium services using your buying power.</p>
+            <p>You can now browse our marketplace and book premium services using your Kea Euros.</p>
             
             <a href="${process.env.APP_URL || 'https://keavalley.com'}/marketplace" style="display: inline-block; background: #ee9d2b; color: #000; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0;">Browse Marketplace</a>
             
@@ -500,7 +500,7 @@ async function sendAdminMembershipNotification(orderId, email, wallet, pkg, amou
                 <p><strong>Customer:</strong> ${email}</p>
                 <p><strong>Wallet:</strong> ${wallet}</p>
                 <p><strong>Amount Paid:</strong> €${amount.toLocaleString()}</p>
-                <p><strong>Buying Power Granted:</strong> €${buyingPower.toLocaleString()}</p>
+                <p><strong>Kea Euros Granted:</strong> €${buyingPower.toLocaleString()}</p>
             </div>
             
             <a href="${process.env.ADMIN_URL || process.env.APP_URL || 'https://keavalley.com'}/admin/memberships/${orderId}" style="display: inline-block; background: #ee9d2b; color: #000; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">View in Admin</a>

@@ -120,7 +120,7 @@ const Packages = {
                         </div>
                         <div class="bg-gray-800/50 rounded-lg p-3 text-center">
                             <div class="text-xl font-bold text-green-400">${Utils.formatCurrency(pkg.buyingPower)}</div>
-                            <div class="text-gray-500 text-xs">Buying Power</div>
+                            <div class="text-gray-500 text-xs">Kea Euros</div>
                         </div>
                     </div>
                     
@@ -285,7 +285,7 @@ const Packages = {
         }
         
         if (data.price < 0 || data.buyingPower < 0) {
-            Utils.showToast('Price and Buying Power must be positive', 'error');
+            Utils.showToast('Price and Kea Euros must be positive', 'error');
             return;
         }
         
