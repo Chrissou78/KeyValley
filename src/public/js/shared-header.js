@@ -134,29 +134,21 @@ var HeaderManager = {
 
   async fetchUserBalance(wallet) {
     if (!this.CONFIG.VIP_TOKEN_ADDRESS || !this.CONFIG.POLYGON_RPC) {
-      console.warn('Config not loaded, cannot fetch balance');
-      return;
+        console.warn('Config not loaded, cannot fetch balance');
+        return;
     }
 
     try {
-      if (typeof ethers === 'undefined') {
-        await this.loadEthers();
-      }
-
-      const provider = new ethers.JsonRpcProvider(this.CONFIG.POLYGON_RPC);
-      const erc20Abi = ['function balanceOf(address) view returns (uint256)', 'function decimals() view returns (uint8)'];
-      const tokenContract = new ethers.Contract(this.CONFIG.VIP_TOKEN_ADDRESS, erc20Abi, provider);
-      
-      const [rawBalance, decimals] = await Promise.all([
-        tokenContract.balanceOf(wallet),
-        tokenContract.decimals()
-      ]);
-      
-      this.userBalance = parseFloat(ethers.formatUnits(rawBalance, decimals));
-      console.log('💰 On-chain balance:', this.userBalance);
+        if (typeof ethers === 'undefined') {await this.loadEthers();}
+        const provider = new ethers.JsonRpcProvider(this.CONFIG.POLYGON_RPC);
+        const erc20Abi = ['function balanceOf(address) view returns (uint256)', 'function decimals() view returns (uint8)'];
+        const tokenContract = new ethers.Contract(this.CONFIG.VIP_TOKEN_ADDRESS, erc20Abi, provider);
+        const [rawBalance, decimals] = await Promise.all([ tokenContract.balanceOf(wallet), tokenContract.decimals() ]);
+        this.userBalance = parseFloat(ethers.formatUnits(rawBalance, decimals));
+        console.log('💰 On-chain balance:', this.userBalance);
     } catch (e) {
-      console.error('Failed to fetch balance:', e);
-      this.userBalance = 0;
+        console.error('Failed to fetch balance:', e);
+        this.userBalance = 0;
     }
     this.updateBalanceDisplays(this.userBalance);
   },

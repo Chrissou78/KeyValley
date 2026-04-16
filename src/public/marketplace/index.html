@@ -677,30 +677,54 @@
 
         function updateBalanceDisplays() {
             var currentUser = HeaderManager.currentUser;
-            var balance = currentUser ? (HeaderManager.userBalance || 0) : 0;
+            var balance = 0;
             
-            var balanceEls = ['userBalance', 'checkoutBalance'];
-            balanceEls.forEach(function(id) {
-                var el = document.getElementById(id);
-                if (el) {el.textContent = balance.toLocaleString();}
+            if (HeaderManager.userBalance !== undefined) {
+                balance = HeaderManager.userBalance;
+            } else if (currentUser && currentUser.balance !== undefined) {
+                balance = currentUser.balance;
+            }
+            
+            // Update userBalance element (in buying power banner)
+            var userBalanceEl = document.getElementById('userBalance');
+            if (userBalanceEl) {
+                userBalanceEl.textContent = balance.toLocaleString();
+            }
+            
+            // Update checkout balance
+            var checkoutBalanceEl = document.getElementById('checkoutBalance');
+            if (checkoutBalanceEl) {
+                checkoutBalanceEl.textContent = balance.toLocaleString();
+            }
+            
+            // Update data-user-balance elements in dropdown
+            document.querySelectorAll('[data-user-balance]').forEach(function(el) {
+                el.textContent = balance.toLocaleString();
             });
-            document.querySelectorAll('[data-user-balance]').forEach(function(el) {el.textContent = balance.toLocaleString();});
+            
             updateTokenPaymentOption();
+            
+            console.log('💰 Balance displays updated:', balance);
         }
 
         function updateTokenPaymentOption() {
-            var currentUser = HeaderManager.currentUser;
-            var balance = currentUser ? (HeaderManager.userBalance || 0) : 0;
+            var balance = HeaderManager.userBalance || 0;
             var total = getCartTotal();
             var canAfford = balance >= total;
+            
             var tokenBtn = document.getElementById('payWithTokens');
             var tokenBalance = document.getElementById('checkoutTokenBalance');
             
             if (tokenBtn) {
-                tokenBtn.disabled = !canAfford || !currentUser;
-                tokenBtn.classList.toggle('opacity-50', !canAfford || !currentUser);
+                tokenBtn.disabled = !canAfford || !HeaderManager.currentUser;
+                tokenBtn.classList.toggle('opacity-50', !canAfford || !HeaderManager.currentUser);
             }
-            if (tokenBalance) {tokenBalance.textContent = canAfford ? 'Balance: Kea€' + balance.toLocaleString() : 'Insufficient balance (Kea€' + balance.toLocaleString() + ')';}
+            
+            if (tokenBalance) {
+                tokenBalance.textContent = canAfford 
+                    ? 'Balance: Kea€' + balance.toLocaleString()
+                    : 'Insufficient balance (Kea€' + balance.toLocaleString() + ')';
+            }
         }
 
         // Services
