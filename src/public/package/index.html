@@ -1159,19 +1159,6 @@
             document.getElementById('result-package').textContent = details.package;
             document.getElementById('result-buying-power').textContent = 'Kea€' + details.buyingPower?.toLocaleString();
             document.getElementById('result-order-id').textContent = details.orderId || '--';
-            
-            // Add TX hash link if available
-            if (details.txHash) {
-                const txLink = document.createElement('div');
-                txLink.className = 'flex justify-between mt-2';
-                txLink.innerHTML = `
-                    <span class="text-gray-400">Transaction</span>
-                    <a href="https://polygonscan.com/tx/${details.txHash}" target="_blank" class="text-primary hover:underline">
-                        ${details.txHash.slice(0, 8)}...${details.txHash.slice(-6)}
-                    </a>
-                `;
-                document.getElementById('result-details').appendChild(txLink);
-            }
         } else {
             document.getElementById('result-details').classList.add('hidden');
         }
