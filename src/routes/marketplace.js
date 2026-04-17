@@ -234,6 +234,9 @@ router.post('/checkout/tokens', async (req, res) => {
         return res.status(400).json({ success: false, error: 'Invalid request' });
     }
     
+    // Normalize wallet address to lowercase
+    const walletLower = wallet_address.toLowerCase();
+    
     try {
         // Calculate total
         let totalAmount = 0;
@@ -251,7 +254,6 @@ router.post('/checkout/tokens', async (req, res) => {
             const service = servicesMap[serviceId];
             if (!service) throw new Error(`Service ${serviceId} not found`);
             
-            // Use totalPrice from options if available (for bookings with nights)
             const itemTotal = item.options?.totalPrice || (parseFloat(service.price) * (item.quantity || 1));
             totalAmount += itemTotal;
             
@@ -272,7 +274,7 @@ router.post('/checkout/tokens', async (req, res) => {
         // Check balance
         const balanceResult = await db.pool.query(`
             SELECT balance FROM member_balances WHERE wallet_address = $1
-        `, [wallet_address]);
+        `, [walletLower]);
         
         const currentBalance = balanceResult.rows.length > 0 ? parseFloat(balanceResult.rows[0].balance) : 0;
         
@@ -290,7 +292,7 @@ router.post('/checkout/tokens', async (req, res) => {
             INSERT INTO marketplace_orders (wallet_address, email, phone, items, total_amount, payment_method, status)
             VALUES ($1, $2, $3, $4, $5, 'tokens', 'completed')
             RETURNING *
-        `, [wallet_address, email || null, phone || null, JSON.stringify(orderItems), totalAmount]);
+        `, [walletLower, email || null, phone || null, JSON.stringify(orderItems), totalAmount]);
         
         const orderId = orderResult.rows[0].id;
         
@@ -299,13 +301,13 @@ router.post('/checkout/tokens', async (req, res) => {
             UPDATE member_balances 
             SET balance = balance - $1, total_spent = total_spent + $1, updated_at = NOW()
             WHERE wallet_address = $2
-        `, [totalAmount, wallet_address]);
+        `, [totalAmount, walletLower]);
         
         // Log transaction
         await db.pool.query(`
             INSERT INTO token_transactions (wallet_address, amount, type, reference_type, reference_id, description, status)
             VALUES ($1, $2, 'spend', 'order', $3, $4, 'completed')
-        `, [wallet_address, -totalAmount, orderId, `Marketplace purchase: ${orderItems.map(i => i.service_name).join(', ')}`]);
+        `, [walletLower, -totalAmount, orderId, `Marketplace purchase: ${orderItems.map(i => i.service_name).join(', ')}`]);
         
         // Create vouchers for each item
         const createdVouchers = [];
@@ -323,7 +325,7 @@ router.post('/checkout/tokens', async (req, res) => {
                 RETURNING *
             `, [
                 orderId,
-                wallet_address,
+                walletLower,
                 email || null,
                 item.service_id,
                 item.service_name,
@@ -387,6 +389,7 @@ router.post('/checkout/tokens', async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 });
+
 
 // POST checkout with Stripe - create intent
 router.post('/checkout/create-intent', async (req, res) => {
