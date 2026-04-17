@@ -973,20 +973,33 @@
         const pkg = PACKAGES[selectedPackage];
         if (!pkg) return;
         
-        document.getElementById('stripe-package').textContent = pkg.name;
-        document.getElementById('stripe-buying-power').textContent = '€' + pkg.buyingPower.toLocaleString();
-        document.getElementById('stripe-total').textContent = '€' + pkg.price.toLocaleString();
-        document.getElementById('stripe-amount').textContent = pkg.price.toLocaleString();
+        // Check ALL modal elements exist
+        const stripeModal = document.getElementById('stripe-modal');
+        const stripePackage = document.getElementById('stripe-package');
+        const stripeBuyingPower = document.getElementById('stripe-buying-power');
+        const stripeTotal = document.getElementById('stripe-total');
+        const stripeAmount = document.getElementById('stripe-amount');
         
-        // Reset card and button
+        if (!stripeModal || !stripePackage || !stripeBuyingPower || !stripeTotal || !stripeAmount) {
+            console.error('Modal elements missing, reloading...');
+            location.reload();
+            return;
+        }
+        
+        stripePackage.textContent = pkg.name;
+        stripeBuyingPower.textContent = 'Kea€' + pkg.buyingPower.toLocaleString();
+        stripeTotal.textContent = '€' + pkg.price.toLocaleString();
+        stripeAmount.textContent = pkg.price.toLocaleString();
+        
         if (cardElement) cardElement.clear();
+        
         const submitBtn = document.getElementById('stripe-submit');
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="material-symbols-outlined">lock</span> Pay €' + pkg.price.toLocaleString();
         }
         
-        document.getElementById('stripe-modal').classList.remove('hidden');
+        stripeModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
         
         createPaymentIntent(pkg);
