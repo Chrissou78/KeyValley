@@ -973,25 +973,13 @@
         const pkg = PACKAGES[selectedPackage];
         if (!pkg) return;
         
-        // Check if modal elements exist, reload page if not
-        const stripePackage = document.getElementById('stripe-package');
-        const stripeBuyingPower = document.getElementById('stripe-buying-power');
-        const stripeTotal = document.getElementById('stripe-total');
-        const stripeAmount = document.getElementById('stripe-amount');
+        document.getElementById('stripe-package').textContent = pkg.name;
+        document.getElementById('stripe-buying-power').textContent = '€' + pkg.buyingPower.toLocaleString();
+        document.getElementById('stripe-total').textContent = '€' + pkg.price.toLocaleString();
+        document.getElementById('stripe-amount').textContent = pkg.price.toLocaleString();
         
-        if (!stripePackage || !stripeBuyingPower || !stripeTotal || !stripeAmount) {
-            console.log('Modal elements missing, reloading page...');
-            location.reload();
-            return;
-        }
-        
-        stripePackage.textContent = pkg.name;
-        stripeBuyingPower.textContent = '€' + pkg.buyingPower.toLocaleString();
-        stripeTotal.textContent = '€' + pkg.price.toLocaleString();
-        stripeAmount.textContent = pkg.price.toLocaleString();
-        
+        // Reset card and button
         if (cardElement) cardElement.clear();
-        
         const submitBtn = document.getElementById('stripe-submit');
         if (submitBtn) {
             submitBtn.disabled = true;
@@ -1142,11 +1130,19 @@
         document.body.style.overflow = '';
         window.currentPaymentIntent = null;
         
-        const pkg = PACKAGES[selectedPackage];
-        if (pkg) {
-            const btn = document.getElementById('stripe-submit');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="material-symbols-outlined">lock</span> Pay €' + pkg.price.toLocaleString();
+        // Reset submit button
+        const submitBtn = document.getElementById('stripe-submit');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            const pkg = PACKAGES[selectedPackage];
+            if (pkg) {
+                submitBtn.innerHTML = '<span class="material-symbols-outlined">lock</span> Pay €' + pkg.price.toLocaleString();
+            }
+        }
+        
+        // Clear card element
+        if (cardElement) {
+            cardElement.clear();
         }
     }
 
