@@ -52,7 +52,7 @@ router.get('/packages', async (req, res) => {
         const isProduction = process.env.NODE_ENV === 'production';
         
         const result = await pool.query(`
-            SELECT id, name, description, price, currency, buying_power, bonus,
+            SELECT id, name, description, price, currency, buyingPower, bonus,
                    CASE WHEN price > 0 THEN ROUND((bonus / price) * 100) ELSE 0 END as bonus_percent,
                    tier, icon, features, popular
             FROM membership_packages 
@@ -172,7 +172,7 @@ router.post('/mint-and-capture', async (req, res) => {
             return res.status(404).json({ success: false, error: 'Package not found' });
         }
         
-        const buyingPowerAmount = parseFloat(pkg.buying_power);
+        const buyingPowerAmount = parseFloat(pkg.buyingPower);
         const walletLower = walletAddress.toLowerCase();
         
         // 3. MINT TOKENS FIRST
@@ -207,8 +207,8 @@ router.post('/mint-and-capture', async (req, res) => {
             
             // Update order status
             await pool.query(
-                `UPDATE membership_purchases SET status = 'mint_failed', error_message = $1 WHERE id = $2`,
-                [mintError.message, orderId]
+                `UPDATE membership_purchases SET status = 'mint_failed', error_message = $1 WHERE payment_intent_id = $2`,
+                [mintError.message, paymentIntentId]
             );
             
             return res.status(500).json({ 
@@ -270,8 +270,8 @@ router.post('/mint-and-capture', async (req, res) => {
                     '{mint_tx_hash}',
                     $5::jsonb
                 )
-            WHERE id = $6
-        `, [stripeFee, netAmount, platformFee, partnerAmount, JSON.stringify(mintTxHash), orderId]);
+            WHERE payment_intent_id = $6
+        `, [stripeFee, netAmount, platformFee, partnerAmount, JSON.stringify(mintTxHash), paymentIntentId]);
         
         // 7. Transfer to connected account (if configured)
         if (CONNECTED_ACCOUNT_ID && partnerAmount > 0) {
