@@ -1022,56 +1022,70 @@
     async function handleStripeSubmit(e) {
         e.preventDefault();
         
-        if (!selectedPackage) return;
-        
-        showProcessingUI('Authorizing payment...');
-        
-        const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-            payment_method: {
-                card: cardElement,
-                billing_details: {
-                    email: document.getElementById('email').value
-                }
-            }
-        });
-        
-        if (error) {
-            showError(error.message);
+        if (!selectedPackage || !window.currentPaymentIntent) {
+            showToast('Please select a package first', 'error');
             return;
         }
         
-        // Payment authorized but NOT captured yet
-        showProcessingUI('Minting your Kea€ tokens...');
+        const pkg = PACKAGES[selectedPackage];
+        const paymentData = window.currentPaymentIntent;
+        
+        // Disable button and show processing
+        const submitBtn = document.getElementById('stripe-submit');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>Processing...';
         
         try {
+            const { error, paymentIntent } = await stripe.confirmCardPayment(paymentData.clientSecret, {
+                payment_method: {
+                    card: cardElement,
+                    billing_details: {
+                        email: currentUser?.email || ''
+                    }
+                }
+            });
+            
+            if (error) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span class="material-symbols-outlined">lock</span> Pay €' + pkg.price.toLocaleString();
+                showToast(error.message, 'error');
+                return;
+            }
+            
+            // Payment authorized - now mint and capture
+            submitBtn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>Minting tokens...';
+            
             const response = await fetch('/api/membership/mint-and-capture', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     paymentIntentId: paymentIntent.id,
-                    orderId: currentOrderId,
-                    walletAddress: currentUser.wallet,
-                    packageId: selectedPackage.id
+                    orderId: paymentData.orderId,
+                    walletAddress: currentWallet,
+                    packageId: selectedPackage
                 })
             });
             
             const data = await response.json();
             
+            closeStripeModal();
+            
             if (data.success) {
-                // Update balance display
-                currentBalance += data.buying_power;
-                fetchUserBalance(); // Refresh from DB
-                
-                showSuccess({
-                    title: 'Purchase Complete!',
-                    message: `${data.buying_power} Kea€ has been added to your account.`,
+                fetchUserBalance(); // Refresh balance from DB
+                showResult('success', 'Welcome to Kea Valley!', 'Your Kea€ has been added to your account.', {
+                    package: pkg.name,
+                    buyingPower: pkg.buyingPower,
+                    orderId: data.order_id,
                     txHash: data.mint_tx_hash
                 });
             } else {
-                showError(data.error || 'Payment failed');
+                showResult('error', 'Purchase Failed', data.error || 'Please contact support.');
             }
+            
         } catch (err) {
-            showError('Connection error. Please check your purchase status.');
+            console.error('Payment error:', err);
+            closeStripeModal();
+            showResult('error', 'Connection Error', 'Please check your purchase status or try again.');
         }
     }
 
