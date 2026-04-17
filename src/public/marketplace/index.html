@@ -1137,9 +1137,9 @@
             var total = getCartTotal();
             document.getElementById('checkoutTotal').textContent = 'Kea€' + total.toLocaleString();
             
-            var currentUser = HeaderManager.currentUser;
-            if (currentUser && currentUser.email) {
-                document.getElementById('checkoutEmail').value = currentUser.email;
+            var emailInput = document.getElementById('checkoutEmail');
+            if (emailInput && HeaderManager.currentUser.email) {
+                emailInput.value = HeaderManager.currentUser.email;
             }
             
             updateTokenPaymentOption();
@@ -1198,9 +1198,12 @@
                 return;
             }
             
-            var email = document.getElementById('checkoutEmail').value;
+            // Get email - from checkout form OR from user profile
+            var email = document.getElementById('checkoutEmail')?.value || currentUser.email || '';
+            
             if (!email) {
                 showToast('Please enter your email', 'error');
+                document.getElementById('checkoutEmail')?.focus();
                 return;
             }
             
@@ -1218,7 +1221,7 @@
                         wallet_address: currentUser.wallet,
                         items: cart,
                         email: email,
-                        phone: document.getElementById('checkoutPhone').value || '',
+                        phone: document.getElementById('checkoutPhone')?.value || '',
                         name: currentUser.name || currentUser.firstName || ''
                     })
                 });
