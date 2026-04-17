@@ -760,17 +760,37 @@
     }
 
     async function fetchUserBalance() {
-        if (!currentWallet) return;
+        if (!currentUser || !currentUser.wallet) return;
+        
         try {
-            const response = await fetch(`https://api.wallettwo.com/blockchain/balance/137/${currentWallet}/${CONFIG.VIP_TOKEN_ADDRESS}`);
-            if (response.ok) {
-                const data = await response.json();
-                userBalance = typeof data === 'number' ? data : (data.balance || 0);
+            // Fetch from YOUR database, not external API
+            const response = await fetch('/api/member/balance/' + currentUser.wallet.toLowerCase());
+            const data = await response.json();
+            
+            if (data.success) {
+                currentBalance = parseFloat(data.balance) || 0;
+                console.log('💰 Balance loaded from DB:', currentBalance);
+            } else {
+                currentBalance = 0;
             }
-        } catch (e) {
-            userBalance = 0;
+            
+            // Update all balance displays
+            const balanceElements = document.querySelectorAll('[data-user-balance], #userBalance, #headerBalance');
+            balanceElements.forEach(el => {
+                el.textContent = 'Kea€' + currentBalance.toLocaleString();
+            });
+            
+            // Update HeaderManager if available
+            if (typeof HeaderManager !== 'undefined') {
+                HeaderManager.userBalance = currentBalance;
+                if (HeaderManager.updateBalanceDisplays) {
+                    HeaderManager.updateBalanceDisplays(currentBalance);
+                }
+            }
+        } catch (error) {
+            console.error('Balance fetch failed:', error);
+            currentBalance = 0;
         }
-        updateHeaderUI(currentUser, userBalance);
     }
 
     // ============================================
@@ -1002,75 +1022,56 @@
     async function handleStripeSubmit(e) {
         e.preventDefault();
         
-        const btn = document.getElementById('stripe-submit');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="animate-spin inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full mr-2"></span>Authorizing...';
+        if (!selectedPackage) return;
         
-        const paymentData = window.currentPaymentIntent;
-        if (!paymentData?.clientSecret) {
-            showResult('error', 'Error', 'Session expired');
-            closeStripeModal();
+        showProcessingUI('Authorizing payment...');
+        
+        const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+            payment_method: {
+                card: cardElement,
+                billing_details: {
+                    email: document.getElementById('email').value
+                }
+            }
+        });
+        
+        if (error) {
+            showError(error.message);
             return;
         }
         
+        // Payment authorized but NOT captured yet
+        showProcessingUI('Minting your Kea€ tokens...');
+        
         try {
-            // Step 1: Authorize the card (no charge yet)
-            const { error, paymentIntent } = await stripe.confirmCardPayment(paymentData.clientSecret, {
-                payment_method: { card: cardElement }
+            const response = await fetch('/api/membership/mint-and-capture', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    paymentIntentId: paymentIntent.id,
+                    orderId: currentOrderId,
+                    walletAddress: currentUser.wallet,
+                    packageId: selectedPackage.id
+                })
             });
             
-            if (error) {
-                document.getElementById('card-errors').textContent = error.message;
-                document.getElementById('card-errors').classList.remove('hidden');
-                btn.disabled = false;
-                btn.innerHTML = '<span class="material-symbols-outlined">lock</span> Pay €' + paymentData.price.toLocaleString();
-                return;
-            }
+            const data = await response.json();
             
-            // Card authorized, now mint tokens and capture payment
-            if (paymentIntent.status === 'requires_capture') {
-                closeStripeModal();
-                showProcessing('Minting your Kea Euros...');
+            if (data.success) {
+                // Update balance display
+                currentBalance += data.buying_power;
+                fetchUserBalance(); // Refresh from DB
                 
-                // Step 2: Mint tokens, then capture payment
-                const response = await fetch('/api/membership/mint-and-capture', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        paymentIntentId: paymentIntent.id,
-                        orderId: paymentData.orderId
-                    })
+                showSuccess({
+                    title: 'Purchase Complete!',
+                    message: `${data.buying_power} Kea€ has been added to your account.`,
+                    txHash: data.mint_tx_hash
                 });
-                
-                const result = await response.json();
-                
-                hideProcessing();
-                
-                if (result.success) {
-                    showResult('success', 'Welcome to Kea Valley!', 'Your Kea Euros have been minted and credited.', {
-                        package: paymentData.name,
-                        buyingPower: paymentData.buyingPower,
-                        orderId: result.orderId,
-                        txHash: result.mintTxHash
-                    });
-                    fetchUserBalance();
-                } else {
-                    showResult('error', 'Purchase Failed', result.error || 'Please contact support.');
-                }
-            } else if (paymentIntent.status === 'succeeded') {
-                // Fallback for automatic capture (shouldn't happen with new flow)
-                closeStripeModal();
-                showProcessing('Processing your membership...');
-                await pollPurchaseStatus(paymentIntent.id, paymentData);
             } else {
-                showResult('error', 'Payment Error', `Unexpected status: ${paymentIntent.status}`);
-                closeStripeModal();
+                showError(data.error || 'Payment failed');
             }
-            
         } catch (err) {
-            hideProcessing();
-            showResult('error', 'Payment Failed', err.message);
-            closeStripeModal();
+            showError('Connection error. Please check your purchase status.');
         }
     }
 
