@@ -472,12 +472,12 @@ async function handleMembershipPaymentSuccess(paymentIntent) {
     try {
         // Check if already processed
         const existingCheck = await pool.query(
-            'SELECT status FROM membership_purchases WHERE id = $1',
-            [order_id]
+            'SELECT status FROM membership_purchases WHERE payment_intent_id = $1',
+            [paymentIntent.id]
         );
-        
+
         if (existingCheck.rows[0]?.status === 'completed') {
-            console.log('⚠️ Payment already processed, skipping');
+            console.log('⚠️ Already processed by mint-and-capture, skipping webhook');
             return;
         }
 
