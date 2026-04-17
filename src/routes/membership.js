@@ -186,7 +186,7 @@ router.post('/mint-and-capture', async (req, res) => {
             const minterWallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
             
             const tokenContract = new ethers.Contract(
-                process.env.VIP_TOKEN_ADDRESS,
+                process.env.TOKEN_ADDRESS_POLYGON,
                 ['function mint(address to, uint256 amount) external'],
                 minterWallet
             );
