@@ -234,15 +234,18 @@ router.post('/checkout/tokens', async (req, res) => {
         return res.status(400).json({ success: false, error: 'Invalid request' });
     }
     
-    // Normalize wallet address to lowercase
     const walletLower = wallet_address.toLowerCase();
+    const client = await db.pool.connect();
     
     try {
+        // Start transaction
+        await client.query('BEGIN');
+        
         // Calculate total
         let totalAmount = 0;
         const serviceIds = items.map(item => item.service_id || item.serviceId);
         
-        const servicesResult = await db.pool.query(`
+        const servicesResult = await client.query(`
             SELECT id, price, name FROM marketplace_services WHERE id = ANY($1)
         `, [serviceIds]);
         
@@ -271,14 +274,15 @@ router.post('/checkout/tokens', async (req, res) => {
             };
         });
         
-        // Check balance
-        const balanceResult = await db.pool.query(`
-            SELECT balance FROM member_balances WHERE wallet_address = $1
+        // Check balance (with row lock)
+        const balanceResult = await client.query(`
+            SELECT balance FROM member_balances WHERE wallet_address = $1 FOR UPDATE
         `, [walletLower]);
         
         const currentBalance = balanceResult.rows.length > 0 ? parseFloat(balanceResult.rows[0].balance) : 0;
         
         if (currentBalance < totalAmount) {
+            await client.query('ROLLBACK');
             return res.status(400).json({ 
                 success: false, 
                 error: 'Insufficient Kea€ balance',
@@ -288,7 +292,7 @@ router.post('/checkout/tokens', async (req, res) => {
         }
         
         // Create order
-        const orderResult = await db.pool.query(`
+        const orderResult = await client.query(`
             INSERT INTO marketplace_orders (wallet_address, email, phone, items, total_amount, payment_method, status)
             VALUES ($1, $2, $3, $4, $5, 'tokens', 'completed')
             RETURNING *
@@ -297,14 +301,14 @@ router.post('/checkout/tokens', async (req, res) => {
         const orderId = orderResult.rows[0].id;
         
         // Deduct balance
-        await db.pool.query(`
+        await client.query(`
             UPDATE member_balances 
             SET balance = balance - $1, total_spent = total_spent + $1, updated_at = NOW()
             WHERE wallet_address = $2
         `, [totalAmount, walletLower]);
         
         // Log transaction
-        await db.pool.query(`
+        await client.query(`
             INSERT INTO token_transactions (wallet_address, amount, type, reference_type, reference_id, description, status)
             VALUES ($1, $2, 'spend', 'order', $3, $4, 'completed')
         `, [walletLower, -totalAmount, orderId, `Marketplace purchase: ${orderItems.map(i => i.service_name).join(', ')}`]);
@@ -313,68 +317,56 @@ router.post('/checkout/tokens', async (req, res) => {
         const createdVouchers = [];
         
         for (const item of orderItems) {
-            const voucherCode = voucherRoutes.generateVoucherCode();
-            
-            const voucherResult = await db.pool.query(`
-                INSERT INTO marketplace_vouchers (
-                    order_id, wallet_address, user_email, service_id, service_name, 
-                    code, value, status, valid_from, created_at,
-                    booking_start, booking_end, booking_date
-                )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', CURRENT_DATE, NOW(), $8, $9, $10)
-                RETURNING *
-            `, [
-                orderId,
-                walletLower,
-                email || null,
-                item.service_id,
-                item.service_name,
-                voucherCode,
-                item.total,
-                item.booking_start || null,
-                item.booking_end || null,
-                item.booking_date || null
-            ]);
-            
-            const voucher = voucherResult.rows[0];
-            createdVouchers.push(voucher);
-            
-            // Send email to buyer
+            // Create a voucher for each unit of quantity
+            for (let i = 0; i < item.quantity; i++) {
+                const voucherCode = voucherRoutes.generateVoucherCode();
+                
+                const voucherResult = await client.query(`
+                    INSERT INTO marketplace_vouchers (
+                        order_id, wallet_address, user_email, service_id, service_name, 
+                        code, value, status, valid_from, created_at,
+                        booking_start, booking_end, booking_date
+                    )
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', CURRENT_DATE, NOW(), $8, $9, $10)
+                    RETURNING *
+                `, [
+                    orderId,
+                    walletLower,
+                    email || null,
+                    item.service_id,
+                    item.service_name,
+                    voucherCode,
+                    item.price,  // Single unit price (10€), not total (30€)
+                    item.booking_start || null,
+                    item.booking_end || null,
+                    item.booking_date || null
+                ]);
+                
+                createdVouchers.push(voucherResult.rows[0]);
+            }
+        }
+        
+        // Commit transaction
+        await client.query('COMMIT');
+        
+        console.log('✅ Order created with', createdVouchers.length, 'voucher(s):', orderId);
+        
+        // Send emails AFTER successful commit (outside transaction)
+        for (const voucher of createdVouchers) {
             if (email) {
                 try {
-                    const buyerEmailResult = await emailService.sendVoucherPurchaseEmail(voucher, email);
-                    await emailService.logEmail(
-                        db, 
-                        voucher.id, 
-                        'purchase_buyer', 
-                        email,
-                        `Your Kea Valley Voucher - ${voucher.service_name}`,
-                        buyerEmailResult.success ? 'sent' : 'failed',
-                        buyerEmailResult.error || null
-                    );
+                    await emailService.sendVoucherPurchaseEmail(voucher, email);
                 } catch (emailErr) {
                     console.error('Failed to send buyer email:', emailErr.message);
                 }
             }
             
-            // Send notification to site owner
             try {
-                const ownerEmailResult = await emailService.sendVoucherPurchaseNotificationToOwner(voucher, email, name);
-                await emailService.logEmail(
-                    db, 
-                    voucher.id, 
-                    'purchase_owner', 
-                    emailService.SITE_OWNER_EMAIL,
-                    `New Voucher Purchase - ${voucher.service_name}`,
-                    ownerEmailResult.success ? 'sent' : 'failed',
-                    ownerEmailResult.error || null
-                );
+                await emailService.sendVoucherPurchaseNotificationToOwner(voucher, email, name);
             } catch (emailErr) {
                 console.error('Failed to send owner notification:', emailErr.message);
             }
         }
-        
-        console.log('✅ Order created with', createdVouchers.length, 'voucher(s):', orderId);
         
         res.json({ 
             success: true, 
@@ -385,8 +377,11 @@ router.post('/checkout/tokens', async (req, res) => {
         });
         
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error processing token checkout:', error);
         res.status(500).json({ success: false, error: error.message });
+    } finally {
+        client.release();
     }
 });
 

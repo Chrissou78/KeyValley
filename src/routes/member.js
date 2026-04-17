@@ -32,7 +32,7 @@ router.get('/balance/:wallet', async (req, res) => {
 // GET /api/member/vouchers/:wallet
 router.get('/vouchers/:wallet', async (req, res) => {
     try {
-        const { wallet } = req.params;
+        const wallet = req.params.wallet.toLowerCase();
         
         const result = await db.pool.query(`
             SELECT 
@@ -41,7 +41,7 @@ router.get('/vouchers/:wallet', async (req, res) => {
                 s.image_url, s.category
             FROM marketplace_vouchers v
             LEFT JOIN marketplace_services s ON v.service_id = s.id
-            WHERE LOWER(v.wallet_address) = LOWER($1)
+            WHERE LOWER(v.wallet_address) = $1
             ORDER BY v.created_at DESC
         `, [wallet]);
 
@@ -58,14 +58,14 @@ router.get('/vouchers/:wallet', async (req, res) => {
 // GET /api/member/orders/:wallet
 router.get('/orders/:wallet', async (req, res) => {
     try {
-        const { wallet } = req.params;
+        const wallet = req.params.wallet.toLowerCase();
         
         const result = await db.pool.query(`
             SELECT 
                 id, order_number, items, total_amount, 
                 payment_method, status, created_at
             FROM marketplace_orders
-            WHERE LOWER(wallet_address) = LOWER($1)
+            WHERE LOWER(wallet_address) = $1
             ORDER BY created_at DESC
         `, [wallet]);
 
