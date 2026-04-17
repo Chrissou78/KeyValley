@@ -965,17 +965,28 @@
     // Purchase Flow
     // ============================================
     function startPurchase() {
+        console.log('=== startPurchase called ===');
+        console.log('currentWallet:', currentWallet);
+        console.log('selectedPackage:', selectedPackage);
+        console.log('PACKAGES:', PACKAGES);
+        console.log('stripe-modal:', document.getElementById('stripe-modal'));
+        console.log('stripe-package:', document.getElementById('stripe-package'));
+        console.log('stripe-buying-power:', document.getElementById('stripe-buying-power'));
+        console.log('stripe-total:', document.getElementById('stripe-total'));
+        console.log('stripe-amount:', document.getElementById('stripe-amount'));
+        
         if (!currentWallet) {
             showLoginModal();
             return;
         }
         
         const pkg = PACKAGES[selectedPackage];
+        console.log('pkg:', pkg);
         if (!pkg) return;
         
-        // Check ALL modal elements exist
-        const stripeModal = document.getElementById('stripe-modal');
         const stripePackage = document.getElementById('stripe-package');
+        console.log('stripePackage before setting:', stripePackage);
+        const stripeModal = document.getElementById('stripe-modal');
         const stripeBuyingPower = document.getElementById('stripe-buying-power');
         const stripeTotal = document.getElementById('stripe-total');
         const stripeAmount = document.getElementById('stripe-amount');
