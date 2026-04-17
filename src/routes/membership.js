@@ -183,7 +183,7 @@ router.post('/mint-and-capture', async (req, res) => {
             // Load ethers
             const { ethers } = require('ethers');
             const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC || 'https://polygon-rpc.com');
-            const minterWallet = new ethers.Wallet(process.env.MINTER_PRIVATE_KEY, provider);
+            const minterWallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
             
             const tokenContract = new ethers.Contract(
                 process.env.VIP_TOKEN_ADDRESS,
