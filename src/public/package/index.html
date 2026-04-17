@@ -1004,7 +1004,7 @@
         
         const btn = document.getElementById('stripe-submit');
         btn.disabled = true;
-        btn.innerHTML = '<span class="animate-spin inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full mr-2"></span>Processing...';
+        btn.innerHTML = '<span class="animate-spin inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full mr-2"></span>Authorizing...';
         
         const paymentData = window.currentPaymentIntent;
         if (!paymentData?.clientSecret) {
@@ -1014,6 +1014,7 @@
         }
         
         try {
+            // Step 1: Authorize the card (no charge yet)
             const { error, paymentIntent } = await stripe.confirmCardPayment(paymentData.clientSecret, {
                 payment_method: { card: cardElement }
             });
@@ -1026,12 +1027,48 @@
                 return;
             }
             
-            if (paymentIntent.status === 'succeeded') {
+            // Card authorized, now mint tokens and capture payment
+            if (paymentIntent.status === 'requires_capture') {
                 closeStripeModal();
-                showProcessing('Payment successful! Processing your membership...');
+                showProcessing('Minting your Kea Euros...');
+                
+                // Step 2: Mint tokens, then capture payment
+                const response = await fetch('/api/membership/mint-and-capture', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        paymentIntentId: paymentIntent.id,
+                        orderId: paymentData.orderId
+                    })
+                });
+                
+                const result = await response.json();
+                
+                hideProcessing();
+                
+                if (result.success) {
+                    showResult('success', 'Welcome to Kea Valley!', 'Your Kea Euros have been minted and credited.', {
+                        package: paymentData.name,
+                        buyingPower: paymentData.buyingPower,
+                        orderId: result.orderId,
+                        txHash: result.mintTxHash
+                    });
+                    fetchUserBalance();
+                } else {
+                    showResult('error', 'Purchase Failed', result.error || 'Please contact support.');
+                }
+            } else if (paymentIntent.status === 'succeeded') {
+                // Fallback for automatic capture (shouldn't happen with new flow)
+                closeStripeModal();
+                showProcessing('Processing your membership...');
                 await pollPurchaseStatus(paymentIntent.id, paymentData);
+            } else {
+                showResult('error', 'Payment Error', `Unexpected status: ${paymentIntent.status}`);
+                closeStripeModal();
             }
+            
         } catch (err) {
+            hideProcessing();
             showResult('error', 'Payment Failed', err.message);
             closeStripeModal();
         }
@@ -1105,8 +1142,21 @@
         if (details) {
             document.getElementById('result-details').classList.remove('hidden');
             document.getElementById('result-package').textContent = details.package;
-            document.getElementById('result-buying-power').textContent = '€' + details.buyingPower?.toLocaleString();
+            document.getElementById('result-buying-power').textContent = 'Kea€' + details.buyingPower?.toLocaleString();
             document.getElementById('result-order-id').textContent = details.orderId || '--';
+            
+            // Add TX hash link if available
+            if (details.txHash) {
+                const txLink = document.createElement('div');
+                txLink.className = 'flex justify-between mt-2';
+                txLink.innerHTML = `
+                    <span class="text-gray-400">Transaction</span>
+                    <a href="https://polygonscan.com/tx/${details.txHash}" target="_blank" class="text-primary hover:underline">
+                        ${details.txHash.slice(0, 8)}...${details.txHash.slice(-6)}
+                    </a>
+                `;
+                document.getElementById('result-details').appendChild(txLink);
+            }
         } else {
             document.getElementById('result-details').classList.add('hidden');
         }
