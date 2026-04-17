@@ -475,8 +475,8 @@ async function handleMembershipPaymentSuccess(paymentIntent) {
             'SELECT status FROM membership_purchases WHERE payment_intent_id = $1',
             [paymentIntent.id]
         );
-
-        if (existingCheck.rows[0]?.status === 'completed') {
+        
+        if (existingCheck.rows.length > 0 && existingCheck.rows[0].status === 'completed') {
             console.log('⚠️ Already processed by mint-and-capture, skipping webhook');
             return;
         }

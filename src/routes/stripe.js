@@ -68,10 +68,8 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 async function handlePaymentSuccess(paymentIntent) {
   const { order_id, wallet_address, email, package_key, package_name, buying_power } = paymentIntent.metadata || {};
 
-  console.log(`\n💳 Processing membership payment: ${paymentIntent.id}`);
+  console.log(`\n💳 Stripe webhook received for: ${paymentIntent.id}`);
   console.log(`   Order: ${order_id}, Package: ${package_key}`);
-  console.log(`   Wallet: ${wallet_address}`);
-  console.log(`   Kea Euros: €${buying_power}`);
 
   if (!order_id || !wallet_address) {
     console.error('❌ Missing order_id or wallet_address in metadata');
@@ -79,16 +77,19 @@ async function handlePaymentSuccess(paymentIntent) {
   }
 
   try {
-    // Check if already processed
+    // Check if already processed by mint-and-capture
     const existingCheck = await pool.query(
-      'SELECT status FROM membership_purchases WHERE id = $1',
-      [order_id]
+      'SELECT status FROM membership_purchases WHERE payment_intent_id = $1',
+      [paymentIntent.id]
     );
     
     if (existingCheck.rows.length > 0 && existingCheck.rows[0].status === 'completed') {
-      console.log('⚠️ Payment already processed, skipping');
+      console.log('⚠️ Already processed by mint-and-capture, skipping webhook');
       return;
     }
+
+    console.log(`   Wallet: ${wallet_address}`);
+    console.log(`   Kea Euros: €${buying_power}`);
 
     const chargedAmount = paymentIntent.amount / 100;
     let stripeFee = 0;

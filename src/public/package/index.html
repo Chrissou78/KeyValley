@@ -973,13 +973,30 @@
         const pkg = PACKAGES[selectedPackage];
         if (!pkg) return;
         
-        document.getElementById('stripe-package').textContent = pkg.name;
-        document.getElementById('stripe-buying-power').textContent = '€' + pkg.buyingPower.toLocaleString();
-        document.getElementById('stripe-total').textContent = '€' + pkg.price.toLocaleString();
-        document.getElementById('stripe-amount').textContent = pkg.price.toLocaleString();
+        // Check if modal elements exist, reload page if not
+        const stripePackage = document.getElementById('stripe-package');
+        const stripeBuyingPower = document.getElementById('stripe-buying-power');
+        const stripeTotal = document.getElementById('stripe-total');
+        const stripeAmount = document.getElementById('stripe-amount');
+        
+        if (!stripePackage || !stripeBuyingPower || !stripeTotal || !stripeAmount) {
+            console.log('Modal elements missing, reloading page...');
+            location.reload();
+            return;
+        }
+        
+        stripePackage.textContent = pkg.name;
+        stripeBuyingPower.textContent = '€' + pkg.buyingPower.toLocaleString();
+        stripeTotal.textContent = '€' + pkg.price.toLocaleString();
+        stripeAmount.textContent = pkg.price.toLocaleString();
         
         if (cardElement) cardElement.clear();
-        document.getElementById('stripe-submit').disabled = true;
+        
+        const submitBtn = document.getElementById('stripe-submit');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="material-symbols-outlined">lock</span> Pay €' + pkg.price.toLocaleString();
+        }
         
         document.getElementById('stripe-modal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
@@ -1168,6 +1185,8 @@
 
     function closeResultOverlay() {
         document.getElementById('result-overlay').classList.add('hidden');
+        // Refresh balance display
+        fetchUserBalance();
     }
 
     // ============================================
