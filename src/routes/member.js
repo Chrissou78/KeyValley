@@ -3,6 +3,32 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db-postgres');
 
+// GET /api/member/balance/:wallet
+router.get('/balance/:wallet', async (req, res) => {
+    try {
+        const wallet = req.params.wallet.toLowerCase();
+        
+        const result = await db.pool.query(
+            'SELECT balance, total_credited, total_spent FROM member_balances WHERE wallet_address = $1',
+            [wallet]
+        );
+        
+        if (result.rows.length > 0) {
+            res.json({ 
+                success: true, 
+                balance: parseFloat(result.rows[0].balance) || 0,
+                total_credited: parseFloat(result.rows[0].total_credited) || 0,
+                total_spent: parseFloat(result.rows[0].total_spent) || 0
+            });
+        } else {
+            res.json({ success: true, balance: 0, total_credited: 0, total_spent: 0 });
+        }
+    } catch (error) {
+        console.error('Error fetching balance:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch balance' });
+    }
+});
+
 // GET /api/member/vouchers/:wallet
 router.get('/vouchers/:wallet', async (req, res) => {
     try {
