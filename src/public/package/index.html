@@ -1154,17 +1154,15 @@
         document.body.style.overflow = '';
         window.currentPaymentIntent = null;
         
-        // Reset submit button
+        // Reset submit button WITH the stripe-amount span
         const submitBtn = document.getElementById('stripe-submit');
         if (submitBtn) {
             submitBtn.disabled = true;
             const pkg = PACKAGES[selectedPackage];
-            if (pkg) {
-                submitBtn.innerHTML = '<span class="material-symbols-outlined">lock</span> Pay €' + pkg.price.toLocaleString();
-            }
+            const amount = pkg ? pkg.price.toLocaleString() : '0';
+            submitBtn.innerHTML = '<span class="material-symbols-outlined">lock</span> Pay €<span id="stripe-amount">' + amount + '</span>';
         }
         
-        // Clear card element
         if (cardElement) {
             cardElement.clear();
         }
