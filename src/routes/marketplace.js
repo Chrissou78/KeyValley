@@ -442,6 +442,7 @@ router.post('/checkout/create-intent', async (req, res) => {
         const paymentIntent = await stripe.paymentIntents.create({
             amount: Math.round(totalAmount * 100), // cents
             currency: 'eur',
+            capture_method: 'manual',
             metadata: {
                 order_id: orderResult.rows[0].id,
                 wallet_address: wallet_address || '',

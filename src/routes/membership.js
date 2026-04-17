@@ -147,6 +147,166 @@ router.get('/verify-connect', async (req, res) => {
     }
 });
 
+// POST /api/membership/mint-and-capture
+router.post('/mint-and-capture', async (req, res) => {
+    const { paymentIntentId, orderId, walletAddress, packageId } = req.body;
+    
+    console.log('🔄 Mint-and-capture started:', { paymentIntentId, orderId, walletAddress, packageId });
+    
+    try {
+        // 1. Get the payment intent
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        
+        if (paymentIntent.status !== 'requires_capture') {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Payment not ready for capture. Status: ' + paymentIntent.status 
+            });
+        }
+        
+        // 2. Get package details
+        const pkg = await getPackage(packageId);
+        if (!pkg) {
+            // Cancel the payment intent
+            await stripe.paymentIntents.cancel(paymentIntentId);
+            return res.status(404).json({ success: false, error: 'Package not found' });
+        }
+        
+        const buyingPowerAmount = parseFloat(pkg.buying_power);
+        const walletLower = walletAddress.toLowerCase();
+        
+        // 3. MINT TOKENS FIRST
+        let mintTxHash = null;
+        try {
+            console.log('🪙 Minting', buyingPowerAmount, 'tokens to', walletLower);
+            
+            // Load ethers
+            const { ethers } = require('ethers');
+            const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC || 'https://polygon-rpc.com');
+            const minterWallet = new ethers.Wallet(process.env.MINTER_PRIVATE_KEY, provider);
+            
+            const tokenContract = new ethers.Contract(
+                process.env.VIP_TOKEN_ADDRESS,
+                ['function mint(address to, uint256 amount) external'],
+                minterWallet
+            );
+            
+            // Mint with proper decimals (assuming 18)
+            const mintAmount = ethers.parseUnits(buyingPowerAmount.toString(), 18);
+            const tx = await tokenContract.mint(walletAddress, mintAmount);
+            const receipt = await tx.wait();
+            
+            mintTxHash = receipt.hash;
+            console.log('✅ Tokens minted! TX:', mintTxHash);
+            
+        } catch (mintError) {
+            console.error('❌ Minting failed:', mintError.message);
+            
+            // CANCEL the payment - don't charge the user
+            await stripe.paymentIntents.cancel(paymentIntentId);
+            
+            // Update order status
+            await pool.query(
+                `UPDATE membership_purchases SET status = 'mint_failed', error_message = $1 WHERE id = $2`,
+                [mintError.message, orderId]
+            );
+            
+            return res.status(500).json({ 
+                success: false, 
+                error: 'Token minting failed. Your card was not charged.' 
+            });
+        }
+        
+        // 4. CAPTURE PAYMENT (only after successful mint)
+        console.log('💳 Capturing payment...');
+        const capturedIntent = await stripe.paymentIntents.capture(paymentIntentId);
+        console.log('✅ Payment captured!');
+        
+        // 5. Credit database balance
+        await pool.query(`
+            INSERT INTO member_balances (wallet_address, balance, total_credited)
+            VALUES ($1, $2, $2)
+            ON CONFLICT (wallet_address) 
+            DO UPDATE SET 
+                balance = member_balances.balance + $2,
+                total_credited = member_balances.total_credited + $2,
+                updated_at = NOW()
+        `, [walletLower, buyingPowerAmount]);
+        
+        console.log('✅ Database balance credited:', buyingPowerAmount);
+        
+        // 6. Calculate fees and update order
+        const amountReceived = capturedIntent.amount_received / 100;
+        let stripeFee = amountReceived * 0.029 + 0.25; // Estimate
+        
+        // Try to get actual fee
+        try {
+            if (capturedIntent.latest_charge) {
+                const charge = await stripe.charges.retrieve(capturedIntent.latest_charge);
+                if (charge.balance_transaction) {
+                    const balanceTx = await stripe.balanceTransactions.retrieve(charge.balance_transaction);
+                    stripeFee = balanceTx.fee / 100;
+                }
+            }
+        } catch (e) {
+            console.log('Using estimated Stripe fee');
+        }
+        
+        const netAmount = amountReceived - stripeFee;
+        const platformFee = netAmount * (PLATFORM_FEE_PERCENT / 100);
+        const partnerAmount = netAmount - platformFee;
+        
+        // Update order with all details
+        await pool.query(`
+            UPDATE membership_purchases 
+            SET status = 'completed',
+                stripe_fee = $1,
+                net_amount = $2,
+                platform_fee = $3,
+                partner_amount = $4,
+                completed_at = NOW(),
+                metadata = jsonb_set(
+                    COALESCE(metadata, '{}'::jsonb),
+                    '{mint_tx_hash}',
+                    $5::jsonb
+                )
+            WHERE id = $6
+        `, [stripeFee, netAmount, platformFee, partnerAmount, JSON.stringify(mintTxHash), orderId]);
+        
+        // 7. Transfer to connected account (if configured)
+        if (CONNECTED_ACCOUNT_ID && partnerAmount > 0) {
+            try {
+                await stripe.transfers.create({
+                    amount: Math.round(partnerAmount * 100),
+                    currency: 'eur',
+                    destination: CONNECTED_ACCOUNT_ID,
+                    transfer_group: orderId,
+                    metadata: { order_id: orderId, package_id: packageId }
+                });
+                console.log('✅ Transfer to partner:', partnerAmount);
+            } catch (e) {
+                console.error('Transfer failed:', e.message);
+            }
+        }
+        
+        // 8. Send confirmation email (non-blocking)
+        // ... your email logic here ...
+        
+        res.json({
+            success: true,
+            order_id: orderId,
+            mint_tx_hash: mintTxHash,
+            buying_power: buyingPowerAmount,
+            message: 'Tokens minted and payment captured successfully'
+        });
+        
+    } catch (error) {
+        console.error('❌ Mint-and-capture error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+
 // ============================================
 // POST /api/membership/create-payment-intent
 // ============================================
@@ -164,7 +324,7 @@ router.post('/create-payment-intent', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Invalid or inactive package' });
         }
 
-        // Verify price matches (allow for minor discrepancies)
+        // Verify price matches
         if (price && Math.abs(pkg.price - price) > 1) {
             console.warn(`Price mismatch for ${packageKey}: expected ${pkg.price}, got ${price}`);
             return res.status(400).json({ success: false, error: 'Price mismatch - please refresh the page' });
@@ -173,7 +333,7 @@ router.post('/create-payment-intent', async (req, res) => {
         // Generate order number
         const orderNumber = 'KV-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
 
-        // Create order in database - matching actual table schema
+        // Create order in database
         const orderResult = await pool.query(`
             INSERT INTO membership_purchases 
             (order_number, package, package_type, amount_paid, buying_power_granted, status, payment_method, metadata)
@@ -195,13 +355,13 @@ router.post('/create-payment-intent', async (req, res) => {
         ]);
 
         const order = orderResult.rows[0];
-
-        // Create Stripe payment intent
         const amountCents = Math.round(pkg.price * 100);
 
+        // Create Stripe payment intent with MANUAL CAPTURE
         const paymentIntent = await stripe.paymentIntents.create({
             amount: amountCents,
             currency: pkg.currency,
+            capture_method: 'manual', 
             metadata: {
                 order_id: order.id.toString(),
                 order_number: order.order_number,
@@ -222,7 +382,7 @@ router.post('/create-payment-intent', async (req, res) => {
             [paymentIntent.id, order.id]
         );
 
-        console.log(`✅ Payment intent created for ${pkg.name}:`, {
+        console.log(`✅ Payment intent created (manual capture) for ${pkg.name}:`, {
             paymentIntentId: paymentIntent.id,
             orderId: order.id,
             orderNumber: order.order_number,
@@ -233,7 +393,8 @@ router.post('/create-payment-intent', async (req, res) => {
         res.json({
             success: true,
             clientSecret: paymentIntent.client_secret,
-            orderId: order.order_number
+            orderId: order.order_number,
+            paymentIntentId: paymentIntent.id
         });
     } catch (error) {
         console.error('Error creating payment intent:', error);
