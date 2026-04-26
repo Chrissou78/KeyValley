@@ -727,6 +727,9 @@
             headerConnected.classList.remove('hidden');
             headerDisconnected.classList.add('hidden');
             
+            // FIX: Use user.firstName and user.lastName
+            const firstName = user.firstName || '';
+            const lastName = user.lastName || '';
             const fullName = user.name || `${firstName} ${lastName}`.trim() || 'Member';
             const shortName = fullName.length > 15 ? fullName.substring(0, 12) + '...' : fullName;
             document.getElementById('headerUserName').textContent = shortName;
@@ -743,9 +746,9 @@
             document.getElementById('dropdownEmail').textContent = email;
             
             let initials = '--';
-            if (user.firstName && user.lastName) {
-                initials = `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
-            } else if (fullName !== 'Member') {
+            if (firstName && lastName) {
+                initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
+            } else if (fullName && fullName !== 'Member') {
                 const parts = fullName.split(' ');
                 initials = parts.length > 1 ? `${parts[0][0]}${parts[parts.length-1][0]}`.toUpperCase() : fullName.slice(0, 2).toUpperCase();
             } else if (user.wallet) {
