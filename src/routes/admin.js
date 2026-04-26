@@ -764,6 +764,142 @@ router.post('/upload/service-image', requireAdminAuth, upload.single('image'), (
     res.json({ success: true, imageUrl });
 });
 
+// ==========================================
+// VOUCHER BOOKINGS MANAGEMENT
+// ==========================================
+
+// GET /api/admin/bookings - All booking requests
+router.get('/bookings', requireAdminAuth, async (req, res) => {
+    try {
+        const { status } = req.query;
+        
+        let query = `
+            SELECT vb.*, 
+                   mo.order_number,
+                   mo.email as order_email
+            FROM voucher_bookings vb
+            LEFT JOIN marketplace_orders mo ON vb.order_id = mo.id
+        `;
+        
+        const params = [];
+        if (status && status !== 'all') {
+            query += ' WHERE vb.status = $1';
+            params.push(status);
+        }
+        
+        query += ' ORDER BY vb.created_at DESC';
+        
+        const result = await db.pool.query(query, params);
+        
+        res.json({ success: true, bookings: result.rows });
+    } catch (error) {
+        console.error('Error fetching bookings:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// POST /api/admin/bookings/:id/confirm - Confirm booking
+router.post('/bookings/:id/confirm', requireAdminAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const adminEmail = req.adminSession?.email || 'admin';
+        
+        const result = await db.pool.query(`
+            UPDATE voucher_bookings
+            SET status = 'confirmed',
+                responded_by = $2,
+                responded_at = NOW(),
+                updated_at = NOW()
+            WHERE id = $1 AND status = 'pending_confirmation'
+            RETURNING *
+        `, [id, adminEmail]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Booking not found or already processed' 
+            });
+        }
+        
+        const booking = result.rows[0];
+        
+        // Send confirmation email to user
+        // (You can import and call sendBookingConfirmedToUser here)
+        
+        res.json({ success: true, booking });
+    } catch (error) {
+        console.error('Error confirming booking:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// POST /api/admin/bookings/:id/reject - Reject booking
+router.post('/bookings/:id/reject', requireAdminAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body;
+        const adminEmail = req.adminSession?.email || 'admin';
+        
+        const result = await db.pool.query(`
+            UPDATE voucher_bookings
+            SET status = 'rejected',
+                responded_by = $2,
+                responded_at = NOW(),
+                rejection_reason = $3,
+                updated_at = NOW()
+            WHERE id = $1 AND status = 'pending_confirmation'
+            RETURNING *
+        `, [id, adminEmail, reason || 'Date not available']);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Booking not found or already processed' 
+            });
+        }
+        
+        const booking = result.rows[0];
+        
+        // Send rejection email to user
+        // (You can import and call sendBookingRejectedToUser here)
+        
+        res.json({ success: true, booking });
+    } catch (error) {
+        console.error('Error rejecting booking:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// POST /api/admin/bookings/:id/redeem - Mark voucher as redeemed
+router.post('/bookings/:id/redeem', requireAdminAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const adminEmail = req.adminSession?.email || 'admin';
+        
+        const result = await db.pool.query(`
+            UPDATE voucher_bookings
+            SET status = 'redeemed',
+                redeemed_at = NOW(),
+                responded_by = $2,
+                updated_at = NOW()
+            WHERE id = $1 AND status = 'confirmed'
+            RETURNING *
+        `, [id, adminEmail]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Booking not found or not confirmed' 
+            });
+        }
+        
+        res.json({ success: true, message: 'Voucher marked as redeemed' });
+    } catch (error) {
+        console.error('Error redeeming voucher:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 router.get('/referrals', requireAdminAuth, async (req, res) => {
     try {
         const [codes, activity, stats] = await Promise.all([

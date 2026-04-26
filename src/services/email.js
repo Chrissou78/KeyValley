@@ -265,17 +265,20 @@ async function sendBookingRequestEmail(voucher, bookingDetails, validationToken)
 }
 
 // 4. Booking confirmed to buyer
-async function sendBookingConfirmedEmail(voucher) {
-    const dateDisplay = voucher.booking_start && voucher.booking_end
-        ? `${voucher.booking_start} → ${voucher.booking_end}`
-        : voucher.booking_date || 'As confirmed';
+async function sendBookingRequestEmail(voucher, bookingDetails, validationToken) {
+    const validateUrl = `${SITE_URL}/api/vouchers/validate/${validationToken}`;
+    const rejectUrl = `${SITE_URL}/api/vouchers/reject/${validationToken}`;
+    
+    const dateDisplay = bookingDetails.booking_start && bookingDetails.booking_end
+        ? `${bookingDetails.booking_start} → ${bookingDetails.booking_end}`
+        : bookingDetails.booking_date || 'Not specified';
 
     const content = `
-        <h2>Booking Confirmed! ✓</h2>
-        <p>Great news! Your booking has been confirmed.</p>
+        <h2>Booking Request 📅</h2>
+        <p>A member has requested a booking for their voucher.</p>
         
         <div class="voucher-code">
-            <p style="margin: 0 0 10px; color: #94a3b8; font-size: 14px;">YOUR VOUCHER CODE</p>
+            <p style="margin: 0 0 10px; color: #94a3b8; font-size: 14px;">VOUCHER CODE</p>
             <span>${voucher.code}</span>
         </div>
         
@@ -285,23 +288,32 @@ async function sendBookingConfirmedEmail(voucher) {
                 <span class="details-value">${voucher.service_name}</span>
             </div>
             <div class="details-row">
-                <span class="details-label">Confirmed Dates</span>
-                <span class="details-value" style="color: #10b981;">${dateDisplay}</span>
+                <span class="details-label">Requested Dates</span>
+                <span class="details-value" style="color: #daa520;">${dateDisplay}</span>
             </div>
             <div class="details-row">
-                <span class="details-label">Status</span>
-                <span class="details-value" style="color: #10b981;">Confirmed</span>
+                <span class="details-label">Member Email</span>
+                <span class="details-value">${voucher.user_email || 'N/A'}</span>
             </div>
+            <div class="details-row">
+                <span class="details-label">Value</span>
+                <span class="details-value">Kea€${voucher.value}</span>
+            </div>
+            ${bookingDetails.booking_notes ? `
+            <div class="details-row">
+                <span class="details-label">Notes</span>
+                <span class="details-value">${bookingDetails.booking_notes}</span>
+            </div>
+            ` : ''}
         </div>
         
-        <p>Please present your voucher code when you arrive. We look forward to seeing you!</p>
+        <p style="text-align: center; margin: 30px 0;">
+            <a href="${validateUrl}" class="btn">✓ Confirm Booking</a>
+            <a href="${rejectUrl}" class="btn" style="background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); color: #ffffff !important;">✕ Decline</a>
+        </p>
         
-        <div style="text-align: center;">
-            <a href="${SITE_URL}/profile" class="btn">View My Bookings</a>
-        </div>
-        
-        <p style="font-size: 13px; color: #64748b; margin-top: 30px;">
-            Need to make changes? Contact us at <a href="mailto:${SITE_OWNER_EMAIL}" style="color: #daa520;">${SITE_OWNER_EMAIL}</a>
+        <p style="font-size: 13px; color: #64748b; text-align: center;">
+            Or manage all bookings in the <a href="${SITE_URL}/admin" style="color: #daa520;">Admin Panel</a>
         </p>
     `;
 

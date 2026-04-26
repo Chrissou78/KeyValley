@@ -1,8 +1,259 @@
+// src/routes/vouchers.js
+// VERSION: 2026-04-25 - Voucher booking system with WalletTwo email webhook
+
 const express = require('express');
 const router = express.Router();
 const db = require('../db-postgres');
 const crypto = require('crypto');
-const emailService = require('../services/email');
+
+// ============================================
+// EMAIL CONFIGURATION
+// ============================================
+const WALLETTWO_EMAIL_WEBHOOK = process.env.WALLETTWO_EMAIL_WEBHOOK;
+const SITE_OWNER_EMAIL = process.env.SITE_OWNER_EMAIL || 'julie.meyer@vivapartners.net';
+const SITE_URL = process.env.SITE_URL || 'https://keavalley.com';
+
+// ============================================
+// EMAIL FUNCTIONS
+// ============================================
+
+async function sendEmail(email, htmlContent) {
+    if (!WALLETTWO_EMAIL_WEBHOOK) {
+        console.error('❌ WALLETTWO_EMAIL_WEBHOOK not configured');
+        return { success: false, error: 'Email webhook not configured' };
+    }
+    
+    try {
+        const response = await fetch(WALLETTWO_EMAIL_WEBHOOK, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: email,
+                content: htmlContent
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Webhook returned ${response.status}`);
+        }
+        
+        console.log('✅ Email sent via webhook to:', email);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Email webhook failed:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+function getBaseTemplate(content) {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0d0d0d; font-family: 'Helvetica Neue', Arial, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #1a1a1a;">
+        <div style="background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); padding: 30px; text-align: center;">
+            <img src="${SITE_URL}/images/logo.png" alt="Kea Valley" style="height: 50px;">
+            <h1 style="color: #0d0d0d; margin: 15px 0 0; font-size: 24px;">Kea Valley Private Members Club</h1>
+        </div>
+        <div style="padding: 40px 30px; color: #ffffff;">
+            ${content}
+        </div>
+        <div style="background: #0d0d0d; padding: 30px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
+            <p style="color: #64748b; font-size: 12px; margin: 5px 0;">Kea Valley Private Members Club</p>
+            <p style="color: #64748b; font-size: 12px; margin: 5px 0;">Questions? Contact us at <a href="mailto:${SITE_OWNER_EMAIL}" style="color: #daa520; text-decoration: none;">${SITE_OWNER_EMAIL}</a></p>
+            <p style="color: #64748b; font-size: 12px; margin: 15px 0 0;">© 2026 Kea Valley. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
+    `;
+}
+
+async function sendBookingRequestToOwner(voucher, bookingDetails, validationToken) {
+    const confirmUrl = `${SITE_URL}/api/vouchers/validate/${validationToken}`;
+    const rejectUrl = `${SITE_URL}/api/vouchers/reject/${validationToken}`;
+    
+    const dateDisplay = bookingDetails.booking_start && bookingDetails.booking_end
+        ? `${bookingDetails.booking_start} → ${bookingDetails.booking_end}`
+        : bookingDetails.booking_date || 'Not specified';
+    
+    const content = `
+        <h2 style="color: #daa520; margin-top: 0;">New Booking Request 📅</h2>
+        <p style="color: #94a3b8; line-height: 1.6;">A member has requested to use their voucher.</p>
+        
+        <div style="background: rgba(218, 165, 32, 0.1); border: 2px dashed #daa520; border-radius: 12px; padding: 20px; text-align: center; margin: 25px 0;">
+            <p style="margin: 0 0 10px; color: #94a3b8; font-size: 14px;">VOUCHER CODE</p>
+            <span style="font-size: 28px; font-weight: bold; color: #daa520; letter-spacing: 3px;">${voucher.code}</span>
+        </div>
+        
+        <div style="background: #0d0d0d; border-radius: 12px; padding: 20px; margin: 25px 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Service</td>
+                    <td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.service_name}</td>
+                </tr>
+                <tr>
+                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Requested Date</td>
+                    <td style="color: #daa520; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${dateDisplay}</td>
+                </tr>
+                <tr>
+                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Member Email</td>
+                    <td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.user_email || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td style="color: #94a3b8; padding: 10px 0;">Value</td>
+                    <td style="color: #ffffff; font-weight: 600; padding: 10px 0; text-align: right;">Kea€${voucher.value}</td>
+                </tr>
+                ${bookingDetails.booking_notes ? `
+                <tr>
+                    <td style="color: #94a3b8; padding: 10px 0; border-top: 1px solid rgba(255,255,255,0.1);">Notes</td>
+                    <td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-top: 1px solid rgba(255,255,255,0.1); text-align: right;">${bookingDetails.booking_notes}</td>
+                </tr>
+                ` : ''}
+            </table>
+        </div>
+        
+        <p style="text-align: center; margin: 30px 0;">
+            <a href="${confirmUrl}" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #0d0d0d !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; margin: 10px 5px;">✓ Confirm Booking</a>
+            <a href="${rejectUrl}" style="display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); color: #ffffff !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; margin: 10px 5px;">✕ Decline</a>
+        </p>
+        
+        <p style="font-size: 13px; color: #64748b; text-align: center;">
+            Or manage all bookings in the <a href="${SITE_URL}/admin" style="color: #daa520;">Admin Panel</a>
+        </p>
+    `;
+    
+    return sendEmail(SITE_OWNER_EMAIL, getBaseTemplate(content));
+}
+
+async function sendBookingRequestToUser(voucher, bookingDetails) {
+    const dateDisplay = bookingDetails.booking_start && bookingDetails.booking_end
+        ? `${bookingDetails.booking_start} → ${bookingDetails.booking_end}`
+        : bookingDetails.booking_date || 'Not specified';
+    
+    const content = `
+        <h2 style="color: #daa520; margin-top: 0;">Booking Request Submitted 📅</h2>
+        <p style="color: #94a3b8; line-height: 1.6;">Your booking request has been submitted and is awaiting confirmation.</p>
+        
+        <div style="background: rgba(218, 165, 32, 0.1); border: 2px dashed #daa520; border-radius: 12px; padding: 20px; text-align: center; margin: 25px 0;">
+            <p style="margin: 0 0 10px; color: #94a3b8; font-size: 14px;">YOUR VOUCHER</p>
+            <span style="font-size: 28px; font-weight: bold; color: #daa520; letter-spacing: 3px;">${voucher.code}</span>
+        </div>
+        
+        <div style="background: #0d0d0d; border-radius: 12px; padding: 20px; margin: 25px 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Service</td>
+                    <td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.service_name}</td>
+                </tr>
+                <tr>
+                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Requested Date</td>
+                    <td style="color: #daa520; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${dateDisplay}</td>
+                </tr>
+                <tr>
+                    <td style="color: #94a3b8; padding: 10px 0;">Status</td>
+                    <td style="color: #f59e0b; font-weight: 600; padding: 10px 0; text-align: right;">Pending Confirmation</td>
+                </tr>
+            </table>
+        </div>
+        
+        <p style="color: #94a3b8; line-height: 1.6;">You will receive an email once your booking is confirmed. This usually takes 24-48 hours.</p>
+        
+        <div style="text-align: center;">
+            <a href="${SITE_URL}/profile" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #0d0d0d !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">View My Vouchers</a>
+        </div>
+    `;
+    
+    return sendEmail(voucher.user_email, getBaseTemplate(content));
+}
+
+async function sendBookingConfirmedToUser(voucher) {
+    const dateDisplay = voucher.booking_start && voucher.booking_end
+        ? `${voucher.booking_start} → ${voucher.booking_end}`
+        : voucher.booking_date || 'As confirmed';
+    
+    const content = `
+        <h2 style="color: #daa520; margin-top: 0;">Booking Confirmed! ✓</h2>
+        <p style="color: #94a3b8; line-height: 1.6;">Great news! Your booking has been confirmed.</p>
+        
+        <div style="background: rgba(218, 165, 32, 0.1); border: 2px dashed #daa520; border-radius: 12px; padding: 20px; text-align: center; margin: 25px 0;">
+            <p style="margin: 0 0 10px; color: #94a3b8; font-size: 14px;">YOUR VOUCHER</p>
+            <span style="font-size: 28px; font-weight: bold; color: #daa520; letter-spacing: 3px;">${voucher.code}</span>
+        </div>
+        
+        <div style="background: #0d0d0d; border-radius: 12px; padding: 20px; margin: 25px 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Service</td>
+                    <td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.service_name}</td>
+                </tr>
+                <tr>
+                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Confirmed Date</td>
+                    <td style="color: #10b981; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${dateDisplay}</td>
+                </tr>
+                <tr>
+                    <td style="color: #94a3b8; padding: 10px 0;">Status</td>
+                    <td style="color: #10b981; font-weight: 600; padding: 10px 0; text-align: right;">✓ Confirmed</td>
+                </tr>
+            </table>
+        </div>
+        
+        <p style="color: #94a3b8; line-height: 1.6;">Please arrive on time. We look forward to seeing you!</p>
+        
+        <div style="text-align: center;">
+            <a href="${SITE_URL}/profile" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #0d0d0d !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">View My Bookings</a>
+        </div>
+        
+        <p style="font-size: 13px; color: #64748b; margin-top: 30px; text-align: center;">
+            Need to make changes? Contact us at <a href="mailto:${SITE_OWNER_EMAIL}" style="color: #daa520;">${SITE_OWNER_EMAIL}</a>
+        </p>
+    `;
+    
+    return sendEmail(voucher.user_email, getBaseTemplate(content));
+}
+
+async function sendBookingRejectedToUser(voucher, reason) {
+    const content = `
+        <h2 style="color: #daa520; margin-top: 0;">Booking Update</h2>
+        <p style="color: #94a3b8; line-height: 1.6;">Unfortunately, your booking request could not be confirmed for the requested date.</p>
+        
+        <div style="background: #0d0d0d; border-radius: 12px; padding: 20px; margin: 25px 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Service</td>
+                    <td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.service_name}</td>
+                </tr>
+                <tr>
+                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Requested Date</td>
+                    <td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.booking_date || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td style="color: #94a3b8; padding: 10px 0;">Reason</td>
+                    <td style="color: #f59e0b; font-weight: 600; padding: 10px 0; text-align: right;">${reason}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 15px; margin: 20px 0; color: #10b981;">
+            <strong>Your voucher is still valid!</strong><br>
+            You can request a different date at any time.
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="${SITE_URL}/profile" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #0d0d0d !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Request New Date</a>
+        </div>
+    `;
+    
+    return sendEmail(voucher.user_email, getBaseTemplate(content));
+}
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
 
 // Generate voucher code: KEA-XXXX-XXXX
 function generateVoucherCode() {
@@ -23,6 +274,10 @@ function generateValidationToken() {
     return crypto.randomBytes(32).toString('hex');
 }
 
+// ============================================
+// ROUTES
+// ============================================
+
 // GET vouchers by wallet
 router.get('/:wallet', async (req, res) => {
     console.log('🎫 GET /api/vouchers/:wallet called');
@@ -31,7 +286,7 @@ router.get('/:wallet', async (req, res) => {
             SELECT v.*, s.image_url, s.category, s.description as service_description
             FROM marketplace_vouchers v
             LEFT JOIN marketplace_services s ON v.service_id = s.id
-            WHERE v.wallet_address = $1
+            WHERE LOWER(v.wallet_address) = LOWER($1)
             ORDER BY v.created_at DESC
         `, [req.params.wallet]);
         
@@ -127,20 +382,14 @@ router.post('/:id/book', async (req, res) => {
             WHERE id = $6
         `, [booking_date, booking_start, booking_end, booking_notes, validationToken, req.params.id]);
         
-        // Send email to site owner with validation link
+        // Send email to user confirming request received
         const bookingDetails = { booking_date, booking_start, booking_end, booking_notes };
-        const emailResult = await emailService.sendBookingRequestEmail(voucher, bookingDetails, validationToken);
+        if (voucher.user_email) {
+            await sendBookingRequestToUser(voucher, bookingDetails);
+        }
         
-        // Log email
-        await emailService.logEmail(
-            db,
-            voucher.id,
-            'booking_request',
-            emailService.SITE_OWNER_EMAIL,
-            `Booking Request - ${voucher.service_name}`,
-            emailResult.success ? 'sent' : 'failed',
-            emailResult.error || null
-        );
+        // Send email to site owner with validation link
+        await sendBookingRequestToOwner(voucher, bookingDetails, validationToken);
         
         console.log('✅ Booking requested for voucher:', voucher.code);
         res.json({ 
@@ -155,7 +404,7 @@ router.post('/:id/book', async (req, res) => {
     }
 });
 
-// GET validate voucher via email link (one-click)
+// GET validate voucher via email link (one-click confirm)
 router.get('/validate/:token', async (req, res) => {
     console.log('🎫 GET /api/vouchers/validate/:token called');
     try {
@@ -198,22 +447,14 @@ router.get('/validate/:token', async (req, res) => {
             UPDATE marketplace_vouchers 
             SET status = 'validated',
                 validated_at = NOW(),
-                validated_by = 'email_link'
+                validated_by = 'email_link',
+                validation_token = NULL
             WHERE id = $1
         `, [voucher.id]);
         
         // Send confirmation email to buyer
         if (voucher.user_email) {
-            const emailResult = await emailService.sendBookingConfirmedEmail(voucher);
-            await emailService.logEmail(
-                db,
-                voucher.id,
-                'booking_confirmed',
-                voucher.user_email,
-                `Booking Confirmed - ${voucher.service_name}`,
-                emailResult.success ? 'sent' : 'failed',
-                emailResult.error || null
-            );
+            await sendBookingConfirmedToUser(voucher);
         }
         
         console.log('✅ Voucher validated via email link:', voucher.code);
@@ -230,98 +471,19 @@ router.get('/validate/:token', async (req, res) => {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
                 <style>
-                    body { 
-                        font-family: 'Manrope', sans-serif; 
-                        background: #0d0d0d; 
-                        color: #fff; 
-                        text-align: center; 
-                        padding: 50px 20px;
-                        margin: 0;
-                    }
-                    .container { 
-                        max-width: 500px; 
-                        margin: 0 auto; 
-                        background: #1a1a1a; 
-                        padding: 40px; 
-                        border-radius: 16px; 
-                        border: 1px solid rgba(218,165,32,0.2); 
-                    }
-                    .success-icon {
-                        width: 80px;
-                        height: 80px;
-                        background: rgba(16, 185, 129, 0.2);
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        margin: 0 auto 20px;
-                        font-size: 40px;
-                    }
-                    h1 { 
-                        color: #10b981; 
-                        margin: 0 0 10px;
-                        font-size: 28px;
-                    }
-                    .subtitle {
-                        color: #94a3b8;
-                        margin-bottom: 30px;
-                    }
-                    .code { 
-                        font-size: 28px; 
-                        font-weight: bold; 
-                        color: #daa520; 
-                        background: rgba(218,165,32,0.1); 
-                        padding: 20px; 
-                        border-radius: 12px; 
-                        margin: 20px 0;
-                        letter-spacing: 2px;
-                    }
-                    .details { 
-                        text-align: left; 
-                        margin: 25px 0;
-                        background: #0d0d0d;
-                        border-radius: 12px;
-                        padding: 20px;
-                    }
-                    .details-row {
-                        display: flex;
-                        justify-content: space-between;
-                        padding: 12px 0;
-                        border-bottom: 1px solid rgba(255,255,255,0.1);
-                    }
-                    .details-row:last-child {
-                        border-bottom: none;
-                    }
-                    .details-label { 
-                        color: #94a3b8; 
-                    }
-                    .details-value {
-                        color: #fff;
-                        font-weight: 600;
-                    }
-                    .notification {
-                        background: rgba(16, 185, 129, 0.1);
-                        border: 1px solid rgba(16, 185, 129, 0.3);
-                        border-radius: 8px;
-                        padding: 15px;
-                        margin: 20px 0;
-                        color: #10b981;
-                        font-size: 14px;
-                    }
-                    .btn { 
-                        display: inline-block; 
-                        background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); 
-                        color: #0d0d0d; 
-                        padding: 15px 35px; 
-                        border-radius: 8px; 
-                        text-decoration: none; 
-                        font-weight: bold; 
-                        margin-top: 20px;
-                        transition: transform 0.2s;
-                    }
-                    .btn:hover {
-                        transform: translateY(-2px);
-                    }
+                    body { font-family: 'Manrope', sans-serif; background: #0d0d0d; color: #fff; text-align: center; padding: 50px 20px; margin: 0; }
+                    .container { max-width: 500px; margin: 0 auto; background: #1a1a1a; padding: 40px; border-radius: 16px; border: 1px solid rgba(218,165,32,0.2); }
+                    .success-icon { width: 80px; height: 80px; background: rgba(16, 185, 129, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 40px; }
+                    h1 { color: #10b981; margin: 0 0 10px; font-size: 28px; }
+                    .subtitle { color: #94a3b8; margin-bottom: 30px; }
+                    .code { font-size: 28px; font-weight: bold; color: #daa520; background: rgba(218,165,32,0.1); padding: 20px; border-radius: 12px; margin: 20px 0; letter-spacing: 2px; }
+                    .details { text-align: left; margin: 25px 0; background: #0d0d0d; border-radius: 12px; padding: 20px; }
+                    .details-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+                    .details-row:last-child { border-bottom: none; }
+                    .details-label { color: #94a3b8; }
+                    .details-value { color: #fff; font-weight: 600; }
+                    .notification { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 15px; margin: 20px 0; color: #10b981; font-size: 14px; }
+                    .btn { display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #0d0d0d; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 20px; }
                 </style>
             </head>
             <body>
@@ -329,9 +491,7 @@ router.get('/validate/:token', async (req, res) => {
                     <div class="success-icon">✓</div>
                     <h1>Booking Confirmed!</h1>
                     <p class="subtitle">The voucher has been validated successfully</p>
-                    
                     <div class="code">${voucher.code}</div>
-                    
                     <div class="details">
                         <div class="details-row">
                             <span class="details-label">Service</span>
@@ -350,11 +510,7 @@ router.get('/validate/:token', async (req, res) => {
                             <span class="details-value">${voucher.user_email || voucher.wallet_address.slice(0, 10) + '...'}</span>
                         </div>
                     </div>
-                    
-                    <div class="notification">
-                        ✉️ A confirmation email has been sent to the member.
-                    </div>
-                    
+                    <div class="notification">✉️ A confirmation email has been sent to the member.</div>
                     <a href="/admin" class="btn">Go to Admin Dashboard</a>
                 </div>
             </body>
@@ -377,6 +533,118 @@ router.get('/validate/:token', async (req, res) => {
     }
 });
 
+// GET reject voucher via email link (one-click decline)
+router.get('/reject/:token', async (req, res) => {
+    console.log('🎫 GET /api/vouchers/reject/:token called');
+    const reason = req.query.reason || 'Date not available';
+    
+    try {
+        const result = await db.pool.query(
+            'SELECT * FROM marketplace_vouchers WHERE validation_token = $1',
+            [req.params.token]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).send(`
+                <html>
+                <head><title>Invalid Link</title></head>
+                <body style="font-family: sans-serif; text-align: center; padding: 50px; background: #0d0d0d; color: #fff;">
+                    <h1 style="color: #ef4444;">Invalid or Expired Link</h1>
+                    <p style="color: #94a3b8;">This link is no longer valid.</p>
+                    <a href="/admin" style="color: #daa520;">Go to Admin</a>
+                </body>
+                </html>
+            `);
+        }
+        
+        const voucher = result.rows[0];
+        
+        if (voucher.status !== 'pending_validation') {
+            return res.send(`
+                <html>
+                <head><title>Already Processed</title></head>
+                <body style="font-family: sans-serif; text-align: center; padding: 50px; background: #0d0d0d; color: #fff;">
+                    <h1 style="color: #f59e0b;">Already Processed</h1>
+                    <p style="color: #94a3b8;">This booking request has already been processed.</p>
+                    <p style="color: #daa520;">Status: ${voucher.status}</p>
+                    <a href="/admin" style="display: inline-block; background: #daa520; color: #0d0d0d; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 20px;">Go to Admin</a>
+                </body>
+                </html>
+            `);
+        }
+        
+        // Reset voucher to active (booking rejected, voucher still valid)
+        await db.pool.query(`
+            UPDATE marketplace_vouchers 
+            SET status = 'active',
+                booking_date = NULL,
+                booking_start = NULL,
+                booking_end = NULL,
+                booking_notes = NULL,
+                booking_requested_at = NULL,
+                validation_token = NULL
+            WHERE id = $1
+        `, [voucher.id]);
+        
+        // Send rejection email to buyer
+        if (voucher.user_email) {
+            await sendBookingRejectedToUser(voucher, reason);
+        }
+        
+        console.log('❌ Booking rejected for voucher:', voucher.code, 'Reason:', reason);
+        
+        res.send(`
+            <html>
+            <head>
+                <title>Booking Declined</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+                <style>
+                    body { font-family: 'Manrope', sans-serif; background: #0d0d0d; color: #fff; text-align: center; padding: 50px 20px; margin: 0; }
+                    .container { max-width: 500px; margin: 0 auto; background: #1a1a1a; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); }
+                    .icon { width: 80px; height: 80px; background: rgba(245, 158, 11, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 40px; }
+                    h1 { color: #f59e0b; margin: 0 0 10px; font-size: 28px; }
+                    .subtitle { color: #94a3b8; margin-bottom: 30px; }
+                    .code { font-size: 20px; color: #daa520; background: rgba(218,165,32,0.1); padding: 15px; border-radius: 12px; margin: 20px 0; }
+                    .info { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 15px; margin: 20px 0; color: #10b981; font-size: 14px; text-align: left; }
+                    .btn { display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #0d0d0d; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 20px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="icon">✕</div>
+                    <h1>Booking Declined</h1>
+                    <p class="subtitle">The booking request has been declined</p>
+                    <div class="code">
+                        <strong>${voucher.service_name}</strong><br>
+                        <span style="color: #94a3b8; font-size: 14px;">Voucher: ${voucher.code}</span>
+                    </div>
+                    <div class="info">
+                        ✓ The voucher is still valid<br>
+                        ✓ The member has been notified<br>
+                        ✓ They can request a different date
+                    </div>
+                    <a href="/admin" class="btn">Go to Admin Dashboard</a>
+                </div>
+            </body>
+            </html>
+        `);
+        
+    } catch (error) {
+        console.error('Error rejecting booking:', error);
+        res.status(500).send(`
+            <html>
+            <head><title>Error</title></head>
+            <body style="font-family: sans-serif; text-align: center; padding: 50px; background: #0d0d0d; color: #fff;">
+                <h1 style="color: #ef4444;">Error</h1>
+                <p style="color: #94a3b8;">Something went wrong.</p>
+                <a href="/admin" style="color: #daa520;">Go to Admin</a>
+            </body>
+            </html>
+        `);
+    }
+});
+
 // POST validate voucher (admin)
 router.post('/:id/validate', async (req, res) => {
     console.log('🎫 POST /api/vouchers/:id/validate called');
@@ -387,7 +655,8 @@ router.post('/:id/validate', async (req, res) => {
             UPDATE marketplace_vouchers 
             SET status = 'validated',
                 validated_at = NOW(),
-                validated_by = $1
+                validated_by = $1,
+                validation_token = NULL
             WHERE id = $2
             RETURNING *
         `, [validated_by || 'admin', req.params.id]);
@@ -400,16 +669,7 @@ router.post('/:id/validate', async (req, res) => {
         
         // Send confirmation email to buyer
         if (voucher.user_email) {
-            const emailResult = await emailService.sendBookingConfirmedEmail(voucher);
-            await emailService.logEmail(
-                db,
-                voucher.id,
-                'booking_confirmed',
-                voucher.user_email,
-                `Booking Confirmed - ${voucher.service_name}`,
-                emailResult.success ? 'sent' : 'failed',
-                emailResult.error || null
-            );
+            await sendBookingConfirmedToUser(voucher);
         }
         
         console.log('✅ Voucher validated:', voucher.code);
@@ -421,7 +681,53 @@ router.post('/:id/validate', async (req, res) => {
     }
 });
 
-// POST consume voucher (admin - marks as used)
+// POST reject voucher (admin)
+router.post('/:id/reject', async (req, res) => {
+    console.log('🎫 POST /api/vouchers/:id/reject called');
+    const { reason } = req.body;
+    
+    try {
+        // Get voucher first
+        const voucherResult = await db.pool.query(
+            'SELECT * FROM marketplace_vouchers WHERE id = $1',
+            [req.params.id]
+        );
+        
+        if (voucherResult.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Voucher not found' });
+        }
+        
+        const voucher = voucherResult.rows[0];
+        
+        // Reset voucher to active
+        const result = await db.pool.query(`
+            UPDATE marketplace_vouchers 
+            SET status = 'active',
+                booking_date = NULL,
+                booking_start = NULL,
+                booking_end = NULL,
+                booking_notes = NULL,
+                booking_requested_at = NULL,
+                validation_token = NULL
+            WHERE id = $1
+            RETURNING *
+        `, [req.params.id]);
+        
+        // Send rejection email to buyer
+        if (voucher.user_email) {
+            await sendBookingRejectedToUser(voucher, reason || 'Date not available');
+        }
+        
+        console.log('❌ Booking rejected for voucher:', voucher.code);
+        res.json({ success: true, voucher: result.rows[0] });
+        
+    } catch (error) {
+        console.error('Error rejecting booking:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// POST consume voucher (admin - marks as used/redeemed)
 router.post('/:id/consume', async (req, res) => {
     console.log('🎫 POST /api/vouchers/:id/consume called');
     

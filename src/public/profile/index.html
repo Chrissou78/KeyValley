@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html class="dark" lang="en">
-<!-- VERSION: 2026-04-11 - Using shared header config -->
+<!-- VERSION: 2026-04-25 - Added voucher booking functionality -->
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -189,6 +189,13 @@
             from { transform: translate(-50%, 20px); opacity: 0; }
             to { transform: translate(-50%, 0); opacity: 1; }
         }
+
+        /* Voucher status badges */
+        .status-active { color: #4ade80; }
+        .status-pending_validation { color: #fbbf24; }
+        .status-validated { color: #60a5fa; }
+        .status-consumed { color: #9ca3af; }
+        .status-cancelled { color: #f87171; }
     </style>
 </head>
 <body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
@@ -398,15 +405,16 @@
                 </div>
 
                 <div class="grid lg:grid-cols-2 gap-6 mb-6">
+                    <!-- VOUCHERS SECTION - Updated with booking -->
                     <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
                         <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <span class="material-symbols-outlined text-purple-400">confirmation_number</span>
-                                <h3 class="text-xs font-bold uppercase tracking-widest text-white">Vouchers</h3>
+                                <h3 class="text-xs font-bold uppercase tracking-widest text-white">My Vouchers</h3>
                             </div>
                             <span id="vouchersCount" class="text-primary font-bold text-lg">0</span>
                         </div>
-                        <div class="p-4 max-h-64 overflow-y-auto">
+                        <div class="p-4 max-h-80 overflow-y-auto">
                             <div id="vouchersLoading" class="hidden text-center py-4">
                                 <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
                             </div>
@@ -415,7 +423,7 @@
                                 <p class="text-slate-500 text-sm">No vouchers yet</p>
                                 <a href="/marketplace" class="text-primary text-sm hover:underline">Browse marketplace →</a>
                             </div>
-                            <div id="vouchersList" class="hidden space-y-1"></div>
+                            <div id="vouchersList" class="hidden space-y-2"></div>
                         </div>
                     </div>
 
@@ -507,6 +515,76 @@
                             allow="clipboard-write"
                         ></iframe>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Modal - NEW -->
+    <div id="bookingModal" class="fixed inset-0 z-[100] hidden">
+        <div class="modal-overlay absolute inset-0" onclick="closeBookingModal()"></div>
+        <div class="absolute inset-4 md:inset-8 flex items-center justify-center">
+            <div class="modal-content bg-surface border border-white/10 rounded-2xl w-full max-w-md">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                    <h2 class="text-xl font-serif text-white">Book Your Experience</h2>
+                    <button onclick="closeBookingModal()" class="text-slate-500 hover:text-white transition-colors">
+                        <span class="material-symbols-outlined text-2xl">close</span>
+                    </button>
+                </div>
+                
+                <div class="p-6 space-y-5">
+                    <!-- Voucher Info -->
+                    <div class="bg-black/30 rounded-xl p-4 border border-white/5">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                                <span class="material-symbols-outlined text-purple-400">confirmation_number</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p id="bookingServiceName" class="text-white font-semibold truncate">Service Name</p>
+                                <p id="bookingVoucherCode" class="text-primary font-mono text-sm">KEA-XXXX-XXXX</p>
+                                <p class="text-slate-500 text-xs mt-1">Value: <span id="bookingVoucherValue" class="text-white">€0</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Date Selection -->
+                    <div>
+                        <label class="block text-slate-400 text-sm mb-2">Select Date <span class="text-red-400">*</span></label>
+                        <input type="date" id="bookingDate" required
+                            class="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors">
+                    </div>
+                    
+                    <!-- Time Selection -->
+                    <div id="timeSelectionSection" class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-slate-400 text-sm mb-2">Start Time</label>
+                            <input type="time" id="bookingStart"
+                                class="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 text-sm mb-2">End Time</label>
+                            <input type="time" id="bookingEnd"
+                                class="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors">
+                        </div>
+                    </div>
+                    
+                    <!-- Notes -->
+                    <div>
+                        <label class="block text-slate-400 text-sm mb-2">Special Requests</label>
+                        <textarea id="bookingNotes" rows="3" placeholder="Any special requirements or notes..."
+                            class="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white resize-none focus:border-primary focus:outline-none transition-colors"></textarea>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <button id="submitBookingBtn" onclick="submitBooking()" 
+                        class="w-full bg-primary hover:bg-primary-light text-black font-bold py-4 rounded-xl transition-colors flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">event_available</span>
+                        Request Booking
+                    </button>
+                    
+                    <p class="text-slate-500 text-xs text-center">
+                        Your booking request will be reviewed. You'll receive an email confirmation.
+                    </p>
                 </div>
             </div>
         </div>
@@ -671,9 +749,9 @@
 
     <script>
         // ============================================
-        // VERSION: 2026-04-11 - Profile with shared header config
+        // VERSION: 2026-04-25 - Profile with voucher booking
         // ============================================
-        console.log('🚀 Profile page initializing... (v2026-04-11)');
+        console.log('🚀 Profile page initializing... (v2026-04-25)');
         
         // Prevent HeaderManager auto-init - profile handles its own flow
         if (typeof HeaderManager !== 'undefined') {
@@ -701,6 +779,7 @@
         let isProcessingLogin = false;
         let savedToDatabase = false;
         let questionnaireData = null;
+        let currentBookingVoucher = null; // For booking modal
 
         // DOM Elements
         const loginContainer = document.getElementById('loginContainer');
@@ -837,6 +916,96 @@
             iframe.src = '';
             modal.classList.add('hidden');
             document.body.style.overflow = '';
+        }
+
+        // ============================================
+        // BOOKING MODAL - NEW
+        // ============================================
+        function openBookingModal(voucher) {
+            currentBookingVoucher = voucher;
+            
+            // Populate modal
+            document.getElementById('bookingServiceName').textContent = voucher.service_name || 'Service';
+            document.getElementById('bookingVoucherCode').textContent = voucher.code || '';
+            document.getElementById('bookingVoucherValue').textContent = '€' + (voucher.value || 0);
+            
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('bookingDate');
+            dateInput.min = today;
+            dateInput.value = '';
+            
+            // Clear other fields
+            document.getElementById('bookingStart').value = '';
+            document.getElementById('bookingEnd').value = '';
+            document.getElementById('bookingNotes').value = '';
+            
+            // Reset button
+            const btn = document.getElementById('submitBookingBtn');
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-symbols-outlined">event_available</span> Request Booking';
+            
+            // Show modal
+            document.getElementById('bookingModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeBookingModal() {
+            document.getElementById('bookingModal').classList.add('hidden');
+            document.body.style.overflow = '';
+            currentBookingVoucher = null;
+        }
+
+        async function submitBooking() {
+            if (!currentBookingVoucher) {
+                showToast('No voucher selected', 'error');
+                return;
+            }
+            
+            const bookingDate = document.getElementById('bookingDate').value;
+            if (!bookingDate) {
+                showToast('Please select a date', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('submitBookingBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div> Submitting...';
+            
+            const bookingData = {
+                booking_date: bookingDate,
+                booking_start: document.getElementById('bookingStart').value || null,
+                booking_end: document.getElementById('bookingEnd').value || null,
+                booking_notes: document.getElementById('bookingNotes').value || null
+            };
+            
+            try {
+                const response = await fetch(`/api/vouchers/${currentBookingVoucher.id}/book`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bookingData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('Booking request sent! You will receive an email confirmation.', 'success');
+                    closeBookingModal();
+                    // Refresh vouchers list to show updated status
+                    if (currentUser?.wallet) {
+                        fetchVouchers(currentUser.wallet);
+                    }
+                } else {
+                    showToast(result.error || 'Booking failed', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="material-symbols-outlined">event_available</span> Request Booking';
+                }
+            } catch (error) {
+                console.error('Booking error:', error);
+                showToast('Failed to submit booking request', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined">event_available</span> Request Booking';
+            }
         }
 
         // ============================================
@@ -1046,8 +1215,36 @@
         }
 
         // ============================================
-        // FETCH VOUCHERS
+        // FETCH VOUCHERS - Updated with booking functionality
         // ============================================
+        function getStatusLabel(status) {
+            const labels = {
+                'active': 'Available',
+                'purchased': 'Available',
+                'pending_validation': 'Pending Confirmation',
+                'validated': 'Confirmed',
+                'consumed': 'Used',
+                'cancelled': 'Cancelled'
+            };
+            return labels[status] || status;
+        }
+
+        function getStatusClass(status) {
+            const classes = {
+                'active': 'text-green-400',
+                'purchased': 'text-green-400',
+                'pending_validation': 'text-yellow-400',
+                'validated': 'text-blue-400',
+                'consumed': 'text-slate-500',
+                'cancelled': 'text-red-400'
+            };
+            return classes[status] || 'text-slate-400';
+        }
+
+        function canBookVoucher(status) {
+            return ['active', 'purchased'].includes(status);
+        }
+
         async function fetchVouchers(wallet) {
             const loading = document.getElementById('vouchersLoading');
             const empty = document.getElementById('vouchersEmpty');
@@ -1059,7 +1256,7 @@
             list.classList.add('hidden');
             
             try {
-                const response = await fetch(`/api/member/vouchers/${wallet.toLowerCase()}`);
+                const response = await fetch(`/api/vouchers/${wallet.toLowerCase()}`);
                 
                 if (!response.ok) {
                     loading.classList.add('hidden');
@@ -1074,21 +1271,49 @@
                 if (data.success && data.vouchers && data.vouchers.length > 0) {
                     count.textContent = data.vouchers.length;
                     list.classList.remove('hidden');
-                    list.innerHTML = data.vouchers.map(v => `
-                        <div class="list-item flex items-center justify-between py-2 px-3 rounded hover:bg-white/5">
-                            <div class="flex items-center gap-3">
-                                <span class="material-symbols-outlined text-purple-400 text-lg">confirmation_number</span>
-                                <div>
-                                    <p class="text-white text-sm">${v.service_name || v.name || 'Voucher'}</p>
-                                    <p class="text-slate-500 text-xs">${v.code || ''}</p>
+                    
+                    list.innerHTML = data.vouchers.map(v => {
+                        const canBook = canBookVoucher(v.status);
+                        const statusLabel = getStatusLabel(v.status);
+                        const statusClass = getStatusClass(v.status);
+                        
+                        // Format booking date if exists
+                        let bookingInfo = '';
+                        if (v.booking_date) {
+                            const date = new Date(v.booking_date).toLocaleDateString('en-GB', { 
+                                day: 'numeric', month: 'short', year: 'numeric' 
+                            });
+                            bookingInfo = `<p class="text-slate-500 text-xs mt-1">📅 ${date}</p>`;
+                        }
+                        
+                        return `
+                            <div class="bg-black/20 rounded-lg p-3 border border-white/5 hover:border-white/10 transition-colors">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex items-start gap-3 min-w-0 flex-1">
+                                        <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                                            <span class="material-symbols-outlined text-purple-400 text-lg">confirmation_number</span>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <p class="text-white text-sm font-medium truncate">${v.service_name || 'Voucher'}</p>
+                                            <p class="text-primary font-mono text-xs">${v.code || ''}</p>
+                                            <p class="text-xs ${statusClass} mt-1">${statusLabel}</p>
+                                            ${bookingInfo}
+                                        </div>
+                                    </div>
+                                    <div class="text-right flex-shrink-0">
+                                        <p class="text-primary font-semibold">€${v.value || 0}</p>
+                                        ${canBook ? `
+                                            <button onclick='openBookingModal(${JSON.stringify(v).replace(/'/g, "&#39;")})' 
+                                                class="mt-2 text-xs bg-primary/20 text-primary px-3 py-1.5 rounded-lg hover:bg-primary/30 transition-colors flex items-center gap-1">
+                                                <span class="material-symbols-outlined text-sm">calendar_month</span>
+                                                Book
+                                            </button>
+                                        ` : ''}
+                                    </div>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <p class="text-primary font-medium">€${v.value || 0}</p>
-                                <p class="text-xs ${v.status === 'active' ? 'text-green-400' : 'text-slate-500'}">${v.status || 'active'}</p>
-                            </div>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 } else {
                     count.textContent = '0';
                     empty.classList.remove('hidden');
@@ -1322,7 +1547,7 @@
         }
 
         // ============================================
-        // BALANCE - reads from blockchain using CONFIG
+        // BALANCE - reads from database
         // ============================================
         async function fetchBalance(wallet) {
             const balanceLoading = document.getElementById('balanceLoading');
@@ -1742,7 +1967,7 @@
         // INITIALIZE
         // ============================================
         async function init() {
-            console.log('🚀 Profile page initializing... (v2026-04-11)');
+            console.log('🚀 Profile page initializing... (v2026-04-25)');
             
             const configLoaded = await loadConfig();
             if (!configLoaded) {
