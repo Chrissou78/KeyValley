@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db-postgres');
-const emailService = require('../services/email');
+const emailService = require('../services/email-webhook');
 const voucherRoutes = require('./vouchers');
 
 // GET all active services
