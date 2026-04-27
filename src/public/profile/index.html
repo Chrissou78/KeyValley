@@ -502,9 +502,9 @@
                     </a>
                 </div>
 
-                <div class="grid lg:grid-cols-2 gap-6 mb-6">
+                <div class="space-y-6 mb-6">
                     <!-- VOUCHERS SECTION - Updated with booking -->
-                    <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
+                    <div class="bg-surface border border-white/5 rounded-xl overflow-hidden mb-6">
                         <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <span class="material-symbols-outlined text-purple-400">confirmation_number</span>
@@ -512,7 +512,7 @@
                             </div>
                             <span id="vouchersCount" class="text-primary font-bold text-lg">0</span>
                         </div>
-                        <div class="p-4 max-h-80 overflow-y-auto">
+                        <div class="p-4">
                             <div id="vouchersLoading" class="hidden text-center py-4">
                                 <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
                             </div>
@@ -521,10 +521,36 @@
                                 <p class="text-slate-500 text-sm">No vouchers yet</p>
                                 <a href="/marketplace" class="text-primary text-sm hover:underline">Browse marketplace →</a>
                             </div>
-                            <div id="vouchersList" class="hidden space-y-2"></div>
+                            
+                            <!-- To Be Used Section -->
+                            <div id="vouchersToUseSection" class="hidden mb-4">
+                                <button onclick="toggleVoucherSection('toUse')" class="w-full flex items-center justify-between p-3 bg-green-500/10 border border-green-500/20 rounded-lg hover:bg-green-500/15 transition-colors">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-green-400">event_available</span>
+                                        <span class="text-green-400 font-semibold text-sm">To Be Used</span>
+                                        <span id="toUseCount" class="bg-green-500/20 text-green-400 text-xs px-2 py-0.5 rounded-full">0</span>
+                                    </div>
+                                    <span id="toUseChevron" class="material-symbols-outlined text-green-400 transition-transform">expand_more</span>
+                                </button>
+                                <div id="vouchersToUseList" class="mt-2 space-y-2 max-h-64 overflow-y-auto"></div>
+                            </div>
+                            
+                            <!-- Used Section -->
+                            <div id="vouchersUsedSection" class="hidden">
+                                <button onclick="toggleVoucherSection('used')" class="w-full flex items-center justify-between p-3 bg-slate-500/10 border border-slate-500/20 rounded-lg hover:bg-slate-500/15 transition-colors">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-slate-400">history</span>
+                                        <span class="text-slate-400 font-semibold text-sm">Used</span>
+                                        <span id="usedCount" class="bg-slate-500/20 text-slate-400 text-xs px-2 py-0.5 rounded-full">0</span>
+                                    </div>
+                                    <span id="usedChevron" class="material-symbols-outlined text-slate-400 transition-transform rotate-180">expand_more</span>
+                                </button>
+                                <div id="vouchersUsedList" class="hidden mt-2 space-y-2 max-h-48 overflow-y-auto"></div>
+                            </div>
                         </div>
                     </div>
 
+                    <!-- Order History - Now single column -->
                     <div class="bg-surface border border-white/5 rounded-xl overflow-hidden">
                         <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
                             <div class="flex items-center gap-2">
@@ -1087,7 +1113,7 @@
 
         function openBookingModal(voucher) {
             currentBookingVoucher = voucher;
-            
+            selectedStartTime = null;
             // Populate modal
             document.getElementById('bookingServiceName').textContent = voucher.service_name || 'Service';
             document.getElementById('bookingVoucherCode').textContent = voucher.code || '';
@@ -1207,28 +1233,159 @@
         // ============================================
         // TIME PICKER - Apple-style Scrollers
         // ============================================
-        function openTimePicker(field) {
+        let selectedStartTime = null; // Track selected start time
+
+       function openTimePicker(field) {
             currentTimeField = field;
+            document.getElementById('timePickerModal').classList.remove('hidden');
             
-            // Get current value or default
-            const currentValue = document.getElementById(field === 'start' ? 'bookingStart' : 'bookingEnd').value;
-            if (currentValue) {
-                const [h, m] = currentValue.split(':');
-                selectedHour = parseInt(h);
-                selectedMinute = parseInt(m);
-            } else {
-                selectedHour = 12;
-                selectedMinute = 0;
+            let currentHour = 9;
+            let currentMinute = 0;
+            
+            // Get current value if exists
+            const displayEl = document.getElementById(field === 'start' ? 'bookingStartDisplay' : 'bookingEndDisplay');
+            if (displayEl.textContent && displayEl.textContent !== 'Select time') {
+                const parts = displayEl.textContent.split(':');
+                if (parts.length === 2) {
+                    currentHour = parseInt(parts[0]);
+                    currentMinute = parseInt(parts[1]);
+                }
             }
             
-            // Update label
-            document.getElementById('timePickerLabel').textContent = field === 'start' ? 'Start Time' : 'End Time';
+            // If selecting end time and start time is set, minimum is start + 15 min
+            let minHour = 0;
+            let minMinute = 0;
             
-            // Build scrollers
-            buildTimeScrollers();
+            if (field === 'end' && selectedStartTime) {
+                minHour = selectedStartTime.hour;
+                minMinute = selectedStartTime.minute + 15;
+                if (minMinute >= 60) {
+                    minMinute -= 60;
+                    minHour += 1;
+                }
+                // If current selection is before minimum, adjust
+                if (currentHour < minHour || (currentHour === minHour && currentMinute < minMinute)) {
+                    currentHour = minHour;
+                    currentMinute = minMinute;
+                }
+            }
             
-            // Show modal
-            document.getElementById('timePickerModal').classList.remove('hidden');
+            buildTimeScrollers(currentHour, currentMinute, minHour, minMinute);
+        }
+
+        function buildTimeScrollers(selectedHour, selectedMinute, minHour = 0, minMinute = 0) {
+            const hourScroller = document.getElementById('hourScroller');
+            const minuteScroller = document.getElementById('minuteScroller');
+            
+            // Build hours (filter out hours before minimum)
+            hourScroller.innerHTML = '<div class="scroll-padding"></div>';
+            for (let h = 0; h < 24; h++) {
+                const disabled = h < minHour;
+                hourScroller.innerHTML += `<div class="time-item ${disabled ? 'disabled' : ''}" data-value="${h}" ${disabled ? 'style="opacity: 0.3; pointer-events: none;"' : ''}>${String(h).padStart(2, '0')}</div>`;
+            }
+            hourScroller.innerHTML += '<div class="scroll-padding"></div>';
+            
+            // Build minutes
+            updateMinuteScroller(selectedHour, selectedMinute, minHour, minMinute);
+            
+            // Scroll to selected values
+            setTimeout(() => {
+                scrollToValue(hourScroller, selectedHour);
+                scrollToValue(minuteScroller, selectedMinute / 15);
+            }, 50);
+            
+            // Add scroll listeners
+            hourScroller.onscroll = () => {
+                updateScrollerSelection(hourScroller);
+                // Update minute scroller when hour changes
+                const currentHour = getSelectedValue(hourScroller);
+                updateMinuteScroller(currentHour, getSelectedMinute(), minHour, minMinute);
+            };
+            minuteScroller.onscroll = () => updateScrollerSelection(minuteScroller);
+        }
+
+        function updateMinuteScroller(currentHour, selectedMinute, minHour, minMinute) {
+            const minuteScroller = document.getElementById('minuteScroller');
+            const minutes = [0, 15, 30, 45];
+            
+            minuteScroller.innerHTML = '<div class="scroll-padding"></div>';
+            minutes.forEach((m, index) => {
+                // Disable minutes that are before minimum when on minimum hour
+                const disabled = (currentHour === minHour && m < minMinute);
+                minuteScroller.innerHTML += `<div class="time-item ${disabled ? 'disabled' : ''}" data-value="${index}" ${disabled ? 'style="opacity: 0.3; pointer-events: none;"' : ''}>${String(m).padStart(2, '0')}</div>`;
+            });
+            minuteScroller.innerHTML += '<div class="scroll-padding"></div>';
+        }
+
+        function getSelectedValue(scroller) {
+            const items = scroller.querySelectorAll('.time-item:not(.disabled)');
+            const scrollerRect = scroller.getBoundingClientRect();
+            const center = scrollerRect.top + scrollerRect.height / 2;
+            
+            let closest = null;
+            let closestDist = Infinity;
+            
+            items.forEach(item => {
+                const rect = item.getBoundingClientRect();
+                const itemCenter = rect.top + rect.height / 2;
+                const dist = Math.abs(center - itemCenter);
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closest = item;
+                }
+            });
+            
+            return closest ? parseInt(closest.dataset.value) : 0;
+        }
+
+        function getSelectedMinute() {
+            const minuteScroller = document.getElementById('minuteScroller');
+            const index = getSelectedValue(minuteScroller);
+            return [0, 15, 30, 45][index] || 0;
+        }
+
+        function confirmTimePicker() {
+            const hourScroller = document.getElementById('hourScroller');
+            const minuteScroller = document.getElementById('minuteScroller');
+            
+            const hour = getSelectedValue(hourScroller);
+            const minuteIndex = getSelectedValue(minuteScroller);
+            const minute = [0, 15, 30, 45][minuteIndex] || 0;
+            
+            const timeStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+            
+            if (currentTimeField === 'start') {
+                document.getElementById('bookingStartDisplay').textContent = timeStr;
+                document.getElementById('bookingStart').value = timeStr;
+                selectedStartTime = { hour, minute };
+                
+                // Reset end time if it's now before start time
+                const endDisplay = document.getElementById('bookingEndDisplay');
+                if (endDisplay.textContent && endDisplay.textContent !== 'Select time') {
+                    const endParts = endDisplay.textContent.split(':');
+                    const endHour = parseInt(endParts[0]);
+                    const endMinute = parseInt(endParts[1]);
+                    
+                    let minEndMinute = minute + 15;
+                    let minEndHour = hour;
+                    if (minEndMinute >= 60) {
+                        minEndMinute -= 60;
+                        minEndHour += 1;
+                    }
+                    
+                    if (endHour < minEndHour || (endHour === minEndHour && endMinute < minEndMinute)) {
+                        // Reset end time
+                        const newEndTime = `${String(minEndHour).padStart(2, '0')}:${String(minEndMinute).padStart(2, '0')}`;
+                        endDisplay.textContent = newEndTime;
+                        document.getElementById('bookingEnd').value = newEndTime;
+                    }
+                }
+            } else {
+                document.getElementById('bookingEndDisplay').textContent = timeStr;
+                document.getElementById('bookingEnd').value = timeStr;
+            }
+            
+            closeTimePicker();
         }
 
         function closeTimePicker() {
@@ -1590,14 +1747,51 @@
         // ============================================
         // FETCH VOUCHERS - Updated with booking functionality
         // ============================================
+        let voucherSectionsState = {
+            toUse: true,  // expanded by default
+            used: false   // collapsed by default
+        };
+
+        function toggleVoucherSection(section) {
+            voucherSectionsState[section] = !voucherSectionsState[section];
+            
+            if (section === 'toUse') {
+                const list = document.getElementById('vouchersToUseList');
+                const chevron = document.getElementById('toUseChevron');
+                if (voucherSectionsState.toUse) {
+                    list.classList.remove('hidden');
+                    chevron.classList.remove('rotate-180');
+                } else {
+                    list.classList.add('hidden');
+                    chevron.classList.add('rotate-180');
+                }
+            } else {
+                const list = document.getElementById('vouchersUsedList');
+                const chevron = document.getElementById('usedChevron');
+                if (voucherSectionsState.used) {
+                    list.classList.remove('hidden');
+                    chevron.classList.remove('rotate-180');
+                } else {
+                    list.classList.add('hidden');
+                    chevron.classList.add('rotate-180');
+                }
+            }
+        }
+
+        // ============================================
+        // FETCH VOUCHERS - Updated with two sections
+        // ============================================
         function getStatusLabel(status) {
             const labels = {
                 'active': 'Available',
                 'purchased': 'Available',
                 'pending_validation': 'Pending Confirmation',
                 'validated': 'Confirmed',
-                'consumed': 'Used',
-                'cancelled': 'Cancelled'
+                'confirmed': 'Confirmed',
+                'consumed': 'Redeemed',
+                'used': 'Redeemed',
+                'cancelled': 'Cancelled',
+                'expired': 'Expired'
             };
             return labels[status] || status;
         }
@@ -1608,8 +1802,11 @@
                 'purchased': 'text-green-400',
                 'pending_validation': 'text-yellow-400',
                 'validated': 'text-blue-400',
+                'confirmed': 'text-blue-400',  // Added
                 'consumed': 'text-slate-500',
-                'cancelled': 'text-red-400'
+                'used': 'text-slate-500',  // Added
+                'cancelled': 'text-red-400',
+                'expired': 'text-red-400'
             };
             return classes[status] || 'text-slate-400';
         }
@@ -1618,15 +1815,100 @@
             return ['active', 'purchased'].includes(status);
         }
 
+        function isVoucherToBeUsed(status) {
+            // Only these statuses mean the voucher is still pending use
+            return ['active', 'purchased', 'pending_validation'].includes(status);
+        }
+
+        function isVoucherUsed(status) {
+            // These statuses mean the voucher has been used or is no longer valid
+            return ['consumed', 'used', 'confirmed', 'cancelled', 'expired'].includes(status);
+        }
+
+        function renderVoucherCard(v, showBookButton = true) {
+            const canBook = canBookVoucher(v.status);
+            const statusLabel = getStatusLabel(v.status);
+            const statusClass = getStatusClass(v.status);
+            
+            // Format booking date if exists
+            let bookingInfo = '';
+            if (v.booking_date) {
+                const date = new Date(v.booking_date).toLocaleDateString('en-GB', { 
+                    weekday: 'short', day: 'numeric', month: 'short'
+                });
+                let timeInfo = '';
+                const startTime = v.booking_time_start || v.booking_start;
+                const endTime = v.booking_time_end || v.booking_end;
+                if (startTime && endTime) {
+                    const formatTime = (t) => String(t).slice(0, 5);
+                    timeInfo = ` (${formatTime(startTime)} - ${formatTime(endTime)})`;
+                }
+                bookingInfo = `<p class="text-slate-400 text-xs mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-sm">calendar_month</span>${date}${timeInfo}</p>`;
+            }
+            
+            // Used date for consumed vouchers
+            let usedInfo = '';
+            if (v.status === 'consumed' && v.redeemed_at) {
+                const usedDate = new Date(v.redeemed_at).toLocaleDateString('en-GB', { 
+                    day: 'numeric', month: 'short', year: 'numeric'
+                });
+                usedInfo = `<p class="text-slate-500 text-xs mt-1">Used on ${usedDate}</p>`;
+            }
+            
+            const isUsed = !isVoucherToBeUsed(v.status);
+            const cardBg = isUsed ? 'bg-black/10' : 'bg-black/20';
+            const opacity = isUsed ? 'opacity-70' : '';
+            
+            return `
+                <div class="${cardBg} rounded-lg p-3 border border-white/5 hover:border-white/10 transition-colors ${opacity}">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-start gap-3 min-w-0 flex-1">
+                            <div class="w-10 h-10 rounded-lg ${isUsed ? 'bg-slate-500/20' : 'bg-purple-500/20'} flex items-center justify-center flex-shrink-0">
+                                <span class="material-symbols-outlined ${isUsed ? 'text-slate-400' : 'text-purple-400'} text-lg">
+                                    ${isUsed ? 'check_circle' : 'confirmation_number'}
+                                </span>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-white text-sm font-medium truncate">${v.service_name || 'Voucher'}</p>
+                                <p class="text-primary font-mono text-xs">${v.code || ''}</p>
+                                <p class="text-xs ${statusClass} mt-1 flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full ${statusClass.replace('text-', 'bg-')}"></span>
+                                    ${statusLabel}
+                                </p>
+                                ${bookingInfo}
+                                ${usedInfo}
+                            </div>
+                        </div>
+                        <div class="text-right flex-shrink-0">
+                            <p class="${isUsed ? 'text-slate-400' : 'text-primary'} font-semibold">€${v.value || 0}</p>
+                            ${showBookButton && canBook ? `
+                                <button onclick='openBookingModal(${JSON.stringify(v).replace(/'/g, "&#39;")})' 
+                                    class="mt-2 text-xs bg-primary/20 text-primary px-3 py-1.5 rounded-lg hover:bg-primary/30 transition-colors flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-sm">calendar_month</span>
+                                    Book
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         async function fetchVouchers(wallet) {
             const loading = document.getElementById('vouchersLoading');
             const empty = document.getElementById('vouchersEmpty');
-            const list = document.getElementById('vouchersList');
             const count = document.getElementById('vouchersCount');
+            const toUseSection = document.getElementById('vouchersToUseSection');
+            const usedSection = document.getElementById('vouchersUsedSection');
+            const toUseList = document.getElementById('vouchersToUseList');
+            const usedList = document.getElementById('vouchersUsedList');
+            const toUseCount = document.getElementById('toUseCount');
+            const usedCount = document.getElementById('usedCount');
             
             loading.classList.remove('hidden');
             empty.classList.add('hidden');
-            list.classList.add('hidden');
+            toUseSection.classList.add('hidden');
+            usedSection.classList.add('hidden');
             
             try {
                 const response = await fetch(`/api/vouchers/${wallet.toLowerCase()}`);
@@ -1643,50 +1925,47 @@
                 
                 if (data.success && data.vouchers && data.vouchers.length > 0) {
                     count.textContent = data.vouchers.length;
-                    list.classList.remove('hidden');
                     
-                    list.innerHTML = data.vouchers.map(v => {
-                        const canBook = canBookVoucher(v.status);
-                        const statusLabel = getStatusLabel(v.status);
-                        const statusClass = getStatusClass(v.status);
+                    // Split vouchers into two categories
+                    const toBeUsed = data.vouchers.filter(v => isVoucherToBeUsed(v.status));
+                    const used = data.vouchers.filter(v => !isVoucherToBeUsed(v.status));
+                    
+                    // Render To Be Used section
+                    if (toBeUsed.length > 0) {
+                        toUseSection.classList.remove('hidden');
+                        toUseCount.textContent = toBeUsed.length;
+                        toUseList.innerHTML = toBeUsed.map(v => renderVoucherCard(v, true)).join('');
                         
-                        // Format booking date if exists
-                        let bookingInfo = '';
-                        if (v.booking_date) {
-                            const date = new Date(v.booking_date).toLocaleDateString('en-GB', { 
-                                day: 'numeric', month: 'short', year: 'numeric' 
-                            });
-                            bookingInfo = `<p class="text-slate-500 text-xs mt-1">📅 ${date}</p>`;
+                        // Apply initial state
+                        if (voucherSectionsState.toUse) {
+                            toUseList.classList.remove('hidden');
+                            document.getElementById('toUseChevron').classList.remove('rotate-180');
+                        } else {
+                            toUseList.classList.add('hidden');
+                            document.getElementById('toUseChevron').classList.add('rotate-180');
                         }
+                    }
+                    
+                    // Render Used section
+                    if (used.length > 0) {
+                        usedSection.classList.remove('hidden');
+                        usedCount.textContent = used.length;
+                        usedList.innerHTML = used.map(v => renderVoucherCard(v, false)).join('');
                         
-                        return `
-                            <div class="bg-black/20 rounded-lg p-3 border border-white/5 hover:border-white/10 transition-colors">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="flex items-start gap-3 min-w-0 flex-1">
-                                        <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                                            <span class="material-symbols-outlined text-purple-400 text-lg">confirmation_number</span>
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <p class="text-white text-sm font-medium truncate">${v.service_name || 'Voucher'}</p>
-                                            <p class="text-primary font-mono text-xs">${v.code || ''}</p>
-                                            <p class="text-xs ${statusClass} mt-1">${statusLabel}</p>
-                                            ${bookingInfo}
-                                        </div>
-                                    </div>
-                                    <div class="text-right flex-shrink-0">
-                                        <p class="text-primary font-semibold">€${v.value || 0}</p>
-                                        ${canBook ? `
-                                            <button onclick='openBookingModal(${JSON.stringify(v).replace(/'/g, "&#39;")})' 
-                                                class="mt-2 text-xs bg-primary/20 text-primary px-3 py-1.5 rounded-lg hover:bg-primary/30 transition-colors flex items-center gap-1">
-                                                <span class="material-symbols-outlined text-sm">calendar_month</span>
-                                                Book
-                                            </button>
-                                        ` : ''}
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
+                        // Apply initial state (collapsed by default)
+                        if (voucherSectionsState.used) {
+                            usedList.classList.remove('hidden');
+                            document.getElementById('usedChevron').classList.remove('rotate-180');
+                        } else {
+                            usedList.classList.add('hidden');
+                            document.getElementById('usedChevron').classList.add('rotate-180');
+                        }
+                    }
+                    
+                    // Show empty if no vouchers at all
+                    if (toBeUsed.length === 0 && used.length === 0) {
+                        empty.classList.remove('hidden');
+                    }
                 } else {
                     count.textContent = '0';
                     empty.classList.remove('hidden');

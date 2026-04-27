@@ -1,5 +1,5 @@
 // src/routes/vouchers.js
-// VERSION: 2026-04-25 - Voucher booking system with WalletTwo email webhook
+// VERSION: 2026-04-27 - Voucher booking system with WalletTwo email webhook
 
 const express = require('express');
 const router = express.Router();
@@ -12,6 +12,83 @@ const crypto = require('crypto');
 const WALLETTWO_EMAIL_WEBHOOK = process.env.WALLETTWO_EMAIL_WEBHOOK;
 const SITE_OWNER_EMAIL = process.env.SITE_OWNER_EMAIL || 'julie.meyer@vivapartners.net';
 const SITE_URL = process.env.SITE_URL || 'https://keavalley.com';
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+// Generate voucher code: KEA-XXXX-XXXX
+function generateVoucherCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = 'KEA-';
+    for (let i = 0; i < 4; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    code += '-';
+    for (let i = 0; i < 4; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+// Generate validation token
+function generateValidationToken() {
+    return crypto.randomBytes(32).toString('hex');
+}
+
+// Helper function to format date safely
+function formatBookingDate(dateValue) {
+    if (!dateValue) return null;
+    
+    try {
+        let dateObj;
+        
+        // If it's already a Date object (from PostgreSQL)
+        if (dateValue instanceof Date) {
+            dateObj = dateValue;
+        }
+        // If it's a string
+        else if (typeof dateValue === 'string') {
+            const trimmed = dateValue.trim();
+            
+            // Handle YYYY-MM-DD format (with optional time part)
+            const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (isoMatch) {
+                dateObj = new Date(parseInt(isoMatch[1]), parseInt(isoMatch[2]) - 1, parseInt(isoMatch[3]));
+            } else {
+                // Try native parsing as fallback
+                dateObj = new Date(trimmed);
+            }
+        } else {
+            dateObj = new Date(dateValue);
+        }
+        
+        // Check if valid date
+        if (!dateObj || isNaN(dateObj.getTime())) {
+            return String(dateValue);
+        }
+        
+        return dateObj.toLocaleDateString('en-GB', { 
+            weekday: 'short', 
+            day: 'numeric', 
+            month: 'short', 
+            year: 'numeric' 
+        });
+    } catch (e) {
+        console.error('Date formatting error:', e);
+        return String(dateValue);
+    }
+}
+
+// Helper function to format time safely (handles PostgreSQL time format "HH:MM:SS")
+function formatTime(timeValue) {
+    if (!timeValue) return null;
+    
+    const timeStr = String(timeValue);
+    // Extract HH:MM from HH:MM:SS or HH:MM
+    const match = timeStr.match(/^(\d{2}:\d{2})/);
+    return match ? match[1] : timeStr;
+}
 
 // ============================================
 // EMAIL FUNCTIONS
@@ -50,49 +127,37 @@ function getBaseTemplate(content) {
 }
 
 async function sendBookingRequestToOwner(voucher, booking_date, booking_start, booking_end, booking_notes) {
-    // Format the date properly
-    let dateDisplay = booking_date || 'Not specified';
-    if (booking_date) {
-        try {
-            const dateObj = new Date(booking_date);
-            dateDisplay = dateObj.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-        } catch (e) {
-            dateDisplay = booking_date;
-        }
-    }
+    let dateDisplay = formatBookingDate(booking_date) || 'Not specified';
     
     // Add time if provided
-    if (booking_start && booking_end) {
-        dateDisplay += ` (${booking_start} - ${booking_end})`;
-    } else if (booking_start) {
-        dateDisplay += ` at ${booking_start}`;
+    const startTime = formatTime(booking_start);
+    const endTime = formatTime(booking_end);
+    
+    if (startTime && endTime) {
+        dateDisplay += ` (${startTime} - ${endTime})`;
+    } else if (startTime) {
+        dateDisplay += ` at ${startTime}`;
     }
 
     const confirmUrl = `${SITE_URL}/api/vouchers/validate/${voucher.validation_token}`;
     const rejectUrl = `${SITE_URL}/api/vouchers/reject/${voucher.validation_token}`;
 
-    const content = `<h2 style="color: #ffffff; margin-top: 0;">New Booking Request</h2><p style="color: #94a3b8; line-height: 1.6;">A member has requested a booking.</p><div style="background: #0d0d0d; border-radius: 12px; padding: 20px; margin: 25px 0;"><table style="width: 100%; border-collapse: collapse;"><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Voucher Code</td><td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.code}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Service</td><td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.service_name}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Requested Date</td><td style="color: #daa520; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${dateDisplay}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Value</td><td style="color: #10b981; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">Kea€${voucher.value}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0;">Member Email</td><td style="color: #ffffff; font-weight: 600; padding: 10px 0; text-align: right;">${voucher.user_email || 'N/A'}</td></tr>${booking_notes ? `<tr><td style="color: #94a3b8; padding: 10px 0;">Notes</td><td style="color: #ffffff; padding: 10px 0; text-align: right;">${booking_notes}</td></tr>` : ''}</table></div><div style="text-align: center; margin: 30px 0;"><a href="${confirmUrl}" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; margin: 5px;">Confirm Booking</a><a href="${rejectUrl}" style="display: inline-block; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; margin: 5px;">Reject Booking</a></div>`;
+    const content = `<h2 style="color: #ffffff; margin-top: 0;">New Booking Request</h2><p style="color: #94a3b8; line-height: 1.6;">A member has requested a booking.</p><div style="background: #0d0d0d; border-radius: 12px; padding: 20px; margin: 25px 0;"><table style="width: 100%; border-collapse: collapse;"><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Voucher Code</td><td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.code}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Service</td><td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.service_name}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Requested Date</td><td style="color: #daa520; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${dateDisplay}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Value</td><td style="color: #10b981; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">Kea${voucher.value}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0;">Member Email</td><td style="color: #ffffff; font-weight: 600; padding: 10px 0; text-align: right;">${voucher.user_email || 'N/A'}</td></tr>${booking_notes ? `<tr><td style="color: #94a3b8; padding: 10px 0;">Notes</td><td style="color: #ffffff; padding: 10px 0; text-align: right;">${booking_notes}</td></tr>` : ''}</table></div><div style="text-align: center; margin: 30px 0;"><a href="${confirmUrl}" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; margin: 5px;">Confirm Booking</a><a href="${rejectUrl}" style="display: inline-block; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; margin: 5px;">Reject Booking</a></div>`;
 
     return sendEmail(SITE_OWNER_EMAIL, getBaseTemplate(content));
 }
 
 async function sendBookingRequestToUser(voucher, booking_date, booking_start, booking_end) {
-    // Format the date properly
-    let dateDisplay = booking_date || 'Not specified';
-    if (booking_date) {
-        try {
-            const dateObj = new Date(booking_date);
-            dateDisplay = dateObj.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-        } catch (e) {
-            dateDisplay = booking_date;
-        }
-    }
+    let dateDisplay = formatBookingDate(booking_date) || 'Not specified';
     
     // Add time if provided
-    if (booking_start && booking_end) {
-        dateDisplay += ` (${booking_start} - ${booking_end})`;
-    } else if (booking_start) {
-        dateDisplay += ` at ${booking_start}`;
+    const startTime = formatTime(booking_start);
+    const endTime = formatTime(booking_end);
+    
+    if (startTime && endTime) {
+        dateDisplay += ` (${startTime} - ${endTime})`;
+    } else if (startTime) {
+        dateDisplay += ` at ${startTime}`;
     }
 
     const content = `<h2 style="color: #ffffff; margin-top: 0;">Booking Request Submitted</h2><p style="color: #94a3b8; line-height: 1.6;">Your booking request has been submitted and is pending confirmation.</p><div style="background: #0d0d0d; border-radius: 12px; padding: 20px; margin: 25px 0;"><table style="width: 100%; border-collapse: collapse;"><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Voucher Code</td><td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.code}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Service</td><td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.service_name}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Requested Date</td><td style="color: #daa520; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${dateDisplay}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0;">Status</td><td style="color: #f59e0b; font-weight: 600; padding: 10px 0; text-align: right;">Pending Confirmation</td></tr></table></div><p style="color: #94a3b8; line-height: 1.6;">You will receive an email once your booking is confirmed or if we need to arrange an alternative time.</p><div style="text-align: center; margin: 30px 0;"><a href="${SITE_URL}/profile" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #ffffff; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">View My Vouchers</a></div>`;
@@ -101,24 +166,15 @@ async function sendBookingRequestToUser(voucher, booking_date, booking_start, bo
 }
 
 async function sendBookingConfirmedToUser(voucher) {
-    // Format the date properly
-    let dateDisplay = 'As confirmed';
-    if (voucher.booking_date) {
-        try {
-            const dateObj = new Date(voucher.booking_date);
-            dateDisplay = dateObj.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-        } catch (e) {
-            dateDisplay = voucher.booking_date;
-        }
-    }
+    let dateDisplay = formatBookingDate(voucher.booking_date) || 'As confirmed';
     
     // Add time if provided (check both new and old column names)
-    const startTime = voucher.booking_time_start || voucher.booking_start;
-    const endTime = voucher.booking_time_end || voucher.booking_end;
+    const startTime = formatTime(voucher.booking_time_start) || formatTime(voucher.booking_start);
+    const endTime = formatTime(voucher.booking_time_end) || formatTime(voucher.booking_end);
     
-    if (startTime && endTime && !startTime.includes('-')) {
+    if (startTime && endTime) {
         dateDisplay += ` (${startTime} - ${endTime})`;
-    } else if (startTime && !startTime.includes('-')) {
+    } else if (startTime) {
         dateDisplay += ` at ${startTime}`;
     }
 
@@ -128,20 +184,11 @@ async function sendBookingConfirmedToUser(voucher) {
 }
 
 async function sendBookingRejectedToUser(voucher, reason) {
-    // Format the date properly
-    let dateDisplay = 'the requested date';
-    if (voucher.booking_date) {
-        try {
-            const dateObj = new Date(voucher.booking_date);
-            dateDisplay = dateObj.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-        } catch (e) {
-            dateDisplay = voucher.booking_date;
-        }
-    }
+    let dateDisplay = formatBookingDate(voucher.booking_date) || 'the requested date';
     
     // Add time if provided
-    const startTime = voucher.booking_time_start || voucher.booking_start;
-    if (startTime && !startTime.includes('-')) {
+    const startTime = formatTime(voucher.booking_time_start) || formatTime(voucher.booking_start);
+    if (startTime) {
         dateDisplay += ` at ${startTime}`;
     }
 
@@ -151,30 +198,7 @@ async function sendBookingRejectedToUser(voucher, reason) {
 }
 
 // ============================================
-// HELPER FUNCTIONS
-// ============================================
-
-// Generate voucher code: KEA-XXXX-XXXX
-function generateVoucherCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code = 'KEA-';
-    for (let i = 0; i < 4; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    code += '-';
-    for (let i = 0; i < 4; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return code;
-}
-
-// Generate validation token
-function generateValidationToken() {
-    return crypto.randomBytes(32).toString('hex');
-}
-
-// ============================================
-// ROUTES
+// ROUTES - SPECIFIC ROUTES FIRST
 // ============================================
 
 // GET validate voucher via email link (one-click confirm)
@@ -233,9 +257,14 @@ router.get('/validate/:token', async (req, res) => {
         console.log('✅ Voucher validated via email link:', voucher.code);
         
         // Format dates for display
-        const dateDisplay = voucher.booking_start && voucher.booking_end
-            ? `${voucher.booking_start} to ${voucher.booking_end}`
-            : voucher.booking_date || 'As confirmed';
+        let dateDisplay = formatBookingDate(voucher.booking_date) || 'As confirmed';
+        const startTime = formatTime(voucher.booking_time_start) || formatTime(voucher.booking_start);
+        const endTime = formatTime(voucher.booking_time_end) || formatTime(voucher.booking_end);
+        if (startTime && endTime) {
+            dateDisplay += ` (${startTime} - ${endTime})`;
+        } else if (startTime) {
+            dateDisplay += ` at ${startTime}`;
+        }
         
         res.send(`
             <html>
@@ -256,7 +285,7 @@ router.get('/validate/:token', async (req, res) => {
                     .details-label { color: #94a3b8; }
                     .details-value { color: #fff; font-weight: 600; }
                     .notification { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 15px; margin: 20px 0; color: #10b981; font-size: 14px; }
-                    .btn { display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #0d0d0d; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 20px; }
+                    .btn { display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #ffffff; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 20px; }
                 </style>
             </head>
             <body>
@@ -276,7 +305,7 @@ router.get('/validate/:token', async (req, res) => {
                         </div>
                         <div class="details-row">
                             <span class="details-label">Value</span>
-                            <span class="details-value" style="color: #daa520;">Kea€${voucher.value}</span>
+                            <span class="details-value" style="color: #daa520;">Kea${voucher.value}</span>
                         </div>
                         <div class="details-row">
                             <span class="details-label">Member</span>
@@ -353,6 +382,8 @@ router.get('/reject/:token', async (req, res) => {
                 booking_date = NULL,
                 booking_start = NULL,
                 booking_end = NULL,
+                booking_time_start = NULL,
+                booking_time_end = NULL,
                 booking_notes = NULL,
                 booking_requested_at = NULL,
                 validation_token = NULL
@@ -380,7 +411,7 @@ router.get('/reject/:token', async (req, res) => {
                     .subtitle { color: #94a3b8; margin-bottom: 30px; }
                     .code { font-size: 20px; color: #daa520; background: rgba(218,165,32,0.1); padding: 15px; border-radius: 12px; margin: 20px 0; }
                     .info { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 15px; margin: 20px 0; color: #10b981; font-size: 14px; text-align: left; }
-                    .btn { display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #0d0d0d; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 20px; }
+                    .btn { display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #ffffff; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 20px; }
                 </style>
             </head>
             <body>
@@ -415,25 +446,6 @@ router.get('/reject/:token', async (req, res) => {
             </body>
             </html>
         `);
-    }
-});
-
-// GET vouchers by wallet
-router.get('/:wallet', async (req, res) => {
-    console.log('🎫 GET /api/vouchers/:wallet called');
-    try {
-        const result = await db.pool.query(`
-            SELECT v.*, s.image_url, s.category, s.description as service_description
-            FROM marketplace_vouchers v
-            LEFT JOIN marketplace_services s ON v.service_id = s.id
-            WHERE LOWER(v.wallet_address) = LOWER($1)
-            ORDER BY v.created_at DESC
-        `, [req.params.wallet]);
-        
-        res.json({ success: true, vouchers: result.rows });
-    } catch (error) {
-        console.error('Error fetching vouchers:', error);
-        res.status(500).json({ success: false, error: error.message });
     }
 });
 
@@ -481,10 +493,35 @@ router.get('/id/:id', async (req, res) => {
     }
 });
 
+// ============================================
+// CATCH-ALL ROUTES (MUST BE AFTER SPECIFIC ROUTES)
+// ============================================
+
+// GET vouchers by wallet
+router.get('/:wallet', async (req, res) => {
+    console.log('🎫 GET /api/vouchers/:wallet called');
+    try {
+        const result = await db.pool.query(`
+            SELECT v.*, s.image_url, s.category, s.description as service_description
+            FROM marketplace_vouchers v
+            LEFT JOIN marketplace_services s ON v.service_id = s.id
+            WHERE LOWER(v.wallet_address) = LOWER($1)
+            ORDER BY v.created_at DESC
+        `, [req.params.wallet]);
+        
+        res.json({ success: true, vouchers: result.rows });
+    } catch (error) {
+        console.error('Error fetching vouchers:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // POST request booking for a voucher
 router.post('/:id/book', async (req, res) => {
     console.log('🎫 POST /api/vouchers/:id/book called');
     const { booking_date, booking_start, booking_end, booking_notes } = req.body;
+    
+    console.log('📅 Booking data received:', { booking_date, booking_start, booking_end, booking_notes });
     
     try {
         // Get voucher
@@ -509,10 +546,8 @@ router.post('/:id/book', async (req, res) => {
         // Generate validation token for email link
         const validationToken = generateValidationToken();
         
-        // Determine if booking_start/end are dates (accommodation) or times (service)
-        // If format is "HH:MM" it's a time, if "YYYY-MM-DD" it's a date
-        const isTimeFormat = (val) => val && /^\d{2}:\d{2}$/.test(val);
-        const isDateFormat = (val) => val && /^\d{4}-\d{2}-\d{2}$/.test(val);
+        // Determine if booking_start/end are times (HH:MM) or dates (YYYY-MM-DD)
+        const isTimeFormat = (val) => val && /^\d{2}:\d{2}(:\d{2})?$/.test(val);
         
         let updateQuery, updateParams;
         
@@ -554,14 +589,16 @@ router.post('/:id/book', async (req, res) => {
         
         await db.pool.query(updateQuery, updateParams);
         
+        // Add validation_token to voucher object for email functions
+        voucher.validation_token = validationToken;
+        
         // Send email to user confirming request received
-        const bookingDetails = { booking_date, booking_start, booking_end, booking_notes };
         if (voucher.user_email) {
-            await sendBookingRequestToUser(voucher, bookingDetails);
+            await sendBookingRequestToUser(voucher, booking_date, booking_start, booking_end);
         }
         
         // Send email to site owner with validation link
-        await sendBookingRequestToOwner(voucher, bookingDetails, validationToken);
+        await sendBookingRequestToOwner(voucher, booking_date, booking_start, booking_end, booking_notes);
         
         console.log('✅ Booking requested for voucher:', voucher.code);
         res.json({ 
@@ -637,6 +674,8 @@ router.post('/:id/reject', async (req, res) => {
                 booking_date = NULL,
                 booking_start = NULL,
                 booking_end = NULL,
+                booking_time_start = NULL,
+                booking_time_end = NULL,
                 booking_notes = NULL,
                 booking_requested_at = NULL,
                 validation_token = NULL
