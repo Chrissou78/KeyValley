@@ -49,181 +49,104 @@ function getBaseTemplate(content) {
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin: 0; padding: 0; background-color: #0d0d0d; font-family: Helvetica Neue, Arial, sans-serif;"><div style="max-width: 600px; margin: 0 auto; background-color: #1a1a1a;"><div style="background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); padding: 20px; text-align: center;"><img src="${SITE_URL}/images/logo.png" alt="Kea Valley" height="30" style="height: 30px; width: auto;"><p style="color: #ffffff; margin: 10px 0 0; font-size: 14px; font-weight: 600;">Kea Valley Private Members Club</p></div><div style="padding: 40px 30px; color: #ffffff;">${content}</div><div style="background: #0d0d0d; padding: 30px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);"><p style="color: #64748b; font-size: 12px; margin: 5px 0;">Kea Valley Private Members Club</p><p style="color: #64748b; font-size: 12px; margin: 5px 0;">Questions? Contact us at <a href="mailto:${SITE_OWNER_EMAIL}" style="color: #daa520; text-decoration: none;">${SITE_OWNER_EMAIL}</a></p><p style="color: #64748b; font-size: 12px; margin: 15px 0 0;">2026 Kea Valley. All rights reserved.</p></div></div></body></html>`;
 }
 
-async function sendBookingRequestToOwner(voucher, bookingDetails, validationToken) {
-    const confirmUrl = `${SITE_URL}/api/vouchers/validate/${validationToken}`;
-    const rejectUrl = `${SITE_URL}/api/vouchers/reject/${validationToken}`;
+async function sendBookingRequestToOwner(voucher, booking_date, booking_start, booking_end, booking_notes) {
+    // Format the date properly
+    let dateDisplay = booking_date || 'Not specified';
+    if (booking_date) {
+        try {
+            const dateObj = new Date(booking_date);
+            dateDisplay = dateObj.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+        } catch (e) {
+            dateDisplay = booking_date;
+        }
+    }
     
-    const dateDisplay = bookingDetails.booking_start && bookingDetails.booking_end
-        ? `${bookingDetails.booking_start} → ${bookingDetails.booking_end}`
-        : bookingDetails.booking_date || 'Not specified';
-    
-    const content = `
-        <h2 style="color: #daa520; margin-top: 0;">New Booking Request 📅</h2>
-        <p style="color: #94a3b8; line-height: 1.6;">A member has requested to use their voucher.</p>
-        
-        <div style="background: rgba(218, 165, 32, 0.1); border: 2px dashed #daa520; border-radius: 12px; padding: 20px; text-align: center; margin: 25px 0;">
-            <p style="margin: 0 0 10px; color: #94a3b8; font-size: 14px;">VOUCHER CODE</p>
-            <span style="font-size: 28px; font-weight: bold; color: #daa520; letter-spacing: 3px;">${voucher.code}</span>
-        </div>
-        
-        <div style="background: #0d0d0d; border-radius: 12px; padding: 20px; margin: 25px 0;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Service</td>
-                    <td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.service_name}</td>
-                </tr>
-                <tr>
-                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Requested Date</td>
-                    <td style="color: #daa520; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${dateDisplay}</td>
-                </tr>
-                <tr>
-                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Member Email</td>
-                    <td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.user_email || 'N/A'}</td>
-                </tr>
-                <tr>
-                    <td style="color: #94a3b8; padding: 10px 0;">Value</td>
-                    <td style="color: #ffffff; font-weight: 600; padding: 10px 0; text-align: right;">Kea€${voucher.value}</td>
-                </tr>
-                ${bookingDetails.booking_notes ? `
-                <tr>
-                    <td style="color: #94a3b8; padding: 10px 0; border-top: 1px solid rgba(255,255,255,0.1);">Notes</td>
-                    <td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-top: 1px solid rgba(255,255,255,0.1); text-align: right;">${bookingDetails.booking_notes}</td>
-                </tr>
-                ` : ''}
-            </table>
-        </div>
-        
-        <p style="text-align: center; margin: 30px 0;">
-            <a href="${confirmUrl}" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #ffffff !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; margin: 10px 5px;">✓ Confirm Booking</a>
-            <a href="${rejectUrl}" style="display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); color: #ffffff !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; margin: 10px 5px;">✕ Decline</a>
-        </p>
-        
-        <p style="font-size: 13px; color: #64748b; text-align: center;">
-            Or manage all bookings in the <a href="${SITE_URL}/admin" style="color: #daa520;">Admin Panel</a>
-        </p>
-    `;
-    
+    // Add time if provided
+    if (booking_start && booking_end) {
+        dateDisplay += ` (${booking_start} - ${booking_end})`;
+    } else if (booking_start) {
+        dateDisplay += ` at ${booking_start}`;
+    }
+
+    const confirmUrl = `${SITE_URL}/api/vouchers/validate/${voucher.validation_token}`;
+    const rejectUrl = `${SITE_URL}/api/vouchers/reject/${voucher.validation_token}`;
+
+    const content = `<h2 style="color: #ffffff; margin-top: 0;">New Booking Request</h2><p style="color: #94a3b8; line-height: 1.6;">A member has requested a booking.</p><div style="background: #0d0d0d; border-radius: 12px; padding: 20px; margin: 25px 0;"><table style="width: 100%; border-collapse: collapse;"><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Voucher Code</td><td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.code}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Service</td><td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.service_name}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Requested Date</td><td style="color: #daa520; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${dateDisplay}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Value</td><td style="color: #10b981; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">Kea€${voucher.value}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0;">Member Email</td><td style="color: #ffffff; font-weight: 600; padding: 10px 0; text-align: right;">${voucher.user_email || 'N/A'}</td></tr>${booking_notes ? `<tr><td style="color: #94a3b8; padding: 10px 0;">Notes</td><td style="color: #ffffff; padding: 10px 0; text-align: right;">${booking_notes}</td></tr>` : ''}</table></div><div style="text-align: center; margin: 30px 0;"><a href="${confirmUrl}" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; margin: 5px;">Confirm Booking</a><a href="${rejectUrl}" style="display: inline-block; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; margin: 5px;">Reject Booking</a></div>`;
+
     return sendEmail(SITE_OWNER_EMAIL, getBaseTemplate(content));
 }
 
-async function sendBookingRequestToUser(voucher, bookingDetails) {
-    const dateDisplay = bookingDetails.booking_start && bookingDetails.booking_end
-        ? `${bookingDetails.booking_start} → ${bookingDetails.booking_end}`
-        : bookingDetails.booking_date || 'Not specified';
+async function sendBookingRequestToUser(voucher, booking_date, booking_start, booking_end) {
+    // Format the date properly
+    let dateDisplay = booking_date || 'Not specified';
+    if (booking_date) {
+        try {
+            const dateObj = new Date(booking_date);
+            dateDisplay = dateObj.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+        } catch (e) {
+            dateDisplay = booking_date;
+        }
+    }
     
-    const content = `
-        <h2 style="color: #daa520; margin-top: 0;">Booking Request Submitted 📅</h2>
-        <p style="color: #94a3b8; line-height: 1.6;">Your booking request has been submitted and is awaiting confirmation.</p>
-        
-        <div style="background: rgba(218, 165, 32, 0.1); border: 2px dashed #daa520; border-radius: 12px; padding: 20px; text-align: center; margin: 25px 0;">
-            <p style="margin: 0 0 10px; color: #94a3b8; font-size: 14px;">YOUR VOUCHER</p>
-            <span style="font-size: 28px; font-weight: bold; color: #daa520; letter-spacing: 3px;">${voucher.code}</span>
-        </div>
-        
-        <div style="background: #0d0d0d; border-radius: 12px; padding: 20px; margin: 25px 0;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Service</td>
-                    <td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.service_name}</td>
-                </tr>
-                <tr>
-                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Requested Date</td>
-                    <td style="color: #daa520; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${dateDisplay}</td>
-                </tr>
-                <tr>
-                    <td style="color: #94a3b8; padding: 10px 0;">Status</td>
-                    <td style="color: #f59e0b; font-weight: 600; padding: 10px 0; text-align: right;">Pending Confirmation</td>
-                </tr>
-            </table>
-        </div>
-        
-        <p style="color: #94a3b8; line-height: 1.6;">You will receive an email once your booking is confirmed. This usually takes 24-48 hours.</p>
-        
-        <div style="text-align: center;">
-            <a href="${SITE_URL}/profile" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #ffffff !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">View My Vouchers</a>
-        </div>
-    `;
-    
+    // Add time if provided
+    if (booking_start && booking_end) {
+        dateDisplay += ` (${booking_start} - ${booking_end})`;
+    } else if (booking_start) {
+        dateDisplay += ` at ${booking_start}`;
+    }
+
+    const content = `<h2 style="color: #ffffff; margin-top: 0;">Booking Request Submitted</h2><p style="color: #94a3b8; line-height: 1.6;">Your booking request has been submitted and is pending confirmation.</p><div style="background: #0d0d0d; border-radius: 12px; padding: 20px; margin: 25px 0;"><table style="width: 100%; border-collapse: collapse;"><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Voucher Code</td><td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.code}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Service</td><td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.service_name}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Requested Date</td><td style="color: #daa520; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${dateDisplay}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0;">Status</td><td style="color: #f59e0b; font-weight: 600; padding: 10px 0; text-align: right;">Pending Confirmation</td></tr></table></div><p style="color: #94a3b8; line-height: 1.6;">You will receive an email once your booking is confirmed or if we need to arrange an alternative time.</p><div style="text-align: center; margin: 30px 0;"><a href="${SITE_URL}/profile" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #ffffff; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">View My Vouchers</a></div>`;
+
     return sendEmail(voucher.user_email, getBaseTemplate(content));
 }
 
 async function sendBookingConfirmedToUser(voucher) {
-    const dateDisplay = voucher.booking_start && voucher.booking_end
-        ? `${voucher.booking_start} → ${voucher.booking_end}`
-        : voucher.booking_date || 'As confirmed';
+    // Format the date properly
+    let dateDisplay = 'As confirmed';
+    if (voucher.booking_date) {
+        try {
+            const dateObj = new Date(voucher.booking_date);
+            dateDisplay = dateObj.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+        } catch (e) {
+            dateDisplay = voucher.booking_date;
+        }
+    }
     
-    const content = `
-        <h2 style="color: #daa520; margin-top: 0;">Booking Confirmed! ✓</h2>
-        <p style="color: #94a3b8; line-height: 1.6;">Great news! Your booking has been confirmed.</p>
-        
-        <div style="background: rgba(218, 165, 32, 0.1); border: 2px dashed #daa520; border-radius: 12px; padding: 20px; text-align: center; margin: 25px 0;">
-            <p style="margin: 0 0 10px; color: #94a3b8; font-size: 14px;">YOUR VOUCHER</p>
-            <span style="font-size: 28px; font-weight: bold; color: #daa520; letter-spacing: 3px;">${voucher.code}</span>
-        </div>
-        
-        <div style="background: #0d0d0d; border-radius: 12px; padding: 20px; margin: 25px 0;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Service</td>
-                    <td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.service_name}</td>
-                </tr>
-                <tr>
-                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Confirmed Date</td>
-                    <td style="color: #10b981; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${dateDisplay}</td>
-                </tr>
-                <tr>
-                    <td style="color: #94a3b8; padding: 10px 0;">Status</td>
-                    <td style="color: #10b981; font-weight: 600; padding: 10px 0; text-align: right;">✓ Confirmed</td>
-                </tr>
-            </table>
-        </div>
-        
-        <p style="color: #94a3b8; line-height: 1.6;">Please arrive on time. We look forward to seeing you!</p>
-        
-        <div style="text-align: center;">
-            <a href="${SITE_URL}/profile" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #ffffff !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">View My Bookings</a>
-        </div>
-        
-        <p style="font-size: 13px; color: #64748b; margin-top: 30px; text-align: center;">
-            Need to make changes? Contact us at <a href="mailto:${SITE_OWNER_EMAIL}" style="color: #daa520;">${SITE_OWNER_EMAIL}</a>
-        </p>
-    `;
+    // Add time if provided (check both new and old column names)
+    const startTime = voucher.booking_time_start || voucher.booking_start;
+    const endTime = voucher.booking_time_end || voucher.booking_end;
     
+    if (startTime && endTime && !startTime.includes('-')) {
+        dateDisplay += ` (${startTime} - ${endTime})`;
+    } else if (startTime && !startTime.includes('-')) {
+        dateDisplay += ` at ${startTime}`;
+    }
+
+    const content = `<h2 style="color: #ffffff; margin-top: 0;">Booking Confirmed!</h2><p style="color: #94a3b8; line-height: 1.6;">Great news! Your booking has been confirmed.</p><div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 25px; text-align: center; margin: 25px 0;"><p style="margin: 0 0 10px; color: #94a3b8; font-size: 14px;">YOUR BOOKING DATE</p><span style="font-size: 24px; font-weight: bold; color: #10b981;">${dateDisplay}</span></div><div style="background: #0d0d0d; border-radius: 12px; padding: 20px; margin: 25px 0;"><table style="width: 100%; border-collapse: collapse;"><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Service</td><td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.service_name}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Voucher Code</td><td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.code}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0;">Status</td><td style="color: #10b981; font-weight: 600; padding: 10px 0; text-align: right;">Confirmed</td></tr></table></div><p style="color: #94a3b8; line-height: 1.6;">Please arrive on time. If you need to make changes, contact us.</p><div style="text-align: center; margin: 30px 0;"><a href="${SITE_URL}/profile" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #ffffff; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">View My Bookings</a></div>`;
+
     return sendEmail(voucher.user_email, getBaseTemplate(content));
 }
 
 async function sendBookingRejectedToUser(voucher, reason) {
-    const content = `
-        <h2 style="color: #daa520; margin-top: 0;">Booking Update</h2>
-        <p style="color: #94a3b8; line-height: 1.6;">Unfortunately, your booking request could not be confirmed for the requested date.</p>
-        
-        <div style="background: #0d0d0d; border-radius: 12px; padding: 20px; margin: 25px 0;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Service</td>
-                    <td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.service_name}</td>
-                </tr>
-                <tr>
-                    <td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Requested Date</td>
-                    <td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.booking_date || 'N/A'}</td>
-                </tr>
-                <tr>
-                    <td style="color: #94a3b8; padding: 10px 0;">Reason</td>
-                    <td style="color: #f59e0b; font-weight: 600; padding: 10px 0; text-align: right;">${reason}</td>
-                </tr>
-            </table>
-        </div>
-        
-        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 15px; margin: 20px 0; color: #10b981;">
-            <strong>Your voucher is still valid!</strong><br>
-            You can request a different date at any time.
-        </div>
-        
-        <div style="text-align: center;">
-            <a href="${SITE_URL}/profile" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #ffffff !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Request New Date</a>
-        </div>
-    `;
+    // Format the date properly
+    let dateDisplay = 'the requested date';
+    if (voucher.booking_date) {
+        try {
+            const dateObj = new Date(voucher.booking_date);
+            dateDisplay = dateObj.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+        } catch (e) {
+            dateDisplay = voucher.booking_date;
+        }
+    }
     
+    // Add time if provided
+    const startTime = voucher.booking_time_start || voucher.booking_start;
+    if (startTime && !startTime.includes('-')) {
+        dateDisplay += ` at ${startTime}`;
+    }
+
+    const content = `<h2 style="color: #ffffff; margin-top: 0;">Booking Update Required</h2><p style="color: #94a3b8; line-height: 1.6;">Unfortunately, we were unable to confirm your booking for ${dateDisplay}.</p>${reason ? `<div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 20px; margin: 25px 0;"><p style="color: #ef4444; margin: 0;"><strong>Reason:</strong> ${reason}</p></div>` : ''}<div style="background: #0d0d0d; border-radius: 12px; padding: 20px; margin: 25px 0;"><table style="width: 100%; border-collapse: collapse;"><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Service</td><td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.service_name}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">Voucher Code</td><td style="color: #ffffff; font-weight: 600; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right;">${voucher.code}</td></tr><tr><td style="color: #94a3b8; padding: 10px 0;">Voucher Status</td><td style="color: #10b981; font-weight: 600; padding: 10px 0; text-align: right;">Still Valid</td></tr></table></div><p style="color: #94a3b8; line-height: 1.6;">Your voucher is still valid. Please request a new booking date.</p><div style="text-align: center; margin: 30px 0;"><a href="${SITE_URL}/profile" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #ffffff; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Request New Date</a></div>`;
+
     return sendEmail(voucher.user_email, getBaseTemplate(content));
 }
 
