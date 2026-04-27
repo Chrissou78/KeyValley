@@ -355,14 +355,29 @@ router.post('/checkout/tokens', async (req, res) => {
         for (const voucher of createdVouchers) {
             if (email) {
                 try {
-                    await emailService.sendVoucherPurchaseEmail(voucher, email);
+                    await emailService.sendVoucherPurchaseToBuyer({
+                        userEmail: email,
+                        voucherCode: voucher.code,
+                        serviceName: voucher.service_name,
+                        value: voucher.value,
+                        orderNumber: orderId,
+                        validUntil: voucher.valid_until
+                    });
                 } catch (emailErr) {
                     console.error('Failed to send buyer email:', emailErr.message);
                 }
             }
             
             try {
-                await emailService.sendVoucherPurchaseNotificationToOwner(voucher, email, name);
+                await emailService.sendVoucherPurchaseToOwner({
+                    userEmail: email,
+                    voucherCode: voucher.code,
+                    serviceName: voucher.service_name,
+                    value: voucher.value,
+                    orderNumber: orderId,
+                    walletAddress: walletLower,
+                    quantity: 1
+                });
             } catch (emailErr) {
                 console.error('Failed to send owner notification:', emailErr.message);
             }

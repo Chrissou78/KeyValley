@@ -196,6 +196,104 @@
         .status-validated { color: #60a5fa; }
         .status-consumed { color: #9ca3af; }
         .status-cancelled { color: #f87171; }
+
+        .calendar-day {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .calendar-day:hover:not(.disabled):not(.selected) {
+            background: rgba(218, 165, 32, 0.2);
+        }
+        .calendar-day.selected {
+            background: #daa520;
+            color: #0d0d0d;
+            font-weight: 600;
+        }
+        .calendar-day.disabled {
+            color: #444;
+            cursor: not-allowed;
+        }
+        .calendar-day.today:not(.selected) {
+            border: 1px solid #daa520;
+        }
+
+        /* Time Scroller Styles */
+        .time-scroller-container {
+            width: 80px;
+            height: 180px;
+            overflow: hidden;
+            position: relative;
+        }
+        .time-scroller-container::before,
+        .time-scroller-container::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 60px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .time-scroller-container::before {
+            top: 0;
+            background: linear-gradient(to bottom, rgba(26,26,26,1) 0%, rgba(26,26,26,0) 100%);
+        }
+        .time-scroller-container::after {
+            bottom: 0;
+            background: linear-gradient(to top, rgba(26,26,26,1) 0%, rgba(26,26,26,0) 100%);
+        }
+        .time-scroller {
+            height: 100%;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .time-scroller::-webkit-scrollbar {
+            display: none;
+        }
+        .time-scroller-item {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 300;
+            color: #666;
+            scroll-snap-align: center;
+            transition: all 0.2s;
+        }
+        .time-scroller-item.active {
+            color: #fff;
+            font-weight: 500;
+            transform: scale(1.1);
+        }
+        .time-scroller-highlight {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 60px;
+            transform: translateY(-50%);
+            border-top: 1px solid rgba(218, 165, 32, 0.3);
+            border-bottom: 1px solid rgba(218, 165, 32, 0.3);
+            pointer-events: none;
+        }
+
+        @keyframes slide-up {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .animate-slide-up {
+            animation: slide-up 0.3s ease-out;
+        }
     </style>
 </head>
 <body class="bg-background-dark text-white selection:bg-primary selection:text-background-dark antialiased min-h-screen flex flex-col">
@@ -547,24 +645,84 @@
                         </div>
                     </div>
                     
-                    <!-- Date Selection -->
+                    <!-- Date Selection with Calendar -->
                     <div>
                         <label class="block text-slate-400 text-sm mb-2">Select Date <span class="text-red-400">*</span></label>
-                        <input type="date" id="bookingDate" required
-                            class="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors">
+                        <div class="relative">
+                            <input type="text" id="bookingDateDisplay" readonly placeholder="Choose a date..."
+                                class="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors cursor-pointer pr-10">
+                            <input type="hidden" id="bookingDate">
+                            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none">calendar_month</span>
+                        </div>
+                        <!-- Mini Calendar -->
+                        <div id="bookingCalendar" class="hidden mt-2 bg-black/50 border border-white/10 rounded-xl p-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <button type="button" onclick="changeCalendarMonth(-1)" class="text-slate-400 hover:text-white p-1">
+                                    <span class="material-symbols-outlined">chevron_left</span>
+                                </button>
+                                <span id="calendarMonthYear" class="text-white font-semibold"></span>
+                                <button type="button" onclick="changeCalendarMonth(1)" class="text-slate-400 hover:text-white p-1">
+                                    <span class="material-symbols-outlined">chevron_right</span>
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-7 gap-1 text-center text-xs mb-2">
+                                <span class="text-slate-500">Su</span>
+                                <span class="text-slate-500">Mo</span>
+                                <span class="text-slate-500">Tu</span>
+                                <span class="text-slate-500">We</span>
+                                <span class="text-slate-500">Th</span>
+                                <span class="text-slate-500">Fr</span>
+                                <span class="text-slate-500">Sa</span>
+                            </div>
+                            <div id="calendarDays" class="grid grid-cols-7 gap-1"></div>
+                        </div>
                     </div>
                     
-                    <!-- Time Selection -->
-                    <div id="timeSelectionSection" class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-slate-400 text-sm mb-2">Start Time</label>
-                            <input type="time" id="bookingStart"
-                                class="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors">
+                    <!-- Time Selection with Apple-style Scrollers -->
+                    <div id="timeSelectionSection">
+                        <label class="block text-slate-400 text-sm mb-2">Select Time</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- Start Time -->
+                            <div>
+                                <label class="block text-slate-500 text-xs mb-1">Start</label>
+                                <div class="relative">
+                                    <input type="text" id="bookingStartDisplay" readonly placeholder="--:--"
+                                        class="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white text-center focus:border-primary focus:outline-none transition-colors cursor-pointer">
+                                    <input type="hidden" id="bookingStart">
+                                </div>
+                            </div>
+                            <!-- End Time -->
+                            <div>
+                                <label class="block text-slate-500 text-xs mb-1">End</label>
+                                <div class="relative">
+                                    <input type="text" id="bookingEndDisplay" readonly placeholder="--:--"
+                                        class="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white text-center focus:border-primary focus:outline-none transition-colors cursor-pointer">
+                                    <input type="hidden" id="bookingEnd">
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-slate-400 text-sm mb-2">End Time</label>
-                            <input type="time" id="bookingEnd"
-                                class="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors">
+                    </div>
+                    
+                    <!-- Time Picker Modal -->
+                    <div id="timePickerModal" class="hidden fixed inset-0 z-[110] flex items-end justify-center">
+                        <div class="absolute inset-0 bg-black/60" onclick="closeTimePicker()"></div>
+                        <div class="relative bg-surface border-t border-white/10 w-full max-w-md rounded-t-2xl overflow-hidden animate-slide-up">
+                            <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                                <button onclick="closeTimePicker()" class="text-slate-400 text-sm">Cancel</button>
+                                <span id="timePickerLabel" class="text-white font-semibold">Select Time</span>
+                                <button onclick="confirmTimePicker()" class="text-primary font-semibold text-sm">Done</button>
+                            </div>
+                            <div class="flex justify-center py-6 px-4">
+                                <!-- Hour Scroller -->
+                                <div class="time-scroller-container">
+                                    <div id="hourScroller" class="time-scroller" data-value="12"></div>
+                                </div>
+                                <span class="text-white text-3xl font-light mx-2 self-center">:</span>
+                                <!-- Minute Scroller -->
+                                <div class="time-scroller-container">
+                                    <div id="minuteScroller" class="time-scroller" data-value="00"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -779,7 +937,6 @@
         let isProcessingLogin = false;
         let savedToDatabase = false;
         let questionnaireData = null;
-        let currentBookingVoucher = null; // For booking modal
 
         // DOM Elements
         const loginContainer = document.getElementById('loginContainer');
@@ -921,6 +1078,13 @@
         // ============================================
         // BOOKING MODAL - NEW
         // ============================================
+        let currentBookingVoucher = null;
+        let calendarDate = new Date();
+        let selectedDate = null;
+        let currentTimeField = null; // 'start' or 'end'
+        let selectedHour = 12;
+        let selectedMinute = 0;
+
         function openBookingModal(voucher) {
             currentBookingVoucher = voucher;
             
@@ -929,31 +1093,241 @@
             document.getElementById('bookingVoucherCode').textContent = voucher.code || '';
             document.getElementById('bookingVoucherValue').textContent = '€' + (voucher.value || 0);
             
-            // Set minimum date to today
-            const today = new Date().toISOString().split('T')[0];
-            const dateInput = document.getElementById('bookingDate');
-            dateInput.min = today;
-            dateInput.value = '';
-            
-            // Clear other fields
+            // Reset fields
+            selectedDate = null;
+            document.getElementById('bookingDateDisplay').value = '';
+            document.getElementById('bookingDate').value = '';
+            document.getElementById('bookingStartDisplay').value = '';
             document.getElementById('bookingStart').value = '';
+            document.getElementById('bookingEndDisplay').value = '';
             document.getElementById('bookingEnd').value = '';
             document.getElementById('bookingNotes').value = '';
+            document.getElementById('bookingCalendar').classList.add('hidden');
             
             // Reset button
             const btn = document.getElementById('submitBookingBtn');
             btn.disabled = false;
             btn.innerHTML = '<span class="material-symbols-outlined">event_available</span> Request Booking';
             
+            // Initialize calendar to current month
+            calendarDate = new Date();
+            renderCalendar();
+            
             // Show modal
             document.getElementById('bookingModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+            
+            // Setup event listeners
+            document.getElementById('bookingDateDisplay').onclick = toggleCalendar;
+            document.getElementById('bookingStartDisplay').onclick = () => openTimePicker('start');
+            document.getElementById('bookingEndDisplay').onclick = () => openTimePicker('end');
         }
 
         function closeBookingModal() {
             document.getElementById('bookingModal').classList.add('hidden');
             document.body.style.overflow = '';
             currentBookingVoucher = null;
+            closeTimePicker();
+        }
+
+        function toggleCalendar() {
+            const cal = document.getElementById('bookingCalendar');
+            cal.classList.toggle('hidden');
+        }
+
+        function renderCalendar() {
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+            
+            // Update header
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                                'July', 'August', 'September', 'October', 'November', 'December'];
+            document.getElementById('calendarMonthYear').textContent = `${monthNames[month]} ${year}`;
+            
+            // Get first day and days in month
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // Build calendar grid
+            let html = '';
+            
+            // Empty cells before first day
+            for (let i = 0; i < firstDay; i++) {
+                html += '<div class="calendar-day"></div>';
+            }
+            
+            // Days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isPast = date < today;
+                const isToday = date.getTime() === today.getTime();
+                const isSelected = selectedDate === dateStr;
+                
+                let classes = 'calendar-day';
+                if (isPast) classes += ' disabled text-slate-600';
+                if (isToday) classes += ' today';
+                if (isSelected) classes += ' selected';
+                
+                if (isPast) {
+                    html += `<div class="${classes}">${day}</div>`;
+                } else {
+                    html += `<div class="${classes}" onclick="selectCalendarDate('${dateStr}', ${day})">${day}</div>`;
+                }
+            }
+            
+            document.getElementById('calendarDays').innerHTML = html;
+        }
+
+        function changeCalendarMonth(delta) {
+            calendarDate.setMonth(calendarDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function selectCalendarDate(dateStr, day) {
+            selectedDate = dateStr;
+            
+            // Format display date
+            const date = new Date(dateStr);
+            const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+            document.getElementById('bookingDateDisplay').value = date.toLocaleDateString('en-GB', options);
+            document.getElementById('bookingDate').value = dateStr;
+            
+            // Update visual selection
+            renderCalendar();
+            
+            // Hide calendar after selection
+            setTimeout(() => {
+                document.getElementById('bookingCalendar').classList.add('hidden');
+            }, 200);
+        }
+
+        // ============================================
+        // TIME PICKER - Apple-style Scrollers
+        // ============================================
+        function openTimePicker(field) {
+            currentTimeField = field;
+            
+            // Get current value or default
+            const currentValue = document.getElementById(field === 'start' ? 'bookingStart' : 'bookingEnd').value;
+            if (currentValue) {
+                const [h, m] = currentValue.split(':');
+                selectedHour = parseInt(h);
+                selectedMinute = parseInt(m);
+            } else {
+                selectedHour = 12;
+                selectedMinute = 0;
+            }
+            
+            // Update label
+            document.getElementById('timePickerLabel').textContent = field === 'start' ? 'Start Time' : 'End Time';
+            
+            // Build scrollers
+            buildTimeScrollers();
+            
+            // Show modal
+            document.getElementById('timePickerModal').classList.remove('hidden');
+        }
+
+        function closeTimePicker() {
+            document.getElementById('timePickerModal').classList.add('hidden');
+            currentTimeField = null;
+        }
+
+        function buildTimeScrollers() {
+            // Build hour scroller (0-23)
+            let hourHtml = '<div class="time-scroller-item" data-value=""></div>'; // Padding
+            for (let h = 0; h < 24; h++) {
+                const val = String(h).padStart(2, '0');
+                const active = h === selectedHour ? ' active' : '';
+                hourHtml += `<div class="time-scroller-item${active}" data-value="${h}">${val}</div>`;
+            }
+            hourHtml += '<div class="time-scroller-item" data-value=""></div>'; // Padding
+            
+            const hourScroller = document.getElementById('hourScroller');
+            hourScroller.innerHTML = hourHtml + '<div class="time-scroller-highlight"></div>';
+            
+            // Build minute scroller (0, 15, 30, 45)
+            const minutes = [0, 15, 30, 45];
+            let minuteHtml = '<div class="time-scroller-item" data-value=""></div>'; // Padding
+            for (const m of minutes) {
+                const val = String(m).padStart(2, '0');
+                const active = m === selectedMinute ? ' active' : '';
+                minuteHtml += `<div class="time-scroller-item${active}" data-value="${m}">${val}</div>`;
+            }
+            minuteHtml += '<div class="time-scroller-item" data-value=""></div>'; // Padding
+            
+            const minuteScroller = document.getElementById('minuteScroller');
+            minuteScroller.innerHTML = minuteHtml + '<div class="time-scroller-highlight"></div>';
+            
+            // Scroll to selected values
+            setTimeout(() => {
+                scrollToValue(hourScroller, selectedHour);
+                scrollToValue(minuteScroller, selectedMinute);
+                
+                // Add scroll listeners
+                hourScroller.onscroll = () => updateScrollerSelection(hourScroller, 'hour');
+                minuteScroller.onscroll = () => updateScrollerSelection(minuteScroller, 'minute');
+            }, 50);
+        }
+
+        function scrollToValue(scroller, value) {
+            const items = scroller.querySelectorAll('.time-scroller-item[data-value]');
+            for (const item of items) {
+                if (item.dataset.value == value) {
+                    const offset = item.offsetTop - scroller.offsetHeight / 2 + item.offsetHeight / 2;
+                    scroller.scrollTop = offset;
+                    break;
+                }
+            }
+        }
+
+        function updateScrollerSelection(scroller, type) {
+            const items = scroller.querySelectorAll('.time-scroller-item[data-value]');
+            const scrollerRect = scroller.getBoundingClientRect();
+            const center = scrollerRect.top + scrollerRect.height / 2;
+            
+            let closestItem = null;
+            let closestDistance = Infinity;
+            
+            items.forEach(item => {
+                if (item.dataset.value === '') return;
+                const itemRect = item.getBoundingClientRect();
+                const itemCenter = itemRect.top + itemRect.height / 2;
+                const distance = Math.abs(center - itemCenter);
+                
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestItem = item;
+                }
+                
+                item.classList.remove('active');
+            });
+            
+            if (closestItem) {
+                closestItem.classList.add('active');
+                if (type === 'hour') {
+                    selectedHour = parseInt(closestItem.dataset.value);
+                } else {
+                    selectedMinute = parseInt(closestItem.dataset.value);
+                }
+            }
+        }
+
+        function confirmTimePicker() {
+            const timeStr = `${String(selectedHour).padStart(2, '0')}:${String(selectedMinute).padStart(2, '0')}`;
+            
+            if (currentTimeField === 'start') {
+                document.getElementById('bookingStartDisplay').value = timeStr;
+                document.getElementById('bookingStart').value = timeStr;
+            } else {
+                document.getElementById('bookingEndDisplay').value = timeStr;
+                document.getElementById('bookingEnd').value = timeStr;
+            }
+            
+            closeTimePicker();
         }
 
         async function submitBooking() {
@@ -991,7 +1365,7 @@
                 if (result.success) {
                     showToast('Booking request sent! You will receive an email confirmation.', 'success');
                     closeBookingModal();
-                    // Refresh vouchers list to show updated status
+                    // Refresh vouchers list
                     if (currentUser?.wallet) {
                         fetchVouchers(currentUser.wallet);
                     }
@@ -1007,7 +1381,6 @@
                 btn.innerHTML = '<span class="material-symbols-outlined">event_available</span> Request Booking';
             }
         }
-
         // ============================================
         // SESSION MANAGEMENT
         // ============================================

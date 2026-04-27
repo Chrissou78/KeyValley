@@ -46,31 +46,7 @@ async function sendEmail(email, htmlContent) {
 }
 
 function getBaseTemplate(content) {
-    return `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #0d0d0d; font-family: 'Helvetica Neue', Arial, sans-serif;">
-    <div style="max-width: 600px; margin: 0 auto; background-color: #1a1a1a;">
-        <div style="background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); padding: 30px; text-align: center;">
-            <img src="${SITE_URL}/images/logo.png" alt="Kea Valley" style="height: 50px;">
-            <h1 style="color: #0d0d0d; margin: 15px 0 0; font-size: 24px;">Kea Valley Private Members Club</h1>
-        </div>
-        <div style="padding: 40px 30px; color: #ffffff;">
-            ${content}
-        </div>
-        <div style="background: #0d0d0d; padding: 30px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);">
-            <p style="color: #64748b; font-size: 12px; margin: 5px 0;">Kea Valley Private Members Club</p>
-            <p style="color: #64748b; font-size: 12px; margin: 5px 0;">Questions? Contact us at <a href="mailto:${SITE_OWNER_EMAIL}" style="color: #daa520; text-decoration: none;">${SITE_OWNER_EMAIL}</a></p>
-            <p style="color: #64748b; font-size: 12px; margin: 15px 0 0;">© 2026 Kea Valley. All rights reserved.</p>
-        </div>
-    </div>
-</body>
-</html>
-    `;
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin: 0; padding: 0; background-color: #0d0d0d; font-family: Helvetica Neue, Arial, sans-serif;"><div style="max-width: 600px; margin: 0 auto; background-color: #1a1a1a;"><div style="background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); padding: 20px; text-align: center;"><img src="${SITE_URL}/images/logo.png" alt="Kea Valley" height="30" style="height: 30px; width: auto;"><p style="color: #ffffff; margin: 10px 0 0; font-size: 14px; font-weight: 600;">Kea Valley Private Members Club</p></div><div style="padding: 40px 30px; color: #ffffff;">${content}</div><div style="background: #0d0d0d; padding: 30px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1);"><p style="color: #64748b; font-size: 12px; margin: 5px 0;">Kea Valley Private Members Club</p><p style="color: #64748b; font-size: 12px; margin: 5px 0;">Questions? Contact us at <a href="mailto:${SITE_OWNER_EMAIL}" style="color: #daa520; text-decoration: none;">${SITE_OWNER_EMAIL}</a></p><p style="color: #64748b; font-size: 12px; margin: 15px 0 0;">2026 Kea Valley. All rights reserved.</p></div></div></body></html>`;
 }
 
 async function sendBookingRequestToOwner(voucher, bookingDetails, validationToken) {
@@ -118,7 +94,7 @@ async function sendBookingRequestToOwner(voucher, bookingDetails, validationToke
         </div>
         
         <p style="text-align: center; margin: 30px 0;">
-            <a href="${confirmUrl}" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #0d0d0d !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; margin: 10px 5px;">✓ Confirm Booking</a>
+            <a href="${confirmUrl}" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #ffffff !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; margin: 10px 5px;">✓ Confirm Booking</a>
             <a href="${rejectUrl}" style="display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); color: #ffffff !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; margin: 10px 5px;">✕ Decline</a>
         </p>
         
@@ -164,7 +140,7 @@ async function sendBookingRequestToUser(voucher, bookingDetails) {
         <p style="color: #94a3b8; line-height: 1.6;">You will receive an email once your booking is confirmed. This usually takes 24-48 hours.</p>
         
         <div style="text-align: center;">
-            <a href="${SITE_URL}/profile" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #0d0d0d !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">View My Vouchers</a>
+            <a href="${SITE_URL}/profile" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #ffffff !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">View My Vouchers</a>
         </div>
     `;
     
@@ -205,7 +181,7 @@ async function sendBookingConfirmedToUser(voucher) {
         <p style="color: #94a3b8; line-height: 1.6;">Please arrive on time. We look forward to seeing you!</p>
         
         <div style="text-align: center;">
-            <a href="${SITE_URL}/profile" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #0d0d0d !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">View My Bookings</a>
+            <a href="${SITE_URL}/profile" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #ffffff !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">View My Bookings</a>
         </div>
         
         <p style="font-size: 13px; color: #64748b; margin-top: 30px; text-align: center;">
@@ -244,7 +220,7 @@ async function sendBookingRejectedToUser(voucher, reason) {
         </div>
         
         <div style="text-align: center;">
-            <a href="${SITE_URL}/profile" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #0d0d0d !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Request New Date</a>
+            <a href="${SITE_URL}/profile" style="display: inline-block; background: linear-gradient(135deg, #daa520 0%, #f4d03f 100%); color: #ffffff !important; padding: 15px 35px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Request New Date</a>
         </div>
     `;
     
@@ -277,132 +253,6 @@ function generateValidationToken() {
 // ============================================
 // ROUTES
 // ============================================
-
-// GET vouchers by wallet
-router.get('/:wallet', async (req, res) => {
-    console.log('🎫 GET /api/vouchers/:wallet called');
-    try {
-        const result = await db.pool.query(`
-            SELECT v.*, s.image_url, s.category, s.description as service_description
-            FROM marketplace_vouchers v
-            LEFT JOIN marketplace_services s ON v.service_id = s.id
-            WHERE LOWER(v.wallet_address) = LOWER($1)
-            ORDER BY v.created_at DESC
-        `, [req.params.wallet]);
-        
-        res.json({ success: true, vouchers: result.rows });
-    } catch (error) {
-        console.error('Error fetching vouchers:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// GET voucher by code
-router.get('/code/:code', async (req, res) => {
-    console.log('🎫 GET /api/vouchers/code/:code called');
-    try {
-        const result = await db.pool.query(`
-            SELECT v.*, s.image_url, s.category, s.description as service_description
-            FROM marketplace_vouchers v
-            LEFT JOIN marketplace_services s ON v.service_id = s.id
-            WHERE v.code = $1
-        `, [req.params.code.toUpperCase()]);
-        
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'Voucher not found' });
-        }
-        
-        res.json({ success: true, voucher: result.rows[0] });
-    } catch (error) {
-        console.error('Error fetching voucher:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// GET voucher by ID
-router.get('/id/:id', async (req, res) => {
-    console.log('🎫 GET /api/vouchers/id/:id called');
-    try {
-        const result = await db.pool.query(`
-            SELECT v.*, s.image_url, s.category, s.description as service_description
-            FROM marketplace_vouchers v
-            LEFT JOIN marketplace_services s ON v.service_id = s.id
-            WHERE v.id = $1
-        `, [req.params.id]);
-        
-        if (result.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'Voucher not found' });
-        }
-        
-        res.json({ success: true, voucher: result.rows[0] });
-    } catch (error) {
-        console.error('Error fetching voucher:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// POST request booking for a voucher
-router.post('/:id/book', async (req, res) => {
-    console.log('🎫 POST /api/vouchers/:id/book called');
-    const { booking_date, booking_start, booking_end, booking_notes } = req.body;
-    
-    try {
-        // Get voucher
-        const voucherResult = await db.pool.query(
-            'SELECT * FROM marketplace_vouchers WHERE id = $1',
-            [req.params.id]
-        );
-        
-        if (voucherResult.rows.length === 0) {
-            return res.status(404).json({ success: false, error: 'Voucher not found' });
-        }
-        
-        const voucher = voucherResult.rows[0];
-        
-        if (voucher.status !== 'active' && voucher.status !== 'purchased') {
-            return res.status(400).json({ 
-                success: false, 
-                error: `Cannot book voucher with status: ${voucher.status}` 
-            });
-        }
-        
-        // Generate validation token for email link
-        const validationToken = generateValidationToken();
-        
-        // Update voucher with booking request
-        await db.pool.query(`
-            UPDATE marketplace_vouchers 
-            SET booking_date = $1, 
-                booking_start = $2, 
-                booking_end = $3, 
-                booking_notes = $4,
-                booking_requested_at = NOW(),
-                status = 'pending_validation',
-                validation_token = $5
-            WHERE id = $6
-        `, [booking_date, booking_start, booking_end, booking_notes, validationToken, req.params.id]);
-        
-        // Send email to user confirming request received
-        const bookingDetails = { booking_date, booking_start, booking_end, booking_notes };
-        if (voucher.user_email) {
-            await sendBookingRequestToUser(voucher, bookingDetails);
-        }
-        
-        // Send email to site owner with validation link
-        await sendBookingRequestToOwner(voucher, bookingDetails, validationToken);
-        
-        console.log('✅ Booking requested for voucher:', voucher.code);
-        res.json({ 
-            success: true, 
-            message: 'Booking request submitted. You will receive a confirmation email once validated.',
-            voucher_code: voucher.code
-        });
-        
-    } catch (error) {
-        console.error('Error requesting booking:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
 
 // GET validate voucher via email link (one-click confirm)
 router.get('/validate/:token', async (req, res) => {
@@ -642,6 +492,164 @@ router.get('/reject/:token', async (req, res) => {
             </body>
             </html>
         `);
+    }
+});
+
+// GET vouchers by wallet
+router.get('/:wallet', async (req, res) => {
+    console.log('🎫 GET /api/vouchers/:wallet called');
+    try {
+        const result = await db.pool.query(`
+            SELECT v.*, s.image_url, s.category, s.description as service_description
+            FROM marketplace_vouchers v
+            LEFT JOIN marketplace_services s ON v.service_id = s.id
+            WHERE LOWER(v.wallet_address) = LOWER($1)
+            ORDER BY v.created_at DESC
+        `, [req.params.wallet]);
+        
+        res.json({ success: true, vouchers: result.rows });
+    } catch (error) {
+        console.error('Error fetching vouchers:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// GET voucher by code
+router.get('/code/:code', async (req, res) => {
+    console.log('🎫 GET /api/vouchers/code/:code called');
+    try {
+        const result = await db.pool.query(`
+            SELECT v.*, s.image_url, s.category, s.description as service_description
+            FROM marketplace_vouchers v
+            LEFT JOIN marketplace_services s ON v.service_id = s.id
+            WHERE v.code = $1
+        `, [req.params.code.toUpperCase()]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Voucher not found' });
+        }
+        
+        res.json({ success: true, voucher: result.rows[0] });
+    } catch (error) {
+        console.error('Error fetching voucher:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// GET voucher by ID
+router.get('/id/:id', async (req, res) => {
+    console.log('🎫 GET /api/vouchers/id/:id called');
+    try {
+        const result = await db.pool.query(`
+            SELECT v.*, s.image_url, s.category, s.description as service_description
+            FROM marketplace_vouchers v
+            LEFT JOIN marketplace_services s ON v.service_id = s.id
+            WHERE v.id = $1
+        `, [req.params.id]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Voucher not found' });
+        }
+        
+        res.json({ success: true, voucher: result.rows[0] });
+    } catch (error) {
+        console.error('Error fetching voucher:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// POST request booking for a voucher
+router.post('/:id/book', async (req, res) => {
+    console.log('🎫 POST /api/vouchers/:id/book called');
+    const { booking_date, booking_start, booking_end, booking_notes } = req.body;
+    
+    try {
+        // Get voucher
+        const voucherResult = await db.pool.query(
+            'SELECT * FROM marketplace_vouchers WHERE id = $1',
+            [req.params.id]
+        );
+        
+        if (voucherResult.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Voucher not found' });
+        }
+        
+        const voucher = voucherResult.rows[0];
+        
+        if (voucher.status !== 'active' && voucher.status !== 'purchased') {
+            return res.status(400).json({ 
+                success: false, 
+                error: `Cannot book voucher with status: ${voucher.status}` 
+            });
+        }
+        
+        // Generate validation token for email link
+        const validationToken = generateValidationToken();
+        
+        // Determine if booking_start/end are dates (accommodation) or times (service)
+        // If format is "HH:MM" it's a time, if "YYYY-MM-DD" it's a date
+        const isTimeFormat = (val) => val && /^\d{2}:\d{2}$/.test(val);
+        const isDateFormat = (val) => val && /^\d{4}-\d{2}-\d{2}$/.test(val);
+        
+        let updateQuery, updateParams;
+        
+        if (isTimeFormat(booking_start) || isTimeFormat(booking_end)) {
+            // Service booking: single date + time slots
+            const startTime = booking_start && booking_start.trim() ? booking_start : null;
+            const endTime = booking_end && booking_end.trim() ? booking_end : null;
+            
+            updateQuery = `
+                UPDATE marketplace_vouchers 
+                SET booking_date = $1, 
+                    booking_time_start = $2, 
+                    booking_time_end = $3, 
+                    booking_notes = $4,
+                    booking_requested_at = NOW(),
+                    status = 'pending_validation',
+                    validation_token = $5
+                WHERE id = $6
+            `;
+            updateParams = [booking_date, startTime, endTime, booking_notes || null, validationToken, req.params.id];
+        } else {
+            // Accommodation booking: date range (check-in to check-out)
+            const startDate = booking_start && booking_start.trim() ? booking_start : null;
+            const endDate = booking_end && booking_end.trim() ? booking_end : null;
+            
+            updateQuery = `
+                UPDATE marketplace_vouchers 
+                SET booking_date = $1, 
+                    booking_start = $2, 
+                    booking_end = $3, 
+                    booking_notes = $4,
+                    booking_requested_at = NOW(),
+                    status = 'pending_validation',
+                    validation_token = $5
+                WHERE id = $6
+            `;
+            updateParams = [booking_date, startDate, endDate, booking_notes || null, validationToken, req.params.id];
+        }
+        
+        await db.pool.query(updateQuery, updateParams);
+        
+        // Send email to user confirming request received
+        const bookingDetails = { booking_date, booking_start, booking_end, booking_notes };
+        if (voucher.user_email) {
+            await sendBookingRequestToUser(voucher, bookingDetails);
+        }
+        
+        // Send email to site owner with validation link
+        await sendBookingRequestToOwner(voucher, bookingDetails, validationToken);
+        
+        console.log('✅ Booking requested for voucher:', voucher.code);
+        res.json({ 
+            success: true, 
+            message: 'Booking request submitted. You will receive a confirmation email once validated.',
+            voucher_code: voucher.code
+        });
+        
+    } catch (error) {
+        console.error('Error requesting booking:', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
