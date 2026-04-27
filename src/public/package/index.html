@@ -1021,6 +1021,8 @@
 
     async function createPaymentIntent(pkg) {
         try {
+            console.log('📧 DEBUG - currentUser:', JSON.stringify(currentUser));
+            console.log('📧 DEBUG - email being sent:', currentUser?.email);
             const response = await fetch('/api/membership/create-payment-intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
