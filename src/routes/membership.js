@@ -16,6 +16,11 @@ console.log(`   Platform Fee: ${PLATFORM_FEE_PERCENT}% of NET (after Stripe fees
 // ============================================
 // Helper: Get package from database
 // ============================================
+
+function estimateStripeFee(amount) {
+    return amount * 0.029 + 0.25;
+}
+
 async function getPackage(id) {
     try {
         const result = await pool.query(
