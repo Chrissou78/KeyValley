@@ -241,20 +241,63 @@ router.post('/mint-and-capture', async (req, res) => {
         console.log('✅ Database balance credited:', buyingPowerAmount);
         
         // 6. Calculate fees and update order
-        const amountReceived = capturedIntent.amount_received / 100;
-        let stripeFee = amountReceived * 0.029 + 0.25; // Estimate
-        
-        // Try to get actual fee
+        const amountReceived = capturedIntent.amount_received / 100; // EUR (payment currency)
+        const paymentCurrency = (capturedIntent.currency || 'eur').toLowerCase();
+        let stripeFee = estimateStripeFee(amountReceived); // Default estimate: 2.9% + €0.25
+        let feeSource = 'estimated';
+
+        // Try to get actual fee from Stripe
         try {
             if (capturedIntent.latest_charge) {
                 const charge = await stripe.charges.retrieve(capturedIntent.latest_charge);
+                console.log('📊 Charge ID:', charge.id);
+                
                 if (charge.balance_transaction) {
                     const balanceTx = await stripe.balanceTransactions.retrieve(charge.balance_transaction);
-                    stripeFee = balanceTx.fee / 100;
+                    
+                    const balanceCurrency = (balanceTx.currency || 'eur').toLowerCase();
+                    const exchangeRate = balanceTx.exchange_rate || 1;
+                    
+                    // Debug logging
+                    console.log('📊 Balance Transaction:', {
+                        id: balanceTx.id,
+                        currency: balanceCurrency.toUpperCase(),
+                        amount: `${balanceTx.amount / 100} ${balanceCurrency.toUpperCase()}`,
+                        fee: `${balanceTx.fee / 100} ${balanceCurrency.toUpperCase()}`,
+                        net: `${balanceTx.net / 100} ${balanceCurrency.toUpperCase()}`,
+                        exchange_rate: exchangeRate,
+                        fee_details: balanceTx.fee_details
+                    });
+                    
+                    // Fee is in balance currency (e.g., BRL), need to convert to payment currency (EUR)
+                    let actualFeeInBalanceCurrency = balanceTx.fee / 100;
+                    let actualFeeInPaymentCurrency;
+                    
+                    if (balanceCurrency !== paymentCurrency && exchangeRate > 0) {
+                        // exchange_rate: 1 EUR = X BRL (e.g., 5.84517)
+                        // To convert BRL to EUR: BRL / exchange_rate
+                        actualFeeInPaymentCurrency = actualFeeInBalanceCurrency / exchangeRate;
+                        console.log(`💱 Currency conversion: ${actualFeeInBalanceCurrency.toFixed(2)} ${balanceCurrency.toUpperCase()} ÷ ${exchangeRate} = ${actualFeeInPaymentCurrency.toFixed(2)} ${paymentCurrency.toUpperCase()}`);
+                    } else {
+                        actualFeeInPaymentCurrency = actualFeeInBalanceCurrency;
+                    }
+                    
+                    // Sanity check: Stripe fees typically 1.5%-4% for EU, up to 8% with currency conversion
+                    const maxReasonableFee = amountReceived * 0.10; // 10% max (generous for currency conversion)
+                    const minReasonableFee = 0.25;
+                    
+                    if (actualFeeInPaymentCurrency >= minReasonableFee && actualFeeInPaymentCurrency <= maxReasonableFee) {
+                        stripeFee = actualFeeInPaymentCurrency;
+                        feeSource = 'actual';
+                        console.log(`✅ Using actual Stripe fee: €${stripeFee.toFixed(2)} (${((stripeFee/amountReceived)*100).toFixed(2)}%)`);
+                    } else {
+                        console.warn(`⚠️ Fee outside expected range: €${actualFeeInPaymentCurrency.toFixed(2)} (${((actualFeeInPaymentCurrency/amountReceived)*100).toFixed(1)}%)`);
+                        console.warn(`⚠️ Using estimated fee: €${stripeFee.toFixed(2)}`);
+                    }
                 }
             }
         } catch (e) {
-            console.log('Using estimated Stripe fee');
+            console.log('⚠️ Could not retrieve actual Stripe fee:', e.message);
         }
         
         const netAmount = amountReceived - stripeFee;
