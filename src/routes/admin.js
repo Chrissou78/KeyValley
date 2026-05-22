@@ -278,52 +278,74 @@ router.delete('/whitelist/:email', requireAdminAuth, requireSuperAdmin, async (r
 // DASHBOARD OVERVIEW
 // ==========================================
 
-router.get('/overview', requireAdminAuth, async (req, res) => {
+router.get('/overview', requireAuth, async (req, res) => {
     try {
-        const [revenue, orders, members, vouchers, recentOrders, recentMemberships] = await Promise.all([
-            db.pool.query(`
-                SELECT 
-                    COALESCE(SUM(total_amount), 0) as total,
-                    COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE THEN total_amount ELSE 0 END), 0) as today,
-                    COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '7 days' THEN total_amount ELSE 0 END), 0) as week,
-                    COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '30 days' THEN total_amount ELSE 0 END), 0) as month
-                FROM marketplace_orders WHERE status != 'cancelled'
-            `),
-            db.pool.query(`
-                SELECT 
-                    COUNT(*) as total,
-                    COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending
-                FROM marketplace_orders 
-            `),
-            db.pool.query('SELECT COUNT(*) as total FROM registrants'),
-            db.pool.query(`
-                SELECT 
-                    COUNT(*) as total,
-                    COUNT(CASE WHEN status = 'active' THEN 1 END) as active
-                FROM marketplace_vouchers
-            `).catch(() => ({ rows: [{ total: 0, active: 0 }] })),
-            db.pool.query('SELECT * FROM marketplace_orders ORDER BY created_at DESC LIMIT 5').catch(() => ({ rows: [] })),
-            db.pool.query('SELECT * FROM membership_purchases ORDER BY created_at DESC LIMIT 5').catch(() => ({ rows: [] }))
-        ]);
-
+        // Stats
+        const revenueResult = await db.pool.query(`
+            SELECT COALESCE(SUM(total_amount), 0) AS total 
+            FROM marketplace_orders WHERE status = 'completed'
+        `);
+        const ordersResult = await db.pool.query('SELECT COUNT(*) FROM marketplace_orders');
+        const pendingResult = await db.pool.query(`SELECT COUNT(*) FROM marketplace_orders WHERE status = 'pending'`);
+        const membersResult = await db.pool.query('SELECT COUNT(*) FROM member_balances');
+        const vouchersResult = await db.pool.query(`SELECT COUNT(*) FROM marketplace_vouchers WHERE status = 'active'`);
+        
+        // Revenue by period
+        const todayResult = await db.pool.query(`
+            SELECT COALESCE(SUM(total_amount), 0) AS total 
+            FROM marketplace_orders 
+            WHERE status = 'completed' AND created_at >= CURRENT_DATE
+        `);
+        const weekResult = await db.pool.query(`
+            SELECT COALESCE(SUM(total_amount), 0) AS total 
+            FROM marketplace_orders 
+            WHERE status = 'completed' AND created_at >= CURRENT_DATE - INTERVAL '7 days'
+        `);
+        const monthResult = await db.pool.query(`
+            SELECT COALESCE(SUM(total_amount), 0) AS total 
+            FROM marketplace_orders 
+            WHERE status = 'completed' AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+        `);
+        
+        // Recent orders with member info
+        const recentOrdersResult = await db.pool.query(`
+            SELECT o.*, 
+                   r.email AS member_email,
+                   r.metadata->>'name' AS member_name
+            FROM marketplace_orders o
+            LEFT JOIN registrants r ON LOWER(r.wallet_address) = LOWER(o.wallet_address)
+            ORDER BY o.created_at DESC 
+            LIMIT 5
+        `);
+        
+        // Recent memberships with member info
+        const recentMembershipsResult = await db.pool.query(`
+            SELECT mp.*,
+                   r.email AS member_email,
+                   r.metadata->>'name' AS member_name
+            FROM membership_purchases mp
+            LEFT JOIN registrants r ON LOWER(r.wallet_address) = LOWER(mp.metadata->>'wallet_address')
+            ORDER BY mp.created_at DESC 
+            LIMIT 5
+        `);
+        
         res.json({
             success: true,
             stats: {
-                totalRevenue: parseFloat(revenue.rows[0]?.total || 0),
-                revenueToday: parseFloat(revenue.rows[0]?.today || 0),
-                revenueWeek: parseFloat(revenue.rows[0]?.week || 0),
-                revenueMonth: parseFloat(revenue.rows[0]?.month || 0),
-                totalOrders: parseInt(orders.rows[0]?.total || 0),
-                pendingOrders: parseInt(orders.rows[0]?.pending || 0),
-                totalMembers: parseInt(members.rows[0]?.total || 0),
-                totalVouchers: parseInt(vouchers.rows[0]?.total || 0),
-                activeVouchers: parseInt(vouchers.rows[0]?.active || 0)
+                totalRevenue: parseFloat(revenueResult.rows[0].total) || 0,
+                totalOrders: parseInt(ordersResult.rows[0].count) || 0,
+                pendingOrders: parseInt(pendingResult.rows[0].count) || 0,
+                totalMembers: parseInt(membersResult.rows[0].count) || 0,
+                activeVouchers: parseInt(vouchersResult.rows[0].count) || 0,
+                revenueToday: parseFloat(todayResult.rows[0].total) || 0,
+                revenueWeek: parseFloat(weekResult.rows[0].total) || 0,
+                revenueMonth: parseFloat(monthResult.rows[0].total) || 0
             },
-            recentOrders: recentOrders.rows,
-            recentMemberships: recentMemberships.rows
+            recentOrders: recentOrdersResult.rows,
+            recentMemberships: recentMembershipsResult.rows
         });
     } catch (error) {
-        console.error('Overview error:', error);
+        console.error('Error fetching overview:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -332,19 +354,21 @@ router.get('/overview', requireAdminAuth, async (req, res) => {
 // ORDERS
 // ==========================================
 
-router.get('/orders', requireAdminAuth, async (req, res) => {
+router.get('/orders', requireAuth, async (req, res) => {
     try {
         const result = await db.pool.query(`
-            SELECT o.*, 
-                   r.email,
-                   r.metadata->>'name' as member_name
+            SELECT 
+                o.*,
+                r.email AS member_email,
+                r.metadata->>'name' AS member_name
             FROM marketplace_orders o
-            LEFT JOIN registrants r ON LOWER(o.wallet_address) = LOWER(r.wallet_address)
+            LEFT JOIN registrants r ON LOWER(r.wallet_address) = LOWER(o.wallet_address)
             ORDER BY o.created_at DESC
         `);
+        
         res.json({ success: true, orders: result.rows });
     } catch (error) {
-        console.error('Orders error:', error);
+        console.error('Error fetching orders:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });

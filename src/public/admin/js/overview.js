@@ -30,18 +30,36 @@ const Overview = {
             el.innerHTML = '<p class="text-gray-500 text-sm">No recent orders</p>';
             return;
         }
-        el.innerHTML = orders.slice(0, 5).map(o => `
-            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
-                <div>
-                    <div class="font-medium">${o.order_number || o.id?.slice(0,8) || '-'}</div>
-                    <div class="text-sm text-gray-400">${Utils.shortAddress(o.wallet_address)}</div>
+        el.innerHTML = orders.slice(0, 5).map(o => {
+            // Get member display - name first, then email, then wallet
+            const memberName = o.member_name || '';
+            const memberEmail = o.member_email || o.email || '';
+            const walletShort = Utils.shortAddress(o.wallet_address);
+            
+            let memberDisplay = '';
+            if (memberName && memberName !== memberEmail) {
+                memberDisplay = `<div class="font-medium">${Utils.escapeHtml(memberName)}</div>
+                                <div class="text-xs text-gray-500">${memberEmail || walletShort}</div>`;
+            } else if (memberEmail) {
+                memberDisplay = `<div class="font-medium">${memberEmail}</div>
+                                <div class="text-xs text-gray-500">${walletShort}</div>`;
+            } else {
+                memberDisplay = `<div class="font-medium">${walletShort}</div>`;
+            }
+            
+            return `
+                <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                    <div>
+                        <div class="text-xs text-gray-500 mb-1">${o.order_number || o.id?.slice(0,8) || '-'}</div>
+                        ${memberDisplay}
+                    </div>
+                    <div class="text-right">
+                        <div class="font-medium text-primary">${Utils.formatCurrency(o.total_amount)}</div>
+                        <span class="px-2 py-0.5 rounded-full text-xs status-${o.status}">${o.status}</span>
+                    </div>
                 </div>
-                <div class="text-right">
-                    <div class="font-medium text-primary">${Utils.formatCurrency(o.total_amount)}</div>
-                    <span class="px-2 py-0.5 rounded-full text-xs status-${o.status}">${o.status}</span>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     },
     
     renderRecentMemberships(memberships) {
@@ -51,17 +69,35 @@ const Overview = {
             el.innerHTML = '<p class="text-gray-500 text-sm">No recent memberships</p>';
             return;
         }
-        el.innerHTML = memberships.slice(0, 5).map(m => `
-            <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
-                <div>
-                    <div class="font-medium capitalize">${m.package_type || 'Package'}</div>
-                    <div class="text-sm text-gray-400">${Utils.shortAddress(m.wallet_address)}</div>
+        el.innerHTML = memberships.slice(0, 5).map(m => {
+            // Get member display - name first, then email, then wallet
+            const memberName = m.member_name || '';
+            const memberEmail = m.member_email || m.email || '';
+            const walletShort = Utils.shortAddress(m.wallet_address);
+            
+            let memberDisplay = '';
+            if (memberName && memberName !== memberEmail) {
+                memberDisplay = `<div class="font-medium">${Utils.escapeHtml(memberName)}</div>
+                                <div class="text-xs text-gray-500">${memberEmail || walletShort}</div>`;
+            } else if (memberEmail) {
+                memberDisplay = `<div class="font-medium">${memberEmail}</div>
+                                <div class="text-xs text-gray-500">${walletShort}</div>`;
+            } else {
+                memberDisplay = `<div class="font-medium">${walletShort}</div>`;
+            }
+            
+            return `
+                <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
+                    <div>
+                        <div class="text-xs text-gray-500 mb-1 capitalize">${m.package_type || 'Package'}</div>
+                        ${memberDisplay}
+                    </div>
+                    <div class="text-right">
+                        <div class="font-medium text-primary">${Utils.formatCurrency(m.amount_paid)}</div>
+                        <span class="px-2 py-0.5 rounded-full text-xs status-${m.status}">${m.status}</span>
+                    </div>
                 </div>
-                <div class="text-right">
-                    <div class="font-medium text-primary">${Utils.formatCurrency(m.amount_paid)}</div>
-                    <span class="px-2 py-0.5 rounded-full text-xs status-${m.status}">${m.status}</span>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 };

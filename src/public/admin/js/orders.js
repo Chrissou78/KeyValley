@@ -12,7 +12,20 @@ const Orders = {
     
     render() {
         const filter = document.getElementById('orderStatusFilter')?.value || 'all';
-        const filtered = filter === 'all' ? this.data : this.data.filter(o => o.status === filter);
+        const search = document.getElementById('orderSearch')?.value?.toLowerCase() || '';
+        
+        let filtered = filter === 'all' ? this.data : this.data.filter(o => o.status === filter);
+        
+        // Apply search
+        if (search) {
+            filtered = filtered.filter(o => 
+                o.order_number?.toLowerCase().includes(search) ||
+                o.member_name?.toLowerCase().includes(search) ||
+                o.member_email?.toLowerCase().includes(search) ||
+                o.email?.toLowerCase().includes(search) ||
+                o.wallet_address?.toLowerCase().includes(search)
+            );
+        }
         
         const tbody = document.getElementById('ordersTableBody');
         if (!tbody) return;
@@ -25,16 +38,44 @@ const Orders = {
         tbody.innerHTML = filtered.map(order => {
             const items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
             const itemCount = items.reduce((sum, i) => sum + (i.quantity || 1), 0);
+            
+            // Get member display - name first, then email, then wallet
+            const memberName = order.member_name || '';
+            const memberEmail = order.member_email || order.email || '';
+            const walletShort = Utils.shortAddress(order.wallet_address);
+            
+            let memberDisplay = '';
+            if (memberName && memberName !== memberEmail) {
+                memberDisplay = `
+                    <div class="font-medium">${Utils.escapeHtml(memberName)}</div>
+                    <div class="text-xs text-gray-500">${memberEmail || walletShort}</div>
+                `;
+            } else if (memberEmail) {
+                memberDisplay = `
+                    <div class="font-medium">${memberEmail}</div>
+                    <div class="text-xs text-gray-500">${walletShort}</div>
+                `;
+            } else {
+                memberDisplay = `<div class="font-medium">${walletShort}</div>`;
+            }
+            
+            // Status colors
+            const statusColors = {
+                'pending': 'bg-yellow-500/20 text-yellow-400',
+                'confirmed': 'bg-blue-500/20 text-blue-400',
+                'completed': 'bg-green-500/20 text-green-400',
+                'cancelled': 'bg-red-500/20 text-red-400',
+                'refunded': 'bg-gray-500/20 text-gray-400'
+            };
+            const statusClass = statusColors[order.status] || 'bg-gray-500/20 text-gray-400';
+            
             return `
                 <tr class="border-t border-gray-800 hover:bg-gray-800/30">
                     <td class="py-4 px-4 font-medium">${order.order_number || order.id?.slice(0,8) || '-'}</td>
-                    <td class="py-4 px-4">
-                        <div>${Utils.shortAddress(order.wallet_address)}</div>
-                        <div class="text-xs text-gray-500">${order.email || ''}</div>
-                    </td>
+                    <td class="py-4 px-4">${memberDisplay}</td>
                     <td class="py-4 px-4">${itemCount} item${itemCount !== 1 ? 's' : ''}</td>
                     <td class="py-4 px-4 font-medium">${Utils.formatCurrency(order.total_amount)}</td>
-                    <td class="py-4 px-4"><span class="px-2 py-1 rounded-full text-xs status-${order.status}">${order.status}</span></td>
+                    <td class="py-4 px-4"><span class="px-2 py-1 rounded-full text-xs ${statusClass}">${order.status}</span></td>
                     <td class="py-4 px-4 text-gray-400">${Utils.formatDate(order.created_at)}</td>
                     <td class="py-4 px-4">
                         <button onclick="Orders.view('${order.id}')" class="text-primary hover:text-primary-light text-sm">View</button>
@@ -55,11 +96,31 @@ const Orders = {
     
     filter() { this.render(); },
     
+    search() { this.render(); },
+    
     async view(id) {
         const order = this.data.find(o => o.id === id);
         if (!order) return;
         
         const items = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
+        
+        // Member info for modal
+        const memberName = order.member_name || '';
+        const memberEmail = order.member_email || order.email || '';
+        const walletShort = Utils.shortAddress(order.wallet_address);
+        
+        let customerDisplay = '';
+        if (memberName && memberName !== memberEmail) {
+            customerDisplay = `<p class="font-medium">${Utils.escapeHtml(memberName)}</p>
+                              <p class="text-sm text-gray-400">${memberEmail}</p>
+                              <p class="font-mono text-xs text-gray-500">${walletShort}</p>`;
+        } else if (memberEmail) {
+            customerDisplay = `<p class="font-medium">${memberEmail}</p>
+                              <p class="font-mono text-xs text-gray-500">${walletShort}</p>`;
+        } else {
+            customerDisplay = `<p class="font-mono text-sm">${order.wallet_address}</p>`;
+        }
+        
         const content = document.getElementById('orderModalContent');
         if (!content) return;
         
@@ -68,7 +129,7 @@ const Orders = {
                 <div class="grid grid-cols-2 gap-4">
                     <div><p class="text-gray-400 text-sm">Order Number</p><p class="font-medium">${order.order_number || order.id?.slice(0,8)}</p></div>
                     <div><p class="text-gray-400 text-sm">Status</p><span class="px-2 py-1 rounded-full text-xs status-${order.status}">${order.status}</span></div>
-                    <div><p class="text-gray-400 text-sm">Customer</p><p class="font-mono text-sm">${Utils.shortAddress(order.wallet_address)}</p></div>
+                    <div><p class="text-gray-400 text-sm">Customer</p>${customerDisplay}</div>
                     <div><p class="text-gray-400 text-sm">Date</p><p>${Utils.formatDateTime(order.created_at)}</p></div>
                 </div>
                 <div>
