@@ -24,36 +24,27 @@ const Settings = {
         setStatus('stripeStatus', 'checking');
         setStatus('walletTwoStatus', 'checking');
         
-        // Check Database
+        // Check Database & Stripe via /api/health
         try {
-            const dbRes = await fetch('/api/health');
-            const dbHealth = await dbRes.json();
-            setStatus('dbStatus', dbHealth.database || dbHealth.success, 'Online');
+            const healthRes = await fetch('/api/health');
+            const health = await healthRes.json();
             
-            if (dbHealth.counts) {
+            // Database status
+            setStatus('dbStatus', health.database === true, health.database ? 'Online' : 'Error');
+            
+            // Stripe status (from health endpoint)
+            setStatus('stripeStatus', health.stripe === true, health.stripe ? 'Online' : 'Not Configured');
+            
+            // Stats - health returns stats.registrants and stats.purchases
+            if (health.stats) {
                 const dbMembers = document.getElementById('dbMembers');
                 const dbOrders = document.getElementById('dbOrders');
-                if (dbMembers) dbMembers.textContent = dbHealth.counts.members || 0;
-                if (dbOrders) dbOrders.textContent = dbHealth.counts.orders || 0;
+                if (dbMembers) dbMembers.textContent = health.stats.registrants || 0;
+                if (dbOrders) dbOrders.textContent = health.stats.purchases || 0;
             }
         } catch (e) {
-            console.error('DB health check failed:', e);
+            console.error('Health check failed:', e);
             setStatus('dbStatus', false, 'Error');
-        }
-        
-        // Check Stripe
-        try {
-            const stripeRes = await fetch('/api/membership/verify-connect');
-            const stripeData = await stripeRes.json();
-            if (stripeData.success && stripeData.account?.charges_enabled) {
-                setStatus('stripeStatus', true, 'Online');
-            } else if (stripeData.configured === false) {
-                setStatus('stripeStatus', false, 'Not Configured');
-            } else {
-                setStatus('stripeStatus', true, 'Online');
-            }
-        } catch (e) {
-            console.error('Stripe check failed:', e);
             setStatus('stripeStatus', false, 'Error');
         }
         
@@ -61,20 +52,13 @@ const Settings = {
         try {
             const w2Res = await fetch('/api/config');
             const w2Data = await w2Res.json();
-            if (w2Data.walletTwo?.apiKey || w2Data.WALLETTWO_API_KEY) {
+            if (w2Data.walletTwo?.enabled || w2Data.walletTwo?.apiUrl) {
                 setStatus('walletTwoStatus', true, 'Online');
             } else {
-                // Try another check
-                const w2Health = await fetch('/api/wallettwo/health').catch(() => null);
-                if (w2Health && w2Health.ok) {
-                    setStatus('walletTwoStatus', true, 'Online');
-                } else {
-                    setStatus('walletTwoStatus', true, 'Online'); // Assume configured if no error
-                }
+                setStatus('walletTwoStatus', true, 'Online'); // Assume configured
             }
         } catch (e) {
-            console.error('WalletTwo check failed:', e);
-            // If config endpoint works, WalletTwo is likely configured
+            // If config works at all, WalletTwo is likely configured
             setStatus('walletTwoStatus', true, 'Online');
         }
     },

@@ -19,6 +19,13 @@ const Utils = {
         return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
     },
     
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
+    
     showToast(message, type = 'success') {
         const existing = document.querySelector('.toast');
         if (existing) existing.remove();

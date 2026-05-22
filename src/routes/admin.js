@@ -47,30 +47,21 @@ router.get('/health', async (req, res) => {
         database: false,
         stripe: false,
         walletTwo: false,
-        counts: {
-            members: 0,
-            orders: 0
-        }
+        counts: { members: 0, orders: 0 }
     };
     
-    // Check Database
     try {
-        await db.pool.query('SELECT 1');
+        await pool.query('SELECT 1');
         health.database = true;
-        
-        const membersResult = await db.pool.query('SELECT COUNT(*) FROM registrants');
-        const ordersResult = await db.pool.query('SELECT COUNT(*) FROM marketplace_orders');
-        health.counts.members = parseInt(membersResult.rows[0].count) || 0;
-        health.counts.orders = parseInt(ordersResult.rows[0].count) || 0;
+        const members = await pool.query('SELECT COUNT(*) FROM member_balances');
+        const orders = await pool.query('SELECT COUNT(*) FROM marketplace_orders');
+        health.counts.members = parseInt(members.rows[0].count) || 0;
+        health.counts.orders = parseInt(orders.rows[0].count) || 0;
     } catch (e) {
-        console.error('DB health check failed:', e.message);
-        health.database = false;
+        console.error('DB health failed:', e.message);
     }
     
-    // Check Stripe
     health.stripe = !!process.env.STRIPE_SECRET_KEY;
-    
-    // Check WalletTwo
     health.walletTwo = !!(process.env.WALLETTWO_API_KEY || process.env.WALLETTWO_EMAIL_WEBHOOK);
     
     res.json(health);
