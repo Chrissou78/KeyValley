@@ -51,10 +51,10 @@ router.get('/health', async (req, res) => {
     };
     
     try {
-        await pool.query('SELECT 1');
+        await db.pool.query('SELECT 1');
         health.database = true;
-        const members = await pool.query('SELECT COUNT(*) FROM member_balances');
-        const orders = await pool.query('SELECT COUNT(*) FROM marketplace_orders');
+        const members = await db.pool.query('SELECT COUNT(*) FROM member_balances');
+        const orders = await db.pool.query('SELECT COUNT(*) FROM marketplace_orders');
         health.counts.members = parseInt(members.rows[0].count) || 0;
         health.counts.orders = parseInt(orders.rows[0].count) || 0;
     } catch (e) {
@@ -486,7 +486,7 @@ router.get('/memberships', requireAdminAuth, async (req, res) => {
 
 router.get('/members', requireAdminAuth, async (req, res) => {
     try {
-        const result = await pool.query(`
+        const result = await db.pool.query(`
             SELECT 
                 mb.wallet_address,
                 mb.balance,
@@ -581,7 +581,7 @@ router.post('/members/remove-balance', requireAdminAuth, async (req, res) => {
     }
     
     try {
-        const current = await pool.query(
+        const current = await db.pool.query(
             'SELECT balance, total_spent FROM member_balances WHERE LOWER(wallet_address) = LOWER($1)',
             [wallet_address]
         );
@@ -603,7 +603,7 @@ router.post('/members/remove-balance', requireAdminAuth, async (req, res) => {
         const newBalance = currentBalance - amount;
         const newSpent = currentSpent + amount;
         
-        await pool.query(
+        await db.pool.query(
             `UPDATE member_balances 
              SET balance = $1, total_spent = $2, updated_at = NOW() 
              WHERE LOWER(wallet_address) = LOWER($3)`,
