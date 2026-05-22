@@ -484,41 +484,29 @@ router.get('/memberships', requireAdminAuth, async (req, res) => {
 // MEMBERS - FIXED: Name first, email, proper balance ops
 // ==========================================
 
-router.get('/members', requireAdminAuth, async (req, res) => {
+router.get('/members', requireAuth, async (req, res) => {
     try {
-        const result = await db.pool.query(`
+        const result = await pool.query(`
             SELECT 
-                r.id,
-                r.wallet_address,
+                mb.wallet_address,
+                mb.balance,
+                COALESCE(mb.total_credited, 0) AS total_credited,
+                COALESCE(mb.total_spent, 0) AS total_spent,
                 r.email,
-                r.metadata->>'name' as name,
-                r.registered_at as created_at,
-                COALESCE(mb.balance, 0) as balance,
-                COALESCE(mb.total_credited, 0) as total_credited,
-                COALESCE(mb.total_consumed, 0) as total_consumed,
-                (
-                    SELECT COALESCE(SUM(total_amount), 0) 
-                    FROM marketplace_orders mo 
-                    WHERE LOWER(mo.wallet_address) = LOWER(r.wallet_address) 
-                    AND mo.status = 'completed'
-                ) as total_spent,
-                (
-                    SELECT COUNT(*) 
-                    FROM marketplace_orders mo 
-                    WHERE LOWER(mo.wallet_address) = LOWER(r.wallet_address)
-                ) as order_count,
-                (
-                    SELECT COUNT(*) 
-                    FROM marketplace_vouchers mv 
-                    WHERE LOWER(mv.wallet_address) = LOWER(r.wallet_address)
-                ) as voucher_count
-            FROM registrants r
-            LEFT JOIN member_balances mb ON LOWER(r.wallet_address) = LOWER(mb.wallet_address)
-            ORDER BY r.registered_at DESC
+                r.metadata->>'name' AS name,
+                r.registered_at AS created_at,
+                (SELECT COUNT(*) FROM marketplace_orders mo 
+                 WHERE LOWER(mo.wallet_address) = LOWER(mb.wallet_address)) AS order_count,
+                (SELECT COUNT(*) FROM marketplace_vouchers mv 
+                 WHERE LOWER(mv.wallet_address) = LOWER(mb.wallet_address)) AS voucher_count
+            FROM member_balances mb
+            LEFT JOIN registrants r ON LOWER(r.wallet_address) = LOWER(mb.wallet_address)
+            ORDER BY mb.balance DESC
         `);
+        
         res.json({ success: true, members: result.rows });
     } catch (error) {
-        console.error('Members error:', error);
+        console.error('Error fetching members:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -585,55 +573,53 @@ router.post('/members/add-balance', requireAdminAuth, async (req, res) => {
 });
 
 // POST /api/admin/members/remove-balance - Deduct from DB (no burn)
-router.post('/members/remove-balance', requireAdminAuth, async (req, res) => {
+router.post('/members/remove-balance', requireAuth, async (req, res) => {
     const { wallet_address, amount, reason } = req.body;
     
     if (!wallet_address || !amount || amount <= 0) {
-        return res.status(400).json({ success: false, error: 'Invalid wallet or amount' });
+        return res.status(400).json({ success: false, error: 'Valid wallet and positive amount required' });
     }
     
     try {
-        const walletLower = wallet_address.toLowerCase();
-        
-        // Check current balance
-        const balanceCheck = await db.pool.query(
-            'SELECT balance FROM member_balances WHERE wallet_address = $1',
-            [walletLower]
+        const current = await pool.query(
+            'SELECT balance, total_spent FROM member_balances WHERE LOWER(wallet_address) = LOWER($1)',
+            [wallet_address]
         );
         
-        if (balanceCheck.rows.length === 0 || parseFloat(balanceCheck.rows[0].balance) < amount) {
-            return res.status(400).json({ success: false, error: 'Insufficient balance' });
+        if (!current.rows.length) {
+            return res.status(404).json({ success: false, error: 'Member not found' });
         }
         
-        // Deduct from DB
-        const result = await db.pool.query(`
-            UPDATE member_balances 
-            SET balance = balance - $2,
-                total_consumed = COALESCE(total_consumed, 0) + $2,
-                updated_at = NOW()
-            WHERE wallet_address = $1
-            RETURNING balance
-        `, [walletLower, amount]);
+        const currentBalance = parseFloat(current.rows[0].balance) || 0;
+        const currentSpent = parseFloat(current.rows[0].total_spent) || 0;
         
-        // Log the adjustment (ignore if table doesn't exist)
-        try {
-            await db.pool.query(`
-                INSERT INTO balance_adjustments (wallet_address, amount, type, reason, created_by, created_at)
-                VALUES ($1, $2, 'debit', $3, $4, NOW())
-            `, [walletLower, amount, reason || 'Manual deduction', req.adminSession?.email || 'admin']);
-        } catch (logError) {
-            console.log('Note: balance_adjustments table may not exist');
+        if (amount > currentBalance) {
+            return res.status(400).json({ 
+                success: false, 
+                error: `Insufficient balance. Current: ${currentBalance} KEA` 
+            });
         }
         
-        console.log(`✅ Removed ${amount} Kea€ from ${walletLower}. New balance: ${result.rows[0].balance}`);
+        const newBalance = currentBalance - amount;
+        const newSpent = currentSpent + amount;
+        
+        await pool.query(
+            `UPDATE member_balances 
+             SET balance = $1, total_spent = $2, updated_at = NOW() 
+             WHERE LOWER(wallet_address) = LOWER($3)`,
+            [newBalance, newSpent, wallet_address]
+        );
+        
+        console.log(`➖ Removed ${amount} KEA from ${wallet_address} | Reason: ${reason || 'Manual'} | New balance: ${newBalance}`);
         
         res.json({ 
             success: true, 
-            new_balance: parseFloat(result.rows[0].balance)
+            new_balance: newBalance,
+            message: `Removed ${amount} Kea Euros`
         });
     } catch (error) {
-        console.error('Remove balance error:', error);
-        res.status(500).json({ success: false, error: error.message });
+        console.error('Error removing balance:', error);
+        res.status(500).json({ success: false, error: 'Failed to remove balance' });
     }
 });
 
