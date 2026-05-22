@@ -484,7 +484,7 @@ router.get('/memberships', requireAdminAuth, async (req, res) => {
 // MEMBERS - FIXED: Name first, email, proper balance ops
 // ==========================================
 
-router.get('/members', requireAuth, async (req, res) => {
+router.get('/members', requireAdminAuth, async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT 
@@ -573,7 +573,7 @@ router.post('/members/add-balance', requireAdminAuth, async (req, res) => {
 });
 
 // POST /api/admin/members/remove-balance - Deduct from DB (no burn)
-router.post('/members/remove-balance', requireAuth, async (req, res) => {
+router.post('/members/remove-balance', requireAdminAuth, async (req, res) => {
     const { wallet_address, amount, reason } = req.body;
     
     if (!wallet_address || !amount || amount <= 0) {
