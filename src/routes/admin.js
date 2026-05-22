@@ -1,5 +1,6 @@
 // src/routes/admin.js
 // Admin routes - WalletTwo authentication flow
+// VERSION: 2026-05-22 - Fixed member names, vouchers, memberships display
 
 const express = require('express');
 const router = express.Router();
@@ -10,7 +11,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Create upload folder if it doesn't exist
-const uploadDir = path.join(__dirname, '../public/images/services');
+const uploadDir = path.join(__dirname, '../../public/images/services');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -35,6 +36,44 @@ const upload = multer({
             cb(new Error('Only images allowed'));
         }
     }
+});
+
+// ==========================================
+// HEALTH CHECK ENDPOINT
+// ==========================================
+router.get('/health', async (req, res) => {
+    const health = {
+        success: true,
+        database: false,
+        stripe: false,
+        walletTwo: false,
+        counts: {
+            members: 0,
+            orders: 0
+        }
+    };
+    
+    // Check Database
+    try {
+        await db.pool.query('SELECT 1');
+        health.database = true;
+        
+        const membersResult = await db.pool.query('SELECT COUNT(*) FROM registrants');
+        const ordersResult = await db.pool.query('SELECT COUNT(*) FROM marketplace_orders');
+        health.counts.members = parseInt(membersResult.rows[0].count) || 0;
+        health.counts.orders = parseInt(ordersResult.rows[0].count) || 0;
+    } catch (e) {
+        console.error('DB health check failed:', e.message);
+        health.database = false;
+    }
+    
+    // Check Stripe
+    health.stripe = !!process.env.STRIPE_SECRET_KEY;
+    
+    // Check WalletTwo
+    health.walletTwo = !!(process.env.WALLETTWO_API_KEY || process.env.WALLETTWO_EMAIL_WEBHOOK);
+    
+    res.json(health);
 });
 
 // POST /api/admin/auth - Authenticate via WalletTwo
@@ -245,175 +284,6 @@ router.delete('/whitelist/:email', requireAdminAuth, requireSuperAdmin, async (r
 });
 
 // ==========================================
-// REFERRAL ADMIN ENDPOINTS
-// ==========================================
-
-// GET /api/admin/referral/stats - Get referral statistics
-router.get('/referral/stats', requireAdminAuth, async (req, res) => {
-    try {
-        const codesResult = await db.pool.query(`
-            SELECT 
-                COUNT(*) as total_codes,
-                COUNT(*) FILTER (WHERE active = true) as active_codes,
-                COALESCE(SUM(use_count), 0) as total_referrals,
-                COALESCE(SUM(total_bonus), 0) as total_bonus_earned,
-                COALESCE(SUM(claim_count), 0) as total_claims,
-                COALESCE(SUM(presale_count), 0) as total_presale_purchases
-            FROM referral_codes
-        `);
-        
-        const trackingResult = await db.pool.query(`
-            SELECT 
-                COALESCE(SUM(CASE WHEN bonus_type = 'claim' AND bonus_paid = true THEN bonus_amount ELSE 0 END), 0) as signup_bonus_paid,
-                COALESCE(SUM(CASE WHEN bonus_type = 'presale' AND bonus_paid = true THEN bonus_amount ELSE 0 END), 0) as presale_bonus_paid
-            FROM referral_tracking
-        `);
-        
-        const stats = codesResult.rows[0];
-        const tracking = trackingResult.rows[0];
-        
-        res.json({
-            total_codes: parseInt(stats.total_codes) || 0,
-            active_codes: parseInt(stats.active_codes) || 0,
-            total_referrals: parseInt(stats.total_referrals) || 0,
-            total_bonus_earned: parseFloat(stats.total_bonus_earned) || 0,
-            total_signup_bonus: parseFloat(tracking.signup_bonus_paid) || 0,
-            total_presale_bonus: parseFloat(tracking.presale_bonus_paid) || 0
-        });
-    } catch (error) {
-        console.error('Error getting referral stats:', error);
-        res.status(500).json({ error: 'Failed to get referral stats' });
-    }
-});
-
-// GET /api/admin/referral/codes - Get all referral codes
-router.get('/referral/codes', requireAdminAuth, async (req, res) => {
-    try {
-        const result = await db.pool.query(`
-            SELECT 
-                code,
-                wallet_address,
-                email,
-                active as enabled,
-                use_count as total_referrals,
-                claim_count as total_claims,
-                presale_count as total_presale_purchases,
-                total_bonus as total_bonus_earned,
-                created_at,
-                updated_at
-            FROM referral_codes
-            ORDER BY created_at DESC
-        `);
-        
-        res.json({ codes: result.rows });
-    } catch (error) {
-        console.error('Error getting referral codes:', error);
-        res.status(500).json({ error: 'Failed to get referral codes' });
-    }
-});
-
-// GET /api/admin/referral/list - Get referral activity
-router.get('/referral/list', requireAdminAuth, async (req, res) => {
-    try {
-        const result = await db.pool.query(`
-            SELECT 
-                referral_code as referrer_code,
-                referrer_wallet,
-                referred_wallet as referee_wallet,
-                referred_email as referee_email,
-                source,
-                bonus_type,
-                bonus_amount,
-                bonus_paid,
-                bonus_tx_hash,
-                created_at
-            FROM referral_tracking
-            ORDER BY created_at DESC
-            LIMIT 100
-        `);
-        
-        res.json({ referrals: result.rows });
-    } catch (error) {
-        console.error('Error getting referral list:', error);
-        res.status(500).json({ error: 'Failed to get referral list' });
-    }
-});
-
-// POST /api/admin/referral/code/:code/toggle - Toggle referral code status
-router.post('/referral/code/:code/toggle', requireAdminAuth, async (req, res) => {
-    try {
-        const { code } = req.params;
-        const { enabled } = req.body;
-        
-        await db.pool.query(
-            'UPDATE referral_codes SET active = $1, updated_at = NOW() WHERE code = $2',
-            [enabled, code.toUpperCase()]
-        );
-        
-        res.json({ success: true, message: `Code ${enabled ? 'enabled' : 'disabled'}` });
-    } catch (error) {
-        console.error('Error toggling referral code:', error);
-        res.status(500).json({ success: false, error: 'Failed to toggle referral code' });
-    }
-});
-
-// ==========================================
-// QUESTIONNAIRE ADMIN ENDPOINTS
-// ==========================================
-
-// GET /api/admin/questionnaire/export - Export questionnaire responses
-router.get('/questionnaire/export', requireAdminAuth, async (req, res) => {
-    try {
-        const result = await db.pool.query(`
-            SELECT 
-                q.wallet_address,
-                r.email,
-                q.is_property_owner,
-                q.property_location,
-                q.interested_property_index,
-                q.interested_property_tour,
-                q.interested_members_club,
-                q.owns_boat,
-                q.interested_yacht_club,
-                q.interested_restaurant_review,
-                q.created_at,
-                q.updated_at
-            FROM questionnaire_responses q
-            LEFT JOIN registrants r ON q.wallet_address = r.wallet_address
-            ORDER BY q.created_at DESC
-        `);
-        
-        res.json({ success: true, responses: result.rows });
-    } catch (error) {
-        console.error('Error exporting questionnaire:', error);
-        res.status(500).json({ success: false, error: 'Failed to export questionnaire data' });
-    }
-});
-
-// GET /api/admin/questionnaire/stats - Get questionnaire statistics
-router.get('/questionnaire/stats', requireAdminAuth, async (req, res) => {
-    try {
-        const result = await db.pool.query(`
-            SELECT 
-                COUNT(*) as total_responses,
-                COUNT(*) FILTER (WHERE is_property_owner = true) as property_owners,
-                COUNT(*) FILTER (WHERE interested_property_index = true) as interested_property_index,
-                COUNT(*) FILTER (WHERE interested_property_tour = true) as interested_property_tour,
-                COUNT(*) FILTER (WHERE interested_members_club = true) as interested_members_club,
-                COUNT(*) FILTER (WHERE owns_boat = true) as boat_owners,
-                COUNT(*) FILTER (WHERE interested_yacht_club = true) as interested_yacht_club,
-                COUNT(*) FILTER (WHERE interested_restaurant_review = true) as interested_restaurant_review
-            FROM questionnaire_responses
-        `);
-        
-        res.json({ success: true, stats: result.rows[0] });
-    } catch (error) {
-        console.error('Error getting questionnaire stats:', error);
-        res.status(500).json({ success: false, error: 'Failed to get questionnaire stats' });
-    }
-});
-
-// ==========================================
 // DASHBOARD OVERVIEW
 // ==========================================
 
@@ -441,7 +311,7 @@ router.get('/overview', requireAdminAuth, async (req, res) => {
                     COUNT(CASE WHEN status = 'active' THEN 1 END) as active
                 FROM marketplace_vouchers
             `).catch(() => ({ rows: [{ total: 0, active: 0 }] })),
-            db.pool.query('SELECT * FROM marketplace_orders  ORDER BY created_at DESC LIMIT 5').catch(() => ({ rows: [] })),
+            db.pool.query('SELECT * FROM marketplace_orders ORDER BY created_at DESC LIMIT 5').catch(() => ({ rows: [] })),
             db.pool.query('SELECT * FROM membership_purchases ORDER BY created_at DESC LIMIT 5').catch(() => ({ rows: [] }))
         ]);
 
@@ -474,7 +344,9 @@ router.get('/overview', requireAdminAuth, async (req, res) => {
 router.get('/orders', requireAdminAuth, async (req, res) => {
     try {
         const result = await db.pool.query(`
-            SELECT o.*, r.email
+            SELECT o.*, 
+                   r.email,
+                   r.metadata->>'name' as member_name
             FROM marketplace_orders o
             LEFT JOIN registrants r ON LOWER(o.wallet_address) = LOWER(r.wallet_address)
             ORDER BY o.created_at DESC
@@ -525,12 +397,16 @@ router.post('/services', requireAdminAuth, async (req, res) => {
     try {
         const { name, short_description, description, category, price, price_note, image_url, location, features, is_active, max_quantity, booking_type, slots_per_day, booking_start_time, booking_end_time, slot_duration_minutes, available_days } = req.body;
         
+        console.log('📦 Creating service with image_url:', image_url);
+        
         const result = await db.pool.query(`
             INSERT INTO marketplace_services 
             (name, short_description, description, category, price, price_note, image_url, location, features, is_active, max_quantity, booking_type, slots_per_day, booking_start_time, booking_end_time, slot_duration_minutes, available_days)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
             RETURNING *
         `, [name, short_description, description, category, price, price_note, image_url, location, features, is_active ?? true, max_quantity ?? 10, booking_type || 'none', slots_per_day || 1, booking_start_time || '09:00', booking_end_time || '18:00', slot_duration_minutes || 60, available_days || '1,2,3,4,5,6,0']);
+        
+        console.log('✅ Service created:', result.rows[0].name, 'image:', result.rows[0].image_url);
         
         res.json({ success: true, service: result.rows[0] });
     } catch (error) {
@@ -543,6 +419,8 @@ router.put('/services/:id', requireAdminAuth, async (req, res) => {
     try {
         const { id } = req.params;
         const { name, short_description, description, category, price, price_note, image_url, location, features, is_active, max_quantity, booking_type, slots_per_day, booking_start_time, booking_end_time, slot_duration_minutes, available_days } = req.body;
+        
+        console.log('📦 Updating service', id, 'with image_url:', image_url);
         
         const result = await db.pool.query(`
             UPDATE marketplace_services SET
@@ -558,6 +436,8 @@ router.put('/services/:id', requireAdminAuth, async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ success: false, error: 'Service not found' });
         }
+        
+        console.log('✅ Service updated:', result.rows[0].name, 'image:', result.rows[0].image_url);
         
         res.json({ success: true, service: result.rows[0] });
     } catch (error) {
@@ -578,17 +458,31 @@ router.delete('/services/:id', requireAdminAuth, async (req, res) => {
 });
 
 // ==========================================
-// MEMBERSHIPS
+// MEMBERSHIPS - FIXED: Show member name/email
 // ==========================================
 
 router.get('/memberships', requireAdminAuth, async (req, res) => {
     try {
         const result = await db.pool.query(`
-            SELECT *
-            FROM membership_purchases
-            ORDER BY created_at DESC
+            SELECT 
+                mp.*,
+                mp.metadata->>'email' as meta_email,
+                mp.metadata->>'wallet_address' as meta_wallet,
+                r.email as registrant_email,
+                r.metadata->>'name' as registrant_name
+            FROM membership_purchases mp
+            LEFT JOIN registrants r ON LOWER(r.wallet_address) = LOWER(mp.metadata->>'wallet_address')
+            ORDER BY mp.created_at DESC
         `);
-        res.json({ success: true, memberships: result.rows });
+        
+        const memberships = result.rows.map(m => ({
+            ...m,
+            member_name: m.registrant_name || m.meta_email || null,
+            member_email: m.registrant_email || m.meta_email || null,
+            wallet_address: m.meta_wallet || null
+        }));
+        
+        res.json({ success: true, memberships });
     } catch (error) {
         console.error('Memberships error:', error);
         res.status(500).json({ success: false, error: error.message });
@@ -596,7 +490,7 @@ router.get('/memberships', requireAdminAuth, async (req, res) => {
 });
 
 // ==========================================
-// MEMBERS (REGISTRANTS)
+// MEMBERS - FIXED: Name first, email, proper balance ops
 // ==========================================
 
 router.get('/members', requireAdminAuth, async (req, res) => {
@@ -606,9 +500,27 @@ router.get('/members', requireAdminAuth, async (req, res) => {
                 r.id,
                 r.wallet_address,
                 r.email,
+                r.metadata->>'name' as name,
                 r.registered_at as created_at,
                 COALESCE(mb.balance, 0) as balance,
-                COALESCE(mb.total_spent, 0) as total_spent
+                COALESCE(mb.total_credited, 0) as total_credited,
+                COALESCE(mb.total_consumed, 0) as total_consumed,
+                (
+                    SELECT COALESCE(SUM(total_amount), 0) 
+                    FROM marketplace_orders mo 
+                    WHERE LOWER(mo.wallet_address) = LOWER(r.wallet_address) 
+                    AND mo.status = 'completed'
+                ) as total_spent,
+                (
+                    SELECT COUNT(*) 
+                    FROM marketplace_orders mo 
+                    WHERE LOWER(mo.wallet_address) = LOWER(r.wallet_address)
+                ) as order_count,
+                (
+                    SELECT COUNT(*) 
+                    FROM marketplace_vouchers mv 
+                    WHERE LOWER(mv.wallet_address) = LOWER(r.wallet_address)
+                ) as voucher_count
             FROM registrants r
             LEFT JOIN member_balances mb ON LOWER(r.wallet_address) = LOWER(mb.wallet_address)
             ORDER BY r.registered_at DESC
@@ -620,23 +532,138 @@ router.get('/members', requireAdminAuth, async (req, res) => {
     }
 });
 
+// POST /api/admin/members/add-balance - Mint tokens to member
+router.post('/members/add-balance', requireAdminAuth, async (req, res) => {
+    const { wallet_address, amount, reason } = req.body;
+    
+    if (!wallet_address || !amount || amount <= 0) {
+        return res.status(400).json({ success: false, error: 'Invalid wallet or amount' });
+    }
+    
+    try {
+        const walletLower = wallet_address.toLowerCase();
+        
+        // 1. Mint tokens on-chain
+        const { ethers } = require('ethers');
+        const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC);
+        const minterWallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+        
+        const tokenContract = new ethers.Contract(
+            process.env.TOKEN_ADDRESS_POLYGON,
+            ['function mint(address to, uint256 amount) external'],
+            minterWallet
+        );
+        
+        console.log(`🪙 Minting ${amount} tokens to ${walletLower}`);
+        const mintAmount = ethers.parseUnits(amount.toString(), 18);
+        const tx = await tokenContract.mint(wallet_address, mintAmount);
+        await tx.wait();
+        console.log(`✅ Minted! TX: ${tx.hash}`);
+        
+        // 2. Update DB balance
+        const result = await db.pool.query(`
+            INSERT INTO member_balances (wallet_address, balance, total_credited)
+            VALUES ($1, $2, $2)
+            ON CONFLICT (wallet_address) 
+            DO UPDATE SET 
+                balance = member_balances.balance + $2,
+                total_credited = COALESCE(member_balances.total_credited, 0) + $2,
+                updated_at = NOW()
+            RETURNING balance
+        `, [walletLower, amount]);
+        
+        // 3. Log the adjustment (ignore if table doesn't exist)
+        try {
+            await db.pool.query(`
+                INSERT INTO balance_adjustments (wallet_address, amount, type, reason, tx_hash, created_by, created_at)
+                VALUES ($1, $2, 'credit', $3, $4, $5, NOW())
+            `, [walletLower, amount, reason || 'Manual addition', tx.hash, req.adminSession?.email || 'admin']);
+        } catch (logError) {
+            console.log('Note: balance_adjustments table may not exist');
+        }
+        
+        res.json({ 
+            success: true, 
+            new_balance: parseFloat(result.rows[0].balance),
+            tx_hash: tx.hash
+        });
+    } catch (error) {
+        console.error('Add balance error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// POST /api/admin/members/remove-balance - Deduct from DB (no burn)
+router.post('/members/remove-balance', requireAdminAuth, async (req, res) => {
+    const { wallet_address, amount, reason } = req.body;
+    
+    if (!wallet_address || !amount || amount <= 0) {
+        return res.status(400).json({ success: false, error: 'Invalid wallet or amount' });
+    }
+    
+    try {
+        const walletLower = wallet_address.toLowerCase();
+        
+        // Check current balance
+        const balanceCheck = await db.pool.query(
+            'SELECT balance FROM member_balances WHERE wallet_address = $1',
+            [walletLower]
+        );
+        
+        if (balanceCheck.rows.length === 0 || parseFloat(balanceCheck.rows[0].balance) < amount) {
+            return res.status(400).json({ success: false, error: 'Insufficient balance' });
+        }
+        
+        // Deduct from DB
+        const result = await db.pool.query(`
+            UPDATE member_balances 
+            SET balance = balance - $2,
+                total_consumed = COALESCE(total_consumed, 0) + $2,
+                updated_at = NOW()
+            WHERE wallet_address = $1
+            RETURNING balance
+        `, [walletLower, amount]);
+        
+        // Log the adjustment (ignore if table doesn't exist)
+        try {
+            await db.pool.query(`
+                INSERT INTO balance_adjustments (wallet_address, amount, type, reason, created_by, created_at)
+                VALUES ($1, $2, 'debit', $3, $4, NOW())
+            `, [walletLower, amount, reason || 'Manual deduction', req.adminSession?.email || 'admin']);
+        } catch (logError) {
+            console.log('Note: balance_adjustments table may not exist');
+        }
+        
+        console.log(`✅ Removed ${amount} Kea€ from ${walletLower}. New balance: ${result.rows[0].balance}`);
+        
+        res.json({ 
+            success: true, 
+            new_balance: parseFloat(result.rows[0].balance)
+        });
+    } catch (error) {
+        console.error('Remove balance error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Legacy adjust-balance endpoint (for backward compatibility)
 router.post('/members/adjust-balance', requireAdminAuth, async (req, res) => {
     try {
         const { wallet_address, amount, reason } = req.body;
         
-        // Update or insert token balance
+        if (amount > 0) {
+            // Redirect to add-balance
+            req.body.amount = Math.abs(amount);
+            return router.handle(req, res, () => {});
+        }
+        
+        // For negative amounts, just update DB (no mint)
         await db.pool.query(`
             INSERT INTO member_balances (wallet_address, balance, updated_at)
             VALUES (LOWER($1), $2, NOW())
             ON CONFLICT (wallet_address) 
-            DO UPDATE SET balance = token_balances.balance + $2, updated_at = NOW()
+            DO UPDATE SET balance = member_balances.balance + $2, updated_at = NOW()
         `, [wallet_address, amount]);
-        
-        // Log the adjustment
-        await db.pool.query(`
-            INSERT INTO balance_adjustments (wallet_address, amount, reason, admin_email, created_at)
-            VALUES (LOWER($1), $2, $3, $4, NOW())
-        `, [wallet_address, amount, reason, req.adminSession?.email]).catch(() => {});
         
         res.json({ success: true, message: 'Balance adjusted' });
     } catch (error) {
@@ -646,13 +673,16 @@ router.post('/members/adjust-balance', requireAdminAuth, async (req, res) => {
 });
 
 // ==========================================
-// VOUCHERS
+// VOUCHERS - FIXED: Show member name/email
 // ==========================================
 
 router.get('/vouchers', requireAdminAuth, async (req, res) => {
     try {
         const result = await db.pool.query(`
-            SELECT v.*, r.email
+            SELECT 
+                v.*,
+                r.email as member_email,
+                r.metadata->>'name' as member_name
             FROM marketplace_vouchers v
             LEFT JOIN registrants r ON LOWER(v.wallet_address) = LOWER(r.wallet_address)
             ORDER BY v.created_at DESC
@@ -685,7 +715,7 @@ router.post('/vouchers/:id/redeem', requireAdminAuth, async (req, res) => {
 });
 
 // ==========================================
-// ADMINS (uses whitelist routes above)
+// ADMINS
 // ==========================================
 
 router.get('/admins', requireAdminAuth, async (req, res) => {
@@ -698,6 +728,126 @@ router.get('/admins', requireAdminAuth, async (req, res) => {
         res.json({ success: true, admins: result.rows });
     } catch (error) {
         console.error('Admins error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ==========================================
+// PACKAGES
+// ==========================================
+
+router.get('/packages', requireAdminAuth, async (req, res) => {
+    try {
+        const result = await db.pool.query(`
+            SELECT * FROM membership_packages ORDER BY sort_order ASC, price ASC
+        `);
+        
+        const packages = result.rows.map(p => ({
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            price: parseFloat(p.price),
+            buyingPower: parseFloat(p.buying_power),
+            bonus: parseFloat(p.bonus || 0),
+            bonusPercent: p.price > 0 ? Math.round(((p.buying_power - p.price) / p.price) * 100) : 0,
+            tier: p.tier,
+            icon: p.icon,
+            features: p.features || [],
+            active: p.active,
+            popular: p.popular,
+            testOnly: p.test_only,
+            sortOrder: p.sort_order
+        }));
+        
+        res.json({ success: true, packages });
+    } catch (error) {
+        console.error('Packages error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post('/packages', requireAdminAuth, async (req, res) => {
+    try {
+        const { id, name, description, price, buyingPower, bonus, tier, icon, features, active, popular, testOnly, sortOrder } = req.body;
+        
+        const result = await db.pool.query(`
+            INSERT INTO membership_packages 
+            (id, name, description, price, buying_power, bonus, tier, icon, features, active, popular, test_only, sort_order)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            RETURNING *
+        `, [id, name, description, price, buyingPower, bonus || 0, tier || 'standard', icon || 'card_membership', features || [], active !== false, popular || false, testOnly || false, sortOrder || 0]);
+        
+        res.json({ success: true, package: result.rows[0] });
+    } catch (error) {
+        console.error('Create package error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.put('/packages/:id', requireAdminAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description, price, buyingPower, bonus, tier, icon, features, active, popular, testOnly, sortOrder } = req.body;
+        
+        const result = await db.pool.query(`
+            UPDATE membership_packages SET
+                name = $1, description = $2, price = $3, buying_power = $4, bonus = $5,
+                tier = $6, icon = $7, features = $8, active = $9, popular = $10,
+                test_only = $11, sort_order = $12, updated_at = NOW()
+            WHERE id = $13 RETURNING *
+        `, [name, description, price, buyingPower, bonus || 0, tier || 'standard', icon || 'card_membership', features || [], active, popular || false, testOnly || false, sortOrder || 0, id]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Package not found' });
+        }
+        
+        res.json({ success: true, package: result.rows[0] });
+    } catch (error) {
+        console.error('Update package error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post('/packages/:id/toggle', requireAdminAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const result = await db.pool.query(`
+            UPDATE membership_packages SET active = NOT active, updated_at = NOW()
+            WHERE id = $1 RETURNING active
+        `, [id]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Package not found' });
+        }
+        
+        res.json({ success: true, active: result.rows[0].active });
+    } catch (error) {
+        console.error('Toggle package error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.delete('/packages/:id', requireAdminAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Check if package has purchases
+        const purchaseCheck = await db.pool.query(
+            'SELECT COUNT(*) FROM membership_purchases WHERE package = $1',
+            [id]
+        );
+        
+        if (parseInt(purchaseCheck.rows[0].count) > 0) {
+            // Soft delete - just deactivate
+            await db.pool.query('UPDATE membership_packages SET active = false WHERE id = $1', [id]);
+            return res.json({ success: true, softDeleted: true, message: 'Package deactivated (has purchases)' });
+        }
+        
+        await db.pool.query('DELETE FROM membership_packages WHERE id = $1', [id]);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Delete package error:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -736,6 +886,10 @@ router.put('/settings', requireAdminAuth, async (req, res) => {
     }
 });
 
+// ==========================================
+// IMAGE UPLOAD
+// ==========================================
+
 router.post('/upload/service-image', requireAdminAuth, upload.single('image'), (req, res) => {
     console.log('📸 Upload request received');
     if (!req.file) {
@@ -748,7 +902,7 @@ router.post('/upload/service-image', requireAdminAuth, upload.single('image'), (
         const oldFileName = oldImageUrl.replace('/images/services/', '');
         const oldFilePath = path.join(uploadDir, oldFileName);
         
-        // Don't delete the default images (villa.jpg, yacht.jpg, etc.)
+        // Don't delete the default images
         const defaultImages = ['villa.jpg', 'yacht.jpg', 'chef.jpg', 'spa.jpg', 'transfer.jpg', 'wine.jpg', 'helicopter.jpg', 'training.jpg', 'dinner.jpg', 'scuba.jpg'];
         
         if (!defaultImages.includes(oldFileName) && fs.existsSync(oldFilePath)) {
@@ -765,192 +919,94 @@ router.post('/upload/service-image', requireAdminAuth, upload.single('image'), (
 });
 
 // ==========================================
-// VOUCHER BOOKINGS MANAGEMENT
+// REFERRALS (keeping existing implementation)
 // ==========================================
 
-// GET /api/admin/bookings - All booking requests
-router.get('/bookings', requireAdminAuth, async (req, res) => {
+router.get('/referral/stats', requireAdminAuth, async (req, res) => {
     try {
-        const { status } = req.query;
+        const codesResult = await db.pool.query(`
+            SELECT 
+                COUNT(*) as total_codes,
+                COUNT(*) FILTER (WHERE active = true) as active_codes,
+                COALESCE(SUM(use_count), 0) as total_referrals,
+                COALESCE(SUM(total_bonus), 0) as total_bonus_earned
+            FROM referral_codes
+        `);
         
-        let query = `
-            SELECT vb.*, 
-                   mo.order_number,
-                   mo.email as order_email
-            FROM voucher_bookings vb
-            LEFT JOIN marketplace_orders mo ON vb.order_id = mo.id
-        `;
+        const stats = codesResult.rows[0];
         
-        const params = [];
-        if (status && status !== 'all') {
-            query += ' WHERE vb.status = $1';
-            params.push(status);
-        }
-        
-        query += ' ORDER BY vb.created_at DESC';
-        
-        const result = await db.pool.query(query, params);
-        
-        res.json({ success: true, bookings: result.rows });
-    } catch (error) {
-        console.error('Error fetching bookings:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// POST /api/admin/bookings/:id/confirm - Confirm booking
-router.post('/bookings/:id/confirm', requireAdminAuth, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const adminEmail = req.adminSession?.email || 'admin';
-        
-        const result = await db.pool.query(`
-            UPDATE voucher_bookings
-            SET status = 'confirmed',
-                responded_by = $2,
-                responded_at = NOW(),
-                updated_at = NOW()
-            WHERE id = $1 AND status = 'pending_confirmation'
-            RETURNING *
-        `, [id, adminEmail]);
-        
-        if (result.rows.length === 0) {
-            return res.status(404).json({ 
-                success: false, 
-                error: 'Booking not found or already processed' 
-            });
-        }
-        
-        const booking = result.rows[0];
-        
-        // Send confirmation email to user
-        // (You can import and call sendBookingConfirmedToUser here)
-        
-        res.json({ success: true, booking });
-    } catch (error) {
-        console.error('Error confirming booking:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// POST /api/admin/bookings/:id/reject - Reject booking
-router.post('/bookings/:id/reject', requireAdminAuth, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { reason } = req.body;
-        const adminEmail = req.adminSession?.email || 'admin';
-        
-        const result = await db.pool.query(`
-            UPDATE voucher_bookings
-            SET status = 'rejected',
-                responded_by = $2,
-                responded_at = NOW(),
-                rejection_reason = $3,
-                updated_at = NOW()
-            WHERE id = $1 AND status = 'pending_confirmation'
-            RETURNING *
-        `, [id, adminEmail, reason || 'Date not available']);
-        
-        if (result.rows.length === 0) {
-            return res.status(404).json({ 
-                success: false, 
-                error: 'Booking not found or already processed' 
-            });
-        }
-        
-        const booking = result.rows[0];
-        
-        // Send rejection email to user
-        // (You can import and call sendBookingRejectedToUser here)
-        
-        res.json({ success: true, booking });
-    } catch (error) {
-        console.error('Error rejecting booking:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// POST /api/admin/bookings/:id/redeem - Mark voucher as redeemed
-router.post('/bookings/:id/redeem', requireAdminAuth, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const adminEmail = req.adminSession?.email || 'admin';
-        
-        const result = await db.pool.query(`
-            UPDATE voucher_bookings
-            SET status = 'redeemed',
-                redeemed_at = NOW(),
-                responded_by = $2,
-                updated_at = NOW()
-            WHERE id = $1 AND status = 'confirmed'
-            RETURNING *
-        `, [id, adminEmail]);
-        
-        if (result.rows.length === 0) {
-            return res.status(404).json({ 
-                success: false, 
-                error: 'Booking not found or not confirmed' 
-            });
-        }
-        
-        res.json({ success: true, message: 'Voucher marked as redeemed' });
-    } catch (error) {
-        console.error('Error redeeming voucher:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-router.get('/referrals', requireAdminAuth, async (req, res) => {
-    try {
-        const [codes, activity, stats] = await Promise.all([
-            db.pool.query(`
-                SELECT 
-                    code,
-                    owner_wallet as wallet_address,
-                    owner_email as email,
-                    enabled,
-                    total_referrals,
-                    total_claims,
-                    total_presale_purchases,
-                    total_bonus_earned,
-                    created_at,
-                    updated_at
-                FROM referral_codes
-                ORDER BY created_at DESC
-            `),
-            db.pool.query(`
-                SELECT 
-                    referral_code,
-                    referrer_wallet,
-                    referred_wallet,
-                    referred_email,
-                    bonus_type,
-                    bonus_amount,
-                    bonus_paid,
-                    created_at
-                FROM referral_tracking
-                ORDER BY created_at DESC
-                LIMIT 50
-            `),
-            db.pool.query(`
-                SELECT 
-                    COUNT(*) as total_codes,
-                    COUNT(*) FILTER (WHERE enabled = true) as active_codes,
-                    COALESCE(SUM(total_referrals), 0) as total_referrals,
-                    COALESCE(SUM(total_bonus_earned), 0) as total_bonus
-                FROM referral_codes
-            `)
-        ]);
-
         res.json({
-            success: true,
-            codes: codes.rows,
-            activity: activity.rows,
-            stats: stats.rows[0]
+            total_codes: parseInt(stats.total_codes) || 0,
+            active_codes: parseInt(stats.active_codes) || 0,
+            total_referrals: parseInt(stats.total_referrals) || 0,
+            total_bonus_earned: parseFloat(stats.total_bonus_earned) || 0
         });
     } catch (error) {
-        console.error('Referrals error:', error);
-        res.status(500).json({ success: false, error: error.message });
+        console.error('Error getting referral stats:', error);
+        res.status(500).json({ error: 'Failed to get referral stats' });
+    }
+});
+
+router.get('/referral/codes', requireAdminAuth, async (req, res) => {
+    try {
+        const result = await db.pool.query(`
+            SELECT 
+                code,
+                wallet_address,
+                email,
+                active as enabled,
+                use_count as total_referrals,
+                total_bonus as total_bonus_earned,
+                created_at
+            FROM referral_codes
+            ORDER BY created_at DESC
+        `);
+        
+        res.json({ codes: result.rows });
+    } catch (error) {
+        console.error('Error getting referral codes:', error);
+        res.status(500).json({ error: 'Failed to get referral codes' });
+    }
+});
+
+router.get('/referral/list', requireAdminAuth, async (req, res) => {
+    try {
+        const result = await db.pool.query(`
+            SELECT 
+                referral_code as referrer_code,
+                referrer_wallet,
+                referred_wallet as referee_wallet,
+                referred_email as referee_email,
+                bonus_type,
+                bonus_amount,
+                bonus_paid,
+                created_at
+            FROM referral_tracking
+            ORDER BY created_at DESC
+            LIMIT 100
+        `);
+        
+        res.json({ referrals: result.rows });
+    } catch (error) {
+        console.error('Error getting referral list:', error);
+        res.status(500).json({ error: 'Failed to get referral list' });
+    }
+});
+
+router.post('/referral/code/:code/toggle', requireAdminAuth, async (req, res) => {
+    try {
+        const { code } = req.params;
+        const { enabled } = req.body;
+        
+        await db.pool.query(
+            'UPDATE referral_codes SET active = $1, updated_at = NOW() WHERE code = $2',
+            [enabled, code.toUpperCase()]
+        );
+        
+        res.json({ success: true, message: `Code ${enabled ? 'enabled' : 'disabled'}` });
+    } catch (error) {
+        console.error('Error toggling referral code:', error);
+        res.status(500).json({ success: false, error: 'Failed to toggle referral code' });
     }
 });
 

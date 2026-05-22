@@ -142,10 +142,6 @@
                         <span class="material-symbols-outlined">confirmation_number</span>
                         <span class="hidden sm:inline">Vouchers</span>
                     </button>
-                    <button data-tab="referrals" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold">
-                        <span class="material-symbols-outlined">share</span>
-                        <span class="hidden sm:inline">Referrals</span>
-                    </button>
                     <button data-tab="admins" class="nav-tab flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-lg text-xs sm:text-sm font-semibold">
                         <span class="material-symbols-outlined">admin_panel_settings</span>
                         <span class="hidden sm:inline">Admins</span>
@@ -555,143 +551,6 @@
                             </thead>
                             <tbody id="vouchersTableBody">
                                 <tr><td colspan="7" class="py-8 text-center text-gray-500">Loading vouchers...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Referrals Panel -->
-            <div data-panel="referrals" class="hidden">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                    <h2 class="text-2xl font-bold">Referral Program</h2>
-                    <div class="flex gap-2">
-                        <button id="refreshReferralsBtn" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                            <span class="material-symbols-outlined text-lg">refresh</span>
-                            Refresh
-                        </button>
-                        <button id="exportReferralsBtn" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                            <span class="material-symbols-outlined text-lg">download</span>
-                            Export
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold text-primary" id="refTotalCodes">0</div>
-                        <div class="text-sm text-gray-400 mt-1">Total Codes</div>
-                    </div>
-                    <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold text-green-400" id="refActiveCodes">0</div>
-                        <div class="text-sm text-gray-400 mt-1">Active Codes</div>
-                    </div>
-                    <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold" id="refTotalReferrals">0</div>
-                        <div class="text-sm text-gray-400 mt-1">Total Referrals</div>
-                    </div>
-                    <div class="glass rounded-xl p-5">
-                        <div class="text-3xl font-bold text-blue-400" id="refTotalBonus">€0</div>
-                        <div class="text-sm text-gray-400 mt-1">Total Bonus Paid</div>
-                    </div>
-                </div>
-                
-                <!-- Referral Settings -->
-                <div class="glass rounded-xl p-6 mb-6">
-                    <h3 class="font-semibold text-lg mb-6 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary">settings</span>
-                        Referral Program Settings
-                    </h3>
-                    
-                    <div class="space-y-6">
-                        <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg">
-                            <div>
-                                <p class="font-medium">Referral Program Enabled</p>
-                                <p class="text-gray-500 text-sm">Allow members to generate and share referral codes</p>
-                            </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="refEnabled" class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                            </label>
-                        </div>
-                        
-                        <div class="p-4 bg-gray-800/50 rounded-lg">
-                            <p class="font-medium mb-4">Membership Purchase Bonus</p>
-                            <p class="text-gray-500 text-sm mb-4">Bonus credited to referrer when referee purchases a membership</p>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-gray-400 text-sm block mb-2">Bonus Type</label>
-                                    <select id="refBonusType" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors">
-                                        <option value="percentage">Percentage of Purchase (%)</option>
-                                        <option value="fixed">Fixed Amount (€)</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="text-gray-400 text-sm block mb-2">Bonus Amount</label>
-                                    <input type="number" id="refBonusAmount" class="w-full bg-gray-800 border border-gray-700 focus:border-primary rounded-lg px-4 py-3 outline-none transition-colors" value="5" step="0.01" min="0">
-                                </div>
-                            </div>
-                            <p id="refBonusExplanation" class="text-gray-500 text-sm mt-2">Referrer receives 5% of referee's membership purchase as Kea Euros</p>
-                        </div>
-                        
-                        <div class="pt-4 border-t border-gray-700">
-                            <button id="saveReferralSettingsBtn" class="w-full bg-primary hover:bg-primary-light hover:text-black rounded-lg px-4 py-3 font-medium text-black transition-colors">
-                                Save Referral Settings
-                            </button>
-                            <div id="refSettingsStatus" class="text-sm text-center mt-2"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Referral Codes Table -->
-                <div class="glass rounded-xl overflow-hidden mb-6">
-                    <div class="p-4 border-b border-gray-700 flex items-center justify-between">
-                        <h3 class="font-semibold">Referral Codes</h3>
-                        <div class="flex gap-2" id="codeFilters">
-                            <button data-code-filter="all" class="code-filter-btn px-3 py-1 rounded text-sm bg-primary text-black">All</button>
-                            <button data-code-filter="active" class="code-filter-btn px-3 py-1 rounded text-sm bg-gray-700 hover:bg-gray-600">Active</button>
-                            <button data-code-filter="disabled" class="code-filter-btn px-3 py-1 rounded text-sm bg-gray-700 hover:bg-gray-600">Disabled</button>
-                        </div>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-800/50">
-                                <tr>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Code</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Owner</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Referrals</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Bonus Earned</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Status</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Created</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="referralCodesBody">
-                                <tr><td colspan="7" class="py-8 text-center text-gray-500">Loading referral codes...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <!-- Referral Activity -->
-                <div class="glass rounded-xl overflow-hidden">
-                    <div class="p-4 border-b border-gray-700">
-                        <h3 class="font-semibold">Referral Activity</h3>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-800/50">
-                                <tr>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Referrer</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Code</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Referee</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Bonus</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Paid</th>
-                                    <th class="text-left py-4 px-4 text-sm font-medium text-gray-400">Date</th>
-                                </tr>
-                            </thead>
-                            <tbody id="referralActivityBody">
-                                <tr><td colspan="6" class="py-8 text-center text-gray-500">Loading activity...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1116,7 +975,6 @@
     <script src="/admin/js/memberships.js"></script>
     <script src="/admin/js/members.js"></script>
     <script src="/admin/js/vouchers.js"></script>
-    <script src="/admin/js/referrals.js"></script>
     <script src="/admin/js/admins.js"></script>
     <script src="/admin/js/settings.js"></script>
     <script src="/admin/js/packages.js"></script>
