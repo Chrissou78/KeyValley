@@ -278,7 +278,7 @@ router.delete('/whitelist/:email', requireAdminAuth, requireSuperAdmin, async (r
 // DASHBOARD OVERVIEW
 // ==========================================
 
-router.get('/overview', requireAuth, async (req, res) => {
+router.get('/overview', requireAdminAuth, async (req, res) => {
     try {
         // Stats
         const revenueResult = await db.pool.query(`
@@ -354,7 +354,7 @@ router.get('/overview', requireAuth, async (req, res) => {
 // ORDERS
 // ==========================================
 
-router.get('/orders', requireAuth, async (req, res) => {
+router.get('/orders', requireAdminAuth, async (req, res) => {
     try {
         const result = await db.pool.query(`
             SELECT 
