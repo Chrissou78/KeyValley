@@ -1,13 +1,90 @@
 // public/admin/js/packages.js
-// VERSION: 2026-04-10 - Package management module
+// VERSION: 2026-07-01 - Package management module with metallic tier icons
 
 const Packages = {
     all: [],
     toDelete: null,
     loaded: false,
 
+    // Tier icon configuration
+    tierConfig: {
+        'test': { icon: 'science', class: 'tier-icon-test' },
+        'bronze': { icon: 'military_tech', class: 'tier-icon-bronze' },
+        'silver': { icon: 'military_tech', class: 'tier-icon-silver' },
+        'gold': { icon: 'military_tech', class: 'tier-icon-gold' },
+        'platinum': { icon: 'hexagon', class: 'tier-icon-platinum' },
+        'diamond': { icon: 'hexagon', class: 'tier-icon-diamond' },
+        'standard': { icon: 'card_membership', class: 'tier-icon-standard' }
+    },
+
     init() {
         console.log('📦 Packages module initialized');
+        this.injectTierStyles();
+    },
+
+    // Inject metallic gradient styles
+    injectTierStyles() {
+        if (document.getElementById('tier-icon-styles')) return;
+        
+        const styles = document.createElement('style');
+        styles.id = 'tier-icon-styles';
+        styles.textContent = `
+            /* Test tier */
+            .tier-icon-test .material-symbols-outlined {
+                color: #eab308;
+            }
+            
+            /* Bronze medal - warm copper tones */
+            .tier-icon-bronze .material-symbols-outlined {
+                background: linear-gradient(180deg, #e8a065 0%, #cd7f32 30%, #8b4513 70%, #cd7f32 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                filter: drop-shadow(1px 1px 1px rgba(139, 69, 19, 0.4));
+            }
+            
+            /* Silver medal - cool metallic gray */
+            .tier-icon-silver .material-symbols-outlined {
+                background: linear-gradient(180deg, #f5f5f5 0%, #d4d4d4 25%, #a8a8a8 50%, #c0c0c0 75%, #e8e8e8 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                filter: drop-shadow(1px 1px 1px rgba(100, 100, 100, 0.4));
+            }
+            
+            /* Gold medal - rich gold tones */
+            .tier-icon-gold .material-symbols-outlined {
+                background: linear-gradient(180deg, #fff4a3 0%, #ffd700 25%, #daa520 50%, #b8860b 75%, #ffd700 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                filter: drop-shadow(1px 1px 1px rgba(184, 134, 11, 0.4));
+            }
+            
+            /* Platinum hexagon - cool steel blue */
+            .tier-icon-platinum .material-symbols-outlined {
+                background: linear-gradient(135deg, #f0f0f0 0%, #a0b2c6 25%, #e5e4e2 50%, #8896ab 75%, #d4d4d4 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                filter: drop-shadow(1px 1px 2px rgba(160, 178, 198, 0.5));
+            }
+            
+            /* Diamond hexagon - brilliant blue */
+            .tier-icon-diamond .material-symbols-outlined {
+                background: linear-gradient(135deg, #e0ffff 0%, #87ceeb 25%, #00bfff 50%, #4fc3f7 75%, #b9f2ff 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                filter: drop-shadow(1px 1px 2px rgba(0, 191, 255, 0.5));
+            }
+            
+            /* Standard tier */
+            .tier-icon-standard .material-symbols-outlined {
+                color: #ee9d2b;
+            }
+        `;
+        document.head.appendChild(styles);
     },
 
     async load() {
@@ -18,7 +95,6 @@ const Packages = {
 
     async loadStripeConnectStatus() {
         try {
-            // This endpoint is outside /api/admin, so use fetch directly
             const response = await fetch('/api/membership/verify-connect', {
                 credentials: 'include'
             });
@@ -68,12 +144,21 @@ const Packages = {
         }
     },
 
-    // HTML escape helper
     escapeHtml(str) {
         if (!str) return '';
         const div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
+    },
+
+    getTierIcon(tier) {
+        const config = this.tierConfig[tier] || this.tierConfig['standard'];
+        return config.icon;
+    },
+
+    getTierClass(tier) {
+        const config = this.tierConfig[tier] || this.tierConfig['standard'];
+        return config.class;
     },
 
     render() {
@@ -93,12 +178,18 @@ const Packages = {
             return;
         }
         
-        grid.innerHTML = this.all.map(pkg => `
+        grid.innerHTML = this.all.map(pkg => {
+            const tierIcon = pkg.icon || this.getTierIcon(pkg.tier);
+            const tierClass = this.getTierClass(pkg.tier);
+            
+            return `
             <div class="glass rounded-xl overflow-hidden ${!pkg.active ? 'opacity-60' : ''} ${pkg.testOnly ? 'border-2 border-yellow-500/30' : ''}">
                 <div class="p-5">
                     <div class="flex items-start justify-between mb-3">
                         <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined text-3xl ${this.getTierColor(pkg.tier)}">${pkg.icon || 'card_membership'}</span>
+                            <div class="${tierClass}">
+                                <span class="material-symbols-outlined text-4xl">${tierIcon}</span>
+                            </div>
                             <div>
                                 <h3 class="font-semibold text-lg">${this.escapeHtml(pkg.name)}</h3>
                                 <p class="text-gray-500 text-xs font-mono">${pkg.id}</p>
@@ -158,18 +249,7 @@ const Packages = {
                     </div>
                 </div>
             </div>
-        `).join('');
-    },
-
-    getTierColor(tier) {
-        const colors = {
-            'test': 'text-yellow-400',
-            'silver': 'text-gray-300',
-            'gold': 'text-yellow-500',
-            'platinum': 'text-purple-400',
-            'standard': 'text-primary'
-        };
-        return colors[tier] || 'text-primary';
+        `}).join('');
     },
 
     updateStats() {
@@ -203,7 +283,7 @@ const Packages = {
             document.getElementById('packageBuyingPower').value = pkg.buyingPower;
             document.getElementById('packageBonus').value = pkg.bonus || 0;
             document.getElementById('packageTier').value = pkg.tier || 'standard';
-            document.getElementById('packageIcon').value = pkg.icon || 'card_membership';
+            document.getElementById('packageIcon').value = pkg.icon || '';
             document.getElementById('packageSortOrder').value = pkg.sortOrder || 0;
             document.getElementById('packageFeatures').value = (pkg.features || []).join('\n');
             document.getElementById('packageActive').checked = pkg.active !== false;
@@ -215,11 +295,32 @@ const Packages = {
             idField.disabled = false;
             document.getElementById('packageActive').checked = true;
             document.getElementById('packageTier').value = 'standard';
-            document.getElementById('packageIcon').value = 'card_membership';
+            document.getElementById('packageIcon').value = '';
             document.getElementById('packageSortOrder').value = '0';
         }
         
+        this.updateIconPreview();
         modal.classList.remove('hidden');
+    },
+
+    updateIconPreview() {
+        const tierSelect = document.getElementById('packageTier');
+        const iconInput = document.getElementById('packageIcon');
+        const preview = document.getElementById('iconPreview');
+        
+        if (!tierSelect || !preview) return;
+        
+        const tier = tierSelect.value;
+        const customIcon = iconInput?.value?.trim();
+        const icon = customIcon || this.getTierIcon(tier);
+        const tierClass = this.getTierClass(tier);
+        
+        preview.innerHTML = `
+            <div class="${tierClass}">
+                <span class="material-symbols-outlined text-4xl">${icon}</span>
+            </div>
+            <span class="text-xs text-gray-500 mt-1">${tier} tier</span>
+        `;
     },
 
     edit(id) {
@@ -257,6 +358,9 @@ const Packages = {
             .map(f => f.trim())
             .filter(f => f.length > 0);
         
+        const tier = document.getElementById('packageTier').value;
+        const customIcon = document.getElementById('packageIcon').value.trim();
+        
         const data = {
             id: document.getElementById('packageId').value.trim().toLowerCase(),
             name: document.getElementById('packageName').value.trim(),
@@ -264,8 +368,8 @@ const Packages = {
             price: parseFloat(document.getElementById('packagePrice').value) || 0,
             buyingPower: parseFloat(document.getElementById('packageBuyingPower').value) || 0,
             bonus: parseFloat(document.getElementById('packageBonus').value) || 0,
-            tier: document.getElementById('packageTier').value,
-            icon: document.getElementById('packageIcon').value,
+            tier: tier,
+            icon: customIcon || this.getTierIcon(tier),
             sortOrder: parseInt(document.getElementById('packageSortOrder').value) || 0,
             features: features,
             active: document.getElementById('packageActive').checked,
@@ -361,7 +465,6 @@ const Packages = {
         }
     },
     
-    // Export packages to CSV
     export() {
         if (!this.all.length) {
             Utils.showToast('No packages to export', 'error');
@@ -377,6 +480,7 @@ const Packages = {
             bonus: p.bonus,
             bonus_percent: p.bonusPercent,
             tier: p.tier,
+            icon: p.icon,
             active: p.active,
             popular: p.popular,
             test_only: p.testOnly,

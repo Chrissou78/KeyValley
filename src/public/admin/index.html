@@ -69,6 +69,44 @@
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
         .modal-backdrop { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); }
+
+        /* Tier Icon Styles - Metallic Gradients */
+        .tier-icon-test .material-symbols-outlined {
+            color: #eab308;
+        }
+        .tier-icon-bronze .material-symbols-outlined {
+            background: linear-gradient(180deg, #e8a065 0%, #cd7f32 30%, #8b4513 70%, #cd7f32 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .tier-icon-silver .material-symbols-outlined {
+            background: linear-gradient(180deg, #f5f5f5 0%, #d4d4d4 25%, #a8a8a8 50%, #c0c0c0 75%, #e8e8e8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .tier-icon-gold .material-symbols-outlined {
+            background: linear-gradient(180deg, #fff4a3 0%, #ffd700 25%, #daa520 50%, #b8860b 75%, #ffd700 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .tier-icon-platinum .material-symbols-outlined {
+            background: linear-gradient(135deg, #f0f0f0 0%, #a0b2c6 25%, #e5e4e2 50%, #8896ab 75%, #d4d4d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .tier-icon-diamond .material-symbols-outlined {
+            background: linear-gradient(135deg, #e0ffff 0%, #87ceeb 25%, #00bfff 50%, #4fc3f7 75%, #b9f2ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .tier-icon-standard .material-symbols-outlined {
+            color: #ee9d2b;
+        }
     </style>
 </head>
 <body class="min-h-screen text-white">
@@ -861,7 +899,7 @@
                 <button id="closePackageModal" class="text-gray-400 hover:text-white"><span class="material-symbols-outlined">close</span></button>
             </div>
             <form id="packageForm" class="p-6 space-y-4">
-                <input type="hidden" id="packageEditMode" value="false">
+                <input type="hidden" id="packageEditMode" value="">
                 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -879,47 +917,70 @@
                     </div>
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">Price (€) *</label>
-                        <input type="number" id="packagePrice" required min="0" step="0.01" placeholder="0.00" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
+                        <input type="number" id="packagePrice" required min="0" step="0.01" placeholder="0.00" onchange="Packages.calculateBonus()" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">Kea Euros (€) *</label>
-                        <input type="number" id="packageBuyingPower" required min="0" step="0.01" placeholder="0.00" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
+                        <input type="number" id="packageBuyingPower" required min="0" step="0.01" placeholder="0.00" onchange="Packages.calculateBonus()" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">Bonus (€)</label>
-                        <input type="number" id="packageBonus" min="0" step="0.01" value="0" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
+                        <input type="number" id="packageBonus" min="0" step="0.01" value="0" readonly class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-green-400">
                         <p class="text-gray-500 text-xs mt-1">Auto-calculated: Kea Euros - Price</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-400 mb-1">Tier</label>
-                        <select id="packageTier" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
-                            <option value="standard">Standard</option>
-                            <option value="test">Test</option>
-                            <option value="silver">Silver</option>
-                            <option value="gold">Gold</option>
-                            <option value="platinum">Platinum</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm text-gray-400 mb-1">Icon</label>
-                        <select id="packageIcon" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
-                            <option value="card_membership">card_membership</option>
-                            <option value="workspace_premium">workspace_premium</option>
-                            <option value="diamond">diamond</option>
-                            <option value="stars">stars</option>
-                            <option value="science">science</option>
-                            <option value="verified">verified</option>
-                        </select>
                     </div>
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">Sort Order</label>
                         <input type="number" id="packageSortOrder" min="0" value="0" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
                     </div>
+                    
+                    <!-- Tier & Icon Section -->
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Tier</label>
+                        <select id="packageTier" onchange="Packages.updateIconPreview()" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
+                            <option value="test">🧪 Test</option>
+                            <option value="bronze">🥉 Bronze</option>
+                            <option value="silver">🥈 Silver</option>
+                            <option value="gold">🥇 Gold</option>
+                            <option value="platinum">💠 Platinum</option>
+                            <option value="diamond">💎 Diamond</option>
+                            <option value="standard">📦 Standard</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1">Icon (optional)</label>
+                        <select id="packageIcon" onchange="Packages.updateIconPreview()" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none">
+                            <option value="">Auto (from tier)</option>
+                            <option value="military_tech">🏅 military_tech (medal)</option>
+                            <option value="hexagon">⬡ hexagon</option>
+                            <option value="workspace_premium">⭐ workspace_premium</option>
+                            <option value="diamond">💎 diamond</option>
+                            <option value="stars">✨ stars</option>
+                            <option value="auto_awesome">✨ auto_awesome</option>
+                            <option value="emoji_events">🏆 emoji_events (trophy)</option>
+                            <option value="shield">🛡️ shield</option>
+                            <option value="verified">✓ verified</option>
+                            <option value="card_membership">💳 card_membership</option>
+                            <option value="science">🧪 science</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Icon Preview -->
+                    <div class="col-span-2">
+                        <label class="block text-sm text-gray-400 mb-1">Preview</label>
+                        <div id="iconPreview" class="flex items-center gap-4 p-4 bg-gray-800/50 rounded-lg">
+                            <div class="tier-icon-standard">
+                                <span class="material-symbols-outlined text-4xl">card_membership</span>
+                            </div>
+                            <span class="text-sm text-gray-400">standard tier</span>
+                        </div>
+                    </div>
+                    
                     <div class="col-span-2">
                         <label class="block text-sm text-gray-400 mb-1">Features (one per line)</label>
                         <textarea id="packageFeatures" rows="4" placeholder="€500 bonus value&#10;Access to marketplace&#10;Member benefits" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none"></textarea>
                     </div>
-                    <div class="flex items-center gap-6">
+                    
+                    <div class="col-span-2 flex items-center gap-6">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" id="packageActive" checked class="w-5 h-5 rounded bg-gray-800 border-gray-700 text-primary">
                             <span class="text-sm">Active</span>
@@ -936,13 +997,12 @@
                 </div>
 
                 <div class="flex gap-3 pt-4 border-t border-gray-700">
-                    <button type="button" id="cancelPackageBtn" class="flex-1 px-4 py-2 border border-gray-700 rounded-lg hover:bg-gray-800">Cancel</button>
+                    <button type="button" onclick="Packages.closeModal()" class="flex-1 px-4 py-2 border border-gray-700 rounded-lg hover:bg-gray-800">Cancel</button>
                     <button type="submit" class="flex-1 px-4 py-2 bg-primary text-black font-semibold rounded-lg hover:bg-yellow-500">Save Package</button>
                 </div>
             </form>
         </div>
     </div>
-
     <!-- Delete Package Confirmation Modal -->
     <div id="deletePackageModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="glass rounded-2xl max-w-md w-full">

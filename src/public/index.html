@@ -701,15 +701,15 @@
                     
                     let badgeText = '';
                     let badgeClass = '';
-                    if (isPopular) {
-                        badgeText = 'Most Popular';
-                        badgeClass = 'popular';
-                    } else if (isBestValue) {
-                        badgeText = 'Best Value';
-                        badgeClass = 'best-value';
-                    } else {
+                    if (index === 0) {
                         badgeText = 'Starter';
                         badgeClass = '';
+                    } else if (index === 1) {
+                        badgeText = 'Most Popular';
+                        badgeClass = 'popular';
+                    } else if (index === 2) {
+                        badgeText = 'Best Value';
+                        badgeClass = 'best-value';
                     }
                     
                     // Get features (handle both array and string)
@@ -724,7 +724,7 @@
                         <div class="package-card ${isPopular ? 'featured' : ''}">
                             <div class="package-badge ${badgeClass}">${badgeText}</div>
                             <div class="mb-6">
-                                <h3 class="text-2xl font-serif text-white mb-2">${pkg.name}</h3>
+                                <h3 class="text-4xl font-serif text-white mb-2">${pkg.name}</h3>
                                 <p class="text-slate-500 text-sm">${pkg.description || ''}</p>
                             </div>
                             <div class="mb-4">
