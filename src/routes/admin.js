@@ -11,7 +11,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Create upload folder if it doesn't exist
-const uploadDir = path.join(__dirname, '../../public/images/services');
+const uploadDir = path.join(__dirname, '../public/images/services');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -464,6 +464,23 @@ router.put('/services/:id', requireAdminAuth, async (req, res) => {
 router.delete('/services/:id', requireAdminAuth, async (req, res) => {
     try {
         const { id } = req.params;
+        
+        // Check if service has vouchers
+        const voucherCheck = await db.pool.query(
+            'SELECT COUNT(*) FROM marketplace_vouchers WHERE service_id = $1',
+            [id]
+        );
+        
+        if (parseInt(voucherCheck.rows[0].count) > 0) {
+            // Soft delete - just deactivate
+            await db.pool.query(
+                'UPDATE marketplace_services SET is_active = false, updated_at = NOW() WHERE id = $1',
+                [id]
+            );
+            return res.json({ success: true, softDeleted: true, message: 'Service deactivated (has vouchers)' });
+        }
+        
+        // Hard delete if no vouchers
         await db.pool.query('DELETE FROM marketplace_services WHERE id = $1', [id]);
         res.json({ success: true });
     } catch (error) {

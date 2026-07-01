@@ -63,8 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Action buttons
-    document.getElementById('addServiceBtn')?.addEventListener('click', () => Marketplace.openAddModal());
-    document.getElementById('serviceForm')?.addEventListener('submit', (e) => Marketplace.save(e));
     document.getElementById('addAdminBtn')?.addEventListener('click', () => Admins.add());
     document.getElementById('saveReferralSettingsBtn')?.addEventListener('click', () => Referrals.saveSettings());
     document.getElementById('savePlatformSettingsBtn')?.addEventListener('click', () => Settings.savePlatform());
