@@ -465,6 +465,14 @@ router.delete('/services/:id', requireAdminAuth, async (req, res) => {
     try {
         const { id } = req.params;
         
+        // Get service image before deleting
+        const serviceResult = await db.pool.query(
+            'SELECT image_url FROM marketplace_services WHERE id = $1',
+            [id]
+        );
+        
+        const imageUrl = serviceResult.rows[0]?.image_url;
+        
         // Check if service has vouchers
         const voucherCheck = await db.pool.query(
             'SELECT COUNT(*) FROM marketplace_vouchers WHERE service_id = $1',
@@ -472,7 +480,7 @@ router.delete('/services/:id', requireAdminAuth, async (req, res) => {
         );
         
         if (parseInt(voucherCheck.rows[0].count) > 0) {
-            // Soft delete - just deactivate
+            // Soft delete - just deactivate (keep image)
             await db.pool.query(
                 'UPDATE marketplace_services SET is_active = false, updated_at = NOW() WHERE id = $1',
                 [id]
@@ -480,8 +488,23 @@ router.delete('/services/:id', requireAdminAuth, async (req, res) => {
             return res.json({ success: true, softDeleted: true, message: 'Service deactivated (has vouchers)' });
         }
         
-        // Hard delete if no vouchers
+        // Hard delete
         await db.pool.query('DELETE FROM marketplace_services WHERE id = $1', [id]);
+        
+        // Delete image file if exists
+        if (imageUrl && imageUrl.startsWith('/images/services/')) {
+            const fileName = imageUrl.replace('/images/services/', '');
+            const defaultImages = ['villa.jpg', 'yacht.jpg', 'chef.jpg', 'spa.jpg', 'transfer.jpg', 'wine.jpg', 'helicopter.jpg', 'training.jpg', 'dinner.jpg', 'scuba.jpg', 'meal.png'];
+            
+            if (!defaultImages.includes(fileName)) {
+                const filePath = path.join(__dirname, '../public/images/services', fileName);
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                    console.log('🗑️ Deleted image:', fileName);
+                }
+            }
+        }
+        
         res.json({ success: true });
     } catch (error) {
         console.error('Delete service error:', error);
