@@ -1,10 +1,17 @@
 // src/routes/membership.js
 // VERSION: 2026-04-25 - Packages from DB + 90/10 split on NET + Email webhook
+require('dotenv').config();
 const express = require('express');
 const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { pool } = require('../db-postgres');
 const emailService = require('../services/email-webhook');
+
+// Debug: Check env vars at load time
+console.log('🔧 MEMBERSHIP ROUTE ENV CHECK AT LOAD:');
+console.log('   POLYGON_RPC:', process.env.POLYGON_RPC ? '✅ Set' : '❌ Missing');
+console.log('   PRIVATE_KEY:', process.env.PRIVATE_KEY ? '✅ Set' : '❌ Missing');
+console.log('   TOKEN_ADDRESS_POLYGON:', process.env.TOKEN_ADDRESS_POLYGON ? '✅ Set' : '❌ Missing');
 
 const PLATFORM_FEE_PERCENT = 10; // 10% platform fee on NET amount (after Stripe fees)
 const CONNECTED_ACCOUNT_ID = process.env.STRIPE_CONNECTED_ACCOUNT_ID;
