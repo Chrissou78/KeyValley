@@ -750,7 +750,6 @@ router.post('/create-payment-intent', async (req, res) => {
                 destination: CONNECTED_ACCOUNT_ID,
                 amount: partnerAmountCents
             };
-            paymentIntentOptions.on_behalf_of = CONNECTED_ACCOUNT_ID;
             log(`Transfer configured: €${partnerShare.toFixed(2)} to ${CONNECTED_ACCOUNT_ID}`);
         }
 
