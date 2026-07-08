@@ -577,53 +577,11 @@ router.post('/mint-and-capture', async (req, res) => {
         log('   ✅ Order updated');
 
         // ========================================
-        // STEP 6: Partner Transfer
+        // STEP 6: Partner Transfer (automatic via transfer_data)
         // ========================================
         markStep('6_start');
         log('📍 STEP 6: Partner transfer...');
-
-        if (CONNECTED_ACCOUNT_ID && partnerAmount > 0.50) {
-            try {
-                // Check available balance in the correct currency
-                const balance = await stripe.balance.retrieve();
-                const availableBal = balance.available.find(b => b.currency === currency);
-                const availableAmount = availableBal ? availableBal.amount / 100 : 0;
-                
-                log(`   💰 Available balance: ${availableAmount.toFixed(2)} ${currency.toUpperCase()}`);
-                
-                if (availableAmount >= partnerAmount) {
-                    await stripe.transfers.create({
-                        amount: Math.round(partnerAmount * 100),
-                        currency: currency,
-                        destination: CONNECTED_ACCOUNT_ID,
-                        transfer_group: orderId,
-                        metadata: { order_id: orderId, package_id: packageId }
-                    });
-                    log(`   ✅ Transferred ${partnerAmount.toFixed(2)} ${currency.toUpperCase()} to partner`);
-                } else {
-                    log(`   ⏳ Insufficient available balance (${availableAmount.toFixed(2)} < ${partnerAmount.toFixed(2)} ${currency.toUpperCase()})`);
-                    log(`   ⏳ Transfer will need to be done manually or via scheduled job once funds clear`);
-                    
-                    await pool.query(`
-                        UPDATE membership_purchases 
-                        SET transfer_status = 'pending',
-                            transfer_amount = $1
-                        WHERE payment_intent_id = $2
-                    `, [partnerAmount, paymentIntentId]);
-                }
-            } catch (e) {
-                log(`   ⚠️ Transfer failed: ${e.message}`);
-                
-                await pool.query(`
-                    UPDATE membership_purchases 
-                    SET transfer_status = 'failed',
-                        transfer_error = $1
-                    WHERE payment_intent_id = $2
-                `, [e.message, paymentIntentId]);
-            }
-        } else {
-            log('   ⏭️ Skipped (no connected account or amount too low)');
-        }
+        log('   ✅ Handled automatically via transfer_data on capture');
         markStep('6_end');
         
         // ========================================
@@ -746,10 +704,22 @@ router.post('/create-payment-intent', async (req, res) => {
         const order = orderResult.rows[0];
         const amountCents = Math.round(pkg.price * 100);
 
-        const paymentIntent = await stripe.paymentIntents.create({
+        // Calculate partner amount upfront (4% + €0.28 estimated fee)
+        const estimatedFee = (pkg.price * 0.04) + 0.28;
+        const estimatedNet = pkg.price - estimatedFee;
+        const partnerShare = estimatedNet * ((100 - PLATFORM_FEE_PERCENT) / 100); // 90%
+        const partnerAmountCents = Math.round(partnerShare * 100);
+
+        console.log(`💰 Split calculation for €${pkg.price}:`);
+        console.log(`   Estimated fee: €${estimatedFee.toFixed(2)}`);
+        console.log(`   Estimated net: €${estimatedNet.toFixed(2)}`);
+        console.log(`   Partner (${100 - PLATFORM_FEE_PERCENT}%): €${partnerShare.toFixed(2)}`);
+
+        // Build payment intent options
+        const paymentIntentOptions = {
             amount: amountCents,
-            currency: pkg.currency,
-            capture_method: 'manual', 
+            currency: pkg.currency || 'eur',
+            capture_method: 'manual',
             metadata: {
                 order_id: order.id.toString(),
                 order_number: order.order_number,
@@ -758,15 +728,34 @@ router.post('/create-payment-intent', async (req, res) => {
                 package_key: packageKey,
                 package_name: pkg.name,
                 buying_power: pkg.buyingPower.toString(),
-                bonus: pkg.bonus.toString()
+                bonus: pkg.bonus.toString(),
+                estimated_partner_amount: partnerShare.toFixed(2)
             },
             receipt_email: email || undefined,
             description: `Kea Valley ${pkg.name}`
-        });
+        };
 
+        // Add transfer_data if connected account is configured and partner amount > 0
+        if (CONNECTED_ACCOUNT_ID && partnerAmountCents > 0) {
+            paymentIntentOptions.transfer_data = {
+                destination: CONNECTED_ACCOUNT_ID,
+                amount: partnerAmountCents
+            };
+            paymentIntentOptions.on_behalf_of = CONNECTED_ACCOUNT_ID;
+            console.log(`   ✅ Transfer configured: €${partnerShare.toFixed(2)} to ${CONNECTED_ACCOUNT_ID}`);
+        }
+
+        const paymentIntent = await stripe.paymentIntents.create(paymentIntentOptions);
+
+        // Store split info in order
         await pool.query(
-            'UPDATE membership_purchases SET payment_intent_id = $1 WHERE id = $2',
-            [paymentIntent.id, order.id]
+            `UPDATE membership_purchases 
+             SET payment_intent_id = $1, 
+                 estimated_fee = $2,
+                 estimated_net = $3,
+                 partner_amount = $4
+             WHERE id = $5`,
+            [paymentIntent.id, estimatedFee, estimatedNet, partnerShare, order.id]
         );
 
         console.log(`✅ Payment intent created: ${paymentIntent.id} for ${pkg.name}`);
@@ -872,6 +861,115 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
     }
 
     res.json({ received: true });
+});
+
+// GET /api/membership/process-pending-transfers
+router.get('/process-pending-transfers', async (req, res) => {
+    const logs = [];
+    const log = (msg) => {
+        console.log(`[TRANSFERS] ${msg}`);
+        logs.push(msg);
+    };
+    
+    try {
+        log('Starting pending transfers processing...');
+        
+        // Get available balance
+        const balance = await stripe.balance.retrieve();
+        const availableChf = balance.available.find(b => b.currency === 'chf');
+        const available = availableChf ? availableChf.amount / 100 : 0;
+        
+        log(`Available balance: ${available.toFixed(2)} CHF`);
+        
+        if (available <= 0) {
+            return res.json({ 
+                success: true, 
+                message: 'No available balance', 
+                processed: 0,
+                logs 
+            });
+        }
+        
+        // Get pending transfers
+        const pending = await pool.query(`
+            SELECT payment_intent_id, order_id, partner_amount, currency 
+            FROM membership_purchases 
+            WHERE transfer_status = 'pending' 
+            AND partner_amount > 0
+            ORDER BY created_at ASC
+        `);
+        
+        log(`Found ${pending.rows.length} pending transfers`);
+        
+        if (pending.rows.length === 0) {
+            return res.json({ 
+                success: true, 
+                message: 'No pending transfers', 
+                processed: 0,
+                available_balance: available,
+                logs 
+            });
+        }
+        
+        let processed = 0;
+        let failed = 0;
+        let remaining = available;
+        
+        for (const row of pending.rows) {
+            const amount = parseFloat(row.partner_amount);
+            const currency = row.currency || 'chf';
+            
+            if (remaining < amount) {
+                log(`⏭️ ${row.order_id}: Skipped (need ${amount.toFixed(2)}, have ${remaining.toFixed(2)} ${currency.toUpperCase()})`);
+                continue;
+            }
+            
+            try {
+                await stripe.transfers.create({
+                    amount: Math.round(amount * 100),
+                    currency: currency,
+                    destination: CONNECTED_ACCOUNT_ID,
+                    transfer_group: row.order_id,
+                    metadata: { order_id: row.order_id }
+                });
+                
+                await pool.query(`
+                    UPDATE membership_purchases 
+                    SET transfer_status = 'completed',
+                        transfer_completed_at = NOW()
+                    WHERE payment_intent_id = $1
+                `, [row.payment_intent_id]);
+                
+                remaining -= amount;
+                processed++;
+                log(`✅ ${row.order_id}: Transferred ${amount.toFixed(2)} ${currency.toUpperCase()}`);
+                
+            } catch (e) {
+                failed++;
+                log(`❌ ${row.order_id}: Failed - ${e.message}`);
+                
+                await pool.query(`
+                    UPDATE membership_purchases 
+                    SET transfer_error = $1
+                    WHERE payment_intent_id = $2
+                `, [e.message, row.payment_intent_id]);
+            }
+        }
+        
+        log(`Done. Processed: ${processed}, Failed: ${failed}, Remaining balance: ${remaining.toFixed(2)} CHF`);
+        
+        res.json({ 
+            success: true, 
+            processed,
+            failed,
+            remaining_balance: remaining,
+            logs 
+        });
+        
+    } catch (err) {
+        log(`Fatal error: ${err.message}`);
+        res.status(500).json({ success: false, error: err.message, logs });
+    }
 });
 
 module.exports = router;
