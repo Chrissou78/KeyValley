@@ -492,9 +492,10 @@ router.post('/mint-and-capture', async (req, res) => {
         // ========================================
         markStep('4_start');
         log('📍 STEP 4: Capturing payment...');
-        
+
         let capturedIntent;
-        
+        let actualStripeFee = null;
+
         if (paymentIntent.status === 'requires_capture') {
             capturedIntent = await stripe.paymentIntents.capture(paymentIntentId);
             log(`   ✅ Captured: €${capturedIntent.amount_received / 100}`);
@@ -502,15 +503,49 @@ router.post('/mint-and-capture', async (req, res) => {
             capturedIntent = paymentIntent;
             log('   ⚠️ Already captured, using existing data');
         }
-        
-        markStep('4_end', { amount: capturedIntent.amount_received / 100 });
-        
+
+        // Get ACTUAL Stripe fee from the charge
+        const amountReceived = capturedIntent.amount_received / 100;
+
+        if (capturedIntent.latest_charge) {
+            try {
+                const charge = await stripe.charges.retrieve(capturedIntent.latest_charge);
+                if (charge.balance_transaction) {
+                    const balanceTx = await stripe.balanceTransactions.retrieve(charge.balance_transaction);
+                    actualStripeFee = balanceTx.fee / 100;
+                    log(`   💳 Actual Stripe fee: €${actualStripeFee.toFixed(2)}`);
+                }
+            } catch (e) {
+                log(`   ⚠️ Could not get actual fee: ${e.message}`);
+            }
+        }
+
+        // Use actual fee or estimate as fallback
+        const stripeFee = actualStripeFee !== null ? actualStripeFee : estimateStripeFee(amountReceived);
+        const netAmount = amountReceived - stripeFee;
+        const platformFee = netAmount * (PLATFORM_FEE_PERCENT / 100);
+        const partnerAmount = netAmount - platformFee;
+
+        log(`   📊 Gross: €${amountReceived.toFixed(2)}`);
+        log(`   📊 Stripe fee: €${stripeFee.toFixed(2)}${actualStripeFee !== null ? ' (actual)' : ' (estimated)'}`);
+        log(`   📊 Net: €${netAmount.toFixed(2)}`);
+        log(`   📊 Platform (${PLATFORM_FEE_PERCENT}%): €${platformFee.toFixed(2)}`);
+        log(`   📊 Partner: €${partnerAmount.toFixed(2)}`);
+
+        markStep('4_end', { 
+            amount: amountReceived, 
+            stripe_fee: stripeFee, 
+            net: netAmount,
+            platform: platformFee,
+            partner: partnerAmount
+        });
+
         // ========================================
         // STEP 5: Update Database
         // ========================================
         markStep('5_start');
         log('📍 STEP 5: Updating database...');
-        
+
         // Credit balance
         await pool.query(`
             INSERT INTO member_balances (wallet_address, balance, total_credited)
@@ -522,32 +557,7 @@ router.post('/mint-and-capture', async (req, res) => {
                 updated_at = NOW()
         `, [walletLower, buyingPowerAmount]);
         log(`   ✅ Credited ${buyingPowerAmount} Kea€ to ${walletLower}`);
-        
-        // Calculate fees
-        const amountReceived = capturedIntent.amount_received / 100;
-        let stripeFee = estimateStripeFee(amountReceived);
-        
-        try {
-            if (capturedIntent.latest_charge) {
-                const charge = await stripe.charges.retrieve(capturedIntent.latest_charge);
-                if (charge.balance_transaction) {
-                    const balanceTx = await stripe.balanceTransactions.retrieve(charge.balance_transaction);
-                    const actualFee = balanceTx.fee / 100;
-                    if (actualFee >= 0.25 && actualFee <= amountReceived * 0.10) {
-                        stripeFee = actualFee;
-                    }
-                }
-            }
-        } catch (e) {
-            log(`   ⚠️ Could not get actual fee: ${e.message}`);
-        }
-        
-        const netAmount = amountReceived - stripeFee;
-        const platformFee = netAmount * (PLATFORM_FEE_PERCENT / 100);
-        const partnerAmount = netAmount - platformFee;
-        
-        log(`   📊 Stripe: €${stripeFee.toFixed(2)}, Platform: €${platformFee.toFixed(2)}, Partner: €${partnerAmount.toFixed(2)}`);
-        
+
         // Update order
         await pool.query(`
             UPDATE membership_purchases 
@@ -559,28 +569,55 @@ router.post('/mint-and-capture', async (req, res) => {
                 metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{mint_tx_hash}', $5::jsonb)
             WHERE payment_intent_id = $6
         `, [stripeFee, netAmount, platformFee, partnerAmount, JSON.stringify(mintTxHash), paymentIntentId]);
-        
+
         markStep('5_end');
         log('   ✅ Order updated');
-        
+
         // ========================================
         // STEP 6: Partner Transfer
         // ========================================
         markStep('6_start');
         log('📍 STEP 6: Partner transfer...');
-        
+
         if (CONNECTED_ACCOUNT_ID && partnerAmount > 0.50) {
             try {
-                await stripe.transfers.create({
-                    amount: Math.round(partnerAmount * 100),
-                    currency: 'eur',
-                    destination: CONNECTED_ACCOUNT_ID,
-                    transfer_group: orderId,
-                    metadata: { order_id: orderId, package_id: packageId }
-                });
-                log(`   ✅ Transferred €${partnerAmount.toFixed(2)}`);
+                // Check available balance first
+                const balance = await stripe.balance.retrieve();
+                const availableEur = balance.available.find(b => b.currency === 'eur');
+                const availableAmount = availableEur ? availableEur.amount / 100 : 0;
+                
+                log(`   💰 Available balance: €${availableAmount.toFixed(2)}`);
+                
+                if (availableAmount >= partnerAmount) {
+                    await stripe.transfers.create({
+                        amount: Math.round(partnerAmount * 100),
+                        currency: 'eur',
+                        destination: CONNECTED_ACCOUNT_ID,
+                        transfer_group: orderId,
+                        metadata: { order_id: orderId, package_id: packageId }
+                    });
+                    log(`   ✅ Transferred €${partnerAmount.toFixed(2)} to partner`);
+                } else {
+                    log(`   ⏳ Insufficient available balance (€${availableAmount.toFixed(2)} < €${partnerAmount.toFixed(2)})`);
+                    log(`   ⏳ Transfer will need to be done manually or via scheduled job once funds clear`);
+                    
+                    // Store pending transfer in DB for later processing
+                    await pool.query(`
+                        UPDATE membership_purchases 
+                        SET transfer_status = 'pending',
+                            transfer_amount = $1
+                        WHERE payment_intent_id = $2
+                    `, [partnerAmount, paymentIntentId]);
+                }
             } catch (e) {
                 log(`   ⚠️ Transfer failed: ${e.message}`);
+                
+                await pool.query(`
+                    UPDATE membership_purchases 
+                    SET transfer_status = 'failed',
+                        transfer_error = $1
+                    WHERE payment_intent_id = $2
+                `, [e.message, paymentIntentId]);
             }
         } else {
             log('   ⏭️ Skipped (no connected account or amount too low)');
