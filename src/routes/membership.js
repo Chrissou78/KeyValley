@@ -494,7 +494,7 @@ router.post('/mint-and-capture', async (req, res) => {
         log('📍 STEP 4: Capturing payment...');
 
         let capturedIntent;
-        let actualStripeFee = null;
+        let balanceTxData = null;
 
         if (paymentIntent.status === 'requires_capture') {
             capturedIntent = await stripe.paymentIntents.capture(paymentIntentId);
@@ -504,39 +504,40 @@ router.post('/mint-and-capture', async (req, res) => {
             log('   ⚠️ Already captured, using existing data');
         }
 
-        // Get ACTUAL Stripe fee from the charge
-        const amountReceived = capturedIntent.amount_received / 100;
-
+        // Get ACTUAL values from balance transaction
         if (capturedIntent.latest_charge) {
             try {
                 const charge = await stripe.charges.retrieve(capturedIntent.latest_charge);
                 if (charge.balance_transaction) {
                     const balanceTx = await stripe.balanceTransactions.retrieve(charge.balance_transaction);
-                    log(`📋 Balance TX raw: ${JSON.stringify(balanceTx)}`);
-                    actualStripeFee = balanceTx.fee / 100;
-                    log(`   💳 Actual Stripe fee: €${actualStripeFee.toFixed(2)}`);
+                    balanceTxData = {
+                        net: balanceTx.net / 100,
+                        fee: balanceTx.fee / 100,
+                        currency: balanceTx.currency
+                    };
+                    log(`   💳 Stripe fee: ${balanceTxData.fee.toFixed(2)} ${balanceTxData.currency.toUpperCase()}`);
+                    log(`   💰 Net received: ${balanceTxData.net.toFixed(2)} ${balanceTxData.currency.toUpperCase()}`);
                 }
             } catch (e) {
-                log(`   ⚠️ Could not get actual fee: ${e.message}`);
+                log(`   ⚠️ Could not get balance transaction: ${e.message}`);
             }
         }
 
-        // Use actual fee or estimate as fallback
-        const stripeFee = actualStripeFee !== null ? actualStripeFee : estimateStripeFee(amountReceived);
-        const netAmount = amountReceived - stripeFee;
+        // Calculate split from actual net amount
+        const netAmount = balanceTxData ? balanceTxData.net : (capturedIntent.amount_received / 100) * 0.95; // fallback estimate
+        const currency = balanceTxData ? balanceTxData.currency : 'eur';
+        const stripeFee = balanceTxData ? balanceTxData.fee : (capturedIntent.amount_received / 100) * 0.05;
         const platformFee = netAmount * (PLATFORM_FEE_PERCENT / 100);
         const partnerAmount = netAmount - platformFee;
 
-        log(`   📊 Gross: €${amountReceived.toFixed(2)}`);
-        log(`   📊 Stripe fee: €${stripeFee.toFixed(2)}${actualStripeFee !== null ? ' (actual)' : ' (estimated)'}`);
-        log(`   📊 Net: €${netAmount.toFixed(2)}`);
-        log(`   📊 Platform (${PLATFORM_FEE_PERCENT}%): €${platformFee.toFixed(2)}`);
-        log(`   📊 Partner: €${partnerAmount.toFixed(2)}`);
+        log(`   📊 Net: ${netAmount.toFixed(2)} ${currency.toUpperCase()}`);
+        log(`   📊 Platform (${PLATFORM_FEE_PERCENT}%): ${platformFee.toFixed(2)} ${currency.toUpperCase()}`);
+        log(`   📊 Partner: ${partnerAmount.toFixed(2)} ${currency.toUpperCase()}`);
 
         markStep('4_end', { 
-            amount: amountReceived, 
-            stripe_fee: stripeFee, 
             net: netAmount,
+            currency: currency,
+            stripe_fee: stripeFee, 
             platform: platformFee,
             partner: partnerAmount
         });
@@ -567,9 +568,10 @@ router.post('/mint-and-capture', async (req, res) => {
                 net_amount = $2,
                 platform_fee = $3,
                 partner_amount = $4,
-                metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{mint_tx_hash}', $5::jsonb)
-            WHERE payment_intent_id = $6
-        `, [stripeFee, netAmount, platformFee, partnerAmount, JSON.stringify(mintTxHash), paymentIntentId]);
+                currency = $5,
+                metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{mint_tx_hash}', $6::jsonb)
+            WHERE payment_intent_id = $7
+        `, [stripeFee, netAmount, platformFee, partnerAmount, currency, JSON.stringify(mintTxHash), paymentIntentId]);
 
         markStep('5_end');
         log('   ✅ Order updated');
@@ -582,27 +584,26 @@ router.post('/mint-and-capture', async (req, res) => {
 
         if (CONNECTED_ACCOUNT_ID && partnerAmount > 0.50) {
             try {
-                // Check available balance first
+                // Check available balance in the correct currency
                 const balance = await stripe.balance.retrieve();
-                const availableEur = balance.available.find(b => b.currency === 'eur');
-                const availableAmount = availableEur ? availableEur.amount / 100 : 0;
+                const availableBal = balance.available.find(b => b.currency === currency);
+                const availableAmount = availableBal ? availableBal.amount / 100 : 0;
                 
-                log(`   💰 Available balance: €${availableAmount.toFixed(2)}`);
+                log(`   💰 Available balance: ${availableAmount.toFixed(2)} ${currency.toUpperCase()}`);
                 
                 if (availableAmount >= partnerAmount) {
                     await stripe.transfers.create({
                         amount: Math.round(partnerAmount * 100),
-                        currency: 'eur',
+                        currency: currency,
                         destination: CONNECTED_ACCOUNT_ID,
                         transfer_group: orderId,
                         metadata: { order_id: orderId, package_id: packageId }
                     });
-                    log(`   ✅ Transferred €${partnerAmount.toFixed(2)} to partner`);
+                    log(`   ✅ Transferred ${partnerAmount.toFixed(2)} ${currency.toUpperCase()} to partner`);
                 } else {
-                    log(`   ⏳ Insufficient available balance (€${availableAmount.toFixed(2)} < €${partnerAmount.toFixed(2)})`);
+                    log(`   ⏳ Insufficient available balance (${availableAmount.toFixed(2)} < ${partnerAmount.toFixed(2)} ${currency.toUpperCase()})`);
                     log(`   ⏳ Transfer will need to be done manually or via scheduled job once funds clear`);
                     
-                    // Store pending transfer in DB for later processing
                     await pool.query(`
                         UPDATE membership_purchases 
                         SET transfer_status = 'pending',
