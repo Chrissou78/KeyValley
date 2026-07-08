@@ -770,6 +770,119 @@ router.post('/create-payment-intent', async (req, res) => {
         console.error('Error creating payment intent:', error);
         res.status(500).json({ success: false, error: 'Failed to create payment' });
     }
+});router.post('/create-payment-intent', async (req, res) => {
+    const serverLogs = [];
+    const log = (msg) => {
+        console.log(`[CREATE-PI] ${msg}`);
+        serverLogs.push(msg);
+    };
+
+    try {
+        const { wallet, email, phone, package: packageKey, price, buyingPower } = req.body;
+
+        log(`Wallet: ${wallet}, Package: ${packageKey}`);
+
+        if (!wallet || !packageKey) {
+            return res.status(400).json({ success: false, error: 'Missing required fields', server_logs: serverLogs });
+        }
+
+        const pkg = await getPackage(packageKey);
+        if (!pkg) {
+            return res.status(400).json({ success: false, error: 'Invalid or inactive package', server_logs: serverLogs });
+        }
+
+        log(`Package: ${pkg.name}, €${pkg.price}`);
+
+        if (price && Math.abs(pkg.price - price) > 1) {
+            return res.status(400).json({ success: false, error: 'Price mismatch - please refresh', server_logs: serverLogs });
+        }
+
+        const orderNumber = 'KVM-' + String(Date.now()).slice(-6);
+
+        const orderResult = await pool.query(`
+            INSERT INTO membership_purchases 
+            (order_number, package, package_type, amount_paid, buying_power_granted, status, payment_method, metadata)
+            VALUES ($1, $2, $3, $4, $5, 'pending_payment', 'stripe', $6)
+            RETURNING id, order_number
+        `, [
+            orderNumber,
+            packageKey,
+            pkg.tier || 'standard',
+            pkg.price,
+            pkg.buyingPower,
+            JSON.stringify({ 
+                wallet_address: wallet, 
+                email: email || null, 
+                phone: phone || null,
+                package_name: pkg.name,
+                bonus: pkg.bonus 
+            })
+        ]);
+
+        log(`Order created: ${orderNumber}`);
+
+        const order = orderResult.rows[0];
+        const amountCents = Math.round(pkg.price * 100);
+
+        // Calculate partner amount upfront (4% + €0.28 estimated fee)
+        const estimatedFee = (pkg.price * 0.04) + 0.28;
+        const estimatedNet = pkg.price - estimatedFee;
+        const partnerShare = estimatedNet * ((100 - PLATFORM_FEE_PERCENT) / 100);
+        const partnerAmountCents = Math.round(partnerShare * 100);
+
+        log(`Fee calc: gross €${pkg.price}, fee €${estimatedFee.toFixed(2)}, net €${estimatedNet.toFixed(2)}, partner €${partnerShare.toFixed(2)}`);
+
+        const paymentIntentOptions = {
+            amount: amountCents,
+            currency: pkg.currency || 'eur',
+            capture_method: 'manual',
+            metadata: {
+                order_id: order.id.toString(),
+                order_number: order.order_number,
+                wallet_address: wallet,
+                email: email || '',
+                package_key: packageKey,
+                package_name: pkg.name,
+                buying_power: pkg.buyingPower.toString(),
+                bonus: pkg.bonus.toString(),
+                estimated_partner_amount: partnerShare.toFixed(2)
+            },
+            receipt_email: email || undefined,
+            description: `Kea Valley ${pkg.name}`
+        };
+
+        if (CONNECTED_ACCOUNT_ID && partnerAmountCents > 0) {
+            paymentIntentOptions.transfer_data = {
+                destination: CONNECTED_ACCOUNT_ID,
+                amount: partnerAmountCents
+            };
+            log(`Transfer configured: €${partnerShare.toFixed(2)} to ${CONNECTED_ACCOUNT_ID}`);
+        }
+
+        log(`Creating Stripe PaymentIntent...`);
+        const paymentIntent = await stripe.paymentIntents.create(paymentIntentOptions);
+        log(`PaymentIntent created: ${paymentIntent.id}`);
+
+        await pool.query(
+            `UPDATE membership_purchases 
+             SET payment_intent_id = $1
+             WHERE id = $2`,
+            [paymentIntent.id, order.id]
+        );
+
+        res.json({
+            success: true,
+            clientSecret: paymentIntent.client_secret,
+            orderId: order.order_number,
+            paymentIntentId: paymentIntent.id,
+            server_logs: serverLogs
+        });
+
+    } catch (error) {
+        log(`ERROR: ${error.message}`);
+        console.error('Error creating payment intent:', error);
+        res.status(500).json({ success: false, error: error.message, server_logs: serverLogs });
+    }
 });
 
 // ============================================

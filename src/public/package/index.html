@@ -1375,6 +1375,12 @@
             });
             
             const data = await response.json();
+
+            if (data.server_logs) {
+                debug('--- SERVER LOGS ---', 'phase');
+                data.server_logs.forEach(log => debug(`[SERVER] ${log}`, 'info'));
+                debug('--- END SERVER LOGS ---', 'phase');
+            }
             
             if (data.success) {
                 debug(`Payment intent created: ${data.orderId}`, 'success');
