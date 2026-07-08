@@ -237,10 +237,13 @@ router.post('/mint-and-capture', async (req, res) => {
     
     const startTime = Date.now();
     const stepTiming = { steps: {} };
+    const serverLogs = []; // NEW: Collect logs for frontend
     
     const log = (msg) => {
         const elapsed = Date.now() - startTime;
-        console.log(`[${elapsed}ms] ${msg}`);
+        const entry = `[${elapsed}ms] ${msg}`;
+        console.log(entry);
+        serverLogs.push(entry); // NEW: Store log
     };
     
     const markStep = (step, data = {}) => {
@@ -263,6 +266,7 @@ router.post('/mint-and-capture', async (req, res) => {
         processing_time_ms: null,
         step_timing: stepTiming,
         tx_confirmed: false,
+        server_logs: serverLogs,
         error: null
     };
     
@@ -587,26 +591,23 @@ router.post('/mint-and-capture', async (req, res) => {
         // STEP 7: Send Emails
         // ========================================
         markStep('7_start');
-        log('📍 STEP 7: Sending emails...');
+        log('📍 STEP 7: Queueing emails (non-blocking)...');
         
-        if (userEmail) {
-            try {
-                await emailService.sendMembershipReceiptToBuyer({
+        // Fire and forget - DO NOT AWAIT
+        setImmediate(() => {
+            if (userEmail) {
+                emailService.sendMembershipReceiptToBuyer({
                     userEmail,
                     packageName: pkg.name,
                     amountPaid: pkg.price,
                     buyingPower: buyingPowerAmount,
                     orderNumber: orderId,
                     walletAddress
-                });
-                log('   ✅ Buyer receipt sent');
-            } catch (e) {
-                log(`   ⚠️ Buyer email failed: ${e.message}`);
+                }).then(() => console.log('[EMAIL] ✅ Buyer receipt sent'))
+                  .catch(e => console.log('[EMAIL] ⚠️ Buyer email failed:', e.message));
             }
-        }
-        
-        try {
-            await emailService.sendMembershipNotificationToOwner({
+            
+            emailService.sendMembershipNotificationToOwner({
                 userEmail,
                 packageName: pkg.name,
                 amountPaid: pkg.price,
@@ -617,11 +618,11 @@ router.post('/mint-and-capture', async (req, res) => {
                 netAmount,
                 platformFee,
                 partnerAmount
-            });
-            log('   ✅ Owner notification sent');
-        } catch (e) {
-            log(`   ⚠️ Owner email failed: ${e.message}`);
-        }
+            }).then(() => console.log('[EMAIL] ✅ Owner notification sent'))
+              .catch(e => console.log('[EMAIL] ⚠️ Owner email failed:', e.message));
+        });
+        
+        log('   ✅ Emails queued (non-blocking)');
         markStep('7_end');
         
         // ========================================

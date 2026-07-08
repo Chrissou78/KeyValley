@@ -1412,7 +1412,6 @@
         debug(`Package: ${pkg.name}, Price: €${pkg.price}`, 'info');
         debug(`Order ID: ${paymentData.orderId}`, 'info');
         
-        // Close Stripe modal and show processing overlay
         document.getElementById('stripe-modal').classList.add('hidden');
         showProcessingOverlay();
         
@@ -1446,29 +1445,85 @@
             debug(`Payment Intent ID: ${paymentIntent.id}`, 'info');
             debug(`Payment status: ${paymentIntent.status}`, 'info');
             
-            // ========== PHASE 2: MINT INIT ==========
+            // ========== PHASE 2: MINT WITH TIMEOUT ==========
             setPhase('MINT_INIT');
             debug('Calling /api/membership/mint-and-capture...', 'info');
             
             const mintStart = Date.now();
             
-            const response = await fetch('/api/membership/mint-and-capture', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    paymentIntentId: paymentIntent.id,
-                    orderId: paymentData.orderId,
-                    walletAddress: currentWallet,
-                    packageId: selectedPackage
-                })
-            });
+            // Create AbortController with 45s timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => {
+                debug('⏱️ Frontend timeout after 45s - aborting fetch', 'warn');
+                controller.abort();
+            }, 45000);
+            
+            let response;
+            let data;
+            let timedOut = false;
+            
+            try {
+                response = await fetch('/api/membership/mint-and-capture', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        paymentIntentId: paymentIntent.id,
+                        orderId: paymentData.orderId,
+                        walletAddress: currentWallet,
+                        packageId: selectedPackage
+                    }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                data = await response.json();
+                
+            } catch (fetchErr) {
+                clearTimeout(timeoutId);
+                
+                if (fetchErr.name === 'AbortError') {
+                    timedOut = true;
+                    debug('⚠️ Request timed out - TX may still be processing', 'warn');
+                    debug(`Payment Intent: ${paymentIntent.id}`, 'info');
+                    debug('Check Polygonscan for recent transactions to your wallet', 'warn');
+                } else {
+                    throw fetchErr;
+                }
+            }
             
             const mintDuration = Date.now() - mintStart;
-            debug(`mint-and-capture responded in ${mintDuration}ms`, 'info');
+            debug(`mint-and-capture ${timedOut ? 'timed out' : 'responded'} in ${mintDuration}ms`, timedOut ? 'warn' : 'info');
             
-            const data = await response.json();
+            // Handle timeout case
+            if (timedOut) {
+                setPhase('MINT_CONFIRM', 'Request timed out - checking status...');
+                
+                setTimeout(() => {
+                    hideProcessingOverlay();
+                    showResult('info', 'Processing Taking Longer Than Expected', 
+                        'Your payment was authorized. The blockchain transaction may still be processing. Please check your wallet balance in a few minutes.', {
+                        package: pkg.name,
+                        buyingPower: pkg.buyingPower,
+                        orderId: paymentData.orderId,
+                        txHash: null
+                    });
+                }, 2000);
+                return;
+            }
             
-            // Log full response for debugging
+            // ========== DISPLAY SERVER LOGS ==========
+            if (data.server_logs && Array.isArray(data.server_logs)) {
+                debug('--- SERVER LOGS ---', 'phase');
+                data.server_logs.forEach(log => {
+                    const logType = log.includes('ERROR') ? 'error' : 
+                                log.includes('SUCCESS') || log.includes('✓') ? 'success' : 
+                                log.includes('⚠') ? 'warn' : 'info';
+                    debug(`[SERVER] ${log}`, logType);
+                });
+                debug('--- END SERVER LOGS ---', 'phase');
+            }
+            
+            // Log response details
             debug(`Response status: ${response.status}`, response.ok ? 'success' : 'error');
             debug(`Response success: ${data.success}`, data.success ? 'success' : 'error');
             
@@ -1502,7 +1557,6 @@
             }
             
             if (data.success) {
-                // Mark all steps complete
                 markStepTime(2);
                 markStepTime(3);
                 markStepTime(4);
@@ -1523,13 +1577,11 @@
                 }, 1500);
                 
             } else if (response.status === 202) {
-                // Partial success - TX broadcast but confirmation timed out
                 debug(`⚠️ Partial success: ${data.error}`, 'warn');
                 setPhase('MINT_CONFIRM', 'Transaction broadcast, awaiting confirmation...');
                 
                 if (data.mint_tx_hash) {
                     debug(`TX may have succeeded: ${data.mint_tx_hash}`, 'warn');
-                    debug(`Check Polygonscan: https://polygonscan.com/tx/${data.mint_tx_hash}`, 'warn');
                 }
                 
                 setTimeout(() => {
@@ -1566,7 +1618,6 @@
             }, 2000);
         }
         
-        // Reset
         window.currentPaymentIntent = null;
         if (cardElement) cardElement.clear();
     }
