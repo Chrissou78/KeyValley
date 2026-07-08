@@ -453,9 +453,12 @@
             </div>
             
             <!-- Transaction Hash (shown when available) -->
-            <div id="processing-tx" class="hidden bg-surface-light rounded-lg p-3 text-xs">
-                <p class="text-gray-500 mb-1">Transaction Hash:</p>
-                <a id="processing-tx-link" href="#" target="_blank" class="text-primary hover:underline break-all"></a>
+            <div id="processing-tx" class="hidden bg-surface-light rounded-lg p-3 text-xs mt-4">
+                <p class="text-gray-500 mb-1">Transaction Hash (click to verify on Polygonscan):</p>
+                <a id="processing-tx-link" href="#" target="_blank" class="text-primary hover:underline break-all font-mono text-[10px]"></a>
+                <button onclick="copyTxHash()" class="ml-2 text-gray-400 hover:text-white">
+                    <span class="material-symbols-outlined text-sm">content_copy</span>
+                </button>
             </div>
             
             <!-- Elapsed Time -->
@@ -483,9 +486,14 @@
                         <span class="text-gray-400">Order ID</span>
                         <span id="result-order-id" class="text-white"></span>
                     </div>
-                    <div id="result-tx-row" class="flex justify-between hidden">
-                        <span class="text-gray-400">Transaction</span>
-                        <a id="result-tx-link" href="#" target="_blank" class="text-primary hover:underline">View on Polygonscan</a>
+                    <div id="result-tx-row" class="hidden border-t border-white/10 pt-2 mt-2">
+                        <p class="text-gray-400 text-xs mb-1">Transaction Hash:</p>
+                        <div class="flex items-center gap-2">
+                            <a id="result-tx-link" href="#" target="_blank" class="text-primary hover:underline break-all font-mono text-[10px] flex-1"></a>
+                            <button onclick="copyResultTxHash()" class="text-gray-400 hover:text-white flex-shrink-0">
+                                <span class="material-symbols-outlined text-sm">content_copy</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -714,6 +722,15 @@
         }
     }
 
+    function copyTxHash() {
+        const linkEl = document.getElementById('processing-tx-link');
+        if (linkEl && linkEl.textContent) {
+            navigator.clipboard.writeText(linkEl.textContent);
+            debug('TX hash copied to clipboard', 'success');
+            showToast('TX hash copied!', 'success');
+        }
+    }
+
     function showProcessingOverlay() {
         processingStartTime = Date.now();
         stepTimes = {};
@@ -766,9 +783,13 @@
         if (txEl && linkEl && txHash) {
             const url = `https://polygonscan.com/tx/${txHash}`;
             linkEl.href = url;
-            linkEl.textContent = `${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}`;
+            linkEl.textContent = txHash; // Show FULL hash for comparison
             txEl.classList.remove('hidden');
-            debug(`TX Hash: ${txHash}`, 'success');
+            
+            debug(`════════════════════════════════════════`, 'success');
+            debug(`TX HASH: ${txHash}`, 'success');
+            debug(`POLYGONSCAN: ${url}`, 'success');
+            debug(`════════════════════════════════════════`, 'success');
         }
     }
 
@@ -1446,22 +1467,46 @@
             debug(`mint-and-capture responded in ${mintDuration}ms`, 'info');
             
             const data = await response.json();
+            
+            // Log full response for debugging
+            debug(`Response status: ${response.status}`, response.ok ? 'success' : 'error');
             debug(`Response success: ${data.success}`, data.success ? 'success' : 'error');
             
+            if (data.mint_tx_hash) {
+                debug(`🔗 TX HASH: ${data.mint_tx_hash}`, 'success');
+                debug(`📋 Polygonscan: https://polygonscan.com/tx/${data.mint_tx_hash}`, 'info');
+                showTransactionHash(data.mint_tx_hash);
+            }
+            
+            if (data.buying_power) {
+                debug(`Buying Power: ${data.buying_power} Kea€`, 'info');
+            }
+            
+            if (data.processing_time_ms) {
+                debug(`Server processing time: ${data.processing_time_ms}ms`, 'info');
+            }
+            
+            // Log step timing if available
+            if (data.step_timing && data.step_timing.steps) {
+                debug('--- Server Step Timing ---', 'phase');
+                const steps = data.step_timing.steps;
+                for (const [key, value] of Object.entries(steps)) {
+                    if (typeof value === 'object') {
+                        const details = Object.entries(value).map(([k, v]) => `${k}:${v}`).join(', ');
+                        debug(`  ${key}: ${details}`, 'info');
+                    } else {
+                        debug(`  ${key}: ${value}`, 'info');
+                    }
+                }
+                debug('--- End Step Timing ---', 'phase');
+            }
+            
             if (data.success) {
-                // Mark steps with timing
+                // Mark all steps complete
                 markStepTime(2);
                 markStepTime(3);
                 markStepTime(4);
                 markStepTime(5);
-                
-                if (data.mint_tx_hash) {
-                    showTransactionHash(data.mint_tx_hash);
-                }
-                
-                if (data.processing_time_ms) {
-                    debug(`Server processing time: ${data.processing_time_ms}ms`, 'info');
-                }
                 
                 setPhase('COMPLETE');
                 debug('Purchase completed successfully!', 'success');
@@ -1477,8 +1522,31 @@
                     });
                 }, 1500);
                 
+            } else if (response.status === 202) {
+                // Partial success - TX broadcast but confirmation timed out
+                debug(`⚠️ Partial success: ${data.error}`, 'warn');
+                setPhase('MINT_CONFIRM', 'Transaction broadcast, awaiting confirmation...');
+                
+                if (data.mint_tx_hash) {
+                    debug(`TX may have succeeded: ${data.mint_tx_hash}`, 'warn');
+                    debug(`Check Polygonscan: https://polygonscan.com/tx/${data.mint_tx_hash}`, 'warn');
+                }
+                
+                setTimeout(() => {
+                    hideProcessingOverlay();
+                    showResult('info', 'Processing', 'Your transaction was broadcast. Please check Polygonscan to verify.', {
+                        package: pkg.name,
+                        buyingPower: pkg.buyingPower,
+                        orderId: data.order_id,
+                        txHash: data.mint_tx_hash
+                    });
+                }, 2000);
+                
             } else {
                 debug(`Mint failed: ${data.error}`, 'error');
+                if (data.error_details) {
+                    debug(`Error details: ${data.error_details}`, 'error');
+                }
                 setPhase('ERROR', data.error || 'Minting failed');
                 
                 setTimeout(() => {
@@ -1489,6 +1557,7 @@
             
         } catch (err) {
             debug(`Exception: ${err.message}`, 'error');
+            debug(`Stack: ${err.stack}`, 'error');
             setPhase('ERROR', err.message);
             
             setTimeout(() => {
@@ -1540,12 +1609,18 @@
             document.getElementById('result-buying-power').textContent = 'Kea€' + details.buyingPower?.toLocaleString();
             document.getElementById('result-order-id').textContent = details.orderId || '--';
             
-            // Show transaction link if available
+            // Show transaction link with FULL hash
             const txRow = document.getElementById('result-tx-row');
             const txLink = document.getElementById('result-tx-link');
             if (details.txHash && txRow && txLink) {
                 txLink.href = `https://polygonscan.com/tx/${details.txHash}`;
+                txLink.textContent = details.txHash; // FULL hash
                 txRow.classList.remove('hidden');
+                
+                // Store for copy function
+                window.lastTxHash = details.txHash;
+                
+                debug(`Result TX: ${details.txHash}`, 'success');
             } else if (txRow) {
                 txRow.classList.add('hidden');
             }
@@ -1554,6 +1629,14 @@
         }
         
         document.getElementById('result-overlay').classList.remove('hidden');
+    }
+
+    function copyResultTxHash() {
+        if (window.lastTxHash) {
+            navigator.clipboard.writeText(window.lastTxHash);
+            debug('TX hash copied to clipboard', 'success');
+            showToast('TX hash copied!', 'success');
+        }
     }
 
     function closeResultOverlay() {
