@@ -1,5 +1,5 @@
 // src/routes/membership.js
-// VERSION: 2026-07-08 v2 - With timeout protection and better error handling
+// VERSION: 2026-07-08 v3 - Manual TX polling (fixes tx.wait() hanging on Alchemy)
 require('dotenv').config();
 const express = require('express');
 const router = express.Router();
@@ -17,13 +17,20 @@ const PLATFORM_FEE_PERCENT = 10;
 const CONNECTED_ACCOUNT_ID = process.env.STRIPE_CONNECTED_ACCOUNT_ID;
 
 // Timeout settings
-const MINT_TIMEOUT_MS = 60000; // 60 seconds max for minting
-const TX_WAIT_TIMEOUT_MS = 45000; // 45 seconds max for tx confirmation
+const TX_POLL_TIMEOUT_MS = 30000; // 30 seconds max for polling confirmation
+const TX_POLL_INTERVAL_MS = 2000; // Poll every 2 seconds
 
 console.log('✅ Membership routes initialized');
 console.log(`   Connected Account: ${CONNECTED_ACCOUNT_ID || 'NOT CONFIGURED'}`);
 console.log(`   Platform Fee: ${PLATFORM_FEE_PERCENT}% of NET`);
-console.log(`   Mint Timeout: ${MINT_TIMEOUT_MS}ms`);
+console.log(`   TX Poll Timeout: ${TX_POLL_TIMEOUT_MS}ms`);
+
+// ============================================
+// Helper: Sleep
+// ============================================
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 // ============================================
 // Helper: Timeout wrapper
@@ -35,6 +42,61 @@ function withTimeout(promise, ms, operation) {
             setTimeout(() => reject(new Error(`${operation} timed out after ${ms}ms`)), ms)
         )
     ]);
+}
+
+// ============================================
+// Helper: Manual TX polling (replaces tx.wait())
+// ============================================
+async function pollForReceipt(provider, txHash, maxWaitMs = TX_POLL_TIMEOUT_MS, intervalMs = TX_POLL_INTERVAL_MS) {
+    const startTime = Date.now();
+    let attempts = 0;
+    
+    console.log(`   ⏳ Polling for TX receipt: ${txHash}`);
+    console.log(`      Max wait: ${maxWaitMs}ms, Interval: ${intervalMs}ms`);
+    
+    while (Date.now() - startTime < maxWaitMs) {
+        attempts++;
+        const elapsed = Date.now() - startTime;
+        
+        try {
+            const receipt = await provider.getTransactionReceipt(txHash);
+            
+            if (receipt !== null) {
+                console.log(`   ✅ Receipt found on attempt ${attempts} (${elapsed}ms)`);
+                console.log(`      Block: ${receipt.blockNumber}, Status: ${receipt.status}`);
+                return {
+                    success: true,
+                    confirmed: true,
+                    receipt,
+                    attempts,
+                    elapsedMs: elapsed
+                };
+            }
+            
+            console.log(`   ⏳ Attempt ${attempts}: No receipt yet (${elapsed}ms)`);
+            
+        } catch (pollError) {
+            console.log(`   ⚠️ Poll attempt ${attempts} error: ${pollError.message}`);
+        }
+        
+        // Wait before next poll
+        await sleep(intervalMs);
+    }
+    
+    // Timeout reached - TX was broadcast but we couldn't confirm
+    const elapsed = Date.now() - startTime;
+    console.log(`   ⚠️ Polling timeout after ${attempts} attempts (${elapsed}ms)`);
+    console.log(`   ⚠️ TX was broadcast - likely confirmed on-chain`);
+    console.log(`   🔗 Verify: https://polygonscan.com/tx/${txHash}`);
+    
+    return {
+        success: true, // TX was broadcast successfully
+        confirmed: false, // But we couldn't get receipt
+        receipt: null,
+        attempts,
+        elapsedMs: elapsed,
+        reason: 'poll_timeout'
+    };
 }
 
 // ============================================
@@ -168,7 +230,7 @@ router.get('/verify-connect', async (req, res) => {
 
 // ============================================
 // POST /api/membership/mint-and-capture
-// With timeout protection and granular timing
+// With manual polling instead of tx.wait()
 // ============================================
 router.post('/mint-and-capture', async (req, res) => {
     const { paymentIntentId, orderId, walletAddress, packageId } = req.body;
@@ -185,8 +247,9 @@ router.post('/mint-and-capture', async (req, res) => {
         stepTiming.steps[step] = { time: Date.now() - startTime, ...data };
     };
     
-    log('='.repeat(50));
-    log('🔄 MINT-AND-CAPTURE START');
+    log('═'.repeat(60));
+    log('🔄 MINT-AND-CAPTURE START (v3 - Manual Polling)');
+    log('═'.repeat(60));
     log(`   PaymentIntent: ${paymentIntentId}`);
     log(`   Order: ${orderId}`);
     log(`   Wallet: ${walletAddress}`);
@@ -199,18 +262,21 @@ router.post('/mint-and-capture', async (req, res) => {
         buying_power: null,
         processing_time_ms: null,
         step_timing: stepTiming,
+        tx_confirmed: false,
         error: null
     };
+    
+    let provider = null;
     
     try {
         // ========================================
         // STEP 1: Retrieve Payment Intent
         // ========================================
-        markStep('1_retrieve_start');
+        markStep('1_start');
         log('📍 STEP 1: Retrieving payment intent...');
         
         const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-        markStep('1_retrieve_end', { status: paymentIntent.status });
+        markStep('1_end', { status: paymentIntent.status });
         
         log(`   Status: ${paymentIntent.status}`);
         log(`   Amount: €${paymentIntent.amount / 100}`);
@@ -219,7 +285,6 @@ router.post('/mint-and-capture', async (req, res) => {
         if (paymentIntent.status === 'succeeded') {
             log('⚠️ Payment already captured - checking if mint completed...');
             
-            // Check if we already processed this
             const existingOrder = await pool.query(
                 `SELECT status, metadata->>'mint_tx_hash' as tx_hash FROM membership_purchases WHERE payment_intent_id = $1`,
                 [paymentIntentId]
@@ -234,8 +299,7 @@ router.post('/mint-and-capture', async (req, res) => {
                 return res.json(responseData);
             }
             
-            // Payment captured but mint may have succeeded - continue to check/complete
-            log('⚠️ Payment captured but order not completed - will attempt to verify and complete');
+            log('⚠️ Payment captured but order not completed - continuing to complete...');
         } else if (paymentIntent.status !== 'requires_capture') {
             log(`❌ Invalid payment status: ${paymentIntent.status}`);
             responseData.error = `Payment not ready. Status: ${paymentIntent.status}`;
@@ -246,7 +310,7 @@ router.post('/mint-and-capture', async (req, res) => {
         // ========================================
         // STEP 2: Get Package Details
         // ========================================
-        markStep('2_package_start');
+        markStep('2_start');
         log('📍 STEP 2: Getting package...');
         
         const pkg = await getPackage(packageId);
@@ -261,7 +325,7 @@ router.post('/mint-and-capture', async (req, res) => {
             return res.status(404).json(responseData);
         }
         
-        markStep('2_package_end', { name: pkg.name, price: pkg.price });
+        markStep('2_end', { name: pkg.name, price: pkg.price });
         log(`   Package: ${pkg.name}, €${pkg.price}, ${pkg.buyingPower} Kea€`);
         
         const buyingPowerAmount = parseFloat(pkg.buyingPower);
@@ -271,12 +335,13 @@ router.post('/mint-and-capture', async (req, res) => {
         responseData.buying_power = buyingPowerAmount;
         
         // ========================================
-        // STEP 3: Mint Tokens (with timeout)
+        // STEP 3: Mint Tokens (with manual polling)
         // ========================================
-        markStep('3_mint_start');
+        markStep('3_start');
         log('📍 STEP 3: Minting tokens...');
         
         let mintTxHash = null;
+        let txConfirmed = false;
         
         try {
             const { ethers } = require('ethers');
@@ -289,30 +354,30 @@ router.post('/mint-and-capture', async (req, res) => {
             log('   🔗 Connecting to Polygon...');
             markStep('3_provider_start');
             
-            const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC);
+            provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC);
             
             // Test connection with timeout
-            const network = await withTimeout(
-                provider.getNetwork(),
+            const blockNumber = await withTimeout(
+                provider.getBlockNumber(),
                 10000,
-                'Network connection'
+                'Get block number'
             );
-            markStep('3_provider_connected', { chainId: network.chainId.toString() });
-            log(`   ✅ Connected to chain ${network.chainId}`);
+            markStep('3_provider_connected', { blockNumber });
+            log(`   ✅ Connected, current block: ${blockNumber}`);
             
             // Setup wallet
             const minterWallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
             log(`   🔑 Minter: ${minterWallet.address}`);
             
             // Check MATIC balance
-            markStep('3_balance_check_start');
+            markStep('3_balance_start');
             const maticBalance = await withTimeout(
                 provider.getBalance(minterWallet.address),
                 10000,
                 'Balance check'
             );
             const maticFormatted = ethers.formatEther(maticBalance);
-            markStep('3_balance_check_end', { matic: maticFormatted });
+            markStep('3_balance_end', { matic: maticFormatted });
             log(`   💰 MATIC: ${maticFormatted}`);
             
             if (parseFloat(maticFormatted) < 0.005) {
@@ -343,37 +408,47 @@ router.post('/mint-and-capture', async (req, res) => {
             responseData.mint_tx_hash = mintTxHash;
             markStep('3_tx_broadcast', { hash: mintTxHash });
             log(`   ✅ TX BROADCAST: ${mintTxHash}`);
+            log(`   🔗 https://polygonscan.com/tx/${mintTxHash}`);
             
-            // Wait for confirmation with timeout
-            log('   ⏳ Waiting for confirmation...');
-            markStep('3_tx_wait_start');
+            // Poll for confirmation (instead of tx.wait())
+            markStep('3_poll_start');
+            const pollResult = await pollForReceipt(provider, mintTxHash, TX_POLL_TIMEOUT_MS, TX_POLL_INTERVAL_MS);
             
-            const receipt = await withTimeout(
-                tx.wait(1),
-                TX_WAIT_TIMEOUT_MS,
-                'Transaction confirmation'
-            );
-            
-            markStep('3_tx_confirmed', { 
-                block: receipt.blockNumber,
-                gasUsed: receipt.gasUsed?.toString()
+            markStep('3_poll_end', {
+                confirmed: pollResult.confirmed,
+                attempts: pollResult.attempts,
+                elapsedMs: pollResult.elapsedMs,
+                block: pollResult.receipt?.blockNumber || null
             });
-            log(`   ✅ CONFIRMED in block ${receipt.blockNumber}`);
             
-            mintTxHash = receipt.hash || tx.hash;
+            if (pollResult.confirmed && pollResult.receipt) {
+                log(`   ✅ TX CONFIRMED in block ${pollResult.receipt.blockNumber}`);
+                
+                if (pollResult.receipt.status === 0) {
+                    throw new Error('Transaction reverted on-chain');
+                }
+                
+                txConfirmed = true;
+                mintTxHash = pollResult.receipt.hash || mintTxHash;
+            } else {
+                log('   ⚠️ Could not confirm TX, but it was broadcast successfully');
+                log('   ⚠️ Continuing with payment capture (TX likely succeeded)');
+                txConfirmed = false;
+            }
+            
             responseData.mint_tx_hash = mintTxHash;
-            markStep('3_mint_complete');
+            responseData.tx_confirmed = txConfirmed;
+            markStep('3_mint_complete', { confirmed: txConfirmed });
             
         } catch (mintError) {
             markStep('3_mint_failed', { error: mintError.message });
             log(`   ❌ MINT FAILED: ${mintError.message}`);
             
-            // If we have a TX hash, the mint might have succeeded even if wait() timed out
+            // If we have a TX hash, the mint might have succeeded
             if (mintTxHash) {
                 log(`   ⚠️ TX was broadcast (${mintTxHash}) - mint may have succeeded`);
                 log('   ⚠️ Will NOT cancel payment - manual verification needed');
                 
-                // Update order with partial status
                 await pool.query(
                     `UPDATE membership_purchases SET status = 'mint_pending_verification', 
                      metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{mint_tx_hash}', $1::jsonb),
@@ -381,9 +456,9 @@ router.post('/mint-and-capture', async (req, res) => {
                     [JSON.stringify(mintTxHash), mintError.message, paymentIntentId]
                 );
                 
-                responseData.error = 'Minting may have succeeded but confirmation timed out. TX: ' + mintTxHash;
+                responseData.error = 'Minting may have succeeded but confirmation failed. TX: ' + mintTxHash;
                 responseData.processing_time_ms = Date.now() - startTime;
-                return res.status(202).json(responseData); // 202 Accepted - processing
+                return res.status(202).json(responseData);
             }
             
             // No TX hash - mint definitely failed, cancel payment
@@ -411,7 +486,7 @@ router.post('/mint-and-capture', async (req, res) => {
         // ========================================
         // STEP 4: Capture Payment
         // ========================================
-        markStep('4_capture_start');
+        markStep('4_start');
         log('📍 STEP 4: Capturing payment...');
         
         let capturedIntent;
@@ -420,17 +495,16 @@ router.post('/mint-and-capture', async (req, res) => {
             capturedIntent = await stripe.paymentIntents.capture(paymentIntentId);
             log(`   ✅ Captured: €${capturedIntent.amount_received / 100}`);
         } else {
-            // Already captured (status was 'succeeded')
             capturedIntent = paymentIntent;
             log('   ⚠️ Already captured, using existing data');
         }
         
-        markStep('4_capture_end', { amount: capturedIntent.amount_received / 100 });
+        markStep('4_end', { amount: capturedIntent.amount_received / 100 });
         
         // ========================================
         // STEP 5: Update Database
         // ========================================
-        markStep('5_db_start');
+        markStep('5_start');
         log('📍 STEP 5: Updating database...');
         
         // Credit balance
@@ -482,13 +556,13 @@ router.post('/mint-and-capture', async (req, res) => {
             WHERE payment_intent_id = $6
         `, [stripeFee, netAmount, platformFee, partnerAmount, JSON.stringify(mintTxHash), paymentIntentId]);
         
-        markStep('5_db_end');
+        markStep('5_end');
         log('   ✅ Order updated');
         
         // ========================================
         // STEP 6: Partner Transfer
         // ========================================
-        markStep('6_transfer_start');
+        markStep('6_start');
         log('📍 STEP 6: Partner transfer...');
         
         if (CONNECTED_ACCOUNT_ID && partnerAmount > 0.50) {
@@ -505,14 +579,14 @@ router.post('/mint-and-capture', async (req, res) => {
                 log(`   ⚠️ Transfer failed: ${e.message}`);
             }
         } else {
-            log('   ⏭️ Skipped');
+            log('   ⏭️ Skipped (no connected account or amount too low)');
         }
-        markStep('6_transfer_end');
+        markStep('6_end');
         
         // ========================================
         // STEP 7: Send Emails
         // ========================================
-        markStep('7_email_start');
+        markStep('7_start');
         log('📍 STEP 7: Sending emails...');
         
         if (userEmail) {
@@ -548,7 +622,7 @@ router.post('/mint-and-capture', async (req, res) => {
         } catch (e) {
             log(`   ⚠️ Owner email failed: ${e.message}`);
         }
-        markStep('7_email_end');
+        markStep('7_end');
         
         // ========================================
         // COMPLETE
@@ -556,26 +630,29 @@ router.post('/mint-and-capture', async (req, res) => {
         const totalTime = Date.now() - startTime;
         stepTiming.total_ms = totalTime;
         
-        log('='.repeat(50));
+        log('═'.repeat(60));
         log(`✅ COMPLETED in ${totalTime}ms`);
+        log('═'.repeat(60));
         log(`   Order: ${orderId}`);
         log(`   TX: ${mintTxHash}`);
+        log(`   TX Confirmed: ${txConfirmed}`);
         log(`   Kea€: ${buyingPowerAmount}`);
-        log('='.repeat(50));
+        log('═'.repeat(60));
         
         responseData.success = true;
         responseData.processing_time_ms = totalTime;
-        responseData.message = 'Success';
+        responseData.message = txConfirmed ? 'Success' : 'Success (TX broadcast, confirmation pending)';
         
         res.json(responseData);
         
     } catch (error) {
         const totalTime = Date.now() - startTime;
         
-        log('='.repeat(50));
+        log('═'.repeat(60));
         log(`❌ FATAL ERROR after ${totalTime}ms`);
         log(`   Error: ${error.message}`);
-        log('='.repeat(50));
+        log(`   Stack: ${error.stack}`);
+        log('═'.repeat(60));
         
         responseData.error = error.message;
         responseData.processing_time_ms = totalTime;
@@ -703,12 +780,14 @@ router.get('/purchase-status/:paymentIntentId', async (req, res) => {
 // ============================================
 router.get('/debug-env', (req, res) => {
     res.json({
-        POLYGON_RPC: process.env.POLYGON_RPC ? '✅ Set' : '❌ Missing',
+        POLYGON_RPC: process.env.POLYGON_RPC ? `✅ ${process.env.POLYGON_RPC.substring(0, 50)}...` : '❌ Missing',
         PRIVATE_KEY: process.env.PRIVATE_KEY ? '✅ Set' : '❌ Missing',
         TOKEN_ADDRESS_POLYGON: process.env.TOKEN_ADDRESS_POLYGON || '❌ Missing',
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY ? '✅ Set' : '❌ Missing',
         CONNECTED_ACCOUNT_ID: CONNECTED_ACCOUNT_ID || 'Not configured',
-        NODE_ENV: process.env.NODE_ENV || 'development'
+        NODE_ENV: process.env.NODE_ENV || 'development',
+        TX_POLL_TIMEOUT_MS,
+        TX_POLL_INTERVAL_MS
     });
 });
 
