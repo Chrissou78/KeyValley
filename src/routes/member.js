@@ -2,32 +2,70 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db-postgres');
+const { ethers } = require('ethers');
 
 // GET /api/member/balance/:wallet
 router.get('/balance/:wallet', async (req, res) => {
     try {
         const wallet = req.params.wallet.toLowerCase();
         
+        // Get on-chain balance (source of truth)
+        const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC);
+        const contract = new ethers.Contract(
+            process.env.KEA_CONTRACT_ADDRESS,
+            ['function balanceOf(address account) view returns (uint256)'],
+            provider
+        );
+        
+        const onChainRaw = await contract.balanceOf(wallet);
+        const onChainBalance = Number(ethers.formatUnits(onChainRaw, 18));
+        
+        // Get DB record
         const result = await db.pool.query(
             'SELECT balance, total_credited, total_spent FROM member_balances WHERE wallet_address = $1',
             [wallet]
         );
         
+        // Sync DB in background if different
         if (result.rows.length > 0) {
-            res.json({ 
-                success: true, 
-                balance: parseFloat(result.rows[0].balance) || 0,
-                total_credited: parseFloat(result.rows[0].total_credited) || 0,
-                total_spent: parseFloat(result.rows[0].total_spent) || 0
-            });
-        } else {
-            res.json({ success: true, balance: 0, total_credited: 0, total_spent: 0 });
+            const dbBalance = parseFloat(result.rows[0].balance) || 0;
+            if (Math.abs(onChainBalance - dbBalance) > 0.001) {
+                db.pool.query(
+                    'UPDATE member_balances SET balance = $1, updated_at = NOW() WHERE wallet_address = $2',
+                    [onChainBalance, wallet]
+                ).catch(err => console.error('Balance sync error:', err));
+            }
         }
+        
+        res.json({ 
+            success: true, 
+            balance: onChainBalance,
+            total_credited: result.rows.length > 0 ? parseFloat(result.rows[0].total_credited) || 0 : 0,
+            total_spent: result.rows.length > 0 ? parseFloat(result.rows[0].total_spent) || 0 : 0
+        });
+        
     } catch (error) {
         console.error('Error fetching balance:', error);
-        res.status(500).json({ success: false, error: 'Failed to fetch balance' });
+        
+        // Fallback to DB if on-chain fails
+        try {
+            const result = await db.pool.query(
+                'SELECT balance, total_credited, total_spent FROM member_balances WHERE wallet_address = $1',
+                [req.params.wallet.toLowerCase()]
+            );
+            
+            res.json({ 
+                success: true, 
+                balance: result.rows.length > 0 ? parseFloat(result.rows[0].balance) || 0 : 0,
+                total_credited: result.rows.length > 0 ? parseFloat(result.rows[0].total_credited) || 0 : 0,
+                total_spent: result.rows.length > 0 ? parseFloat(result.rows[0].total_spent) || 0 : 0
+            });
+        } catch (dbErr) {
+            res.status(500).json({ success: false, error: 'Failed to fetch balance' });
+        }
     }
 });
+
 
 // GET /api/member/vouchers/:wallet
 router.get('/vouchers/:wallet', async (req, res) => {
