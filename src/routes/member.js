@@ -12,7 +12,7 @@ router.get('/balance/:wallet', async (req, res) => {
         // Get on-chain balance (source of truth)
         const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC);
         const contract = new ethers.Contract(
-            process.env.KEA_CONTRACT_ADDRESS,
+            process.env.TOKEN_ADDRESS_POLYGON,
             ['function balanceOf(address account) view returns (uint256)'],
             provider
         );
