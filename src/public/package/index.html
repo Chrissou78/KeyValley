@@ -1335,6 +1335,13 @@
         const stripeTotal = document.getElementById('stripe-total');
         const stripeAmount = document.getElementById('stripe-amount');
         
+        // Debug which element is missing
+        debug(`stripe-modal: ${stripeModal ? 'OK' : 'MISSING'}`, stripeModal ? 'success' : 'error');
+        debug(`stripe-package: ${stripePackage ? 'OK' : 'MISSING'}`, stripePackage ? 'success' : 'error');
+        debug(`stripe-buying-power: ${stripeBuyingPower ? 'OK' : 'MISSING'}`, stripeBuyingPower ? 'success' : 'error');
+        debug(`stripe-total: ${stripeTotal ? 'OK' : 'MISSING'}`, stripeTotal ? 'success' : 'error');
+        debug(`stripe-amount: ${stripeAmount ? 'OK' : 'MISSING'}`, stripeAmount ? 'success' : 'error');
+        
         if (!stripeModal || !stripePackage || !stripeBuyingPower || !stripeTotal || !stripeAmount) {
             debug('Modal elements missing!', 'error');
             return;
@@ -1358,7 +1365,7 @@
         
         createPaymentIntent(pkg);
     }
-
+    
     async function createPaymentIntent(pkg) {
         debug('Creating payment intent...', 'info');
         
