@@ -94,6 +94,28 @@
         .toast.success { background: #10b981; color: white; }
         .toast.error { background: #ef4444; color: white; }
         .toast.info { background: #3b82f6; color: white; }
+
+        /* Processing steps states */
+        #processing-steps .step-pending .step-icon { color: #6b7280; }
+        #processing-steps .step-active .step-icon { color: #ee9d2b; animation: pulse 1s infinite; }
+        #processing-steps .step-active .step-text { color: #ffffff; font-weight: 600; }
+        #processing-steps .step-complete .step-icon { color: #10b981; }
+        #processing-steps .step-complete .step-text { color: #9ca3af; }
+        #processing-steps .step-error .step-icon { color: #ef4444; }
+        #processing-steps .step-error .step-text { color: #ef4444; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Debug panel */
+        #debug-panel { font-size: 11px; }
+        #debug-panel .debug-info { color: #60a5fa; }
+        #debug-panel .debug-success { color: #10b981; }
+        #debug-panel .debug-error { color: #ef4444; }
+        #debug-panel .debug-warn { color: #f59e0b; }
+        #debug-panel .debug-phase { color: #ee9d2b; font-weight: bold; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -388,12 +410,56 @@
         </div>
     </div>
 
-    <!-- Processing Overlay -->
+    <!-- Processing Overlay - Enhanced with Phases -->
     <div id="processing-overlay" class="fixed inset-0 overlay z-50 hidden flex items-center justify-center">
         <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4 text-center">
-            <div class="animate-spin w-16 h-16 border-4 border-primary border-t-transparent rounded-full mx-auto mb-6"></div>
-            <h3 class="text-2xl font-serif font-bold mb-4">Processing</h3>
-            <p id="processing-message" class="text-gray-400">Verifying your payment...</p>
+            <!-- Spinner -->
+            <div class="relative w-20 h-20 mx-auto mb-6">
+                <div class="animate-spin w-20 h-20 border-4 border-primary/30 border-t-primary rounded-full"></div>
+                <span id="processing-phase-icon" class="material-symbols-outlined text-primary text-2xl absolute inset-0 flex items-center justify-center">credit_card</span>
+            </div>
+            
+            <!-- Phase Title -->
+            <h3 id="processing-title" class="text-2xl font-serif font-bold mb-2">Processing</h3>
+            <p id="processing-message" class="text-gray-400 mb-6">Initializing...</p>
+            
+            <!-- Progress Steps -->
+            <div id="processing-steps" class="text-left space-y-3 mb-6">
+                <div id="step-1" class="flex items-center gap-3 text-sm step-pending">
+                    <span class="step-icon material-symbols-outlined text-gray-500">radio_button_unchecked</span>
+                    <span class="step-text text-gray-500">Authorize payment</span>
+                    <span class="step-time text-gray-600 text-xs ml-auto"></span>
+                </div>
+                <div id="step-2" class="flex items-center gap-3 text-sm step-pending">
+                    <span class="step-icon material-symbols-outlined text-gray-500">radio_button_unchecked</span>
+                    <span class="step-text text-gray-500">Create mint transaction</span>
+                    <span class="step-time text-gray-600 text-xs ml-auto"></span>
+                </div>
+                <div id="step-3" class="flex items-center gap-3 text-sm step-pending">
+                    <span class="step-icon material-symbols-outlined text-gray-500">radio_button_unchecked</span>
+                    <span class="step-text text-gray-500">Confirm on blockchain</span>
+                    <span class="step-time text-gray-600 text-xs ml-auto"></span>
+                </div>
+                <div id="step-4" class="flex items-center gap-3 text-sm step-pending">
+                    <span class="step-icon material-symbols-outlined text-gray-500">radio_button_unchecked</span>
+                    <span class="step-text text-gray-500">Capture payment</span>
+                    <span class="step-time text-gray-600 text-xs ml-auto"></span>
+                </div>
+                <div id="step-5" class="flex items-center gap-3 text-sm step-pending">
+                    <span class="step-icon material-symbols-outlined text-gray-500">radio_button_unchecked</span>
+                    <span class="step-text text-gray-500">Update account</span>
+                    <span class="step-time text-gray-600 text-xs ml-auto"></span>
+                </div>
+            </div>
+            
+            <!-- Transaction Hash (shown when available) -->
+            <div id="processing-tx" class="hidden bg-surface-light rounded-lg p-3 text-xs">
+                <p class="text-gray-500 mb-1">Transaction Hash:</p>
+                <a id="processing-tx-link" href="#" target="_blank" class="text-primary hover:underline break-all"></a>
+            </div>
+            
+            <!-- Elapsed Time -->
+            <p id="processing-elapsed" class="text-gray-600 text-xs mt-4">Elapsed: 0s</p>
         </div>
     </div>
 
@@ -417,12 +483,30 @@
                         <span class="text-gray-400">Order ID</span>
                         <span id="result-order-id" class="text-white"></span>
                     </div>
+                    <div id="result-tx-row" class="flex justify-between hidden">
+                        <span class="text-gray-400">Transaction</span>
+                        <a id="result-tx-link" href="#" target="_blank" class="text-primary hover:underline">View on Polygonscan</a>
+                    </div>
                 </div>
             </div>
             <div class="flex gap-4">
                 <a href="/marketplace" class="flex-1 btn-primary py-3 rounded-xl font-semibold text-center">Browse Marketplace</a>
                 <button onclick="closeResultOverlay()" class="flex-1 bg-white/10 text-white py-3 rounded-xl font-semibold hover:bg-white/20 transition-colors">Close</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Debug Panel (toggle with Ctrl+D) -->
+    <div id="debug-panel" class="fixed bottom-4 left-4 z-50 hidden">
+        <div class="glass-card rounded-xl p-4 max-w-md w-96 max-h-80 overflow-hidden flex flex-col">
+            <div class="flex items-center justify-between mb-3 flex-shrink-0">
+                <h4 class="text-primary font-bold text-sm flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg">bug_report</span>
+                    Debug Console (Ctrl+D to hide)
+                </h4>
+                <button onclick="clearDebugLog()" class="text-gray-500 hover:text-white text-xs px-2 py-1 rounded hover:bg-white/10">Clear</button>
+            </div>
+            <div id="debug-log" class="text-xs font-mono space-y-1 text-gray-300 overflow-auto flex-1"></div>
         </div>
     </div>
 
@@ -434,9 +518,9 @@
 
     <script>
     // ============================================
-    // VERSION: 2026-04-10 - Dynamic packages from API
+    // VERSION: 2026-07-08 - With Debug Panel & Processing Phases
     // ============================================
-    console.log('🚀 Package page initializing... (v2026-04-10)');
+    console.log('🚀 Package page initializing... (v2026-07-08-debug)');
 
     // ============================================
     // Configuration
@@ -457,12 +541,247 @@
     let currentWallet = null;
     let currentUser = null;
     let userBalance = 0;
+    let currentBalance = 0;
     let selectedPackage = null;
     let stripe = null;
     let cardElement = null;
     let acceptMessages = false;
     let isResetting = false;
     let isDisconnecting = false;
+
+    // ============================================
+    // DEBUG SYSTEM
+    // ============================================
+    let debugEnabled = false;
+    let debugLog = [];
+
+    function debug(message, type = 'info') {
+        const timestamp = new Date().toLocaleTimeString('en-US', { 
+            hour12: false, 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit',
+            fractionalSecondDigits: 3 
+        });
+        const entry = { timestamp, message, type };
+        debugLog.push(entry);
+        
+        // Also log to browser console
+        const prefix = {
+            'info': '📘',
+            'success': '✅',
+            'error': '❌',
+            'warn': '⚠️',
+            'phase': '🔶'
+        }[type] || '📘';
+        console.log(`${prefix} [${timestamp}] ${message}`);
+        
+        // Add to debug panel
+        const logEl = document.getElementById('debug-log');
+        if (logEl) {
+            const line = document.createElement('div');
+            line.className = `debug-${type}`;
+            line.innerHTML = `<span class="text-gray-600">${timestamp}</span> ${message}`;
+            logEl.appendChild(line);
+            logEl.scrollTop = logEl.scrollHeight;
+            
+            // Keep only last 100 entries in DOM
+            while (logEl.children.length > 100) {
+                logEl.removeChild(logEl.firstChild);
+            }
+        }
+    }
+
+    function clearDebugLog() {
+        debugLog = [];
+        const logEl = document.getElementById('debug-log');
+        if (logEl) logEl.innerHTML = '';
+        debug('Debug log cleared', 'info');
+    }
+
+    function toggleDebug() {
+        debugEnabled = !debugEnabled;
+        const panel = document.getElementById('debug-panel');
+        if (panel) {
+            panel.classList.toggle('hidden', !debugEnabled);
+        }
+        if (debugEnabled) {
+            debug('Debug panel enabled', 'info');
+        }
+    }
+
+    // Ctrl+D to toggle debug
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'd') {
+            e.preventDefault();
+            toggleDebug();
+        }
+    });
+
+    // ============================================
+    // PROCESSING PHASES SYSTEM
+    // ============================================
+    const PHASES = {
+        INIT: { icon: 'hourglass_empty', title: 'Initializing', message: 'Preparing your purchase...' },
+        AUTHORIZE: { icon: 'credit_card', title: 'Authorizing Payment', message: 'Verifying your card with Stripe...' },
+        MINT_INIT: { icon: 'token', title: 'Creating Transaction', message: 'Preparing blockchain transaction...' },
+        MINT_BROADCAST: { icon: 'cell_tower', title: 'Broadcasting', message: 'Sending to Polygon network...' },
+        MINT_CONFIRM: { icon: 'link', title: 'Confirming', message: 'Waiting for blockchain confirmation...' },
+        CAPTURE: { icon: 'payments', title: 'Capturing Payment', message: 'Finalizing payment with Stripe...' },
+        DATABASE: { icon: 'database', title: 'Updating Account', message: 'Adding Kea€ to your balance...' },
+        COMPLETE: { icon: 'check_circle', title: 'Complete!', message: 'Your purchase was successful!' },
+        ERROR: { icon: 'error', title: 'Error', message: 'Something went wrong' }
+    };
+
+    let processingStartTime = null;
+    let processingTimer = null;
+    let currentPhase = null;
+    let stepTimes = {};
+
+    function setPhase(phaseKey, extraMessage = '') {
+        const phase = PHASES[phaseKey];
+        if (!phase) return;
+        
+        currentPhase = phaseKey;
+        debug(`PHASE: ${phaseKey} - ${phase.title}`, 'phase');
+        
+        // Update UI elements
+        const iconEl = document.getElementById('processing-phase-icon');
+        const titleEl = document.getElementById('processing-title');
+        const messageEl = document.getElementById('processing-message');
+        
+        if (iconEl) iconEl.textContent = phase.icon;
+        if (titleEl) titleEl.textContent = phase.title;
+        if (messageEl) messageEl.textContent = extraMessage || phase.message;
+        
+        // Update step indicators
+        updateStepIndicators(phaseKey);
+    }
+
+    function updateStepIndicators(currentPhaseKey) {
+        const phaseToStep = {
+            'INIT': 0,
+            'AUTHORIZE': 1,
+            'MINT_INIT': 2,
+            'MINT_BROADCAST': 2,
+            'MINT_CONFIRM': 3,
+            'CAPTURE': 4,
+            'DATABASE': 5,
+            'COMPLETE': 6,
+            'ERROR': -1
+        };
+        
+        const currentStep = phaseToStep[currentPhaseKey] || 0;
+        
+        for (let i = 1; i <= 5; i++) {
+            const stepEl = document.getElementById(`step-${i}`);
+            if (!stepEl) continue;
+            
+            const iconEl = stepEl.querySelector('.step-icon');
+            
+            // Reset classes
+            stepEl.className = 'flex items-center gap-3 text-sm';
+            
+            if (currentPhaseKey === 'ERROR' && i === Math.abs(phaseToStep['ERROR'])) {
+                // Error state for current step
+                stepEl.classList.add('step-error');
+                if (iconEl) iconEl.textContent = 'error';
+            } else if (i < currentStep) {
+                // Completed
+                stepEl.classList.add('step-complete');
+                if (iconEl) iconEl.textContent = 'check_circle';
+            } else if (i === currentStep) {
+                // Active
+                stepEl.classList.add('step-active');
+                if (iconEl) iconEl.textContent = 'pending';
+            } else {
+                // Pending
+                stepEl.classList.add('step-pending');
+                if (iconEl) iconEl.textContent = 'radio_button_unchecked';
+            }
+        }
+        
+        // Mark all complete on success
+        if (currentPhaseKey === 'COMPLETE') {
+            for (let i = 1; i <= 5; i++) {
+                const stepEl = document.getElementById(`step-${i}`);
+                if (stepEl) {
+                    stepEl.className = 'flex items-center gap-3 text-sm step-complete';
+                    const iconEl = stepEl.querySelector('.step-icon');
+                    if (iconEl) iconEl.textContent = 'check_circle';
+                }
+            }
+        }
+    }
+
+    function showProcessingOverlay() {
+        processingStartTime = Date.now();
+        stepTimes = {};
+        
+        debug('Processing overlay shown', 'info');
+        
+        // Reset all steps
+        for (let i = 1; i <= 5; i++) {
+            const stepEl = document.getElementById(`step-${i}`);
+            if (stepEl) {
+                stepEl.className = 'flex items-center gap-3 text-sm step-pending';
+                const iconEl = stepEl.querySelector('.step-icon');
+                if (iconEl) iconEl.textContent = 'radio_button_unchecked';
+                const timeEl = stepEl.querySelector('.step-time');
+                if (timeEl) timeEl.textContent = '';
+            }
+        }
+        
+        // Hide tx link
+        const txEl = document.getElementById('processing-tx');
+        if (txEl) txEl.classList.add('hidden');
+        
+        // Start elapsed timer
+        const elapsedEl = document.getElementById('processing-elapsed');
+        if (processingTimer) clearInterval(processingTimer);
+        processingTimer = setInterval(() => {
+            const elapsed = ((Date.now() - processingStartTime) / 1000).toFixed(1);
+            if (elapsedEl) elapsedEl.textContent = `Elapsed: ${elapsed}s`;
+        }, 100);
+        
+        setPhase('INIT');
+        document.getElementById('processing-overlay').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function hideProcessingOverlay() {
+        if (processingTimer) {
+            clearInterval(processingTimer);
+            processingTimer = null;
+        }
+        document.getElementById('processing-overlay').classList.add('hidden');
+        document.body.style.overflow = '';
+        debug('Processing overlay hidden', 'info');
+    }
+
+    function showTransactionHash(txHash) {
+        const txEl = document.getElementById('processing-tx');
+        const linkEl = document.getElementById('processing-tx-link');
+        
+        if (txEl && linkEl && txHash) {
+            const url = `https://polygonscan.com/tx/${txHash}`;
+            linkEl.href = url;
+            linkEl.textContent = `${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}`;
+            txEl.classList.remove('hidden');
+            debug(`TX Hash: ${txHash}`, 'success');
+        }
+    }
+
+    function markStepTime(stepNum) {
+        const stepEl = document.getElementById(`step-${stepNum}`);
+        if (stepEl && processingStartTime) {
+            const timeEl = stepEl.querySelector('.step-time');
+            const elapsed = ((Date.now() - processingStartTime) / 1000).toFixed(1);
+            if (timeEl) timeEl.textContent = `${elapsed}s`;
+            stepTimes[stepNum] = elapsed;
+            debug(`Step ${stepNum} completed at ${elapsed}s`, 'success');
+        }
+    }
 
     // ============================================
     // Helper: Build WalletTwo URL
@@ -490,6 +809,7 @@
     // Toast Notification
     // ============================================
     function showToast(message, type = 'info') {
+        debug(`Toast [${type}]: ${message}`, type === 'error' ? 'error' : 'info');
         const container = document.getElementById('toast-container') || document.body;
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
@@ -506,6 +826,7 @@
     // Load Packages from API
     // ============================================
     async function loadPackages() {
+        debug('Loading packages from API...', 'info');
         const loadingEl = document.getElementById('packages-loading');
         const errorEl = document.getElementById('packages-error');
         const containerEl = document.getElementById('packages-container');
@@ -530,7 +851,7 @@
                 PACKAGES[pkg.id] = pkg;
             });
 
-            console.log('✅ Packages loaded:', Object.keys(PACKAGES));
+            debug(`Packages loaded: ${Object.keys(PACKAGES).join(', ')}`, 'success');
 
             // Render package cards
             renderPackageCards(data.packages);
@@ -546,7 +867,7 @@
             purchaseEl.classList.remove('hidden');
 
         } catch (error) {
-            console.error('Failed to load packages:', error);
+            debug(`Failed to load packages: ${error.message}`, 'error');
             loadingEl.classList.add('hidden');
             errorEl.classList.remove('hidden');
         }
@@ -638,6 +959,7 @@
         if (!PACKAGES[pkgId]) return;
         
         selectedPackage = pkgId;
+        debug(`Package selected: ${pkgId}`, 'info');
         
         // Update visual selection
         Object.keys(PACKAGES).forEach(id => {
@@ -687,6 +1009,7 @@
     // Session Management
     // ============================================
     function checkSession() {
+        debug('Checking session...', 'info');
         try {
             const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
             if (stored) {
@@ -695,6 +1018,7 @@
                 if (data.wallet && age < CONFIG.SESSION_DURATION) {
                     currentUser = data;
                     currentWallet = data.wallet;
+                    debug(`Session restored: ${currentWallet.substring(0, 10)}...`, 'success');
                     updateHeaderUI(currentUser, 0);
                     updateBuyButton();
                     fetchUserBalance();
@@ -703,17 +1027,19 @@
                 localStorage.removeItem(CONFIG.STORAGE_KEY);
             }
         } catch (e) {
-            console.error('Session check error:', e);
+            debug(`Session check error: ${e.message}`, 'error');
         }
         
         currentUser = null;
         currentWallet = null;
+        debug('No valid session found', 'info');
         updateHeaderUI(null, 0);
         updateBuyButton();
     }
 
     function saveSession(data) {
         localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify({ ...data, timestamp: Date.now() }));
+        debug('Session saved', 'success');
     }
 
     // ============================================
@@ -727,7 +1053,6 @@
             headerConnected.classList.remove('hidden');
             headerDisconnected.classList.add('hidden');
             
-            // FIX: Use user.firstName and user.lastName
             const firstName = user.firstName || '';
             const lastName = user.lastName || '';
             const fullName = user.name || `${firstName} ${lastName}`.trim() || 'Member';
@@ -765,33 +1090,23 @@
     async function fetchUserBalance() {
         if (!currentUser || !currentUser.wallet) return;
         
+        debug(`Fetching balance for ${currentUser.wallet.substring(0, 10)}...`, 'info');
+        
         try {
-            // Fetch from YOUR database, not external API
             const response = await fetch('/api/member/balance/' + currentUser.wallet.toLowerCase());
             const data = await response.json();
             
             if (data.success) {
                 currentBalance = parseFloat(data.balance) || 0;
-                console.log('💰 Balance loaded from DB:', currentBalance);
+                debug(`Balance: ${currentBalance} Kea€`, 'success');
             } else {
                 currentBalance = 0;
             }
             
-            // Update all balance displays
-            const balanceElements = document.querySelectorAll('[data-user-balance], #userBalance, #headerBalance');
-            balanceElements.forEach(el => {
-                el.textContent = 'Kea€' + currentBalance.toLocaleString();
-            });
+            document.getElementById('headerUserBalance').textContent = Math.floor(currentBalance).toLocaleString();
             
-            // Update HeaderManager if available
-            if (typeof HeaderManager !== 'undefined') {
-                HeaderManager.userBalance = currentBalance;
-                if (HeaderManager.updateBalanceDisplays) {
-                    HeaderManager.updateBalanceDisplays(currentBalance);
-                }
-            }
         } catch (error) {
-            console.error('Balance fetch failed:', error);
+            debug(`Balance fetch failed: ${error.message}`, 'error');
             currentBalance = 0;
         }
     }
@@ -803,6 +1118,8 @@
         if (isDisconnecting) return;
         isDisconnecting = true;
         acceptMessages = false;
+        
+        debug('Disconnecting...', 'info');
         
         localStorage.removeItem(CONFIG.STORAGE_KEY);
         localStorage.removeItem('keavalley_profile');
@@ -824,6 +1141,7 @@
     // Login Modal
     // ============================================
     function showLoginModal() {
+        debug('Opening login modal', 'info');
         const iframe = document.getElementById('login-wallet-iframe');
         if (CONFIG.WALLETTWO_COMPANY_ID) {
             iframe.src = buildWalletTwoUrl('auth');
@@ -897,6 +1215,7 @@
             if (!acceptMessages) return;
 
             const data = event.data;
+            debug(`WalletTwo message: ${JSON.stringify(data).substring(0, 100)}...`, 'info');
 
             // Error/Cancel events
             if (data && ['wallet_error', 'auth_error', 'auth_cancelled', 'wallet_cancelled', 'close', 'cancel', 'error'].includes(data.type || data.event)) {
@@ -914,6 +1233,7 @@
                 const code = data.code || data.token;
                 
                 if (wallet) {
+                    debug(`Wallet connected: ${wallet.substring(0, 10)}...`, 'success');
                     acceptMessages = false;
                     if (code) {
                         exchangeCode(code, wallet, data.user);
@@ -929,6 +1249,7 @@
     }
 
     async function exchangeCode(code, wallet, userId) {
+        debug('Exchanging auth code...', 'info');
         try {
             const response = await fetch('/api/wallettwo/exchange', {
                 method: 'POST',
@@ -947,9 +1268,11 @@
                 lastName: data.user?.family_name,
                 timestamp: Date.now()
             };
+            debug(`User authenticated: ${currentUser.email || currentUser.wallet}`, 'success');
             saveSession(currentUser);
             onWalletConnected();
         } catch (error) {
+            debug(`Code exchange failed: ${error.message}`, 'warn');
             currentWallet = wallet.toLowerCase();
             currentUser = { wallet: currentWallet, timestamp: Date.now() };
             saveSession(currentUser);
@@ -968,15 +1291,9 @@
     // Purchase Flow
     // ============================================
     function startPurchase() {
-        console.log('=== startPurchase called ===');
-        console.log('currentWallet:', currentWallet);
-        console.log('selectedPackage:', selectedPackage);
-        console.log('PACKAGES:', PACKAGES);
-        console.log('stripe-modal:', document.getElementById('stripe-modal'));
-        console.log('stripe-package:', document.getElementById('stripe-package'));
-        console.log('stripe-buying-power:', document.getElementById('stripe-buying-power'));
-        console.log('stripe-total:', document.getElementById('stripe-total'));
-        console.log('stripe-amount:', document.getElementById('stripe-amount'));
+        debug('=== startPurchase called ===', 'info');
+        debug(`Wallet: ${currentWallet}`, 'info');
+        debug(`Package: ${selectedPackage}`, 'info');
         
         if (!currentWallet) {
             showLoginModal();
@@ -984,19 +1301,21 @@
         }
         
         const pkg = PACKAGES[selectedPackage];
-        console.log('pkg:', pkg);
-        if (!pkg) return;
+        if (!pkg) {
+            debug('No package selected!', 'error');
+            return;
+        }
+        
+        debug(`Package details: ${pkg.name}, €${pkg.price}`, 'info');
         
         const stripePackage = document.getElementById('stripe-package');
-        console.log('stripePackage before setting:', stripePackage);
         const stripeModal = document.getElementById('stripe-modal');
         const stripeBuyingPower = document.getElementById('stripe-buying-power');
         const stripeTotal = document.getElementById('stripe-total');
         const stripeAmount = document.getElementById('stripe-amount');
         
         if (!stripeModal || !stripePackage || !stripeBuyingPower || !stripeTotal || !stripeAmount) {
-            console.error('Modal elements missing, reloading...');
-            //location.reload();
+            debug('Modal elements missing!', 'error');
             return;
         }
         
@@ -1020,9 +1339,8 @@
     }
 
     async function createPaymentIntent(pkg) {
+        debug('Creating payment intent...', 'info');
         try {
-            console.log('📧 DEBUG - currentUser:', JSON.stringify(currentUser));
-            console.log('📧 DEBUG - email being sent:', currentUser?.email);
             const response = await fetch('/api/membership/create-payment-intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1038,16 +1356,19 @@
             const data = await response.json();
             
             if (data.success) {
+                debug(`Payment intent created: ${data.orderId}`, 'success');
                 window.currentPaymentIntent = {
                     clientSecret: data.clientSecret,
                     orderId: data.orderId,
                     ...pkg
                 };
             } else {
+                debug(`Payment intent failed: ${data.error}`, 'error');
                 showResult('error', 'Error', data.error || 'Failed to initialize payment');
                 closeStripeModal();
             }
         } catch (error) {
+            debug(`Payment intent error: ${error.message}`, 'error');
             showResult('error', 'Error', 'Failed to initialize payment');
             closeStripeModal();
         }
@@ -1056,7 +1377,10 @@
     async function handleStripeSubmit(e) {
         e.preventDefault();
         
+        debug('=== handleStripeSubmit called ===', 'info');
+        
         if (!selectedPackage || !window.currentPaymentIntent) {
+            debug('Missing package or payment intent', 'error');
             showToast('Please select a package first', 'error');
             return;
         }
@@ -1064,12 +1388,19 @@
         const pkg = PACKAGES[selectedPackage];
         const paymentData = window.currentPaymentIntent;
         
-        // Disable button and show processing
-        const submitBtn = document.getElementById('stripe-submit');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>Processing...';
+        debug(`Package: ${pkg.name}, Price: €${pkg.price}`, 'info');
+        debug(`Order ID: ${paymentData.orderId}`, 'info');
+        
+        // Close Stripe modal and show processing overlay
+        document.getElementById('stripe-modal').classList.add('hidden');
+        showProcessingOverlay();
         
         try {
+            // ========== PHASE 1: AUTHORIZE ==========
+            setPhase('AUTHORIZE');
+            debug('Calling stripe.confirmCardPayment...', 'info');
+            
+            const authorizeStart = Date.now();
             const { error, paymentIntent } = await stripe.confirmCardPayment(paymentData.clientSecret, {
                 payment_method: {
                     card: cardElement,
@@ -1080,14 +1411,25 @@
             });
             
             if (error) {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<span class="material-symbols-outlined">lock</span> Pay €' + pkg.price.toLocaleString();
-                showToast(error.message, 'error');
+                debug(`Stripe error: ${error.message}`, 'error');
+                setPhase('ERROR', error.message);
+                setTimeout(() => {
+                    hideProcessingOverlay();
+                    showResult('error', 'Payment Failed', error.message);
+                }, 2000);
                 return;
             }
             
-            // Payment authorized - now mint and capture
-            submitBtn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>Minting Kea€...';
+            markStepTime(1);
+            debug(`Payment authorized in ${Date.now() - authorizeStart}ms`, 'success');
+            debug(`Payment Intent ID: ${paymentIntent.id}`, 'info');
+            debug(`Payment status: ${paymentIntent.status}`, 'info');
+            
+            // ========== PHASE 2: MINT INIT ==========
+            setPhase('MINT_INIT');
+            debug('Calling /api/membership/mint-and-capture...', 'info');
+            
+            const mintStart = Date.now();
             
             const response = await fetch('/api/membership/mint-and-capture', {
                 method: 'POST',
@@ -1100,58 +1442,64 @@
                 })
             });
             
-            const data = await response.json();
+            const mintDuration = Date.now() - mintStart;
+            debug(`mint-and-capture responded in ${mintDuration}ms`, 'info');
             
-            closeStripeModal();
+            const data = await response.json();
+            debug(`Response success: ${data.success}`, data.success ? 'success' : 'error');
             
             if (data.success) {
-                fetchUserBalance(); // Refresh balance from DB
-                showResult('success', 'Welcome to Kea Valley!', 'Your Kea€ has been added to your account.', {
-                    package: pkg.name,
-                    buyingPower: pkg.buyingPower,
-                    orderId: data.order_id,
-                    txHash: data.mint_tx_hash
-                });
+                // Mark steps with timing
+                markStepTime(2);
+                markStepTime(3);
+                markStepTime(4);
+                markStepTime(5);
+                
+                if (data.mint_tx_hash) {
+                    showTransactionHash(data.mint_tx_hash);
+                }
+                
+                if (data.processing_time_ms) {
+                    debug(`Server processing time: ${data.processing_time_ms}ms`, 'info');
+                }
+                
+                setPhase('COMPLETE');
+                debug('Purchase completed successfully!', 'success');
+                
+                setTimeout(() => {
+                    hideProcessingOverlay();
+                    fetchUserBalance();
+                    showResult('success', 'Welcome to Kea Valley!', 'Your Kea€ has been added to your account.', {
+                        package: pkg.name,
+                        buyingPower: pkg.buyingPower,
+                        orderId: data.order_id,
+                        txHash: data.mint_tx_hash
+                    });
+                }, 1500);
+                
             } else {
-                showResult('error', 'Purchase Failed', data.error || 'Please contact support.');
+                debug(`Mint failed: ${data.error}`, 'error');
+                setPhase('ERROR', data.error || 'Minting failed');
+                
+                setTimeout(() => {
+                    hideProcessingOverlay();
+                    showResult('error', 'Purchase Failed', data.error || 'Please contact support.');
+                }, 2000);
             }
             
         } catch (err) {
-            console.error('Payment error:', err);
-            closeStripeModal();
-            showResult('error', 'Connection Error', 'Please check your purchase status or try again.');
-        }
-    }
-
-    async function pollPurchaseStatus(paymentIntentId, paymentData) {
-        for (let i = 0; i < 60; i++) {
-            try {
-                const response = await fetch('/api/membership/purchase-status/' + paymentIntentId);
-                const data = await response.json();
-                
-                if (data.status === 'completed') {
-                    hideProcessing();
-                    showResult('success', 'Welcome to Kea Valley!', 'Your membership has been activated.', {
-                        package: paymentData.name,
-                        buyingPower: paymentData.buyingPower,
-                        orderId: data.orderId || paymentData.orderId
-                    });
-                    fetchUserBalance();
-                    return;
-                }
-                
-                if (data.status === 'failed') {
-                    hideProcessing();
-                    showResult('error', 'Purchase Failed', data.error || 'Please contact support.');
-                    return;
-                }
-            } catch (e) {}
+            debug(`Exception: ${err.message}`, 'error');
+            setPhase('ERROR', err.message);
             
-            await new Promise(r => setTimeout(r, 1000));
+            setTimeout(() => {
+                hideProcessingOverlay();
+                showResult('error', 'Connection Error', 'Please check your purchase status or try again.');
+            }, 2000);
         }
         
-        hideProcessing();
-        showResult('info', 'Processing', 'Your payment was received. Membership will be activated shortly.');
+        // Reset
+        window.currentPaymentIntent = null;
+        if (cardElement) cardElement.clear();
     }
 
     function closeStripeModal() {
@@ -1159,7 +1507,6 @@
         document.body.style.overflow = '';
         window.currentPaymentIntent = null;
         
-        // Reset submit button WITH the stripe-amount span
         const submitBtn = document.getElementById('stripe-submit');
         if (submitBtn) {
             submitBtn.disabled = true;
@@ -1174,18 +1521,11 @@
     }
 
     // ============================================
-    // Overlays
+    // Result Overlay
     // ============================================
-    function showProcessing(message) {
-        document.getElementById('processing-message').textContent = message;
-        document.getElementById('processing-overlay').classList.remove('hidden');
-    }
-
-    function hideProcessing() {
-        document.getElementById('processing-overlay').classList.add('hidden');
-    }
-
     function showResult(type, title, message, details = null) {
+        debug(`Showing result: ${type} - ${title}`, type === 'success' ? 'success' : 'error');
+        
         const icon = document.getElementById('result-icon');
         icon.textContent = type === 'success' ? 'check_circle' : type === 'info' ? 'info' : 'error';
         icon.className = 'material-symbols-outlined text-5xl mb-4 ' + 
@@ -1199,6 +1539,16 @@
             document.getElementById('result-package').textContent = details.package;
             document.getElementById('result-buying-power').textContent = 'Kea€' + details.buyingPower?.toLocaleString();
             document.getElementById('result-order-id').textContent = details.orderId || '--';
+            
+            // Show transaction link if available
+            const txRow = document.getElementById('result-tx-row');
+            const txLink = document.getElementById('result-tx-link');
+            if (details.txHash && txRow && txLink) {
+                txLink.href = `https://polygonscan.com/tx/${details.txHash}`;
+                txRow.classList.remove('hidden');
+            } else if (txRow) {
+                txRow.classList.add('hidden');
+            }
         } else {
             document.getElementById('result-details').classList.add('hidden');
         }
@@ -1208,7 +1558,6 @@
 
     function closeResultOverlay() {
         document.getElementById('result-overlay').classList.add('hidden');
-        // Refresh balance display
         fetchUserBalance();
     }
 
@@ -1216,8 +1565,12 @@
     // Initialize Stripe
     // ============================================
     function initStripe() {
-        if (!CONFIG.STRIPE_PUBLIC_KEY || typeof Stripe === 'undefined') return;
+        if (!CONFIG.STRIPE_PUBLIC_KEY || typeof Stripe === 'undefined') {
+            debug('Stripe not available', 'warn');
+            return;
+        }
         
+        debug('Initializing Stripe...', 'info');
         stripe = Stripe(CONFIG.STRIPE_PUBLIC_KEY);
         const elements = stripe.elements();
         
@@ -1250,25 +1603,29 @@
         });
         
         document.getElementById('stripe-form')?.addEventListener('submit', handleStripeSubmit);
+        debug('Stripe initialized', 'success');
     }
 
     // ============================================
     // Load Config
     // ============================================
     async function loadConfig() {
+        debug('Loading config...', 'info');
         try {
             const response = await fetch('/api/config/public');
             const config = await response.json();
             
             if (config.walletTwoCompanyId) {
                 CONFIG.WALLETTWO_COMPANY_ID = config.walletTwoCompanyId;
+                debug(`WalletTwo Company ID: ${config.walletTwoCompanyId}`, 'success');
             }
             if (config.stripePublicKey) {
                 CONFIG.STRIPE_PUBLIC_KEY = config.stripePublicKey;
+                debug('Stripe public key loaded', 'success');
                 initStripe();
             }
         } catch (error) {
-            console.error('Failed to load config:', error);
+            debug(`Config load failed: ${error.message}`, 'error');
         }
     }
 
@@ -1276,12 +1633,15 @@
     // Initialize
     // ============================================
     document.addEventListener('DOMContentLoaded', async () => {
-        console.log('📄 DOM loaded, initializing...');
+        debug('DOM loaded, initializing...', 'info');
         
         setupWalletListener();
         await loadConfig();
         checkSession();
         await loadPackages();
+        
+        debug('Initialization complete', 'success');
+        debug('Press Ctrl+D to toggle debug panel', 'info');
     });
     </script>
 </body>

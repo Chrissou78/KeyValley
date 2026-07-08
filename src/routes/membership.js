@@ -1,5 +1,5 @@
 // src/routes/membership.js
-// VERSION: 2026-04-25 - Packages from DB + 90/10 split on NET + Email webhook
+// VERSION: 2026-07-08 - With step timing for frontend debug panel
 require('dotenv').config();
 const express = require('express');
 const router = express.Router();
@@ -161,174 +161,243 @@ router.get('/verify-connect', async (req, res) => {
 
 // ============================================
 // POST /api/membership/mint-and-capture
+// With detailed step timing for frontend debug
 // ============================================
 router.post('/mint-and-capture', async (req, res) => {
     const { paymentIntentId, orderId, walletAddress, packageId } = req.body;
     
-    console.log('='.repeat(60));
-    console.log('🔄 MINT-AND-CAPTURE START');
+    // Timing tracker
+    const startTime = Date.now();
+    const stepTiming = {
+        total_start: startTime,
+        steps: {}
+    };
+    
+    const logStep = (stepNum, stepName, status = 'start') => {
+        const now = Date.now();
+        const elapsed = now - startTime;
+        const key = `step_${stepNum}_${stepName}`;
+        
+        if (status === 'start') {
+            stepTiming.steps[key] = { start: elapsed };
+            console.log(`\n📍 [${elapsed}ms] STEP ${stepNum}: ${stepName}...`);
+        } else {
+            if (stepTiming.steps[key]) {
+                stepTiming.steps[key].end = elapsed;
+                stepTiming.steps[key].duration = elapsed - stepTiming.steps[key].start;
+            }
+            const icon = status === 'complete' ? '✅' : '❌';
+            console.log(`${icon} [${elapsed}ms] STEP ${stepNum}: ${stepName} ${status}`);
+        }
+    };
+    
+    console.log('\n' + '='.repeat(60));
+    console.log(`🔄 [${new Date().toISOString()}] MINT-AND-CAPTURE START`);
     console.log('='.repeat(60));
     console.log('📦 Input:', { paymentIntentId, orderId, walletAddress, packageId });
     
+    // Response data that will be built up through the process
+    let responseData = {
+        success: false,
+        order_id: orderId,
+        mint_tx_hash: null,
+        buying_power: null,
+        processing_time_ms: null,
+        step_timing: null,
+        current_step: 0,
+        error: null
+    };
+    
     try {
-        // 1. Get the payment intent
-        console.log('\n📍 STEP 1: Retrieving payment intent...');
+        // ========================================
+        // STEP 1: Retrieve Payment Intent
+        // ========================================
+        logStep(1, 'retrieve_payment');
+        responseData.current_step = 1;
+        
         const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-        console.log('✅ Payment intent retrieved');
+        
         console.log('   Status:', paymentIntent.status);
         console.log('   Amount:', paymentIntent.amount / 100, paymentIntent.currency?.toUpperCase());
         
         if (paymentIntent.status !== 'requires_capture') {
-            console.log('❌ FAILED: Payment not ready for capture');
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Payment not ready for capture. Status: ' + paymentIntent.status 
-            });
+            logStep(1, 'retrieve_payment', 'failed');
+            responseData.error = `Payment not ready for capture. Status: ${paymentIntent.status}`;
+            responseData.processing_time_ms = Date.now() - startTime;
+            return res.status(400).json(responseData);
         }
         
-        // 2. Get package details
-        console.log('\n📍 STEP 2: Getting package details...');
-        console.log('   Package ID:', packageId);
+        logStep(1, 'retrieve_payment', 'complete');
+        
+        // ========================================
+        // STEP 2: Get Package Details
+        // ========================================
+        logStep(2, 'get_package');
+        responseData.current_step = 2;
+        
         const pkg = await getPackage(packageId);
+        
         if (!pkg) {
-            console.log('❌ FAILED: Package not found:', packageId);
-            // Cancel the payment intent
+            logStep(2, 'get_package', 'failed');
+            console.log('   Package not found:', packageId);
             await stripe.paymentIntents.cancel(paymentIntentId);
-            return res.status(404).json({ success: false, error: 'Package not found' });
+            responseData.error = 'Package not found';
+            responseData.processing_time_ms = Date.now() - startTime;
+            return res.status(404).json(responseData);
         }
-        console.log('✅ Package found:', pkg.name);
+        
+        console.log('   Package:', pkg.name);
         console.log('   Price:', pkg.price);
         console.log('   Buying Power:', pkg.buyingPower);
         
         const buyingPowerAmount = parseFloat(pkg.buyingPower);
         const walletLower = walletAddress.toLowerCase();
-        console.log('   Parsed buying power:', buyingPowerAmount);
-        console.log('   Wallet (lowercase):', walletLower);
-        
-        // Get user email from metadata or order
         const userEmail = paymentIntent.metadata?.email || paymentIntent.receipt_email;
-        console.log('   User email:', userEmail || 'NOT FOUND');
         
-        // 3. MINT TOKENS FIRST
-        console.log('\n📍 STEP 3: Minting tokens...');
+        responseData.buying_power = buyingPowerAmount;
+        logStep(2, 'get_package', 'complete');
+        
+        // ========================================
+        // STEP 3: Mint Tokens (On-Chain)
+        // ========================================
+        logStep(3, 'mint_tokens');
+        responseData.current_step = 3;
+        
         let mintTxHash = null;
+        let txBroadcastTime = null;
+        let txConfirmTime = null;
+        
         try {
-            console.log('🪙 Minting', buyingPowerAmount, 'tokens to', walletLower);
-            
-            // Load ethers
             const { ethers } = require('ethers');
             
-            // Check environment variables
-            console.log('\n🔧 Environment check:');
-            console.log('   POLYGON_RPC:', process.env.POLYGON_RPC ? '✅ Set' : '❌ MISSING');
-            console.log('   PRIVATE_KEY:', process.env.PRIVATE_KEY ? '✅ Set (' + process.env.PRIVATE_KEY.slice(0, 6) + '...)' : '❌ MISSING');
-            console.log('   TOKEN_ADDRESS_POLYGON:', process.env.TOKEN_ADDRESS_POLYGON || '❌ MISSING');
+            // Environment check
+            console.log('   🔧 Environment check:');
+            console.log('      POLYGON_RPC:', process.env.POLYGON_RPC ? '✅' : '❌');
+            console.log('      PRIVATE_KEY:', process.env.PRIVATE_KEY ? '✅' : '❌');
+            console.log('      TOKEN_ADDRESS:', process.env.TOKEN_ADDRESS_POLYGON ? '✅' : '❌');
             
-            if (!process.env.POLYGON_RPC) {
-                throw new Error('POLYGON_RPC environment variable is missing');
-            }
-            if (!process.env.PRIVATE_KEY) {
-                throw new Error('PRIVATE_KEY environment variable is missing');
-            }
-            if (!process.env.TOKEN_ADDRESS_POLYGON) {
-                throw new Error('TOKEN_ADDRESS_POLYGON environment variable is missing');
-            }
+            if (!process.env.POLYGON_RPC) throw new Error('POLYGON_RPC missing');
+            if (!process.env.PRIVATE_KEY) throw new Error('PRIVATE_KEY missing');
+            if (!process.env.TOKEN_ADDRESS_POLYGON) throw new Error('TOKEN_ADDRESS_POLYGON missing');
             
-            console.log('\n🔗 Connecting to Polygon RPC...');
+            // Connect to provider
+            console.log('   🔗 Connecting to Polygon...');
+            const providerStart = Date.now();
             const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC);
             
-            // Test provider connection
-            try {
-                const network = await provider.getNetwork();
-                console.log('✅ Connected to network:', network.name, '(chainId:', network.chainId.toString(), ')');
-            } catch (networkError) {
-                console.error('❌ Failed to connect to network:', networkError.message);
-                throw new Error('Failed to connect to Polygon network: ' + networkError.message);
-            }
+            const network = await provider.getNetwork();
+            console.log(`   ✅ Connected to ${network.name} (${network.chainId}) in ${Date.now() - providerStart}ms`);
             
-            console.log('\n🔑 Loading minter wallet...');
+            // Setup wallet
             const minterWallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-            console.log('✅ Minter wallet address:', minterWallet.address);
+            console.log('   🔑 Minter:', minterWallet.address);
             
-            // Check minter MATIC balance for gas
+            // Check gas balance
             const maticBalance = await provider.getBalance(minterWallet.address);
-            const maticBalanceFormatted = ethers.formatEther(maticBalance);
-            console.log('💰 Minter MATIC balance:', maticBalanceFormatted, 'MATIC');
+            const maticFormatted = ethers.formatEther(maticBalance);
+            console.log('   💰 MATIC balance:', maticFormatted);
             
-            if (parseFloat(maticBalanceFormatted) < 0.01) {
-                throw new Error('Minter wallet has insufficient MATIC for gas. Balance: ' + maticBalanceFormatted + ' MATIC');
+            if (parseFloat(maticFormatted) < 0.01) {
+                throw new Error(`Insufficient MATIC for gas: ${maticFormatted}`);
             }
             
-            console.log('\n📝 Creating token contract instance...');
-            console.log('   Token address:', process.env.TOKEN_ADDRESS_POLYGON);
+            // Create contract instance
             const tokenContract = new ethers.Contract(
                 process.env.TOKEN_ADDRESS_POLYGON,
                 ['function mint(address to, uint256 amount) external'],
                 minterWallet
             );
-            console.log('✅ Token contract created');
             
-            // Mint with proper decimals (assuming 18)
-            console.log('\n🪙 Preparing mint transaction...');
+            // Prepare mint amount
             const mintAmount = ethers.parseUnits(buyingPowerAmount.toString(), 18);
-            console.log('   Amount (human):', buyingPowerAmount);
-            console.log('   Amount (wei):', mintAmount.toString());
-            console.log('   To address:', walletAddress);
+            console.log('   🪙 Minting', buyingPowerAmount, 'tokens to', walletAddress);
             
-            console.log('\n📤 Sending mint transaction...');
+            // Send transaction
+            console.log('   📤 Broadcasting transaction...');
+            const txStart = Date.now();
             const tx = await tokenContract.mint(walletAddress, mintAmount);
-            console.log('✅ Transaction sent!');
-            console.log('   TX Hash:', tx.hash);
+            txBroadcastTime = Date.now() - txStart;
             
-            console.log('⏳ Waiting for confirmation...');
-            const receipt = await tx.wait();
-            console.log('✅ Transaction confirmed!');
-            console.log('   Block number:', receipt.blockNumber);
-            console.log('   Gas used:', receipt.gasUsed?.toString());
+            // TX is now broadcast - we have the hash!
+            mintTxHash = tx.hash;
+            responseData.mint_tx_hash = mintTxHash;
             
-            mintTxHash = receipt.hash;
-            console.log('✅ MINTING SUCCESSFUL! TX:', mintTxHash);
+            console.log(`   ✅ TX BROADCAST in ${txBroadcastTime}ms`);
+            console.log(`   📋 TX Hash: ${mintTxHash}`);
+            console.log('   ⏳ Waiting for confirmation...');
+            
+            stepTiming.steps['step_3_tx_broadcast'] = { 
+                hash: mintTxHash, 
+                duration: txBroadcastTime 
+            };
+            
+            // Wait for confirmation
+            const confirmStart = Date.now();
+            const receipt = await tx.wait(1); // Wait for 1 confirmation
+            txConfirmTime = Date.now() - confirmStart;
+            
+            console.log(`   ✅ TX CONFIRMED in ${txConfirmTime}ms`);
+            console.log(`   📦 Block: ${receipt.blockNumber}`);
+            console.log(`   ⛽ Gas used: ${receipt.gasUsed?.toString()}`);
+            
+            stepTiming.steps['step_3_tx_confirm'] = { 
+                block: receipt.blockNumber,
+                gasUsed: receipt.gasUsed?.toString(),
+                duration: txConfirmTime 
+            };
+            
+            mintTxHash = receipt.hash || tx.hash;
+            responseData.mint_tx_hash = mintTxHash;
+            
+            logStep(3, 'mint_tokens', 'complete');
             
         } catch (mintError) {
-            console.error('\n❌ MINTING FAILED');
-            console.error('   Error name:', mintError.name);
-            console.error('   Error message:', mintError.message);
-            console.error('   Error code:', mintError.code);
-            if (mintError.reason) console.error('   Error reason:', mintError.reason);
-            if (mintError.data) console.error('   Error data:', mintError.data);
-            if (mintError.transaction) console.error('   Transaction:', mintError.transaction);
-            console.error('   Full error:', JSON.stringify(mintError, Object.getOwnPropertyNames(mintError), 2));
+            logStep(3, 'mint_tokens', 'failed');
+            console.error('   ❌ MINT ERROR:', mintError.message);
             
-            // CANCEL the payment - don't charge the user
-            console.log('\n🚫 Cancelling payment intent...');
-            await stripe.paymentIntents.cancel(paymentIntentId);
-            console.log('✅ Payment cancelled');
+            // Cancel payment - don't charge user
+            console.log('   🚫 Cancelling payment...');
+            try {
+                await stripe.paymentIntents.cancel(paymentIntentId);
+            } catch (cancelError) {
+                console.error('   ⚠️ Could not cancel payment:', cancelError.message);
+            }
             
-            // Update order status
+            // Update order
             await pool.query(
                 `UPDATE membership_purchases SET status = 'mint_failed', error_message = $1 WHERE payment_intent_id = $2`,
                 [mintError.message, paymentIntentId]
             );
-            console.log('✅ Order status updated to mint_failed');
             
-            return res.status(500).json({ 
-                success: false, 
-                error: 'Token minting failed. Your card was not charged.',
-                details: mintError.message
-            });
+            responseData.error = 'Token minting failed. Your card was not charged.';
+            responseData.error_details = mintError.message;
+            responseData.processing_time_ms = Date.now() - startTime;
+            responseData.step_timing = stepTiming;
+            
+            return res.status(500).json(responseData);
         }
         
-        // 4. CAPTURE PAYMENT (only after successful mint)
-        console.log('\n📍 STEP 4: Capturing payment...');
-        const capturedIntent = await stripe.paymentIntents.capture(paymentIntentId);
-        console.log('✅ Payment captured!');
-        console.log('   Status:', capturedIntent.status);
-        console.log('   Amount received:', capturedIntent.amount_received / 100, capturedIntent.currency?.toUpperCase());
+        // ========================================
+        // STEP 4: Capture Payment
+        // ========================================
+        logStep(4, 'capture_payment');
+        responseData.current_step = 4;
         
-        // 5. Credit database balance
-        console.log('\n📍 STEP 5: Crediting database balance...');
-        console.log('   Wallet:', walletLower);
-        console.log('   Amount:', buyingPowerAmount);
+        const capturedIntent = await stripe.paymentIntents.capture(paymentIntentId);
+        
+        console.log('   Status:', capturedIntent.status);
+        console.log('   Amount:', capturedIntent.amount_received / 100, capturedIntent.currency?.toUpperCase());
+        
+        logStep(4, 'capture_payment', 'complete');
+        
+        // ========================================
+        // STEP 5: Update Database
+        // ========================================
+        logStep(5, 'update_database');
+        responseData.current_step = 5;
+        
+        // Credit balance
+        console.log('   💳 Crediting balance:', buyingPowerAmount, 'to', walletLower);
         await pool.query(`
             INSERT INTO member_balances (wallet_address, balance, total_credited)
             VALUES ($1, $2, $2)
@@ -338,76 +407,35 @@ router.post('/mint-and-capture', async (req, res) => {
                 total_credited = member_balances.total_credited + $2,
                 updated_at = NOW()
         `, [walletLower, buyingPowerAmount]);
-        console.log('✅ Database balance credited');
         
-        // 6. Calculate fees and update order
-        console.log('\n📍 STEP 6: Calculating fees...');
+        // Calculate fees
         const amountReceived = capturedIntent.amount_received / 100;
-        const paymentCurrency = (capturedIntent.currency || 'eur').toLowerCase();
         let stripeFee = estimateStripeFee(amountReceived);
-        let feeSource = 'estimated';
-        console.log('   Amount received:', amountReceived, paymentCurrency.toUpperCase());
-        console.log('   Estimated Stripe fee:', stripeFee);
-
-        // Try to get actual fee from Stripe
+        
+        // Try to get actual fee
         try {
             if (capturedIntent.latest_charge) {
-                console.log('   Fetching actual fee from charge:', capturedIntent.latest_charge);
                 const charge = await stripe.charges.retrieve(capturedIntent.latest_charge);
-                
                 if (charge.balance_transaction) {
                     const balanceTx = await stripe.balanceTransactions.retrieve(charge.balance_transaction);
-                    
-                    const balanceCurrency = (balanceTx.currency || 'eur').toLowerCase();
-                    const exchangeRate = balanceTx.exchange_rate || 1;
-                    
-                    console.log('   Balance Transaction:', {
-                        id: balanceTx.id,
-                        currency: balanceCurrency.toUpperCase(),
-                        amount: balanceTx.amount / 100,
-                        fee: balanceTx.fee / 100,
-                        net: balanceTx.net / 100,
-                        exchange_rate: exchangeRate
-                    });
-                    
-                    let actualFeeInBalanceCurrency = balanceTx.fee / 100;
-                    let actualFeeInPaymentCurrency;
-                    
-                    if (balanceCurrency !== paymentCurrency && exchangeRate > 0) {
-                        actualFeeInPaymentCurrency = actualFeeInBalanceCurrency / exchangeRate;
-                        console.log('   Currency conversion:', actualFeeInBalanceCurrency, balanceCurrency.toUpperCase(), '→', actualFeeInPaymentCurrency.toFixed(2), paymentCurrency.toUpperCase());
-                    } else {
-                        actualFeeInPaymentCurrency = actualFeeInBalanceCurrency;
-                    }
-                    
-                    const maxReasonableFee = amountReceived * 0.10;
-                    const minReasonableFee = 0.25;
-                    
-                    if (actualFeeInPaymentCurrency >= minReasonableFee && actualFeeInPaymentCurrency <= maxReasonableFee) {
-                        stripeFee = actualFeeInPaymentCurrency;
-                        feeSource = 'actual';
-                        console.log('   ✅ Using actual Stripe fee:', stripeFee.toFixed(2));
-                    } else {
-                        console.log('   ⚠️ Fee outside expected range, using estimate');
+                    const actualFee = balanceTx.fee / 100;
+                    const maxFee = amountReceived * 0.10;
+                    if (actualFee >= 0.25 && actualFee <= maxFee) {
+                        stripeFee = actualFee;
                     }
                 }
             }
         } catch (e) {
-            console.log('   ⚠️ Could not retrieve actual Stripe fee:', e.message);
+            console.log('   ⚠️ Could not get actual fee, using estimate');
         }
         
         const netAmount = amountReceived - stripeFee;
         const platformFee = netAmount * (PLATFORM_FEE_PERCENT / 100);
         const partnerAmount = netAmount - platformFee;
         
-        console.log('   Fee summary:');
-        console.log('     Stripe fee:', stripeFee.toFixed(2), '(' + feeSource + ')');
-        console.log('     Net amount:', netAmount.toFixed(2));
-        console.log('     Platform fee:', platformFee.toFixed(2), '(' + PLATFORM_FEE_PERCENT + '%)');
-        console.log('     Partner amount:', partnerAmount.toFixed(2));
+        console.log('   📊 Fees: Stripe €' + stripeFee.toFixed(2) + ', Platform €' + platformFee.toFixed(2) + ', Partner €' + partnerAmount.toFixed(2));
         
-        // Update order with all details
-        console.log('\n📍 Updating order in database...');
+        // Update order
         await pool.query(`
             UPDATE membership_purchases 
             SET status = 'completed',
@@ -422,13 +450,15 @@ router.post('/mint-and-capture', async (req, res) => {
                 )
             WHERE payment_intent_id = $6
         `, [stripeFee, netAmount, platformFee, partnerAmount, JSON.stringify(mintTxHash), paymentIntentId]);
-        console.log('✅ Order updated to completed');
         
-        // 7. Transfer to connected account (if configured)
-        console.log('\n📍 STEP 7: Partner transfer...');
+        logStep(5, 'update_database', 'complete');
+        
+        // ========================================
+        // STEP 6: Partner Transfer (if configured)
+        // ========================================
+        logStep(6, 'partner_transfer');
+        
         if (CONNECTED_ACCOUNT_ID && partnerAmount > 0) {
-            console.log('   Connected account:', CONNECTED_ACCOUNT_ID);
-            console.log('   Transfer amount:', partnerAmount.toFixed(2));
             try {
                 await stripe.transfers.create({
                     amount: Math.round(partnerAmount * 100),
@@ -437,87 +467,99 @@ router.post('/mint-and-capture', async (req, res) => {
                     transfer_group: orderId,
                     metadata: { order_id: orderId, package_id: packageId }
                 });
-                console.log('✅ Transfer to partner successful');
+                console.log('   ✅ Transfer successful: €' + partnerAmount.toFixed(2));
+                logStep(6, 'partner_transfer', 'complete');
             } catch (e) {
-                console.error('   ❌ Transfer failed:', e.message);
+                console.error('   ⚠️ Transfer failed:', e.message);
+                logStep(6, 'partner_transfer', 'failed');
             }
         } else {
-            console.log('   ⏭️ Skipping transfer (no connected account or zero amount)');
+            console.log('   ⏭️ Skipped (no connected account)');
+            logStep(6, 'partner_transfer', 'complete');
         }
         
-        // 8. Send confirmation emails
-        console.log('\n📍 STEP 8: Sending confirmation emails...');
+        // ========================================
+        // STEP 7: Send Emails
+        // ========================================
+        logStep(7, 'send_emails');
         
-        // Email to buyer (receipt)
+        // Email to buyer
         if (userEmail) {
             try {
-                console.log('   Sending receipt to buyer:', userEmail);
                 await emailService.sendMembershipReceiptToBuyer({
-                    userEmail: userEmail,
+                    userEmail,
                     packageName: pkg.name,
                     amountPaid: pkg.price,
                     buyingPower: buyingPowerAmount,
                     orderNumber: orderId,
-                    walletAddress: walletAddress
+                    walletAddress
                 });
-                console.log('   ✅ Receipt email sent to buyer');
-            } catch (emailError) {
-                console.error('   ⚠️ Failed to send buyer email:', emailError.message);
+                console.log('   ✅ Buyer receipt sent');
+            } catch (e) {
+                console.log('   ⚠️ Buyer email failed:', e.message);
             }
-        } else {
-            console.log('   ⏭️ Skipping buyer email (no email address)');
         }
         
-        // Email to owner (notification with split details)
+        // Email to owner
         try {
-            console.log('   Sending notification to owner...');
             await emailService.sendMembershipNotificationToOwner({
-                userEmail: userEmail,
+                userEmail,
                 packageName: pkg.name,
                 amountPaid: pkg.price,
                 buyingPower: buyingPowerAmount,
                 orderNumber: orderId,
-                walletAddress: walletAddress,
-                stripeFee: stripeFee,
-                netAmount: netAmount,
-                platformFee: platformFee,
-                partnerAmount: partnerAmount
+                walletAddress,
+                stripeFee,
+                netAmount,
+                platformFee,
+                partnerAmount
             });
-            console.log('   ✅ Notification email sent to owner');
-        } catch (emailError) {
-            console.error('   ⚠️ Failed to send owner email:', emailError.message);
+            console.log('   ✅ Owner notification sent');
+        } catch (e) {
+            console.log('   ⚠️ Owner email failed:', e.message);
         }
         
+        logStep(7, 'send_emails', 'complete');
+        
+        // ========================================
+        // COMPLETE
+        // ========================================
+        const totalTime = Date.now() - startTime;
+        stepTiming.total_duration = totalTime;
+        
         console.log('\n' + '='.repeat(60));
-        console.log('✅ MINT-AND-CAPTURE COMPLETED SUCCESSFULLY');
+        console.log(`✅ [${totalTime}ms] MINT-AND-CAPTURE COMPLETED`);
         console.log('='.repeat(60));
-        console.log('   Order ID:', orderId);
-        console.log('   Mint TX:', mintTxHash);
+        console.log('   Order:', orderId);
+        console.log('   TX:', mintTxHash);
         console.log('   Buying Power:', buyingPowerAmount);
+        console.log('   Total Time:', totalTime + 'ms');
         console.log('='.repeat(60) + '\n');
         
-        res.json({
-            success: true,
-            order_id: orderId,
-            mint_tx_hash: mintTxHash,
-            buying_power: buyingPowerAmount,
-            message: 'Tokens minted and payment captured successfully'
-        });
+        responseData.success = true;
+        responseData.processing_time_ms = totalTime;
+        responseData.step_timing = stepTiming;
+        responseData.message = 'Tokens minted and payment captured successfully';
+        
+        res.json(responseData);
         
     } catch (error) {
+        const totalTime = Date.now() - startTime;
+        
         console.error('\n' + '='.repeat(60));
-        console.error('❌ MINT-AND-CAPTURE FATAL ERROR');
+        console.error(`❌ [${totalTime}ms] MINT-AND-CAPTURE FATAL ERROR`);
         console.error('='.repeat(60));
-        console.error('   Error name:', error.name);
-        console.error('   Error message:', error.message);
-        console.error('   Error stack:', error.stack);
+        console.error('   Error:', error.message);
+        console.error('   Stack:', error.stack);
         console.error('='.repeat(60) + '\n');
         
-        res.status(500).json({ success: false, error: error.message });
+        responseData.error = error.message;
+        responseData.processing_time_ms = totalTime;
+        responseData.step_timing = stepTiming;
+        
+        res.status(500).json(responseData);
     }
 });
-
-
 
 // ============================================
 // POST /api/membership/create-payment-intent
@@ -594,7 +636,7 @@ router.post('/create-payment-intent', async (req, res) => {
             [paymentIntent.id, order.id]
         );
 
-        console.log(`✅ Payment intent created (manual capture) for ${pkg.name}:`, {
+        console.log(`✅ Payment intent created for ${pkg.name}:`, {
             paymentIntentId: paymentIntent.id,
             orderId: order.id,
             orderNumber: order.order_number,
@@ -645,6 +687,20 @@ router.get('/purchase-status/:paymentIntentId', async (req, res) => {
 });
 
 // ============================================
+// GET /api/membership/debug-env - Debug endpoint (remove in production)
+// ============================================
+router.get('/debug-env', (req, res) => {
+    res.json({
+        POLYGON_RPC: process.env.POLYGON_RPC ? '✅ Set (' + process.env.POLYGON_RPC.substring(0, 30) + '...)' : '❌ Missing',
+        PRIVATE_KEY: process.env.PRIVATE_KEY ? '✅ Set (' + process.env.PRIVATE_KEY.substring(0, 6) + '...)' : '❌ Missing',
+        TOKEN_ADDRESS_POLYGON: process.env.TOKEN_ADDRESS_POLYGON || '❌ Missing',
+        STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY ? '✅ Set' : '❌ Missing',
+        STRIPE_CONNECTED_ACCOUNT_ID: CONNECTED_ACCOUNT_ID || 'Not configured',
+        NODE_ENV: process.env.NODE_ENV || 'development'
+    });
+});
+
+// ============================================
 // Stripe Webhook Handler for Membership
 // ============================================
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
@@ -691,7 +747,6 @@ async function handleMembershipPaymentSuccess(paymentIntent) {
             return;
         }
         
-        // If not completed, this is a fallback - but mint-and-capture should handle everything
         console.log('⚠️ Order not completed by mint-and-capture, webhook will not process');
         
     } catch (error) {
