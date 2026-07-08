@@ -512,7 +512,7 @@ router.post('/mint-and-capture', async (req, res) => {
                 const charge = await stripe.charges.retrieve(capturedIntent.latest_charge);
                 if (charge.balance_transaction) {
                     const balanceTx = await stripe.balanceTransactions.retrieve(charge.balance_transaction);
-                    console.log('Balance TX:', JSON.stringify(balanceTx, null, 2));
+                    log(`📋 Balance TX raw: ${JSON.stringify(balanceTx)}`);
                     actualStripeFee = balanceTx.fee / 100;
                     log(`   💳 Actual Stripe fee: €${actualStripeFee.toFixed(2)}`);
                 }
