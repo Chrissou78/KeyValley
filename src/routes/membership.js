@@ -577,11 +577,17 @@ router.post('/mint-and-capture', async (req, res) => {
         log('   ✅ Order updated');
 
         // ========================================
-        // STEP 6: Partner Transfer (automatic via transfer_data)
+        // STEP 6: Partner Transfer (already handled via transfer_data)
         // ========================================
         markStep('6_start');
         log('📍 STEP 6: Partner transfer...');
-        log('   ✅ Handled automatically via transfer_data on capture');
+
+        // Get the pre-calculated partner amount from create-payment-intent
+        const estimatedStripeFee = (pkg.price * 0.04) + 0.28;
+        const estimatedNet = pkg.price - estimatedStripeFee;
+        const transferredAmount = estimatedNet * ((100 - PLATFORM_FEE_PERCENT) / 100);
+
+        log(`   ✅ Transfer already processed via transfer_data: €${transferredAmount.toFixed(2)} to partner`);
         markStep('6_end');
         
         // ========================================
