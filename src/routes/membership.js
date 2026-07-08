@@ -663,114 +663,6 @@ router.post('/mint-and-capture', async (req, res) => {
 // POST /api/membership/create-payment-intent
 // ============================================
 router.post('/create-payment-intent', async (req, res) => {
-    try {
-        const { wallet, email, phone, package: packageKey, price, buyingPower } = req.body;
-
-        if (!wallet || !packageKey) {
-            return res.status(400).json({ success: false, error: 'Missing required fields' });
-        }
-
-        const pkg = await getPackage(packageKey);
-        if (!pkg) {
-            return res.status(400).json({ success: false, error: 'Invalid or inactive package' });
-        }
-
-        if (price && Math.abs(pkg.price - price) > 1) {
-            return res.status(400).json({ success: false, error: 'Price mismatch - please refresh' });
-        }
-
-        const orderNumber = 'KVM-' + String(Date.now()).slice(-6);
-
-        const orderResult = await pool.query(`
-            INSERT INTO membership_purchases 
-            (order_number, package, package_type, amount_paid, buying_power_granted, status, payment_method, metadata)
-            VALUES ($1, $2, $3, $4, $5, 'pending_payment', 'stripe', $6)
-            RETURNING id, order_number
-        `, [
-            orderNumber,
-            packageKey,
-            pkg.tier || 'standard',
-            pkg.price,
-            pkg.buyingPower,
-            JSON.stringify({ 
-                wallet_address: wallet, 
-                email: email || null, 
-                phone: phone || null,
-                package_name: pkg.name,
-                bonus: pkg.bonus 
-            })
-        ]);
-
-        const order = orderResult.rows[0];
-        const amountCents = Math.round(pkg.price * 100);
-
-        // Calculate partner amount upfront (4% + €0.28 estimated fee)
-        const estimatedFee = (pkg.price * 0.04) + 0.28;
-        const estimatedNet = pkg.price - estimatedFee;
-        const partnerShare = estimatedNet * ((100 - PLATFORM_FEE_PERCENT) / 100); // 90%
-        const partnerAmountCents = Math.round(partnerShare * 100);
-
-        console.log(`💰 Split calculation for €${pkg.price}:`);
-        console.log(`   Estimated fee: €${estimatedFee.toFixed(2)}`);
-        console.log(`   Estimated net: €${estimatedNet.toFixed(2)}`);
-        console.log(`   Partner (${100 - PLATFORM_FEE_PERCENT}%): €${partnerShare.toFixed(2)}`);
-
-        // Build payment intent options
-        const paymentIntentOptions = {
-            amount: amountCents,
-            currency: pkg.currency || 'eur',
-            capture_method: 'manual',
-            metadata: {
-                order_id: order.id.toString(),
-                order_number: order.order_number,
-                wallet_address: wallet,
-                email: email || '',
-                package_key: packageKey,
-                package_name: pkg.name,
-                buying_power: pkg.buyingPower.toString(),
-                bonus: pkg.bonus.toString(),
-                estimated_partner_amount: partnerShare.toFixed(2)
-            },
-            receipt_email: email || undefined,
-            description: `Kea Valley ${pkg.name}`
-        };
-
-        // Add transfer_data if connected account is configured and partner amount > 0
-        if (CONNECTED_ACCOUNT_ID && partnerAmountCents > 0) {
-            paymentIntentOptions.transfer_data = {
-                destination: CONNECTED_ACCOUNT_ID,
-                amount: partnerAmountCents
-            };
-            paymentIntentOptions.on_behalf_of = CONNECTED_ACCOUNT_ID;
-            console.log(`   ✅ Transfer configured: €${partnerShare.toFixed(2)} to ${CONNECTED_ACCOUNT_ID}`);
-        }
-
-        const paymentIntent = await stripe.paymentIntents.create(paymentIntentOptions);
-
-        // Store split info in order
-        await pool.query(
-            `UPDATE membership_purchases 
-             SET payment_intent_id = $1, 
-                 estimated_fee = $2,
-                 estimated_net = $3,
-                 partner_amount = $4
-             WHERE id = $5`,
-            [paymentIntent.id, estimatedFee, estimatedNet, partnerShare, order.id]
-        );
-
-        console.log(`✅ Payment intent created: ${paymentIntent.id} for ${pkg.name}`);
-
-        res.json({
-            success: true,
-            clientSecret: paymentIntent.client_secret,
-            orderId: order.order_number,
-            paymentIntentId: paymentIntent.id
-        });
-    } catch (error) {
-        console.error('Error creating payment intent:', error);
-        res.status(500).json({ success: false, error: 'Failed to create payment' });
-    }
-});router.post('/create-payment-intent', async (req, res) => {
     const serverLogs = [];
     const log = (msg) => {
         console.log(`[CREATE-PI] ${msg}`);
@@ -832,6 +724,7 @@ router.post('/create-payment-intent', async (req, res) => {
 
         log(`Fee calc: gross €${pkg.price}, fee €${estimatedFee.toFixed(2)}, net €${estimatedNet.toFixed(2)}, partner €${partnerShare.toFixed(2)}`);
 
+        // Build payment intent options
         const paymentIntentOptions = {
             amount: amountCents,
             currency: pkg.currency || 'eur',
@@ -851,15 +744,17 @@ router.post('/create-payment-intent', async (req, res) => {
             description: `Kea Valley ${pkg.name}`
         };
 
+        // Add transfer_data if connected account is configured and partner amount > 0
         if (CONNECTED_ACCOUNT_ID && partnerAmountCents > 0) {
             paymentIntentOptions.transfer_data = {
                 destination: CONNECTED_ACCOUNT_ID,
                 amount: partnerAmountCents
             };
+            paymentIntentOptions.on_behalf_of = CONNECTED_ACCOUNT_ID;
             log(`Transfer configured: €${partnerShare.toFixed(2)} to ${CONNECTED_ACCOUNT_ID}`);
         }
 
-        log(`Creating Stripe PaymentIntent...`);
+        log('Creating Stripe PaymentIntent...');
         const paymentIntent = await stripe.paymentIntents.create(paymentIntentOptions);
         log(`PaymentIntent created: ${paymentIntent.id}`);
 
@@ -881,7 +776,11 @@ router.post('/create-payment-intent', async (req, res) => {
     } catch (error) {
         log(`ERROR: ${error.message}`);
         console.error('Error creating payment intent:', error);
-        res.status(500).json({ success: false, error: error.message, server_logs: serverLogs });
+        res.status(500).json({ 
+            success: false, 
+            error: error.message,
+            server_logs: serverLogs 
+        });
     }
 });
 
