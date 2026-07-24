@@ -331,9 +331,9 @@
                         
                         <div class="user-dropdown-menu">
                             <div class="px-4 py-3 border-b border-white/10 mb-2">
-                                <p class="text-xs text-slate-400 mb-1">Kea Euros</p>
+                                <p class="text-xs text-white mb-1">Kea Euros</p>
                                 <p class="text-2xl font-bold text-primary">€<span id="dropdownBalance">0</span></p>
-                                <p class="text-xs text-slate-500 mt-1" id="dropdownEmail"></p>
+                                <p class="text-xs text-white mt-1" id="dropdownEmail"></p>
                             </div>
                             
                             <a href="/profile">
@@ -384,7 +384,7 @@
                 
                 <div id="mobileUserSection" class="hidden border-t border-white/10 mt-4 pt-4">
                     <div class="px-2 py-2 mb-2">
-                        <p class="text-xs text-slate-400">Kea Euros</p>
+                        <p class="text-xs text-white">Kea Euros</p>
                         <p class="text-xl font-bold text-primary">€<span id="mobileBalance">0</span></p>
                     </div>
                     <button onclick="disconnect()" class="w-full text-left text-sm font-bold tracking-widest text-red-400 hover:text-red-300 py-3 px-2">
@@ -414,7 +414,7 @@
                             <div class="h-[1px] w-8 bg-primary"></div>
                         </div>
                         <h1 class="text-3xl md:text-4xl font-serif italic font-medium text-white mb-3">Welcome Back</h1>
-                        <p class="text-slate-400 font-light">Login to access your profile</p>
+                        <p class="text-white font-light">Login to access your profile</p>
                     </div>
                     <div class="bg-surface border border-white/5 rounded-lg overflow-hidden">
                         <div class="wallet-iframe-container">
@@ -426,7 +426,7 @@
                             ></iframe>
                         </div>
                     </div>
-                    <p class="text-center text-slate-500 text-sm mt-6">
+                    <p class="text-center text-white text-sm mt-6">
                         Not a member yet? <a href="/package" class="text-primary hover:underline">Join the Club</a>
                     </p>
                 </div>
@@ -436,7 +436,7 @@
             <div id="loadingContainer" class="hidden">
                 <div class="flex flex-col items-center justify-center min-h-[60vh]">
                     <div class="w-14 h-14 border-2 border-primary border-t-transparent rounded-full animate-spin mb-6"></div>
-                    <p class="text-slate-400">Loading your profile...</p>
+                    <p class="text-white">Loading your profile...</p>
                 </div>
             </div>
 
@@ -452,9 +452,9 @@
                             
                             <div class="flex-1 text-center sm:text-left">
                                 <h2 id="displayName" class="text-xl lg:text-2xl font-serif text-white mb-1">Loading...</h2>
-                                <p id="displayEmail" class="text-slate-400 text-sm mb-4"></p>
+                                <p id="displayEmail" class="text-white text-sm mb-4"></p>
                                 
-                                <button id="disconnectBtn" class="px-4 py-2 border border-white/10 text-slate-500 rounded-lg text-xs font-bold uppercase tracking-wider hover:border-red-500/30 hover:text-red-400 transition-all flex items-center gap-2">
+                                <button id="disconnectBtn" class="px-4 py-2 border border-white/10 text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:border-red-500/30 hover:text-red-400 transition-all flex items-center gap-2">
                                     <span class="material-symbols-outlined text-lg">logout</span>
                                     Disconnect
                                 </button>
@@ -463,19 +463,19 @@
                     </div>
 
                     <div class="bg-surface border border-white/5 rounded-xl p-6 lg:p-8 flex flex-col justify-center">
-                        <div class="flex items-center gap-2 text-slate-500 text-xs font-bold uppercase tracking-widest mb-3">
+                        <div class="flex items-center gap-2 text-white text-xs font-bold uppercase tracking-widest mb-3">
                             <span class="material-symbols-outlined text-primary text-lg">account_balance_wallet</span>
                             Kea Euros
                         </div>
                         <div id="balanceLoading" class="flex items-center gap-2">
                             <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                            <span class="text-slate-500 text-sm">Loading...</span>
+                            <span class="text-white text-sm">Loading...</span>
                         </div>
                         <div id="balanceDisplay" class="hidden">
                             <p class="text-4xl lg:text-5xl font-serif text-primary balance-glow">
                                 Kea€<span id="balanceAmount">0</span>
                             </p>
-                            <p class="text-slate-500 text-xs mt-2">Available balance</p>
+                            <p class="text-white text-xs mt-2">Available balance</p>
                         </div>
                     </div>
                 </div>
@@ -487,7 +487,7 @@
                         </div>
                         <div>
                             <h3 class="font-semibold text-white">Marketplace</h3>
-                            <p class="text-slate-500 text-sm hidden sm:block">Browse & book services</p>
+                            <p class="text-white text-sm hidden sm:block">Browse & book services</p>
                         </div>
                     </a>
 
@@ -497,7 +497,7 @@
                         </div>
                         <div>
                             <h3 class="font-semibold text-white">Add Kea€</h3>
-                            <p class="text-slate-500 text-sm hidden sm:block">Buy more Kea Euros</p>
+                            <p class="text-white text-sm hidden sm:block">Buy more Kea Euros</p>
                         </div>
                     </a>
                 </div>
@@ -517,8 +517,8 @@
                                 <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
                             </div>
                             <div id="vouchersEmpty" class="text-center py-6">
-                                <span class="material-symbols-outlined text-slate-600 text-4xl mb-2">confirmation_number</span>
-                                <p class="text-slate-500 text-sm">No vouchers yet</p>
+                                <span class="material-symbols-outlined text-white text-4xl mb-2">confirmation_number</span>
+                                <p class="text-white text-sm">No vouchers yet</p>
                                 <a href="/marketplace" class="text-primary text-sm hover:underline">Browse marketplace →</a>
                             </div>
                             
@@ -539,11 +539,11 @@
                             <div id="vouchersUsedSection" class="hidden">
                                 <button onclick="toggleVoucherSection('used')" class="w-full flex items-center justify-between p-3 bg-slate-500/10 border border-slate-500/20 rounded-lg hover:bg-slate-500/15 transition-colors">
                                     <div class="flex items-center gap-2">
-                                        <span class="material-symbols-outlined text-slate-400">history</span>
-                                        <span class="text-slate-400 font-semibold text-sm">Used</span>
-                                        <span id="usedCount" class="bg-slate-500/20 text-slate-400 text-xs px-2 py-0.5 rounded-full">0</span>
+                                        <span class="material-symbols-outlined text-white">history</span>
+                                        <span class="text-white font-semibold text-sm">Used</span>
+                                        <span id="usedCount" class="bg-slate-500/20 text-white text-xs px-2 py-0.5 rounded-full">0</span>
                                     </div>
-                                    <span id="usedChevron" class="material-symbols-outlined text-slate-400 transition-transform rotate-180">expand_more</span>
+                                    <span id="usedChevron" class="material-symbols-outlined text-white transition-transform rotate-180">expand_more</span>
                                 </button>
                                 <div id="vouchersUsedList" class="hidden mt-2 space-y-2 max-h-48 overflow-y-auto"></div>
                             </div>
@@ -564,8 +564,8 @@
                                 <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
                             </div>
                             <div id="ordersEmpty" class="text-center py-6">
-                                <span class="material-symbols-outlined text-slate-600 text-4xl mb-2">receipt_long</span>
-                                <p class="text-slate-500 text-sm">No orders yet</p>
+                                <span class="material-symbols-outlined text-white text-4xl mb-2">receipt_long</span>
+                                <p class="text-white text-sm">No orders yet</p>
                                 <a href="/marketplace" class="text-primary text-sm hover:underline">Start shopping →</a>
                             </div>
                             <div id="ordersList" class="hidden space-y-1"></div>
@@ -595,7 +595,7 @@
                             <div class="flex flex-wrap gap-2" id="preferencesTags"></div>
                         </div>
                         <div id="preferencesEmpty" class="hidden text-center py-4">
-                            <p class="text-slate-500 text-sm mb-3">You haven't set your preferences yet.</p>
+                            <p class="text-white text-sm mb-3">You haven't set your preferences yet.</p>
                             <button 
                                 id="setPreferencesBtn"
                                 class="border border-primary/30 text-primary px-6 py-2 rounded-lg font-bold uppercase tracking-widest text-xs hover:bg-primary/10 transition-colors"
@@ -611,7 +611,7 @@
             <div id="disconnectingContainer" class="hidden">
                 <div class="flex flex-col items-center justify-center min-h-[60vh]">
                     <div class="w-14 h-14 border-2 border-primary border-t-transparent rounded-full animate-spin mb-6"></div>
-                    <p class="text-slate-400">Disconnecting...</p>
+                    <p class="text-white">Disconnecting...</p>
                 </div>
             </div>
 
@@ -625,7 +625,7 @@
             <div class="modal-content bg-surface border border-white/10 rounded-lg w-full max-w-md flex flex-col" style="max-height: 90vh;">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-white/10 flex-shrink-0">
                     <h2 class="text-lg font-serif text-white">Login with WalletTwo</h2>
-                    <button onclick="closeLoginModal()" class="text-slate-500 hover:text-white transition-colors">
+                    <button onclick="closeLoginModal()" class="text-white hover:text-white transition-colors">
                         <span class="material-symbols-outlined text-2xl">close</span>
                     </button>
                 </div>
@@ -651,7 +651,7 @@
             <div class="modal-content bg-surface border border-white/10 rounded-2xl w-full max-w-md">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
                     <h2 class="text-xl font-serif text-white">Book Your Experience</h2>
-                    <button onclick="closeBookingModal()" class="text-slate-500 hover:text-white transition-colors">
+                    <button onclick="closeBookingModal()" class="text-white hover:text-white transition-colors">
                         <span class="material-symbols-outlined text-2xl">close</span>
                     </button>
                 </div>
@@ -666,14 +666,14 @@
                             <div class="flex-1 min-w-0">
                                 <p id="bookingServiceName" class="text-white font-semibold truncate">Service Name</p>
                                 <p id="bookingVoucherCode" class="text-primary font-mono text-sm">KEA-XXXX-XXXX</p>
-                                <p class="text-slate-500 text-xs mt-1">Value: <span id="bookingVoucherValue" class="text-white">€0</span></p>
+                                <p class="text-white text-xs mt-1">Value: <span id="bookingVoucherValue" class="text-white">€0</span></p>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Date Selection with Calendar -->
                     <div>
-                        <label class="block text-slate-400 text-sm mb-2">Select Date <span class="text-red-400">*</span></label>
+                        <label class="block text-white text-sm mb-2">Select Date <span class="text-red-400">*</span></label>
                         <div class="relative">
                             <input type="text" id="bookingDateDisplay" readonly placeholder="Choose a date..."
                                 class="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors cursor-pointer pr-10">
@@ -683,22 +683,22 @@
                         <!-- Mini Calendar -->
                         <div id="bookingCalendar" class="hidden mt-2 bg-black/50 border border-white/10 rounded-xl p-4">
                             <div class="flex items-center justify-between mb-4">
-                                <button type="button" onclick="changeCalendarMonth(-1)" class="text-slate-400 hover:text-white p-1">
+                                <button type="button" onclick="changeCalendarMonth(-1)" class="text-white hover:text-white p-1">
                                     <span class="material-symbols-outlined">chevron_left</span>
                                 </button>
                                 <span id="calendarMonthYear" class="text-white font-semibold"></span>
-                                <button type="button" onclick="changeCalendarMonth(1)" class="text-slate-400 hover:text-white p-1">
+                                <button type="button" onclick="changeCalendarMonth(1)" class="text-white hover:text-white p-1">
                                     <span class="material-symbols-outlined">chevron_right</span>
                                 </button>
                             </div>
                             <div class="grid grid-cols-7 gap-1 text-center text-xs mb-2">
-                                <span class="text-slate-500">Su</span>
-                                <span class="text-slate-500">Mo</span>
-                                <span class="text-slate-500">Tu</span>
-                                <span class="text-slate-500">We</span>
-                                <span class="text-slate-500">Th</span>
-                                <span class="text-slate-500">Fr</span>
-                                <span class="text-slate-500">Sa</span>
+                                <span class="text-white">Su</span>
+                                <span class="text-white">Mo</span>
+                                <span class="text-white">Tu</span>
+                                <span class="text-white">We</span>
+                                <span class="text-white">Th</span>
+                                <span class="text-white">Fr</span>
+                                <span class="text-white">Sa</span>
                             </div>
                             <div id="calendarDays" class="grid grid-cols-7 gap-1"></div>
                         </div>
@@ -706,11 +706,11 @@
                     
                     <!-- Time Selection with Apple-style Scrollers -->
                     <div id="timeSelectionSection">
-                        <label class="block text-slate-400 text-sm mb-2">Select Time</label>
+                        <label class="block text-white text-sm mb-2">Select Time</label>
                         <div class="grid grid-cols-2 gap-4">
                             <!-- Start Time -->
                             <div>
-                                <label class="block text-slate-500 text-xs mb-1">Start</label>
+                                <label class="block text-white text-xs mb-1">Start</label>
                                 <div class="relative">
                                     <input type="text" id="bookingStartDisplay" readonly placeholder="--:--"
                                         class="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white text-center focus:border-primary focus:outline-none transition-colors cursor-pointer">
@@ -719,7 +719,7 @@
                             </div>
                             <!-- End Time -->
                             <div>
-                                <label class="block text-slate-500 text-xs mb-1">End</label>
+                                <label class="block text-white text-xs mb-1">End</label>
                                 <div class="relative">
                                     <input type="text" id="bookingEndDisplay" readonly placeholder="--:--"
                                         class="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white text-center focus:border-primary focus:outline-none transition-colors cursor-pointer">
@@ -734,7 +734,7 @@
                         <div class="absolute inset-0 bg-black/60" onclick="closeTimePicker()"></div>
                         <div class="relative bg-surface border-t border-white/10 w-full max-w-md rounded-t-2xl overflow-hidden animate-slide-up">
                             <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
-                                <button onclick="closeTimePicker()" class="text-slate-400 text-sm">Cancel</button>
+                                <button onclick="closeTimePicker()" class="text-white text-sm">Cancel</button>
                                 <span id="timePickerLabel" class="text-white font-semibold">Select Time</span>
                                 <button onclick="confirmTimePicker()" class="text-primary font-semibold text-sm">Done</button>
                             </div>
@@ -754,7 +754,7 @@
                     
                     <!-- Notes -->
                     <div>
-                        <label class="block text-slate-400 text-sm mb-2">Special Requests</label>
+                        <label class="block text-white text-sm mb-2">Special Requests</label>
                         <textarea id="bookingNotes" rows="3" placeholder="Any special requirements or notes..."
                             class="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white resize-none focus:border-primary focus:outline-none transition-colors"></textarea>
                     </div>
@@ -766,7 +766,7 @@
                         Request Booking
                     </button>
                     
-                    <p class="text-slate-500 text-xs text-center">
+                    <p class="text-white text-xs text-center">
                         Your booking request will be reviewed. You'll receive an email confirmation.
                     </p>
                 </div>
@@ -782,9 +782,9 @@
                 <div class="sticky top-0 bg-surface border-b border-white/10 px-6 py-4 flex items-center justify-between z-10">
                     <div>
                         <h2 class="text-xl font-serif text-white">Update Preferences</h2>
-                        <p class="text-slate-500 text-xs">Customize your Kea Valley experience</p>
+                        <p class="text-white text-xs">Customize your Kea Valley experience</p>
                     </div>
-                    <button onclick="closeQuestionnaireModal()" class="text-slate-500 hover:text-white transition-colors">
+                    <button onclick="closeQuestionnaireModal()" class="text-white hover:text-white transition-colors">
                         <span class="material-symbols-outlined text-2xl">close</span>
                     </button>
                 </div>
@@ -797,60 +797,60 @@
                             <div class="flex gap-6 mb-3">
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="radio" name="modal_is_property_owner" value="yes" class="modal-radio" onchange="toggleModalPropertyLocation(true)">
-                                    <span class="text-slate-300 text-sm">Yes</span>
+                                    <span class="text-white text-sm">Yes</span>
                                 </label>
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="radio" name="modal_is_property_owner" value="no" class="modal-radio" onchange="toggleModalPropertyLocation(false)">
-                                    <span class="text-slate-300 text-sm">No</span>
+                                    <span class="text-white text-sm">No</span>
                                 </label>
                             </div>
                             <div id="modalPropertyLocationField" class="hidden">
-                                <label class="block text-xs text-slate-500 mb-2">Property location</label>
+                                <label class="block text-xs text-white mb-2">Property location</label>
                                 <input type="text" name="modal_property_location" placeholder="Google Maps link or address" class="modal-input text-sm">
                             </div>
                         </div>
 
                         <div class="border-b border-white/5 pb-6">
                             <h3 class="text-white font-medium mb-2">Interested in monthly Kea Property Index?</h3>
-                            <p class="text-slate-500 text-xs mb-3">Monthly review of property sales on the island.</p>
+                            <p class="text-white text-xs mb-3">Monthly review of property sales on the island.</p>
                             <div class="flex gap-6">
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="radio" name="modal_interested_property_index" value="yes" class="modal-radio">
-                                    <span class="text-slate-300 text-sm">Yes</span>
+                                    <span class="text-white text-sm">Yes</span>
                                 </label>
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="radio" name="modal_interested_property_index" value="no" class="modal-radio">
-                                    <span class="text-slate-300 text-sm">No</span>
+                                    <span class="text-white text-sm">No</span>
                                 </label>
                             </div>
                         </div>
 
                         <div class="border-b border-white/5 pb-6">
                             <h3 class="text-white font-medium mb-2">Interested in the next Kea Property Tour?</h3>
-                            <p class="text-slate-500 text-xs mb-3">April 2026 exclusive property tour.</p>
+                            <p class="text-white text-xs mb-3">April 2026 exclusive property tour.</p>
                             <div class="flex gap-6">
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="radio" name="modal_interested_property_tour" value="yes" class="modal-radio">
-                                    <span class="text-slate-300 text-sm">Yes</span>
+                                    <span class="text-white text-sm">Yes</span>
                                 </label>
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="radio" name="modal_interested_property_tour" value="no" class="modal-radio">
-                                    <span class="text-slate-300 text-sm">No</span>
+                                    <span class="text-white text-sm">No</span>
                                 </label>
                             </div>
                         </div>
 
                         <div class="border-b border-white/5 pb-6">
                             <h3 class="text-white font-medium mb-2">Interested in Kea Valley Private Members Club?</h3>
-                            <p class="text-slate-500 text-xs mb-3">Exclusive access to summits and premium experiences.</p>
+                            <p class="text-white text-xs mb-3">Exclusive access to summits and premium experiences.</p>
                             <div class="flex gap-6">
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="radio" name="modal_interested_members_club" value="yes" class="modal-radio">
-                                    <span class="text-slate-300 text-sm">Yes</span>
+                                    <span class="text-white text-sm">Yes</span>
                                 </label>
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="radio" name="modal_interested_members_club" value="no" class="modal-radio">
-                                    <span class="text-slate-300 text-sm">No</span>
+                                    <span class="text-white text-sm">No</span>
                                 </label>
                             </div>
                         </div>
@@ -860,23 +860,23 @@
                             <div class="flex gap-6 mb-3">
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="radio" name="modal_owns_boat" value="yes" class="modal-radio" onchange="toggleModalYachtClub(true)">
-                                    <span class="text-slate-300 text-sm">Yes</span>
+                                    <span class="text-white text-sm">Yes</span>
                                 </label>
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="radio" name="modal_owns_boat" value="no" class="modal-radio" onchange="toggleModalYachtClub(false)">
-                                    <span class="text-slate-300 text-sm">No</span>
+                                    <span class="text-white text-sm">No</span>
                                 </label>
                             </div>
                             <div id="modalYachtClubField" class="hidden border-t border-white/5 pt-4 mt-3">
-                                <h4 class="text-slate-300 text-sm mb-3">Interested in mooring at Kea Valley Yacht Club?</h4>
+                                <h4 class="text-white text-sm mb-3">Interested in mooring at Kea Valley Yacht Club?</h4>
                                 <div class="flex gap-6">
                                     <label class="flex items-center gap-2 cursor-pointer">
                                         <input type="radio" name="modal_interested_yacht_club" value="yes" class="modal-radio">
-                                        <span class="text-slate-300 text-sm">Yes</span>
+                                        <span class="text-white text-sm">Yes</span>
                                     </label>
                                     <label class="flex items-center gap-2 cursor-pointer">
                                         <input type="radio" name="modal_interested_yacht_club" value="no" class="modal-radio">
-                                        <span class="text-slate-300 text-sm">No</span>
+                                        <span class="text-white text-sm">No</span>
                                     </label>
                                 </div>
                             </div>
@@ -884,15 +884,15 @@
 
                         <div class="pb-2">
                             <h3 class="text-white font-medium mb-2">Interested in monthly Kea Restaurant Review?</h3>
-                            <p class="text-slate-500 text-xs mb-3">Monthly review of top restaurants on the island.</p>
+                            <p class="text-white text-xs mb-3">Monthly review of top restaurants on the island.</p>
                             <div class="flex gap-6">
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="radio" name="modal_interested_restaurant_review" value="yes" class="modal-radio">
-                                    <span class="text-slate-300 text-sm">Yes</span>
+                                    <span class="text-white text-sm">Yes</span>
                                 </label>
                                 <label class="flex items-center gap-2 cursor-pointer">
                                     <input type="radio" name="modal_interested_restaurant_review" value="no" class="modal-radio">
-                                    <span class="text-slate-300 text-sm">No</span>
+                                    <span class="text-white text-sm">No</span>
                                 </label>
                             </div>
                         </div>
@@ -903,7 +903,7 @@
                 <div class="sticky bottom-0 bg-surface border-t border-white/10 px-6 py-4 flex items-center justify-between gap-4">
                     <p id="modalStatus" class="text-sm hidden"></p>
                     <div class="flex gap-3 ml-auto">
-                        <button type="button" onclick="closeQuestionnaireModal()" class="px-6 py-3 border border-white/10 text-slate-400 rounded-lg text-xs font-bold uppercase tracking-widest hover:border-white/30 transition-colors">
+                        <button type="button" onclick="closeQuestionnaireModal()" class="px-6 py-3 border border-white/10 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:border-white/30 transition-colors">
                             Cancel
                         </button>
                         <button type="button" id="savePreferencesBtn" onclick="saveQuestionnaireUpdates()" class="px-6 py-3 bg-primary text-background-dark rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity">
@@ -922,7 +922,7 @@
                 <img src="/images/logo.png" alt="Kea Valley" class="h-8 w-auto"/>
                 <span class="font-serif text-lg gold-text">Kea Valley</span>
             </a>
-            <div class="text-gray-500 text-sm">© 2026 Kea Valley Private Members Club</div>
+            <div class="text-white text-sm">© 2026 Kea Valley Private Members Club</div>
         </div>
     </footer>
 
@@ -1193,7 +1193,7 @@
                 const isSelected = selectedDate === dateStr;
                 
                 let classes = 'calendar-day';
-                if (isPast) classes += ' disabled text-slate-600';
+                if (isPast) classes += ' disabled text-white';
                 if (isToday) classes += ' today';
                 if (isSelected) classes += ' selected';
                 
@@ -1803,12 +1803,12 @@
                 'pending_validation': 'text-yellow-400',
                 'validated': 'text-blue-400',
                 'confirmed': 'text-blue-400',  // Added
-                'consumed': 'text-slate-500',
-                'used': 'text-slate-500',  // Added
+                'consumed': 'text-white',
+                'used': 'text-white',  // Added
                 'cancelled': 'text-red-400',
                 'expired': 'text-red-400'
             };
-            return classes[status] || 'text-slate-400';
+            return classes[status] || 'text-white';
         }
 
         function canBookVoucher(status) {
@@ -1843,7 +1843,7 @@
                     const formatTime = (t) => String(t).slice(0, 5);
                     timeInfo = ` (${formatTime(startTime)} - ${formatTime(endTime)})`;
                 }
-                bookingInfo = `<p class="text-slate-400 text-xs mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-sm">calendar_month</span>${date}${timeInfo}</p>`;
+                bookingInfo = `<p class="text-white text-xs mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-sm">calendar_month</span>${date}${timeInfo}</p>`;
             }
             
             // Used date for consumed vouchers
@@ -1852,7 +1852,7 @@
                 const usedDate = new Date(v.redeemed_at).toLocaleDateString('en-GB', { 
                     day: 'numeric', month: 'short', year: 'numeric'
                 });
-                usedInfo = `<p class="text-slate-500 text-xs mt-1">Used on ${usedDate}</p>`;
+                usedInfo = `<p class="text-white text-xs mt-1">Used on ${usedDate}</p>`;
             }
             
             const isUsed = !isVoucherToBeUsed(v.status);
@@ -1864,7 +1864,7 @@
                     <div class="flex items-start justify-between gap-3">
                         <div class="flex items-start gap-3 min-w-0 flex-1">
                             <div class="w-10 h-10 rounded-lg ${isUsed ? 'bg-slate-500/20' : 'bg-purple-500/20'} flex items-center justify-center flex-shrink-0">
-                                <span class="material-symbols-outlined ${isUsed ? 'text-slate-400' : 'text-purple-400'} text-lg">
+                                <span class="material-symbols-outlined ${isUsed ? 'text-white' : 'text-purple-400'} text-lg">
                                     ${isUsed ? 'check_circle' : 'confirmation_number'}
                                 </span>
                             </div>
@@ -1880,7 +1880,7 @@
                             </div>
                         </div>
                         <div class="text-right flex-shrink-0">
-                            <p class="${isUsed ? 'text-slate-400' : 'text-primary'} font-semibold">€${v.value || 0}</p>
+                            <p class="${isUsed ? 'text-white' : 'text-primary'} font-semibold">€${v.value || 0}</p>
                             ${showBookButton && canBook ? `
                                 <button onclick='openBookingModal(${JSON.stringify(v).replace(/'/g, "&#39;")})' 
                                     class="mt-2 text-xs bg-primary/20 text-primary px-3 py-1.5 rounded-lg hover:bg-primary/30 transition-colors flex items-center gap-1">
@@ -2013,12 +2013,12 @@
                                 <span class="material-symbols-outlined text-blue-400 text-lg">receipt_long</span>
                                 <div>
                                     <p class="text-white text-sm">${o.order_number || `Order #${o.id.slice(0,8)}`}</p>
-                                    <p class="text-slate-500 text-xs">${new Date(o.created_at).toLocaleDateString()}</p>
+                                    <p class="text-white text-xs">${new Date(o.created_at).toLocaleDateString()}</p>
                                 </div>
                             </div>
                             <div class="text-right">
                                 <p class="text-primary font-medium">Kea€${o.total_amount || 0}</p>
-                                <p class="text-xs ${o.status === 'completed' ? 'text-green-400' : o.status === 'pending' ? 'text-yellow-400' : 'text-slate-500'}">${o.status || 'pending'}</p>
+                                <p class="text-xs ${o.status === 'completed' ? 'text-green-400' : o.status === 'pending' ? 'text-yellow-400' : 'text-white'}">${o.status || 'pending'}</p>
                             </div>
                         </div>
                     `).join('');
@@ -2082,7 +2082,7 @@
                             </span>
                         `).join('');
                     } else {
-                        tagsEl.innerHTML = '<span class="text-slate-500 text-sm">No interests selected</span>';
+                        tagsEl.innerHTML = '<span class="text-white text-sm">No interests selected</span>';
                     }
                 } else {
                     emptyEl.classList.remove('hidden');
@@ -2272,7 +2272,7 @@
                                 <div class="h-[1px] w-8 bg-primary"></div>
                             </div>
                             <h1 class="text-3xl md:text-4xl font-serif italic font-medium text-white mb-3">Login Cancelled</h1>
-                            <p class="text-slate-400 font-light mb-8">Would you like to try again?</p>
+                            <p class="text-white font-light mb-8">Would you like to try again?</p>
                         </div>
                         <div class="flex flex-col sm:flex-row gap-4 justify-center">
                             <button onclick="resetIframeToLogin()" class="bg-primary hover:bg-primary-light text-black font-semibold px-8 py-3 rounded-lg transition-colors">
@@ -2282,7 +2282,7 @@
                                 Use Different Account
                             </button>
                         </div>
-                        <p class="text-center text-slate-500 text-sm mt-6">
+                        <p class="text-center text-white text-sm mt-6">
                             Not a member yet? <a href="/package" class="text-primary hover:underline">Join the Club</a>
                         </p>
                     </div>
@@ -2310,7 +2310,7 @@
                                 <div class="h-[1px] w-8 bg-primary"></div>
                             </div>
                             <h1 class="text-3xl md:text-4xl font-serif italic font-medium text-white mb-3">Welcome Back</h1>
-                            <p class="text-slate-400 font-light">Login to access your profile</p>
+                            <p class="text-white font-light">Login to access your profile</p>
                         </div>
                         <div class="bg-surface border border-white/5 rounded-lg overflow-hidden">
                             <div class="wallet-iframe-container">
@@ -2322,7 +2322,7 @@
                                 ></iframe>
                             </div>
                         </div>
-                        <p class="text-center text-slate-500 text-sm mt-6">
+                        <p class="text-center text-white text-sm mt-6">
                             Not a member yet? <a href="/package" class="text-primary hover:underline">Join the Club</a>
                         </p>
                     </div>
@@ -2340,7 +2340,7 @@
                 container.innerHTML = `
                     <div class="max-w-lg mx-auto text-center py-12">
                         <div class="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                        <p class="text-slate-400">Switching account...</p>
+                        <p class="text-white">Switching account...</p>
                     </div>
                 `;
                 
@@ -2364,7 +2364,7 @@
                                     <div class="h-[1px] w-8 bg-primary"></div>
                                 </div>
                                 <h1 class="text-3xl md:text-4xl font-serif italic font-medium text-white mb-3">Welcome Back</h1>
-                                <p class="text-slate-400 font-light">Login to access your profile</p>
+                                <p class="text-white font-light">Login to access your profile</p>
                             </div>
                             <div class="bg-surface border border-white/5 rounded-lg overflow-hidden">
                                 <div class="wallet-iframe-container">
@@ -2376,7 +2376,7 @@
                                     ></iframe>
                                 </div>
                             </div>
-                            <p class="text-center text-slate-500 text-sm mt-6">
+                            <p class="text-center text-white text-sm mt-6">
                                 Not a member yet? <a href="/package" class="text-primary hover:underline">Join the Club</a>
                             </p>
                         </div>

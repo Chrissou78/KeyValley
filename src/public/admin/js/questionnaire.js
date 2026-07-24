@@ -42,33 +42,33 @@ const Questionnaire = {
         if (!tbody) return;
         
         if (this.responses.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">No questionnaire responses yet</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-white">No questionnaire responses yet</td></tr>';
             return;
         }
         
         tbody.innerHTML = this.responses.map(r => `
             <tr class="border-b border-gray-700/50 hover:bg-white/5">
                 <td class="py-3 px-4">
-                    <code class="text-xs text-gray-400">${Utils.formatAddress(r.wallet_address)}</code>
+                    <code class="text-xs text-white">${Utils.formatAddress(r.wallet_address)}</code>
                 </td>
                 <td class="py-3 px-4 text-sm">${r.email || '-'}</td>
                 <td class="py-3 px-4">
-                    <span class="px-2 py-1 rounded text-xs ${r.is_property_owner ? 'bg-green-500/20 text-green-400' : 'bg-gray-700 text-gray-400'}">
+                    <span class="px-2 py-1 rounded text-xs ${r.is_property_owner ? 'bg-green-500/20 text-green-400' : 'bg-gray-700 text-white'}">
                         ${r.is_property_owner ? 'Yes' : 'No'}
                     </span>
                 </td>
-                <td class="py-3 px-4 text-sm text-gray-300">${r.property_location || '-'}</td>
+                <td class="py-3 px-4 text-sm text-white">${r.property_location || '-'}</td>
                 <td class="py-3 px-4">
-                    <span class="px-2 py-1 rounded text-xs ${r.interested_members_club ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-700 text-gray-400'}">
+                    <span class="px-2 py-1 rounded text-xs ${r.interested_members_club ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-700 text-white'}">
                         ${r.interested_members_club ? 'Yes' : 'No'}
                     </span>
                 </td>
                 <td class="py-3 px-4">
-                    <span class="px-2 py-1 rounded text-xs ${r.owns_boat ? 'bg-yellow-500/20 text-yellow-400' : 'bg-gray-700 text-gray-400'}">
+                    <span class="px-2 py-1 rounded text-xs ${r.owns_boat ? 'bg-yellow-500/20 text-yellow-400' : 'bg-gray-700 text-white'}">
                         ${r.owns_boat ? 'Yes' : 'No'}
                     </span>
                 </td>
-                <td class="py-3 px-4 text-sm text-gray-400">${Utils.formatDate(r.created_at)}</td>
+                <td class="py-3 px-4 text-sm text-white">${Utils.formatDate(r.created_at)}</td>
             </tr>
         `).join('');
     },

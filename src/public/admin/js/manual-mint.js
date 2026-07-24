@@ -135,7 +135,7 @@ const ManualMint = {
             const mints = data.mints || data || [];
             
             if (!mints || mints.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 text-sm text-center py-4 col-span-full">No manual mints yet</p>';
+                container.innerHTML = '<p class="text-white text-sm text-center py-4 col-span-full">No manual mints yet</p>';
                 return;
             }
             
@@ -143,12 +143,12 @@ const ManualMint = {
                 <div class="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
                     <div class="flex justify-between items-start mb-2">
                         <span class="text-primary font-bold">${parseFloat(mint.token_amount || mint.tokenAmount || 0).toFixed(2)} VIP</span>
-                        <span class="text-xs text-gray-500">${Utils.formatDate(mint.created_at || mint.createdAt)}</span>
+                        <span class="text-xs text-white">${Utils.formatDate(mint.created_at || mint.createdAt)}</span>
                     </div>
-                    <p class="text-sm text-gray-300 font-mono truncate" title="${mint.wallet_address || mint.walletAddress}">
+                    <p class="text-sm text-white font-mono truncate" title="${mint.wallet_address || mint.walletAddress}">
                         To: ${Utils.formatAddress(mint.wallet_address || mint.walletAddress)}
                     </p>
-                    <p class="text-sm text-gray-500">€${parseFloat(mint.eur_amount || mint.eurAmount || 0).toFixed(2)} received</p>
+                    <p class="text-sm text-white">€${parseFloat(mint.eur_amount || mint.eurAmount || 0).toFixed(2)} received</p>
                     ${mint.mint_tx_hash || mint.txHash ? `
                         <a href="https://polygonscan.com/tx/${mint.mint_tx_hash || mint.txHash}" target="_blank" 
                            class="text-xs text-primary hover:underline mt-2 block">

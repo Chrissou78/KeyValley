@@ -39,7 +39,7 @@ const Claims = {
         if (!tbody) return;
         
         if (this.registrants.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">No registrants found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-white">No registrants found</td></tr>';
             return;
         }
         
@@ -66,7 +66,7 @@ const Claims = {
                         </a>
                     ` : '-'}
                 </td>
-                <td class="py-3 px-4 text-sm text-gray-400">
+                <td class="py-3 px-4 text-sm text-white">
                     ${Utils.formatDate(r.registered_at || r.created_at)}
                 </td>
                 <td class="py-3 px-4">

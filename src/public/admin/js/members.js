@@ -23,7 +23,7 @@ const Members = {
         if (!tbody) return;
         
         if (!filtered.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-gray-500">No members found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-white">No members found</td></tr>';
             return;
         }
         
@@ -41,15 +41,15 @@ const Members = {
                             </div>
                             <div>
                                 <div class="font-medium text-white">${Utils.escapeHtml(displayName)}</div>
-                                <div class="text-xs text-gray-500 font-mono">${Utils.shortAddress(m.wallet_address)}</div>
+                                <div class="text-xs text-white font-mono">${Utils.shortAddress(m.wallet_address)}</div>
                             </div>
                         </div>
                     </td>
-                    <td class="py-4 px-4 text-gray-400">${m.email || '-'}</td>
+                    <td class="py-4 px-4 text-white">${m.email || '-'}</td>
                     <td class="py-4 px-4 font-medium text-primary">${Utils.formatCurrency(m.balance)}</td>
                     <td class="py-4 px-4">${Utils.formatCurrency(m.total_spent)}</td>
                     <td class="py-4 px-4">${m.order_count || 0}</td>
-                    <td class="py-4 px-4 text-gray-400">${Utils.formatDate(m.created_at)}</td>
+                    <td class="py-4 px-4 text-white">${Utils.formatDate(m.created_at)}</td>
                     <td class="py-4 px-4">
                         <button onclick="Members.view('${m.wallet_address}')" class="text-primary hover:text-primary-light text-sm font-medium">View</button>
                     </td>
@@ -93,23 +93,23 @@ const Members = {
                     </div>
                     <div>
                         <h3 class="text-xl font-bold">${Utils.escapeHtml(displayName)}</h3>
-                        ${member.email ? `<p class="text-gray-400">${Utils.escapeHtml(member.email)}</p>` : ''}
-                        <p class="text-gray-500 font-mono text-sm">${member.wallet_address}</p>
+                        ${member.email ? `<p class="text-white">${Utils.escapeHtml(member.email)}</p>` : ''}
+                        <p class="text-white font-mono text-sm">${member.wallet_address}</p>
                     </div>
                 </div>
                 
                 <!-- Stats -->
                 <div class="grid grid-cols-3 gap-4">
                     <div class="p-4 bg-gray-800/50 rounded-lg text-center">
-                        <p class="text-gray-400 text-sm">Kea Euros</p>
+                        <p class="text-white text-sm">Kea Euros</p>
                         <p class="text-2xl font-bold text-primary" id="modalBalance">${Utils.formatCurrency(member.balance)}</p>
                     </div>
                     <div class="p-4 bg-gray-800/50 rounded-lg text-center">
-                        <p class="text-gray-400 text-sm">Total Credited</p>
+                        <p class="text-white text-sm">Total Credited</p>
                         <p class="text-2xl font-bold text-green-400">${Utils.formatCurrency(member.total_credited || 0)}</p>
                     </div>
                     <div class="p-4 bg-gray-800/50 rounded-lg text-center">
-                        <p class="text-gray-400 text-sm">Total Spent</p>
+                        <p class="text-white text-sm">Total Spent</p>
                         <p class="text-2xl font-bold">${Utils.formatCurrency(member.total_spent || 0)}</p>
                     </div>
                 </div>
@@ -128,7 +128,7 @@ const Members = {
                                 <span class="material-symbols-outlined">add_circle</span>
                                 Add Kea Euros
                             </h5>
-                            <p class="text-gray-400 text-xs mb-3">Mints new tokens to member's wallet</p>
+                            <p class="text-white text-xs mb-3">Mints new tokens to member's wallet</p>
                             <div class="flex gap-2">
                                 <input type="number" id="addAmount" min="1" step="1" 
                                        class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm" 
@@ -146,7 +146,7 @@ const Members = {
                                 <span class="material-symbols-outlined">remove_circle</span>
                                 Remove Kea Euros
                             </h5>
-                            <p class="text-gray-400 text-xs mb-3">Deducts from DB balance (tokens logged, not burned)</p>
+                            <p class="text-white text-xs mb-3">Deducts from DB balance (tokens logged, not burned)</p>
                             <div class="flex gap-2">
                                 <input type="number" id="removeAmount" min="1" step="1" 
                                        class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm" 
@@ -161,7 +161,7 @@ const Members = {
                     
                     <!-- Reason field -->
                     <div>
-                        <label class="text-gray-400 text-sm block mb-2">Reason (optional)</label>
+                        <label class="text-white text-sm block mb-2">Reason (optional)</label>
                         <input type="text" id="adjustReason" 
                                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm" 
                                placeholder="e.g., Refund, Manual correction, Bonus...">
@@ -171,10 +171,10 @@ const Members = {
                 <!-- Recent Activity -->
                 <div class="border-t border-gray-700 pt-6">
                     <h4 class="font-semibold mb-3">Member Info</h4>
-                    <div class="text-sm text-gray-400 space-y-2">
-                        <p><span class="text-gray-500">Orders:</span> ${member.order_count || 0}</p>
-                        <p><span class="text-gray-500">Vouchers:</span> ${member.voucher_count || 0}</p>
-                        <p><span class="text-gray-500">Joined:</span> ${Utils.formatDate(member.created_at)}</p>
+                    <div class="text-sm text-white space-y-2">
+                        <p><span class="text-white">Orders:</span> ${member.order_count || 0}</p>
+                        <p><span class="text-white">Vouchers:</span> ${member.voucher_count || 0}</p>
+                        <p><span class="text-white">Joined:</span> ${Utils.formatDate(member.created_at)}</p>
                     </div>
                 </div>
             </div>

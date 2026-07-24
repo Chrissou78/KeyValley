@@ -27,7 +27,7 @@ const Overview = {
         const el = document.getElementById('recentOrdersList');
         if (!el) return;
         if (!orders.length) {
-            el.innerHTML = '<p class="text-gray-500 text-sm">No recent orders</p>';
+            el.innerHTML = '<p class="text-white text-sm">No recent orders</p>';
             return;
         }
         el.innerHTML = orders.slice(0, 5).map(o => {
@@ -39,10 +39,10 @@ const Overview = {
             let memberDisplay = '';
             if (memberName && memberName !== memberEmail) {
                 memberDisplay = `<div class="font-medium">${Utils.escapeHtml(memberName)}</div>
-                                <div class="text-xs text-gray-500">${memberEmail || walletShort}</div>`;
+                                <div class="text-xs text-white">${memberEmail || walletShort}</div>`;
             } else if (memberEmail) {
                 memberDisplay = `<div class="font-medium">${memberEmail}</div>
-                                <div class="text-xs text-gray-500">${walletShort}</div>`;
+                                <div class="text-xs text-white">${walletShort}</div>`;
             } else {
                 memberDisplay = `<div class="font-medium">${walletShort}</div>`;
             }
@@ -50,7 +50,7 @@ const Overview = {
             return `
                 <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
                     <div>
-                        <div class="text-xs text-gray-500 mb-1">${o.order_number || o.id?.slice(0,8) || '-'}</div>
+                        <div class="text-xs text-white mb-1">${o.order_number || o.id?.slice(0,8) || '-'}</div>
                         ${memberDisplay}
                     </div>
                     <div class="text-right">
@@ -66,7 +66,7 @@ const Overview = {
         const el = document.getElementById('recentMembershipsList');
         if (!el) return;
         if (!memberships.length) {
-            el.innerHTML = '<p class="text-gray-500 text-sm">No recent memberships</p>';
+            el.innerHTML = '<p class="text-white text-sm">No recent memberships</p>';
             return;
         }
         el.innerHTML = memberships.slice(0, 5).map(m => {
@@ -78,10 +78,10 @@ const Overview = {
             let memberDisplay = '';
             if (memberName && memberName !== memberEmail) {
                 memberDisplay = `<div class="font-medium">${Utils.escapeHtml(memberName)}</div>
-                                <div class="text-xs text-gray-500">${memberEmail || walletShort}</div>`;
+                                <div class="text-xs text-white">${memberEmail || walletShort}</div>`;
             } else if (memberEmail) {
                 memberDisplay = `<div class="font-medium">${memberEmail}</div>
-                                <div class="text-xs text-gray-500">${walletShort}</div>`;
+                                <div class="text-xs text-white">${walletShort}</div>`;
             } else {
                 memberDisplay = `<div class="font-medium">${walletShort}</div>`;
             }
@@ -89,7 +89,7 @@ const Overview = {
             return `
                 <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
                     <div>
-                        <div class="text-xs text-gray-500 mb-1 capitalize">${m.package_type || 'Package'}</div>
+                        <div class="text-xs text-white mb-1 capitalize">${m.package_type || 'Package'}</div>
                         ${memberDisplay}
                     </div>
                     <div class="text-right">

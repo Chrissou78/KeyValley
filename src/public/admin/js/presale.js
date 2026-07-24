@@ -51,7 +51,7 @@ const Presale = {
         if (!tbody) return;
         
         if (this.purchases.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">No purchases found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-white">No purchases found</td></tr>';
             return;
         }
         
@@ -67,7 +67,7 @@ const Presale = {
                 <td class="py-3 px-4 text-sm">${Utils.formatEUR(p.eur_amount)}</td>
                 <td class="py-3 px-4 text-sm">${p.payment_method || '-'}</td>
                 <td class="py-3 px-4">${Utils.getStatusBadge(p.status)}</td>
-                <td class="py-3 px-4 text-sm text-gray-400">${Utils.formatDate(p.created_at)}</td>
+                <td class="py-3 px-4 text-sm text-white">${Utils.formatDate(p.created_at)}</td>
                 <td class="py-3 px-4">
                     ${['paid', 'pending_mint'].includes(p.status) ? `
                         <button onclick="Presale.mintPurchase(${p.id})"
@@ -89,19 +89,19 @@ const Presale = {
         if (!container) return;
         
         if (this.bonusTiers.length === 0) {
-            container.innerHTML = '<p class="text-gray-400 text-sm">No bonus tiers configured</p>';
+            container.innerHTML = '<p class="text-white text-sm">No bonus tiers configured</p>';
             return;
         }
         
         container.innerHTML = this.bonusTiers.map((tier, i) => `
             <div class="flex items-center gap-4 p-3 bg-gray-800/50 rounded-lg" data-tier-index="${i}">
                 <div class="flex-1">
-                    <label class="text-xs text-gray-400">Min EUR</label>
+                    <label class="text-xs text-white">Min EUR</label>
                     <input type="number" value="${tier.min_eur}" 
                            class="w-full bg-gray-700 rounded px-3 py-2 text-white tier-min-eur">
                 </div>
                 <div class="flex-1">
-                    <label class="text-xs text-gray-400">Bonus %</label>
+                    <label class="text-xs text-white">Bonus %</label>
                     <input type="number" value="${tier.bonus_percent}" 
                            class="w-full bg-gray-700 rounded px-3 py-2 text-white tier-bonus-percent">
                 </div>

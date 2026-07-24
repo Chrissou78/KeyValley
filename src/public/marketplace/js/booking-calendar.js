@@ -63,14 +63,14 @@ const BookingCalendar = {
         <div class="calendar-header flex items-center justify-between mb-4">
           <button type="button" onclick="BookingCalendar.prevMonth()" 
                   class="p-2 hover:bg-gray-700 rounded-lg transition-colors">
-            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
           </button>
           <h3 class="text-lg font-semibold text-white">${monthNames[month]} ${year}</h3>
           <button type="button" onclick="BookingCalendar.nextMonth()" 
                   class="p-2 hover:bg-gray-700 rounded-lg transition-colors">
-            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
           </button>
@@ -79,7 +79,7 @@ const BookingCalendar = {
         <div class="calendar-grid">
           <div class="grid grid-cols-7 gap-1 mb-2">
             ${dayNames.map(day => `
-              <div class="text-center text-xs font-medium text-gray-500 py-2">${day}</div>
+              <div class="text-center text-xs font-medium text-white py-2">${day}</div>
             `).join('')}
           </div>
           
@@ -111,11 +111,11 @@ const BookingCalendar = {
       if (isSelected) {
         cellClass += 'bg-amber-500 text-gray-900 ring-2 ring-amber-400';
       } else if (isDisabled) {
-        cellClass += 'bg-gray-800/30 text-gray-600 cursor-not-allowed';
+        cellClass += 'bg-gray-800/30 text-white cursor-not-allowed';
       } else if (bookedCount > 0) {
         cellClass += 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border border-amber-500/30';
       } else {
-        cellClass += 'bg-gray-700/50 text-gray-300 hover:bg-gray-700 hover:text-white';
+        cellClass += 'bg-gray-700/50 text-white hover:bg-gray-700 hover:text-white';
       }
 
       const clickHandler = isDisabled ? '' : `onclick="BookingCalendar.selectDate('${dateStr}')"`;
@@ -132,7 +132,7 @@ const BookingCalendar = {
           </div>
         </div>
 
-        <div class="calendar-legend flex items-center justify-center gap-4 mt-4 text-xs text-gray-400">
+        <div class="calendar-legend flex items-center justify-center gap-4 mt-4 text-xs text-white">
           <div class="flex items-center gap-1">
             <div class="w-3 h-3 rounded bg-gray-700/50"></div>
             <span>Available</span>
@@ -177,7 +177,7 @@ const BookingCalendar = {
     
     return `
       <div class="time-slots mt-4 pt-4 border-t border-gray-700">
-        <h4 class="text-sm font-medium text-gray-300 mb-3">Select a time slot:</h4>
+        <h4 class="text-sm font-medium text-white mb-3">Select a time slot:</h4>
         <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
           ${slots.map(slot => {
             const isBooked = dateBookings.includes(slot);
@@ -187,9 +187,9 @@ const BookingCalendar = {
             if (isSelected) {
               btnClass += 'bg-amber-500 text-gray-900';
             } else if (isBooked) {
-              btnClass += 'bg-gray-800/30 text-gray-600 cursor-not-allowed';
+              btnClass += 'bg-gray-800/30 text-white cursor-not-allowed';
             } else {
-              btnClass += 'bg-gray-700/50 text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer';
+              btnClass += 'bg-gray-700/50 text-white hover:bg-gray-700 hover:text-white cursor-pointer';
             }
             
             const clickHandler = isBooked ? '' : `onclick="BookingCalendar.selectSlot('${slot}')"`;

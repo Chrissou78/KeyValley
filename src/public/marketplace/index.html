@@ -153,15 +153,15 @@
                             </div>
                             <div class="hidden sm:block text-left">
                                 <div id="headerUserName" class="text-sm font-medium text-white">Member</div>
-                                <div id="headerUserEmail" class="text-xs text-gray-400 max-w-[150px] truncate"></div>
+                                <div id="headerUserEmail" class="text-xs text-white max-w-[150px] truncate"></div>
                             </div>
-                            <span class="material-symbols-outlined text-gray-400 text-lg">expand_more</span>
+                            <span class="material-symbols-outlined text-white text-lg">expand_more</span>
                         </button>
                         
                         <div class="user-dropdown-menu">
                             <div class="p-2">
                                 <div class="px-4 py-3 border-b border-white/10">
-                                    <p class="text-xs text-slate-400">Kea Euros</p>
+                                    <p class="text-xs text-white">Kea Euros</p>
                                     <p class="text-lg font-semibold text-primary">€<span data-user-balance>0</span></p>
                                 </div>
                                 <a href="/profile" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors">
@@ -220,7 +220,7 @@
                     <div class="h-[1px] w-8 bg-primary"></div>
                 </div>
                 <h1 class="text-3xl md:text-4xl lg:text-5xl font-serif italic font-medium text-white mb-3">Marketplace</h1>
-                <p class="text-slate-400 font-light max-w-2xl mx-auto">Discover premium experiences and services available exclusively to Kea Valley members.</p>
+                <p class="text-white font-light max-w-2xl mx-auto">Discover premium experiences and services available exclusively to Kea Valley members.</p>
             </div>
 
             <div id="buyingPowerBanner" class="hidden bg-surface border border-white/5 rounded-xl p-4 mb-8">
@@ -230,7 +230,7 @@
                             <span class="material-symbols-outlined text-primary text-2xl">account_balance_wallet</span>
                         </div>
                         <div>
-                            <p class="text-slate-400 text-sm">Your Kea Euros</p>
+                            <p class="text-white text-sm">Your Kea Euros</p>
                             <p class="text-2xl font-serif text-primary">€<span id="userBalance">0</span></p>
                         </div>
                     </div>
@@ -244,23 +244,23 @@
                 <button class="category-btn active px-4 py-2 rounded-lg border border-white/10 text-sm font-medium transition-all" data-category="all">
                     All Services
                 </button>
-                <button class="category-btn px-4 py-2 rounded-lg border border-white/10 text-slate-400 text-sm font-medium hover:border-white/30 transition-all" data-category="accommodation">
+                <button class="category-btn px-4 py-2 rounded-lg border border-white/10 text-white text-sm font-medium hover:border-white/30 transition-all" data-category="accommodation">
                     <span class="material-symbols-outlined text-base align-middle mr-1">villa</span>
                     Accommodation
                 </button>
-                <button class="category-btn px-4 py-2 rounded-lg border border-white/10 text-slate-400 text-sm font-medium hover:border-white/30 transition-all" data-category="experiences">
+                <button class="category-btn px-4 py-2 rounded-lg border border-white/10 text-white text-sm font-medium hover:border-white/30 transition-all" data-category="experiences">
                     <span class="material-symbols-outlined text-base align-middle mr-1">sailing</span>
                     Experiences
                 </button>
-                <button class="category-btn px-4 py-2 rounded-lg border border-white/10 text-slate-400 text-sm font-medium hover:border-white/30 transition-all" data-category="dining">
+                <button class="category-btn px-4 py-2 rounded-lg border border-white/10 text-white text-sm font-medium hover:border-white/30 transition-all" data-category="dining">
                     <span class="material-symbols-outlined text-base align-middle mr-1">restaurant</span>
                     Dining
                 </button>
-                <button class="category-btn px-4 py-2 rounded-lg border border-white/10 text-slate-400 text-sm font-medium hover:border-white/30 transition-all" data-category="wellness">
+                <button class="category-btn px-4 py-2 rounded-lg border border-white/10 text-white text-sm font-medium hover:border-white/30 transition-all" data-category="longevity">
                     <span class="material-symbols-outlined text-base align-middle mr-1">spa</span>
-                    Wellness
+                    Longevity
                 </button>
-                <button class="category-btn px-4 py-2 rounded-lg border border-white/10 text-slate-400 text-sm font-medium hover:border-white/30 transition-all" data-category="transport">
+                <button class="category-btn px-4 py-2 rounded-lg border border-white/10 text-white text-sm font-medium hover:border-white/30 transition-all" data-category="transport">
                     <span class="material-symbols-outlined text-base align-middle mr-1">directions_boat</span>
                     Transport
                 </button>
@@ -268,13 +268,13 @@
 
             <div id="loadingState" class="text-center py-20">
                 <div class="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p class="text-slate-400">Loading services...</p>
+                <p class="text-white">Loading services...</p>
             </div>
 
             <div id="emptyState" class="hidden text-center py-20">
-                <span class="material-symbols-outlined text-6xl text-slate-600 mb-4">inventory_2</span>
+                <span class="material-symbols-outlined text-6xl text-white mb-4">inventory_2</span>
                 <h3 class="text-xl font-serif text-white mb-2">No services available</h3>
-                <p class="text-slate-500">Check back soon for new offerings.</p>
+                <p class="text-white">Check back soon for new offerings.</p>
             </div>
 
             <div id="servicesGrid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -292,15 +292,15 @@
                     <span class="material-symbols-outlined text-primary">shopping_cart</span>
                     Your Cart
                 </h2>
-                <button id="closeCart" class="text-slate-400 hover:text-white transition-colors">
+                <button id="closeCart" class="text-white hover:text-white transition-colors">
                     <span class="material-symbols-outlined text-2xl">close</span>
                 </button>
             </div>
 
             <div id="cartItems" class="flex-1 overflow-y-auto p-6">
                 <div id="cartEmpty" class="text-center py-12">
-                    <span class="material-symbols-outlined text-5xl text-slate-600 mb-3">shopping_cart</span>
-                    <p class="text-slate-500">Your cart is empty</p>
+                    <span class="material-symbols-outlined text-5xl text-white mb-3">shopping_cart</span>
+                    <p class="text-white">Your cart is empty</p>
                     <button class="text-primary text-sm hover:underline mt-2" onclick="closeCartSidebar()">Continue shopping</button>
                 </div>
                 <div id="cartItemsList" class="hidden space-y-4"></div>
@@ -308,7 +308,7 @@
 
             <div id="cartFooter" class="hidden border-t border-white/5 p-6">
                 <div class="space-y-3 mb-6">
-                    <div class="flex justify-between text-slate-400">
+                    <div class="flex justify-between text-white">
                         <span>Subtotal</span>
                         <span id="cartSubtotal">€0</span>
                     </div>
@@ -324,7 +324,7 @@
                         <span class="material-symbols-outlined text-primary">account_balance_wallet</span>
                         <div class="flex-1">
                             <p class="font-medium text-white">Pay with Kea€</p>
-                            <p id="checkoutTokenBalance" class="text-sm text-slate-400">Balance: Kea€0</p>
+                            <p id="checkoutTokenBalance" class="text-sm text-white">Balance: Kea€0</p>
                         </div>
                         </div>
                     </div>
@@ -358,19 +358,19 @@
                         </div>
                         <div class="text-left md:text-right">
                             <p class="text-3xl md:text-4xl font-serif text-primary">€<span id="modalServicePrice">0</span></p>
-                            <p id="modalPriceNote" class="text-slate-500 text-base"></p>
+                            <p id="modalPriceNote" class="text-white text-base"></p>
                         </div>
                     </div>
                 </div>
 
                 <div class="p-6 md:p-8 overflow-y-auto flex-1">
-                    <p id="modalServiceLocation" class="text-slate-400 text-base flex items-center gap-1 mb-6">
+                    <p id="modalServiceLocation" class="text-white text-base flex items-center gap-1 mb-6">
                         <span class="material-symbols-outlined text-base">location_on</span>
                         <span></span>
                     </p>
 
                     <div class="prose prose-invert max-w-none mb-6">
-                        <p id="modalServiceDescription" class="text-slate-300 text-lg leading-relaxed"></p>
+                        <p id="modalServiceDescription" class="text-white text-lg leading-relaxed"></p>
                     </div>
 
                     <div id="modalFeatures" class="mb-6">
@@ -383,11 +383,11 @@
                         
                         <div id="dateRangeBooking" class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-slate-400 text-sm mb-1">Check-in</label>
+                                <label class="block text-white text-sm mb-1">Check-in</label>
                                 <input type="date" id="modalCheckIn" class="w-full bg-background-dark border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary focus:outline-none">
                             </div>
                             <div>
-                                <label class="block text-slate-400 text-sm mb-1">Check-out</label>
+                                <label class="block text-white text-sm mb-1">Check-out</label>
                                 <input type="date" id="modalCheckOut" class="w-full bg-background-dark border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary focus:outline-none">
                             </div>
                         </div>
@@ -440,12 +440,12 @@
             <div class="bg-surface border border-white/10 rounded-2xl w-full max-w-md overflow-hidden">
                 <div class="p-6 border-b border-white/5 flex items-center justify-between">
                     <h2 class="text-xl font-serif text-white">Login to Continue</h2>
-                    <button onclick="HeaderManager.closeLoginModal()" class="text-slate-400 hover:text-white transition-colors">
+                    <button onclick="HeaderManager.closeLoginModal()" class="text-white hover:text-white transition-colors">
                         <span class="material-symbols-outlined text-2xl">close</span>
                     </button>
                 </div>
                 <div id="loginModalContent" class="p-6">
-                    <p class="text-slate-400 text-sm mb-6">Please login to your account to make purchases.</p>
+                    <p class="text-white text-sm mb-6">Please login to your account to make purchases.</p>
                     <div class="wallet-iframe-container">
                         <iframe 
                             id="loginWalletIframe"
@@ -466,7 +466,7 @@
             <div class="bg-surface border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden">
                 <div class="p-6 border-b border-white/5 flex items-center justify-between">
                     <h2 class="text-xl font-serif text-white">Complete Purchase</h2>
-                    <button id="closeCheckoutModal" class="text-slate-400 hover:text-white transition-colors">
+                    <button id="closeCheckoutModal" class="text-white hover:text-white transition-colors">
                         <span class="material-symbols-outlined text-2xl">close</span>
                     </button>
                 </div>
@@ -482,15 +482,15 @@
 
                     <div class="space-y-4 mb-6">
                         <div>
-                            <label class="block text-slate-400 text-sm mb-1">Email for confirmation *</label>
+                            <label class="block text-white text-sm mb-1">Email for confirmation *</label>
                             <input type="email" id="checkoutEmail" class="w-full bg-background-dark border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary focus:outline-none" placeholder="your@email.com">
                         </div>
                         <div>
-                            <label class="block text-slate-400 text-sm mb-1">Phone (optional)</label>
+                            <label class="block text-white text-sm mb-1">Phone (optional)</label>
                             <input type="tel" id="checkoutPhone" class="w-full bg-background-dark border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary focus:outline-none" placeholder="+30 ...">
                         </div>
                         <div>
-                            <label class="block text-slate-400 text-sm mb-1">Special requests (optional)</label>
+                            <label class="block text-white text-sm mb-1">Special requests (optional)</label>
                             <textarea id="checkoutNotes" rows="2" class="w-full bg-background-dark border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary focus:outline-none resize-none" placeholder="Any special requirements..."></textarea>
                         </div>
                     </div>
@@ -501,7 +501,7 @@
                             <span class="material-symbols-outlined text-primary text-2xl">account_balance_wallet</span>
                             <div class="flex-1">
                                 <p class="font-medium text-white">Pay with Kea€</p>
-                                <p id="checkoutTokenBalance" class="text-sm text-slate-400">Balance: Kea€0</p>
+                                <p id="checkoutTokenBalance" class="text-sm text-white">Balance: Kea€0</p>
                             </div>
                         </div>
                     </div>
@@ -511,7 +511,7 @@
                         Complete Purchase
                     </button>
 
-                    <p class="text-slate-500 text-xs text-center mt-4">
+                    <p class="text-white text-xs text-center mt-4">
                         Your voucher will be sent to your email after purchase.
                     </p>
                 </div>
@@ -528,8 +528,8 @@
                     <span class="material-symbols-outlined text-5xl text-green-400">check_circle</span>
                 </div>
                 <h2 class="text-2xl font-serif text-white mb-3">Order Submitted!</h2>
-                <p class="text-slate-400 mb-6">Your order has been received and is pending validation. You'll receive a confirmation email shortly.</p>
-                <p class="text-slate-500 text-sm mb-6">Order #<span id="successOrderId">---</span></p>
+                <p class="text-white mb-6">Your order has been received and is pending validation. You'll receive a confirmation email shortly.</p>
+                <p class="text-white text-sm mb-6">Order #<span id="successOrderId">---</span></p>
                 <div class="flex gap-4">
                     <a href="/profile" class="flex-1 bg-white/10 text-white py-3 rounded-xl font-bold uppercase tracking-wider hover:bg-white/20 transition-colors">
                         View Orders
@@ -550,7 +550,7 @@
                     <img src="/images/logo.png" alt="Kea Valley" class="h-6 w-auto"/>
                     <span class="text-xs font-serif font-bold tracking-widest uppercase text-white">Kea Valley</span>
                 </a>
-                <div class="text-slate-600 text-xs">© 2026 Kea Valley Private Members Club</div>
+                <div class="text-white text-xs">© 2026 Kea Valley Private Members Club</div>
             </div>
         </div>
     </footer>
@@ -769,7 +769,7 @@
             }
             
             if (filtered.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center py-12"><span class="material-symbols-outlined text-5xl text-slate-600 mb-3">search_off</span><p class="text-slate-500">No services in this category</p></div>';
+                grid.innerHTML = '<div class="col-span-full text-center py-12"><span class="material-symbols-outlined text-5xl text-white mb-3">search_off</span><p class="text-white">No services in this category</p></div>';
                 return;
             }
             
@@ -792,10 +792,10 @@
                     '<div class="p-5">' +
                         '<p class="text-primary text-sm font-bold uppercase tracking-widest mb-2">' + getCategoryLabel(service.category) + '</p>' +
                         '<h3 class="font-serif text-xl text-white mb-2 line-clamp-1">' + service.name + '</h3>' +
-                        '<p class="text-slate-400 text-base mb-4 line-clamp-2">' + (service.short_description || service.description || '') + '</p>' +
+                        '<p class="text-white text-base mb-4 line-clamp-2">' + (service.short_description || service.description || '') + '</p>' +
                         '<div class="flex items-center justify-between">' +
                             '<p class="text-2xl font-serif text-primary">' + (hasMultipleOptions ? 'From ' : '') + '€' + service.price.toLocaleString() + '</p>' +
-                            (!hasMultipleOptions && service.price_note ? '<p class="text-slate-500 text-sm">' + service.price_note + '</p>' : '') +
+                            (!hasMultipleOptions && service.price_note ? '<p class="text-white text-sm">' + service.price_note + '</p>' : '') +
                         '</div>' +
                     '</div>' +
                 '</div>';
@@ -820,7 +820,7 @@
             section.classList.remove('hidden');
             list.innerHTML = options.map(function(opt, i) {
                 return '<button type="button" class="pricing-option-pill px-4 py-2 rounded-lg border text-sm font-medium transition-colors ' +
-                    (i === 0 ? 'border-primary bg-primary/10 text-primary' : 'border-white/10 text-slate-300 hover:border-white/30') +
+                    (i === 0 ? 'border-primary bg-primary/10 text-primary' : 'border-white/10 text-white hover:border-white/30') +
                     '" data-index="' + i + '" onclick="selectPricingOptionByIndex(' + i + ')">' +
                     (opt.label ? opt.label + ' ' : '') + '€' + opt.price +
                     '</button>';
@@ -841,10 +841,10 @@
             document.querySelectorAll('#modalPricingOptionsList .pricing-option-pill').forEach(function(btn, i) {
                 if (i === index) {
                     btn.classList.add('border-primary', 'bg-primary/10', 'text-primary');
-                    btn.classList.remove('border-white/10', 'text-slate-300');
+                    btn.classList.remove('border-white/10', 'text-white');
                 } else {
                     btn.classList.remove('border-primary', 'bg-primary/10', 'text-primary');
-                    btn.classList.add('border-white/10', 'text-slate-300');
+                    btn.classList.add('border-white/10', 'text-white');
                 }
             });
         }
@@ -854,7 +854,7 @@
                 'accommodation': 'Accommodation',
                 'experiences': 'Experiences',
                 'dining': 'Dining',
-                'wellness': 'Wellness',
+                'longevity': 'Longevity',
                 'transport': 'Transport',
                 'concierge': 'Concierge'
             };
@@ -899,7 +899,7 @@
             var featuresList = document.getElementById('modalFeaturesList');
             if (selectedService.features && selectedService.features.length > 0) {
                 featuresList.innerHTML = selectedService.features.map(function(f) {
-                    return '<li class="flex items-center gap-2 text-slate-300 text-base"><span class="material-symbols-outlined text-green-400 text-base">check_circle</span>' + f + '</li>';
+                    return '<li class="flex items-center gap-2 text-white text-base"><span class="material-symbols-outlined text-green-400 text-base">check_circle</span>' + f + '</li>';
                 }).join('');
                 featuresSection.classList.remove('hidden');
             } else {
@@ -1121,12 +1121,12 @@
                         var endDate = new Date(item.options.bookingEnd + 'T00:00:00').toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
                         bookingInfo = '<p class="text-primary text-xs mt-1">' + startDate + ' → ' + endDate + ' (' + item.options.nights + ' nights)</p>';
                     } else if (item.options && item.options.checkIn) {
-                        bookingInfo = '<p class="text-slate-500 text-xs">' + item.options.checkIn + ' - ' + item.options.checkOut + '</p>';
+                        bookingInfo = '<p class="text-white text-xs">' + item.options.checkIn + ' - ' + item.options.checkOut + '</p>';
                     } else if (item.options && item.options.bookingDate) {
                         var dateDisplay = new Date(item.options.bookingDate + 'T00:00:00').toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
                         bookingInfo = '<p class="text-primary text-xs">' + dateDisplay + (item.options.timeSlot ? ' at ' + item.options.timeSlot : '') + '</p>';
                     } else if (item.options && item.options.selectedOptionLabel) {
-                        bookingInfo = '<p class="text-slate-500 text-xs">' + item.options.selectedOptionLabel + '</p>';
+                        bookingInfo = '<p class="text-white text-xs">' + item.options.selectedOptionLabel + '</p>';
                     }
                     
                     return '<div class="flex gap-4 bg-background-dark rounded-xl p-4">' +
@@ -1139,7 +1139,7 @@
                                 '<button onclick="updateCartItemQuantity(' + index + ', -1)" class="w-6 h-6 rounded bg-white/10 text-white hover:bg-white/20 flex items-center justify-center text-sm">-</button>' +
                                 '<span class="text-white text-sm w-6 text-center">' + item.quantity + '</span>' +
                                 '<button onclick="updateCartItemQuantity(' + index + ', 1)" class="w-6 h-6 rounded bg-white/10 text-white hover:bg-white/20 flex items-center justify-center text-sm">+</button>' +
-                                '<button onclick="removeFromCart(' + index + ')" class="ml-auto text-slate-500 hover:text-red-400 transition-colors"><span class="material-symbols-outlined text-lg">delete</span></button>' +
+                                '<button onclick="removeFromCart(' + index + ')" class="ml-auto text-white hover:text-red-400 transition-colors"><span class="material-symbols-outlined text-lg">delete</span></button>' +
                             '</div>' +
                         '</div>' +
                     '</div>';
@@ -1196,7 +1196,7 @@
             var checkoutItems = document.getElementById('checkoutItems');
             checkoutItems.innerHTML = cart.map(function(item) {
                 var itemTotal = item.options && item.options.totalPrice ? item.options.totalPrice : (item.price * item.quantity);
-                return '<div class="flex justify-between text-sm"><span class="text-slate-400">' + item.name + ' x' + item.quantity + '</span><span class="text-white">Kea€' + itemTotal.toLocaleString() + '</span></div>';
+                return '<div class="flex justify-between text-sm"><span class="text-white">' + item.name + ' x' + item.quantity + '</span><span class="text-white">Kea€' + itemTotal.toLocaleString() + '</span></div>';
             }).join('');
             
             var total = getCartTotal();
@@ -1331,11 +1331,11 @@
                     '<h4 class="font-medium text-white mb-3">Your Voucher' + (vouchers.length > 1 ? 's' : '') + '</h4>' +
                     vouchers.map(function(v) {
                         return '<div class="flex items-center justify-between py-2 border-b border-white/5 last:border-0">' +
-                            '<span class="text-slate-300">' + v.service_name + '</span>' +
+                            '<span class="text-white">' + v.service_name + '</span>' +
                             '<code class="text-primary font-mono font-bold">' + v.code + '</code>' +
                         '</div>';
                     }).join('') +
-                    '<p class="text-sm text-slate-400 mt-3">Voucher details have been sent to your email.</p>' +
+                    '<p class="text-sm text-white mt-3">Voucher details have been sent to your email.</p>' +
                 '</div>';
             }
             
@@ -1348,8 +1348,8 @@
                     '<span class="material-symbols-outlined text-4xl text-green-400">check_circle</span>' +
                 '</div>' +
                 '<h3 class="text-2xl font-serif text-white mb-2">Purchase Complete!</h3>' +
-                '<p class="text-slate-400">Order #' + order.id.slice(0,8).toUpperCase() + '</p>' +
-                '<p class="text-slate-400 mt-1">Total: Kea€' + order.total_amount.toLocaleString() + '</p>' +
+                '<p class="text-white">Order #' + order.id.slice(0,8).toUpperCase() + '</p>' +
+                '<p class="text-white mt-1">Total: Kea€' + order.total_amount.toLocaleString() + '</p>' +
                 voucherHtml +
                 '<button onclick="closeSuccessModal()" class="mt-6 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-light transition-colors">' +
                     'Continue Shopping' +
@@ -1707,12 +1707,12 @@
                 var html = '<div class="bg-surface-light rounded-xl p-4 border border-white/10">';
                 
                 if (this.fixedDuration) {
-                    html += '<p class="text-slate-400 text-sm mb-4 text-center">' +
+                    html += '<p class="text-white text-sm mb-4 text-center">' +
                         '<span class="text-primary font-semibold">' + this.fixedDuration + '-night stay</span> — ' +
                         'Click a date to select your check-in' +
                         '</p>';
                 } else {
-                    html += '<p class="text-slate-400 text-sm mb-4 text-center">' +
+                    html += '<p class="text-white text-sm mb-4 text-center">' +
                         (this.startDate && !this.endDate ? 
                             '<span class="text-primary">Now select your check-out date</span>' : 
                             'Select your check-in date') +
@@ -1720,18 +1720,18 @@
                 }
                 
                 html += '<div class="flex items-center justify-between mb-4">' +
-                        '<button type="button" onclick="BookingCalendar.prevMonth()" class="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white">' +
+                        '<button type="button" onclick="BookingCalendar.prevMonth()" class="p-2 hover:bg-white/10 rounded-lg transition-colors text-white hover:text-white">' +
                             '<span class="material-symbols-outlined">chevron_left</span>' +
                         '</button>' +
                         '<h3 class="text-lg font-semibold text-white">' + monthNames[month] + ' ' + year + '</h3>' +
-                        '<button type="button" onclick="BookingCalendar.nextMonth()" class="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white">' +
+                        '<button type="button" onclick="BookingCalendar.nextMonth()" class="p-2 hover:bg-white/10 rounded-lg transition-colors text-white hover:text-white">' +
                             '<span class="material-symbols-outlined">chevron_right</span>' +
                         '</button>' +
                     '</div>';
                 
                 html += '<div class="grid grid-cols-7 gap-1 mb-2">';
                 for (var i = 0; i < dayNames.length; i++) {
-                    html += '<div class="text-center text-xs font-medium text-slate-500 py-2">' + dayNames[i] + '</div>';
+                    html += '<div class="text-center text-xs font-medium text-white py-2">' + dayNames[i] + '</div>';
                 }
                 html += '</div>';
                 
@@ -1782,13 +1782,13 @@
                     } else if (isInRange) {
                         cellClass += 'bg-primary/30 text-white cursor-pointer';
                     } else if (isDisabled) {
-                        cellClass += 'bg-background-dark/50 text-slate-600 cursor-not-allowed rounded-lg';
+                        cellClass += 'bg-background-dark/50 text-white cursor-not-allowed rounded-lg';
                     } else if (this.fixedDuration && canStartFixedRange) {
                         cellClass += 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 cursor-pointer rounded-lg border border-emerald-500/30';
                     } else if (bookedCount > 0) {
                         cellClass += 'bg-primary/20 text-primary hover:bg-primary/30 cursor-pointer rounded-lg border border-primary/30';
                     } else {
-                        cellClass += 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white cursor-pointer rounded-lg';
+                        cellClass += 'bg-white/5 text-white hover:bg-white/10 hover:text-white cursor-pointer rounded-lg';
                     }
 
                     var clickHandler = isDisabled ? '' : ' onclick="BookingCalendar.selectDate(\'' + dateStr + '\')"';
@@ -1803,7 +1803,7 @@
 
                 html += '</div>';
                 
-                html += '<div class="flex flex-wrap items-center justify-center gap-3 mt-4 text-xs text-slate-500">';
+                html += '<div class="flex flex-wrap items-center justify-center gap-3 mt-4 text-xs text-white">';
                 if (this.fixedDuration) {
                     html += '<div class="flex items-center gap-1"><div class="w-3 h-3 rounded bg-emerald-500/20 border border-emerald-500/30"></div><span>Available start</span></div>';
                 }
@@ -1823,46 +1823,46 @@
                         
                         html += '<div class="grid grid-cols-2 gap-4 mb-3">' +
                             '<div>' +
-                                '<p class="text-slate-400 text-xs mb-1">Check-in</p>' +
+                                '<p class="text-white text-xs mb-1">Check-in</p>' +
                                 '<p class="text-white font-medium">' + startDisplay.toLocaleDateString('en-US', dateOptions) + '</p>' +
                             '</div>' +
                             '<div>' +
-                                '<p class="text-slate-400 text-xs mb-1">Check-out</p>' +
+                                '<p class="text-white text-xs mb-1">Check-out</p>' +
                                 '<p class="text-white font-medium">' + endDisplay.toLocaleDateString('en-US', dateOptions) + '</p>' +
                             '</div>' +
                         '</div>' +
                         '<div class="flex items-center justify-between pt-3 border-t border-white/10">' +
-                            '<span class="text-slate-400">Duration</span>' +
+                            '<span class="text-white">Duration</span>' +
                             '<span class="text-primary font-semibold">' + nights + ' night' + (nights > 1 ? 's' : '') + '</span>' +
                         '</div>';
                     } else {
                         html += '<p class="text-primary text-center">' +
                             '<span class="font-medium">Check-in:</span> ' + startDisplay.toLocaleDateString('en-US', dateOptions) +
                             '</p>' +
-                            '<p class="text-slate-400 text-sm text-center mt-2">Select check-out date</p>';
+                            '<p class="text-white text-sm text-center mt-2">Select check-out date</p>';
                     }
                     
                     if (this.fixedDuration && this.endDate) {
                         html += '<div class="flex items-center justify-center gap-4 mt-4 pt-3 border-t border-white/10">' +
                             '<button type="button" onclick="BookingCalendar.slideSelection(-1)" ' +
-                                'class="flex items-center gap-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm text-slate-300 hover:text-white">' +
+                                'class="flex items-center gap-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm text-white hover:text-white">' +
                                 '<span class="material-symbols-outlined text-lg">chevron_left</span> Earlier' +
                             '</button>' +
                             '<button type="button" onclick="BookingCalendar.slideSelection(1)" ' +
-                                'class="flex items-center gap-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm text-slate-300 hover:text-white">' +
+                                'class="flex items-center gap-1 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm text-white hover:text-white">' +
                                 'Later <span class="material-symbols-outlined text-lg">chevron_right</span>' +
                             '</button>' +
                         '</div>';
                     }
                     
                     html += '<button type="button" onclick="BookingCalendar.clearSelection()" ' +
-                        'class="w-full mt-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">' +
+                        'class="w-full mt-3 py-2 text-sm text-white hover:text-white hover:bg-white/10 rounded-lg transition-colors">' +
                         'Clear selection</button>';
                     
                     html += '</div>';
                 }
 
-                html += '<div id="calendarPreview" class="hidden mt-2 text-center text-sm text-slate-400"></div>';
+                html += '<div id="calendarPreview" class="hidden mt-2 text-center text-sm text-white"></div>';
 
                 html += '</div>';
                 container.innerHTML = html;

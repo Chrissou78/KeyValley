@@ -54,7 +54,7 @@ const Transactions = {
         }
         
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">No transactions found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-white">No transactions found</td></tr>';
             return;
         }
         
@@ -79,8 +79,8 @@ const Transactions = {
                         ` : '-'}
                     </td>
                     <td class="py-3 px-4">${Utils.getStatusBadge(t.tx_status)}</td>
-                    <td class="py-3 px-4 text-sm text-gray-400">${Utils.formatDate(t.minted_at)}</td>
-                    <td class="py-3 px-4 text-sm text-gray-400">${age}</td>
+                    <td class="py-3 px-4 text-sm text-white">${Utils.formatDate(t.minted_at)}</td>
+                    <td class="py-3 px-4 text-sm text-white">${age}</td>
                     <td class="py-3 px-4">
                         ${['failed', 'timeout'].includes(t.tx_status) ? `
                             <button onclick="Transactions.retrySingle('${t.wallet_address}')"

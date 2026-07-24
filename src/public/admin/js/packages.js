@@ -126,7 +126,7 @@ const Packages = {
         const grid = document.getElementById('packagesGrid');
         if (!grid) return;
         
-        grid.innerHTML = '<p class="text-gray-500 col-span-full text-center py-8">Loading packages...</p>';
+        grid.innerHTML = '<p class="text-white col-span-full text-center py-8">Loading packages...</p>';
         
         try {
             const response = await API.get('/packages');
@@ -168,8 +168,8 @@ const Packages = {
         if (this.all.length === 0) {
             grid.innerHTML = `
                 <div class="col-span-full text-center py-12">
-                    <span class="material-symbols-outlined text-6xl text-gray-600 mb-4">inventory_2</span>
-                    <p class="text-gray-400 mb-4">No packages configured</p>
+                    <span class="material-symbols-outlined text-6xl text-white mb-4">inventory_2</span>
+                    <p class="text-white mb-4">No packages configured</p>
                     <button onclick="Packages.openModal()" class="px-4 py-2 bg-primary text-black rounded-lg font-medium hover:bg-primary-light transition-colors">
                         Add First Package
                     </button>
@@ -192,38 +192,38 @@ const Packages = {
                             </div>
                             <div>
                                 <h3 class="font-semibold text-lg">${this.escapeHtml(pkg.name)}</h3>
-                                <p class="text-gray-500 text-xs font-mono">${pkg.id}</p>
+                                <p class="text-white text-xs font-mono">${pkg.id}</p>
                             </div>
                         </div>
                         <div class="flex gap-1 flex-wrap justify-end">
                             ${pkg.popular ? '<span class="px-2 py-0.5 bg-primary/20 text-primary text-xs rounded">Popular</span>' : ''}
                             ${pkg.testOnly ? '<span class="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs rounded">Test</span>' : ''}
-                            ${!pkg.active ? '<span class="px-2 py-0.5 bg-gray-500/20 text-gray-400 text-xs rounded">Inactive</span>' : ''}
+                            ${!pkg.active ? '<span class="px-2 py-0.5 bg-gray-500/20 text-white text-xs rounded">Inactive</span>' : ''}
                         </div>
                     </div>
                     
-                    <p class="text-gray-400 text-sm mb-4 line-clamp-2">${this.escapeHtml(pkg.description) || 'No description'}</p>
+                    <p class="text-white text-sm mb-4 line-clamp-2">${this.escapeHtml(pkg.description) || 'No description'}</p>
                     
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <div class="bg-gray-800/50 rounded-lg p-3 text-center">
                             <div class="text-xl font-bold text-primary">${Utils.formatCurrency(pkg.price)}</div>
-                            <div class="text-gray-500 text-xs">Price</div>
+                            <div class="text-white text-xs">Price</div>
                         </div>
                         <div class="bg-gray-800/50 rounded-lg p-3 text-center">
                             <div class="text-xl font-bold text-green-400">${Utils.formatCurrency(pkg.buyingPower)}</div>
-                            <div class="text-gray-500 text-xs">Kea Euros</div>
+                            <div class="text-white text-xs">Kea Euros</div>
                         </div>
                     </div>
                     
                     ${pkg.features && pkg.features.length > 0 ? `
-                    <ul class="text-sm text-gray-400 space-y-1 mb-4">
+                    <ul class="text-sm text-white space-y-1 mb-4">
                         ${pkg.features.slice(0, 3).map(f => `
                             <li class="flex items-center gap-2">
                                 <span class="material-symbols-outlined text-green-400 text-sm">check</span>
                                 ${this.escapeHtml(f)}
                             </li>
                         `).join('')}
-                        ${pkg.features.length > 3 ? `<li class="text-gray-500 text-xs">+${pkg.features.length - 3} more...</li>` : ''}
+                        ${pkg.features.length > 3 ? `<li class="text-white text-xs">+${pkg.features.length - 3} more...</li>` : ''}
                     </ul>
                     ` : ''}
                     
@@ -311,7 +311,7 @@ const Packages = {
             <div class="${tierClass}">
                 <span class="material-symbols-outlined text-4xl">${icon}</span>
             </div>
-            <span class="text-xs text-gray-500 mt-1">${tier} tier</span>
+            <span class="text-xs text-white mt-1">${tier} tier</span>
         `;
     },
 

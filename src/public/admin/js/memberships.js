@@ -18,7 +18,7 @@ const Memberships = {
         if (!tbody) return;
         
         if (!filtered.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-gray-500">No memberships found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-white">No memberships found</td></tr>';
             return;
         }
         
@@ -34,17 +34,17 @@ const Memberships = {
             if (memberName && memberName !== memberEmail) {
                 memberDisplay = `
                     <div class="font-medium text-white">${Utils.escapeHtml(memberName)}</div>
-                    ${memberEmail ? `<div class="text-xs text-gray-400">${Utils.escapeHtml(memberEmail)}</div>` : ''}
-                    <div class="text-xs text-gray-500 font-mono">${Utils.shortAddress(walletAddress)}</div>
+                    ${memberEmail ? `<div class="text-xs text-white">${Utils.escapeHtml(memberEmail)}</div>` : ''}
+                    <div class="text-xs text-white font-mono">${Utils.shortAddress(walletAddress)}</div>
                 `;
             } else if (memberEmail) {
                 memberDisplay = `
                     <div class="font-medium text-white">${Utils.escapeHtml(memberEmail)}</div>
-                    <div class="text-xs text-gray-500 font-mono">${Utils.shortAddress(walletAddress)}</div>
+                    <div class="text-xs text-white font-mono">${Utils.shortAddress(walletAddress)}</div>
                 `;
             } else {
                 memberDisplay = `
-                    <div class="font-medium text-gray-400">${Utils.shortAddress(walletAddress)}</div>
+                    <div class="font-medium text-white">${Utils.shortAddress(walletAddress)}</div>
                 `;
             }
             
@@ -58,7 +58,7 @@ const Memberships = {
                     <td class="py-4 px-4 font-medium">${Utils.formatCurrency(m.amount_paid)}</td>
                     <td class="py-4 px-4 text-primary font-medium">${Utils.formatCurrency(m.buying_power_granted || m.buying_power)}</td>
                     <td class="py-4 px-4"><span class="px-2 py-1 rounded-full text-xs status-${m.status}">${m.status}</span></td>
-                    <td class="py-4 px-4 text-gray-400">${Utils.formatDate(m.created_at)}</td>
+                    <td class="py-4 px-4 text-white">${Utils.formatDate(m.created_at)}</td>
                 </tr>
             `;
         }).join('');

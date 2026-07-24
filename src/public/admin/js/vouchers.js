@@ -31,7 +31,7 @@ const Vouchers = {
         if (!tbody) return;
         
         if (!filtered.length) {
-            tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-gray-500">No vouchers found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-white">No vouchers found</td></tr>';
             return;
         }
         
@@ -46,12 +46,12 @@ const Vouchers = {
             if (memberName && memberName !== memberEmail) {
                 memberDisplay = `
                     <div class="font-medium">${this.escapeHtml(memberName)}</div>
-                    <div class="text-xs text-gray-500">${memberEmail || walletShort}</div>
+                    <div class="text-xs text-white">${memberEmail || walletShort}</div>
                 `;
             } else if (memberEmail) {
                 memberDisplay = `
                     <div class="font-medium">${memberEmail}</div>
-                    <div class="text-xs text-gray-500">${walletShort}</div>
+                    <div class="text-xs text-white">${walletShort}</div>
                 `;
             } else {
                 memberDisplay = `<div class="font-medium">${walletShort}</div>`;
@@ -62,16 +62,16 @@ const Vouchers = {
                 'active': 'bg-green-500/20 text-green-400',
                 'pending_validation': 'bg-yellow-500/20 text-yellow-400',
                 'redeemed': 'bg-blue-500/20 text-blue-400',
-                'used': 'bg-gray-500/20 text-gray-400',
+                'used': 'bg-gray-500/20 text-white',
                 'expired': 'bg-red-500/20 text-red-400'
             };
-            const statusClass = statusColors[v.status] || 'bg-gray-500/20 text-gray-400';
+            const statusClass = statusColors[v.status] || 'bg-gray-500/20 text-white';
             const statusLabel = v.status?.replace('_', ' ') || 'unknown';
             
             // Check if expired
             const isExpired = v.valid_until && new Date(v.valid_until) < new Date();
             const expiryDisplay = v.valid_until 
-                ? `<span class="${isExpired ? 'text-red-400' : 'text-gray-400'}">${Utils.formatDate(v.valid_until)}</span>`
+                ? `<span class="${isExpired ? 'text-red-400' : 'text-white'}">${Utils.formatDate(v.valid_until)}</span>`
                 : '-';
             
             return `
@@ -84,7 +84,7 @@ const Vouchers = {
                         <span class="px-2 py-1 rounded-full text-xs capitalize ${statusClass}">${statusLabel}</span>
                     </td>
                     <td class="py-4 px-4">${expiryDisplay}</td>
-                    <td class="py-4 px-4 text-gray-400 text-sm">${Utils.formatDate(v.created_at)}</td>
+                    <td class="py-4 px-4 text-white text-sm">${Utils.formatDate(v.created_at)}</td>
                     <td class="py-4 px-4">
                         ${v.status === 'active' ? `
                             <button onclick="Vouchers.redeem('${v.id}')" class="text-primary hover:text-primary-light text-sm font-medium">

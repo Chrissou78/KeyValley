@@ -160,7 +160,7 @@ const Marketplace = {
         if (!preview) return;
         const options = this.readPricingOptionRows().filter(o => !isNaN(o.price));
         if (!options.length) {
-            preview.innerHTML = '<span class="text-gray-600 text-sm">No pricing set yet</span>';
+            preview.innerHTML = '<span class="text-white text-sm">No pricing set yet</span>';
             return;
         }
         preview.innerHTML = options.map(o =>
@@ -190,7 +190,7 @@ const Marketplace = {
         const list = category === 'all' ? this.services : this.services.filter(s => s.category === category);
 
         if (!list.length) {
-            grid.innerHTML = '<p class="text-gray-500 col-span-full text-center py-8">No services found</p>';
+            grid.innerHTML = '<p class="text-white col-span-full text-center py-8">No services found</p>';
             return;
         }
 
@@ -206,16 +206,16 @@ const Marketplace = {
                 <div class="relative" style="aspect-ratio: 3/1;">
                     ${s.image_url
                         ? `<img src="${s.image_url}" alt="${s.name}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x200/1a1a2e/666?text=No+Image'">`
-                        : `<div class="w-full h-full bg-gray-800 flex items-center justify-center"><span class="material-symbols-outlined text-4xl text-gray-600">image</span></div>`
+                        : `<div class="w-full h-full bg-gray-800 flex items-center justify-center"><span class="material-symbols-outlined text-4xl text-white">image</span></div>`
                     }
-                    <span class="absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs ${s.is_active ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'}">${s.is_active ? 'Active' : 'Inactive'}</span>
+                    <span class="absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs ${s.is_active ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-white'}">${s.is_active ? 'Active' : 'Inactive'}</span>
                     ${s.booking_type && s.booking_type !== 'none' ? `<span class="absolute top-2 left-2 px-2 py-0.5 rounded-full text-xs bg-blue-500/20 text-blue-400">Booking Required</span>` : ''}
                 </div>
                 <div class="p-4">
                     <h4 class="font-semibold mb-1">${s.name}</h4>
-                    <p class="text-gray-400 text-sm mb-3 line-clamp-2">${s.short_description || ''}</p>
+                    <p class="text-white text-sm mb-3 line-clamp-2">${s.short_description || ''}</p>
                     <div class="flex items-center justify-between">
-                        <span class="text-primary font-bold">${hasMultipleOptions ? 'From ' : ''}${Utils.formatCurrency(s.price)}${!hasMultipleOptions && s.price_note ? `<span class="text-gray-500 text-xs">/${s.price_note}</span>` : ''}</span>
+                        <span class="text-primary font-bold">${hasMultipleOptions ? 'From ' : ''}${Utils.formatCurrency(s.price)}${!hasMultipleOptions && s.price_note ? `<span class="text-white text-xs">/${s.price_note}</span>` : ''}</span>
                         <div class="flex gap-2">
                             <button onclick="Marketplace.edit('${s.id}')" class="text-primary hover:text-primary-light"><span class="material-symbols-outlined text-lg">edit</span></button>
                             <button onclick="Marketplace.delete('${s.id}')" class="text-red-400 hover:text-red-300"><span class="material-symbols-outlined text-lg">delete</span></button>

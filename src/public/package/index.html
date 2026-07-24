@@ -146,15 +146,15 @@
                             </div>
                             <div class="text-left hidden lg:block">
                                 <p class="text-sm font-medium" id="headerUserName">Member</p>
-                                <p class="text-xs text-slate-400 lowercase" id="headerUserEmail"></p>
+                                <p class="text-xs text-white lowercase" id="headerUserEmail"></p>
                             </div>
                         </button>
                         
                         <div class="user-dropdown-menu">
                             <div class="px-4 py-3 border-b border-white/10">
-                                <p class="text-xs text-slate-400">Kea Euros</p>
+                                <p class="text-xs text-white">Kea Euros</p>
                                 <p class="text-lg font-semibold text-primary">€<span id="headerUserBalance">0</span></p>
-                                <p class="text-xs text-slate-500 mt-1 lowercase" id="dropdownEmail"></p>
+                                <p class="text-xs text-white mt-1 lowercase" id="dropdownEmail"></p>
                             </div>
                             <a href="/profile"><span class="material-symbols-outlined text-primary">account_circle</span><span class="text-sm">My Profile</span></a>
                             <a href="/marketplace"><span class="material-symbols-outlined text-primary">storefront</span><span class="text-sm">Marketplace</span></a>
@@ -205,12 +205,12 @@
                     <div class="h-[1px] w-8 bg-primary"></div>
                 </div>
                 <h1 class="font-serif text-4xl md:text-5xl lg:text-6xl font-bold gold-gradient mb-6">Membership Packages</h1>
-                <p class="text-gray-400 text-lg max-w-2xl mb-6 mx-auto">Unlock premium Kea Euros and exclusive benefits in the Kea Valley marketplace.</p>
+                <p class="text-white text-lg max-w-2xl mb-6 mx-auto">Unlock premium Kea Euros and exclusive benefits in the Kea Valley marketplace.</p>
             </div>
 
             <!-- How It Works -->
             <div class="glass-card rounded-2xl p-6 mb-10">
-                <h2 class="font-serif text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <h2 class="font-serif text-2xl font-bold text-white mb-4 flex items-center gap-2">
                     <span class="material-symbols-outlined text-primary">info</span>
                     How It Works
                 </h2>
@@ -220,8 +220,8 @@
                             <span class="text-primary font-bold">1</span>
                         </div>
                         <div>
-                            <h3 class="text-white font-semibold mb-1">Choose a Package</h3>
-                            <p class="text-gray-400 text-sm">Select the membership tier that suits your needs</p>
+                            <h3 class="text-white text-lg font-semibold mb-1">Choose a Package</h3>
+                            <p class="text-white text-base">Select the membership tier that suits your needs</p>
                         </div>
                     </div>
                     <div class="flex items-start gap-4">
@@ -229,8 +229,8 @@
                             <span class="text-primary font-bold">2</span>
                         </div>
                         <div>
-                            <h3 class="text-white font-semibold mb-1">Receive Kea€ Credit</h3>
-                            <p class="text-gray-400 text-sm">Get exclusive currency for the marketplace</p>
+                            <h3 class="text-white text-lg font-semibold mb-1">Receive Kea€ Credit</h3>
+                            <p class="text-white text-base">Get exclusive currency for the marketplace</p>
                         </div>
                     </div>
                     <div class="flex items-start gap-4">
@@ -238,8 +238,8 @@
                             <span class="text-primary font-bold">3</span>
                         </div>
                         <div>
-                            <h3 class="text-white font-semibold mb-1">Shop the Marketplace</h3>
-                            <p class="text-gray-400 text-sm">Use your Kea Euros for premium services</p>
+                            <h3 class="text-white text-lg font-semibold mb-1">Shop the Marketplace</h3>
+                            <p class="text-white text-base">Use your Kea Euros for premium services</p>
                         </div>
                     </div>
                 </div>
@@ -248,7 +248,7 @@
             <!-- Package Selection - Dynamic -->
             <div id="packages-loading" class="text-center py-12">
                 <div class="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                <p class="text-gray-400">Loading packages...</p>
+                <p class="text-white">Loading packages...</p>
             </div>
             
             <div id="packages-error" class="hidden text-center py-12">
@@ -261,7 +261,7 @@
 
             <!-- Purchase Section -->
             <div id="purchase-section" class="hidden glass-card rounded-2xl p-8">
-                <h2 class="font-serif text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <h2 class="font-serif text-2xl font-bold text-white mb-6 flex items-center gap-2">
                     <span class="material-symbols-outlined text-primary">shopping_cart</span>
                     Complete Your Purchase
                 </h2>
@@ -269,11 +269,11 @@
                 <!-- Summary -->
                 <div class="bg-surface-light rounded-xl p-6 mb-6">
                     <div class="space-y-3">
-                        <div class="flex justify-between text-gray-400">
+                        <div class="flex justify-between text-white">
                             <span>Package</span>
                             <span id="summary-package" class="text-white font-semibold">-</span>
                         </div>
-                        <div class="flex justify-between text-gray-400">
+                        <div class="flex justify-between text-white">
                             <span>You Pay</span>
                             <span id="summary-price" class="text-white">-</span>
                         </div>
@@ -290,7 +290,7 @@
                     <span id="buy-button-text">Login to Purchase</span>
                 </button>
 
-                <p class="text-gray-500 text-xs text-center mt-4">
+                <p class="text-white text-sm text-center mt-4">
                     Secure payment powered by Stripe. Your purchase will be confirmed by email.
                 </p>
             </div>
@@ -300,32 +300,32 @@
                 <h2 class="font-serif text-2xl font-bold text-white mb-6 text-center">Frequently Asked Questions</h2>
                 <div class="grid md:grid-cols-2 gap-6">
                     <div class="glass-card rounded-xl p-6">
-                        <h3 class="text-white font-semibold mb-2 flex items-center gap-2">
+                        <h3 class="text-white text-lg font-semibold mb-2 flex items-center gap-2">
                             <span class="material-symbols-outlined text-primary text-lg">help</span>
                             What is Kea Euros?
                         </h3>
-                        <p class="text-gray-400 text-sm">Kea Euros is your credit balance in the Kea Valley marketplace. €1 Kea Euros = €1 value when booking services, accommodations, and experiences.</p>
+                        <p class="text-white text-base">Kea Euros is your credit balance in the Kea Valley marketplace. €1 Kea Euros = €1 value when booking services, accommodations, and experiences.</p>
                     </div>
                     <div class="glass-card rounded-xl p-6">
-                        <h3 class="text-white font-semibold mb-2 flex items-center gap-2">
+                        <h3 class="text-white text-lg font-semibold mb-2 flex items-center gap-2">
                             <span class="material-symbols-outlined text-primary text-lg">help</span>
                             How long is it valid?
                         </h3>
-                        <p class="text-gray-400 text-sm">Your Kea Euros is valid for the entire 2026 season (January 1 - December 31, 2026). Unused balance can be extended upon request.</p>
+                        <p class="text-white text-base">Your Kea Euros is valid for the entire 2026 season (January 1 - December 31, 2026). Unused balance can be extended upon request.</p>
                     </div>
                     <div class="glass-card rounded-xl p-6">
-                        <h3 class="text-white font-semibold mb-2 flex items-center gap-2">
+                        <h3 class="text-white text-lg font-semibold mb-2 flex items-center gap-2">
                             <span class="material-symbols-outlined text-primary text-lg">help</span>
                             What can I purchase?
                         </h3>
-                        <p class="text-gray-400 text-sm">Use your Kea Euros for villa rentals, yacht cruises, private chef experiences, spa treatments, airport transfers, and all marketplace services.</p>
+                        <p class="text-white text-base">Use your Kea Euros for villa rentals, yacht cruises, private chef experiences, spa treatments, airport transfers, and all marketplace services.</p>
                     </div>
                     <div class="glass-card rounded-xl p-6">
-                        <h3 class="text-white font-semibold mb-2 flex items-center gap-2">
+                        <h3 class="text-white text-lg font-semibold mb-2 flex items-center gap-2">
                             <span class="material-symbols-outlined text-primary text-lg">help</span>
                             Can I get a refund?
                         </h3>
-                        <p class="text-gray-400 text-sm">Unused Kea Euros can be refunded within 14 days of purchase, minus any bonus credits received. Contact support for assistance.</p>
+                        <p class="text-white text-base">Unused Kea Euros can be refunded within 14 days of purchase, minus any bonus credits received. Contact support for assistance.</p>
                     </div>
                 </div>
             </div>
@@ -340,7 +340,7 @@
                     <img src="/images/logo.png" alt="Kea Valley" class="h-8 w-auto">
                     <span class="font-serif text-lg gold-text">Kea Valley</span>
                 </div>
-                <div class="text-gray-500 text-sm">© 2026 Kea Valley Private Members Club</div>
+                <div class="text-white text-sm">© 2026 Kea Valley Private Members Club</div>
             </div>
         </div>
     </footer>
@@ -350,12 +350,12 @@
         <div class="glass-card rounded-2xl max-w-md w-full max-h-[90vh] overflow-hidden">
             <div class="p-6 border-b border-white/10 flex items-center justify-between">
                 <h2 class="font-serif text-xl font-bold text-white">Login to Continue</h2>
-                <button onclick="closeLoginModal()" class="text-gray-400 hover:text-white transition-colors">
+                <button onclick="closeLoginModal()" class="text-white hover:text-white transition-colors">
                     <span class="material-symbols-outlined text-2xl">close</span>
                 </button>
             </div>
             <div id="loginModalContent" class="p-6">
-                <p class="text-gray-400 text-sm mb-6">Login to purchase membership packages.</p>
+                <p class="text-white text-sm mb-6">Login to purchase membership packages.</p>
                 <div class="wallet-iframe-container">
                     <iframe id="login-wallet-iframe" src="" class="wallet-iframe" allow="clipboard-write"></iframe>
                 </div>
@@ -368,7 +368,7 @@
         <div class="glass-card rounded-2xl max-w-md w-full">
             <div class="p-6 border-b border-white/10 flex items-center justify-between">
                 <h2 class="font-serif text-xl font-bold text-white">Complete Payment</h2>
-                <button onclick="closeStripeModal()" class="text-gray-400 hover:text-white transition-colors">
+                <button onclick="closeStripeModal()" class="text-white hover:text-white transition-colors">
                     <span class="material-symbols-outlined text-2xl">close</span>
                 </button>
             </div>
@@ -376,11 +376,11 @@
                 <div class="bg-surface-light rounded-xl p-4 mb-6">
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
-                            <span class="text-gray-400">Package</span>
+                            <span class="text-white">Package</span>
                             <span id="stripe-package" class="text-white font-semibold">-</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-400">Kea Euros</span>
+                            <span class="text-white">Kea Euros</span>
                             <span id="stripe-buying-power" class="text-green-400">-</span>
                         </div>
                         <div class="flex justify-between font-semibold border-t border-white/10 pt-2 mt-2">
@@ -392,7 +392,7 @@
 
                 <form id="stripe-form">
                     <div class="mb-4">
-                        <label class="block text-gray-400 text-sm mb-2">Card Details</label>
+                        <label class="block text-white text-sm mb-2">Card Details</label>
                         <div id="card-element" class="bg-surface border border-white/10 rounded-lg p-4"></div>
                         <p id="card-errors" class="text-red-500 text-sm mt-2 hidden"></p>
                     </div>
@@ -416,48 +416,48 @@
             
             <!-- Phase Title -->
             <h3 id="processing-title" class="text-2xl font-serif font-bold mb-2">Processing</h3>
-            <p id="processing-message" class="text-gray-400 mb-6">Initializing...</p>
+            <p id="processing-message" class="text-white mb-6">Initializing...</p>
             
             <!-- Progress Steps -->
             <div id="processing-steps" class="text-left space-y-3 mb-6">
                 <div id="step-1" class="flex items-center gap-3 text-sm step-pending">
-                    <span class="step-icon material-symbols-outlined text-gray-500">radio_button_unchecked</span>
-                    <span class="step-text text-gray-500">Authorize payment</span>
-                    <span class="step-time text-gray-600 text-xs ml-auto"></span>
+                    <span class="step-icon material-symbols-outlined text-white">radio_button_unchecked</span>
+                    <span class="step-text text-white">Authorize payment</span>
+                    <span class="step-time text-white text-xs ml-auto"></span>
                 </div>
                 <div id="step-2" class="flex items-center gap-3 text-sm step-pending">
-                    <span class="step-icon material-symbols-outlined text-gray-500">radio_button_unchecked</span>
-                    <span class="step-text text-gray-500">Create mint transaction</span>
-                    <span class="step-time text-gray-600 text-xs ml-auto"></span>
+                    <span class="step-icon material-symbols-outlined text-white">radio_button_unchecked</span>
+                    <span class="step-text text-white">Create mint transaction</span>
+                    <span class="step-time text-white text-xs ml-auto"></span>
                 </div>
                 <div id="step-3" class="flex items-center gap-3 text-sm step-pending">
-                    <span class="step-icon material-symbols-outlined text-gray-500">radio_button_unchecked</span>
-                    <span class="step-text text-gray-500">Confirm on blockchain</span>
-                    <span class="step-time text-gray-600 text-xs ml-auto"></span>
+                    <span class="step-icon material-symbols-outlined text-white">radio_button_unchecked</span>
+                    <span class="step-text text-white">Confirm on blockchain</span>
+                    <span class="step-time text-white text-xs ml-auto"></span>
                 </div>
                 <div id="step-4" class="flex items-center gap-3 text-sm step-pending">
-                    <span class="step-icon material-symbols-outlined text-gray-500">radio_button_unchecked</span>
-                    <span class="step-text text-gray-500">Capture payment</span>
-                    <span class="step-time text-gray-600 text-xs ml-auto"></span>
+                    <span class="step-icon material-symbols-outlined text-white">radio_button_unchecked</span>
+                    <span class="step-text text-white">Capture payment</span>
+                    <span class="step-time text-white text-xs ml-auto"></span>
                 </div>
                 <div id="step-5" class="flex items-center gap-3 text-sm step-pending">
-                    <span class="step-icon material-symbols-outlined text-gray-500">radio_button_unchecked</span>
-                    <span class="step-text text-gray-500">Update account</span>
-                    <span class="step-time text-gray-600 text-xs ml-auto"></span>
+                    <span class="step-icon material-symbols-outlined text-white">radio_button_unchecked</span>
+                    <span class="step-text text-white">Update account</span>
+                    <span class="step-time text-white text-xs ml-auto"></span>
                 </div>
             </div>
             
             <!-- Transaction Hash (shown when available) -->
             <div id="processing-tx" class="hidden bg-surface-light rounded-lg p-3 text-xs mt-4">
-                <p class="text-gray-500 mb-1">Transaction Hash (click to verify on Polygonscan):</p>
+                <p class="text-white mb-1">Transaction Hash (click to verify on Polygonscan):</p>
                 <a id="processing-tx-link" href="#" target="_blank" class="text-primary hover:underline break-all font-mono text-[10px]"></a>
-                <button onclick="copyTxHash()" class="ml-2 text-gray-400 hover:text-white">
+                <button onclick="copyTxHash()" class="ml-2 text-white hover:text-white">
                     <span class="material-symbols-outlined text-sm">content_copy</span>
                 </button>
             </div>
             
             <!-- Elapsed Time -->
-            <p id="processing-elapsed" class="text-gray-600 text-xs mt-4">Elapsed: 0s</p>
+            <p id="processing-elapsed" class="text-white text-xs mt-4">Elapsed: 0s</p>
         </div>
     </div>
 
@@ -466,26 +466,26 @@
         <div class="glass-card rounded-2xl p-8 max-w-md w-full mx-4 text-center">
             <span id="result-icon" class="material-symbols-outlined text-5xl mb-4"></span>
             <h3 id="result-title" class="text-2xl font-serif font-bold mb-4"></h3>
-            <p id="result-message" class="text-gray-400 mb-6"></p>
+            <p id="result-message" class="text-white mb-6"></p>
             <div id="result-details" class="bg-surface-light rounded-xl p-4 mb-6 text-left hidden">
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between">
-                        <span class="text-gray-400">Package</span>
+                        <span class="text-white">Package</span>
                         <span id="result-package" class="text-white font-semibold"></span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-gray-400">Kea Euros</span>
+                        <span class="text-white">Kea Euros</span>
                         <span id="result-buying-power" class="text-green-400"></span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-gray-400">Order ID</span>
+                        <span class="text-white">Order ID</span>
                         <span id="result-order-id" class="text-white"></span>
                     </div>
                     <div id="result-tx-row" class="hidden border-t border-white/10 pt-2 mt-2">
-                        <p class="text-gray-400 text-xs mb-1">Transaction Hash:</p>
+                        <p class="text-white text-xs mb-1">Transaction Hash:</p>
                         <div class="flex items-center gap-2">
                             <a id="result-tx-link" href="#" target="_blank" class="text-primary hover:underline break-all font-mono text-[10px] flex-1"></a>
-                            <button onclick="copyResultTxHash()" class="text-gray-400 hover:text-white flex-shrink-0">
+                            <button onclick="copyResultTxHash()" class="text-white hover:text-white flex-shrink-0">
                                 <span class="material-symbols-outlined text-sm">content_copy</span>
                             </button>
                         </div>
@@ -507,9 +507,9 @@
                     <span class="material-symbols-outlined text-lg">bug_report</span>
                     Debug Console (Ctrl+D to hide)
                 </h4>
-                <button onclick="clearDebugLog()" class="text-gray-500 hover:text-white text-xs px-2 py-1 rounded hover:bg-white/10">Clear</button>
+                <button onclick="clearDebugLog()" class="text-white hover:text-white text-xs px-2 py-1 rounded hover:bg-white/10">Clear</button>
             </div>
-            <div id="debug-log" class="text-xs font-mono space-y-1 text-gray-300 overflow-auto flex-1"></div>
+            <div id="debug-log" class="text-xs font-mono space-y-1 text-white overflow-auto flex-1"></div>
         </div>
     </div>
 
@@ -584,7 +584,7 @@
         if (logEl) {
             const line = document.createElement('div');
             line.className = `debug-${type}`;
-            line.innerHTML = `<span class="text-gray-600">${timestamp}</span> ${message}`;
+            line.innerHTML = `<span class="text-white">${timestamp}</span> ${message}`;
             logEl.appendChild(line);
             logEl.scrollTop = logEl.scrollHeight;
             
@@ -933,21 +933,21 @@
                     <div class="text-center mb-6 ${pkg.popular || isTest ? 'mt-2' : ''}">
                         <span class="material-symbols-outlined text-5xl tier-icon mb-2">${pkg.icon || 'card_membership'}</span>
                         <h2 class="font-serif text-4xl font-bold text-white">${pkg.name.replace(' Membership', '').replace(' Package', '')}</h2>
-                        <p class="text-gray-400 text-sm">${pkg.description || ''}</p>
+                        <p class="text-white text-base">${pkg.description || ''}</p>
                     </div>
-                    
+
                     <div class="bg-surface-light rounded-xl p-6 mb-6 text-center">
-                        <p class="text-sm text-gray-400 mb-1">You receive</p>
+                        <p class="text-base text-white mb-1">You receive</p>
                         <p class="text-4xl font-bold gold-text">€${pkg.buyingPower.toLocaleString()}</p>
-                        <p class="text-sm text-white font-semibold mt-1">in Kea€ Credit</p>
-                        <p class="text-xs text-gray-500 mt-2">${packagePriceRatioText(pkg)}</p>
+                        <p class="text-base text-white font-semibold mt-1">in Kea€ Credit</p>
+                        <p class="text-sm text-white mt-2">${packagePriceRatioText(pkg)}</p>
                     </div>
-                    
+
                     ${pkg.features && pkg.features.length > 0 ? `
-                        <ul class="text-gray-300 text-sm space-y-3 mb-6">
+                        <ul class="text-white text-base space-y-3 mb-6">
                             ${pkg.features.map(f => `
                                 <li class="flex items-center">
-                                    <span class="material-symbols-outlined text-green-500 mr-2 text-base">check_circle</span>
+                                    <span class="material-symbols-outlined text-green-500 mr-2 text-lg">check_circle</span>
                                     ${f}
                                 </li>
                             `).join('')}
@@ -1175,8 +1175,8 @@
         if (modalContent) {
             modalContent.innerHTML = `
                 <div class="text-center py-8">
-                    <span class="material-symbols-outlined text-gray-400 text-5xl mb-4">warning</span>
-                    <p class="text-gray-400 mb-6 text-lg">Login was cancelled</p>
+                    <span class="material-symbols-outlined text-white text-5xl mb-4">warning</span>
+                    <p class="text-white mb-6 text-lg">Login was cancelled</p>
                     <div class="flex flex-col sm:flex-row justify-center gap-4">
                         <button onclick="resetIframeToLogin()" class="btn-primary px-6 py-3 rounded-lg font-semibold">Try Again</button>
                         <button onclick="logoutAndResetIframe()" class="bg-surface hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold border border-white/20">Use Different Account</button>
@@ -1191,7 +1191,7 @@
         const modalContent = document.getElementById('loginModalContent');
         if (modalContent) {
             modalContent.innerHTML = `
-                <p class="text-gray-400 text-sm mb-6">Login to purchase membership packages.</p>
+                <p class="text-white text-sm mb-6">Login to purchase membership packages.</p>
                 <div class="wallet-iframe-container">
                     <iframe id="login-wallet-iframe" src="${buildWalletTwoUrl('auth')}" class="wallet-iframe" allow="clipboard-write"></iframe>
                 </div>
@@ -1207,7 +1207,7 @@
             modalContent.innerHTML = `
                 <div class="text-center py-12">
                     <div class="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                    <p class="text-gray-400">Logging out...</p>
+                    <p class="text-white">Logging out...</p>
                 </div>
                 <iframe src="${buildWalletTwoUrl('logout')}" style="display:none;"></iframe>
             `;
