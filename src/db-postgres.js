@@ -150,6 +150,14 @@ async function initDb() {
             )
         `);
 
+        // marketplace_services is created outside this file (production-only table);
+        // guard this alter so a missing table doesn't block the rest of boot
+        try {
+            await client.query(`ALTER TABLE marketplace_services ADD COLUMN IF NOT EXISTS pricing_options JSONB DEFAULT '[]'::jsonb`);
+        } catch (e) {
+            // Table might not exist in this environment yet
+        }
+
         isInitialized = true;
         console.log('✅ PostgreSQL database initialized');
     } catch (error) {

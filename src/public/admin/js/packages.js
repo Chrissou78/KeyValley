@@ -215,14 +215,6 @@ const Packages = {
                         </div>
                     </div>
                     
-                    ${pkg.bonusPercent > 0 ? `
-                    <div class="text-center mb-4">
-                        <span class="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm">
-                            +${pkg.bonusPercent}% bonus (${Utils.formatCurrency(pkg.bonus)})
-                        </span>
-                    </div>
-                    ` : ''}
-                    
                     ${pkg.features && pkg.features.length > 0 ? `
                     <ul class="text-sm text-gray-400 space-y-1 mb-4">
                         ${pkg.features.slice(0, 3).map(f => `

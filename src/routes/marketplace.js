@@ -9,7 +9,7 @@ router.get('/services', async (req, res) => {
     console.log('📦 GET /api/marketplace/services called');
     try {
         const result = await db.pool.query(`
-            SELECT id, name, short_description, description, category, price, price_note,
+            SELECT id, name, short_description, description, category, price, price_note, pricing_options,
                    location, image_url, features, is_active, is_featured, is_limited,
                    requires_booking, max_quantity, available_from, available_until, max_per_order,
                    booking_type, slot_duration_minutes, slots_per_day, available_days, 
@@ -30,7 +30,7 @@ router.get('/services', async (req, res) => {
 router.get('/services/:id', async (req, res) => {
     try {
         const result = await db.pool.query(`
-            SELECT id, name, short_description, description, category, price, price_note,
+            SELECT id, name, short_description, description, category, price, price_note, pricing_options,
                    location, image_url, features, is_active, is_featured, is_limited,
                    requires_booking, max_quantity, available_from, available_until, max_per_order,
                    booking_type, slot_duration_minutes, slots_per_day, available_days,
@@ -53,7 +53,7 @@ router.get('/services/:id', async (req, res) => {
 router.get('/services/category/:category', async (req, res) => {
     try {
         const result = await db.pool.query(`
-            SELECT id, name, short_description, description, category, price, price_note,
+            SELECT id, name, short_description, description, category, price, price_note, pricing_options,
                    location, image_url, features, is_active, is_featured, is_limited,
                    requires_booking, max_quantity, available_from, available_until, max_per_order,
                    booking_type, slot_duration_minutes, slots_per_day, available_days,
@@ -259,13 +259,14 @@ router.post('/checkout/tokens', async (req, res) => {
             
             const itemTotal = item.options?.totalPrice || (parseFloat(service.price) * (item.quantity || 1));
             totalAmount += itemTotal;
-            
+
             return {
                 service_id: serviceId,
                 service_name: service.name,
                 quantity: item.quantity || 1,
-                price: parseFloat(service.price),
+                price: item.options?.selectedOptionPrice ?? parseFloat(service.price),
                 total: itemTotal,
+                pricing_option_label: item.options?.selectedOptionLabel || null,
                 booking_start: item.options?.bookingStart || null,
                 booking_end: item.options?.bookingEnd || null,
                 nights: item.options?.nights || null,
@@ -273,7 +274,7 @@ router.post('/checkout/tokens', async (req, res) => {
                 time_slot: item.options?.timeSlot || null
             };
         });
-        
+
         // Check balance (with row lock)
         const balanceResult = await client.query(`
             SELECT balance FROM member_balances WHERE wallet_address = $1 FOR UPDATE
@@ -431,13 +432,14 @@ router.post('/checkout/create-intent', async (req, res) => {
             
             const itemTotal = item.options?.totalPrice || (parseFloat(service.price) * (item.quantity || 1));
             totalAmount += itemTotal;
-            
+
             return {
                 service_id: serviceId,
                 service_name: service.name,
                 quantity: item.quantity || 1,
-                price: parseFloat(service.price),
+                price: item.options?.selectedOptionPrice ?? parseFloat(service.price),
                 total: itemTotal,
+                pricing_option_label: item.options?.selectedOptionLabel || null,
                 booking_start: item.options?.bookingStart || null,
                 booking_end: item.options?.bookingEnd || null,
                 nights: item.options?.nights || null,
@@ -445,7 +447,7 @@ router.post('/checkout/create-intent', async (req, res) => {
                 time_slot: item.options?.timeSlot || null
             };
         });
-        
+
         // Create pending order
         const orderResult = await db.pool.query(`
             INSERT INTO marketplace_orders (wallet_address, email, phone, items, total_amount, payment_method, status, notes)

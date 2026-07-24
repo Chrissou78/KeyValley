@@ -353,24 +353,24 @@
                 <div class="sticky top-0 z-10 bg-surface border-b border-white/10 px-6 py-4 flex-shrink-0">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                         <div>
-                            <p id="modalServiceCategory" class="text-primary text-xs font-bold uppercase tracking-widest mb-1"></p>
-                            <h2 id="modalServiceName" class="text-xl md:text-2xl font-serif text-white"></h2>
+                            <p id="modalServiceCategory" class="text-primary text-sm font-bold uppercase tracking-widest mb-1"></p>
+                            <h2 id="modalServiceName" class="text-2xl md:text-3xl font-serif text-white"></h2>
                         </div>
                         <div class="text-left md:text-right">
-                            <p class="text-2xl md:text-3xl font-serif text-primary">€<span id="modalServicePrice">0</span></p>
-                            <p id="modalPriceNote" class="text-slate-500 text-sm"></p>
+                            <p class="text-3xl md:text-4xl font-serif text-primary">€<span id="modalServicePrice">0</span></p>
+                            <p id="modalPriceNote" class="text-slate-500 text-base"></p>
                         </div>
                     </div>
                 </div>
 
                 <div class="p-6 md:p-8 overflow-y-auto flex-1">
-                    <p id="modalServiceLocation" class="text-slate-400 text-sm flex items-center gap-1 mb-6">
+                    <p id="modalServiceLocation" class="text-slate-400 text-base flex items-center gap-1 mb-6">
                         <span class="material-symbols-outlined text-base">location_on</span>
                         <span></span>
                     </p>
 
                     <div class="prose prose-invert max-w-none mb-6">
-                        <p id="modalServiceDescription" class="text-slate-300 leading-relaxed"></p>
+                        <p id="modalServiceDescription" class="text-slate-300 text-lg leading-relaxed"></p>
                     </div>
 
                     <div id="modalFeatures" class="mb-6">
@@ -398,6 +398,11 @@
                             <span class="material-symbols-outlined text-sm align-middle">info</span>
                             Please select your dates to continue
                         </p>
+                    </div>
+
+                    <div id="modalPricingOptions" class="hidden mb-6">
+                        <h3 class="text-white font-semibold mb-3">Choose an Option</h3>
+                        <div id="modalPricingOptionsList" class="flex flex-wrap gap-2"></div>
                     </div>
 
                     <div id="modalQuantitySection" class="mb-6">
@@ -773,7 +778,10 @@
                 if (service.booking_type && service.booking_type !== 'none') {
                     bookingBadge = '<span class="absolute top-3 ' + (service.is_limited ? 'right-20' : 'right-3') + ' bg-blue-500/80 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1"><span class="material-symbols-outlined text-xs">calendar_month</span>Booking</span>';
                 }
-                
+
+                var pricingOptions = getPricingOptions(service);
+                var hasMultipleOptions = pricingOptions.length > 1;
+
                 return '<div class="bg-surface border border-white/5 rounded-xl overflow-hidden card-hover cursor-pointer" onclick="openServiceModal(\'' + service.id + '\')">' +
                     '<div class="relative">' +
                         '<img src="' + (service.image_url || '/images/placeholder.jpg') + '" alt="' + service.name + '" class="w-full h-48 object-cover">' +
@@ -782,16 +790,63 @@
                         bookingBadge +
                     '</div>' +
                     '<div class="p-5">' +
-                        '<p class="text-primary text-xs font-bold uppercase tracking-widest mb-2">' + getCategoryLabel(service.category) + '</p>' +
-                        '<h3 class="font-serif text-lg text-white mb-2 line-clamp-1">' + service.name + '</h3>' +
-                        '<p class="text-slate-400 text-sm mb-4 line-clamp-2">' + (service.short_description || service.description || '') + '</p>' +
+                        '<p class="text-primary text-sm font-bold uppercase tracking-widest mb-2">' + getCategoryLabel(service.category) + '</p>' +
+                        '<h3 class="font-serif text-xl text-white mb-2 line-clamp-1">' + service.name + '</h3>' +
+                        '<p class="text-slate-400 text-base mb-4 line-clamp-2">' + (service.short_description || service.description || '') + '</p>' +
                         '<div class="flex items-center justify-between">' +
-                            '<p class="text-xl font-serif text-primary">€' + service.price.toLocaleString() + '</p>' +
-                            (service.price_note ? '<p class="text-slate-500 text-xs">' + service.price_note + '</p>' : '') +
+                            '<p class="text-2xl font-serif text-primary">' + (hasMultipleOptions ? 'From ' : '') + '€' + service.price.toLocaleString() + '</p>' +
+                            (!hasMultipleOptions && service.price_note ? '<p class="text-slate-500 text-sm">' + service.price_note + '</p>' : '') +
                         '</div>' +
                     '</div>' +
                 '</div>';
             }).join('');
+        }
+
+        function getPricingOptions(service) {
+            return Array.isArray(service && service.pricing_options) ? service.pricing_options : [];
+        }
+
+        function renderPricingOptionsSelector(service) {
+            var section = document.getElementById('modalPricingOptions');
+            var list = document.getElementById('modalPricingOptionsList');
+            var options = getPricingOptions(service);
+
+            if (options.length <= 1) {
+                section.classList.add('hidden');
+                window.selectedPricingOption = null;
+                return;
+            }
+
+            section.classList.remove('hidden');
+            list.innerHTML = options.map(function(opt, i) {
+                return '<button type="button" class="pricing-option-pill px-4 py-2 rounded-lg border text-sm font-medium transition-colors ' +
+                    (i === 0 ? 'border-primary bg-primary/10 text-primary' : 'border-white/10 text-slate-300 hover:border-white/30') +
+                    '" data-index="' + i + '" onclick="selectPricingOptionByIndex(' + i + ')">' +
+                    (opt.label ? opt.label + ' ' : '') + '€' + opt.price +
+                    '</button>';
+            }).join('');
+
+            selectPricingOption(options[0]);
+        }
+
+        function selectPricingOption(option) {
+            window.selectedPricingOption = option;
+            document.getElementById('modalServicePrice').textContent = Number(option.price).toLocaleString();
+            document.getElementById('modalPriceNote').textContent = option.label || '';
+        }
+
+        function selectPricingOptionByIndex(index) {
+            var options = getPricingOptions(selectedService);
+            selectPricingOption(options[index]);
+            document.querySelectorAll('#modalPricingOptionsList .pricing-option-pill').forEach(function(btn, i) {
+                if (i === index) {
+                    btn.classList.add('border-primary', 'bg-primary/10', 'text-primary');
+                    btn.classList.remove('border-white/10', 'text-slate-300');
+                } else {
+                    btn.classList.remove('border-primary', 'bg-primary/10', 'text-primary');
+                    btn.classList.add('border-white/10', 'text-slate-300');
+                }
+            });
         }
 
         function getCategoryLabel(category) {
@@ -844,7 +899,7 @@
             var featuresList = document.getElementById('modalFeaturesList');
             if (selectedService.features && selectedService.features.length > 0) {
                 featuresList.innerHTML = selectedService.features.map(function(f) {
-                    return '<li class="flex items-center gap-2 text-slate-300 text-sm"><span class="material-symbols-outlined text-green-400 text-base">check_circle</span>' + f + '</li>';
+                    return '<li class="flex items-center gap-2 text-slate-300 text-base"><span class="material-symbols-outlined text-green-400 text-base">check_circle</span>' + f + '</li>';
                 }).join('');
                 featuresSection.classList.remove('hidden');
             } else {
@@ -856,8 +911,10 @@
             var dateRangeBooking = document.getElementById('dateRangeBooking');
             var calendarContainer = document.getElementById('bookingCalendarContainer');
             var calendarRequired = document.getElementById('calendarBookingRequired');
-            
+            window.selectedPricingOption = null;
+
             if (selectedService.booking_type && selectedService.booking_type !== 'none') {
+                document.getElementById('modalPricingOptions').classList.add('hidden');
                 bookingSection.classList.remove('hidden');
                 quantitySection.classList.add('hidden');
                 dateRangeBooking.classList.add('hidden');
@@ -899,18 +956,20 @@
                     });
                 }
             } else if (selectedService.requires_booking) {
+                document.getElementById('modalPricingOptions').classList.add('hidden');
                 bookingSection.classList.remove('hidden');
                 quantitySection.classList.add('hidden');
                 dateRangeBooking.classList.remove('hidden');
                 calendarContainer.classList.add('hidden');
                 calendarRequired.classList.add('hidden');
-                
+
                 var today = new Date().toISOString().split('T')[0];
                 document.getElementById('modalCheckIn').min = today;
                 document.getElementById('modalCheckOut').min = today;
             } else {
                 bookingSection.classList.add('hidden');
                 quantitySection.classList.remove('hidden');
+                renderPricingOptionsSelector(selectedService);
             }
             
             document.getElementById('modalQty').textContent = selectedQuantity;
@@ -1007,6 +1066,10 @@
             if (cart[index].quantity <= 0) {
                 removeFromCart(index);
             } else {
+                var opts = cart[index].options;
+                if (opts && typeof opts.selectedOptionPrice === 'number') {
+                    opts.totalPrice = opts.selectedOptionPrice * cart[index].quantity;
+                }
                 saveCart();
             }
         }
@@ -1062,6 +1125,8 @@
                     } else if (item.options && item.options.bookingDate) {
                         var dateDisplay = new Date(item.options.bookingDate + 'T00:00:00').toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
                         bookingInfo = '<p class="text-primary text-xs">' + dateDisplay + (item.options.timeSlot ? ' at ' + item.options.timeSlot : '') + '</p>';
+                    } else if (item.options && item.options.selectedOptionLabel) {
+                        bookingInfo = '<p class="text-slate-500 text-xs">' + item.options.selectedOptionLabel + '</p>';
                     }
                     
                     return '<div class="flex gap-4 bg-background-dark rounded-xl p-4">' +
@@ -1391,8 +1456,15 @@
                         };
                     } else {
                         quantity = selectedQuantity;
+                        if (window.selectedPricingOption) {
+                            options = {
+                                selectedOptionLabel: window.selectedPricingOption.label || '',
+                                selectedOptionPrice: window.selectedPricingOption.price,
+                                totalPrice: window.selectedPricingOption.price * quantity
+                            };
+                        }
                     }
-                    
+
                     addToCart(selectedService, quantity, options);
                     closeServiceModal();
                 });
@@ -1449,8 +1521,15 @@
                         };
                     } else {
                         quantity = selectedQuantity;
+                        if (window.selectedPricingOption) {
+                            options = {
+                                selectedOptionLabel: window.selectedPricingOption.label || '',
+                                selectedOptionPrice: window.selectedPricingOption.price,
+                                totalPrice: window.selectedPricingOption.price * quantity
+                            };
+                        }
                     }
-                    
+
                     addToCart(selectedService, quantity, options);
                     closeServiceModal();
                     startCheckout();

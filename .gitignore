@@ -88,6 +88,7 @@ coverage/
 .nyc_output/
 test-results/
 junit.xml
+.claude
 
 # ===========================================
 # Misc

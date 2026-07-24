@@ -210,10 +210,10 @@
             color: #fff;
         }
         .buying-power-highlight {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 12px;
-            padding: 16px;
+            padding: 20px;
             text-align: center;
             margin: 20px 0;
         }
@@ -513,8 +513,8 @@
                                     <span class="material-symbols-outlined text-primary">currency_exchange</span>
                                 </div>
                                 <div>
-                                    <h4 class="text-white font-medium">Bonus Kea Euros</h4>
-                                    <p class="text-slate-500 text-sm">Get up to 50% extra with membership packages</p>
+                                    <h4 class="text-white font-medium">Kea Euro Credit</h4>
+                                    <p class="text-slate-500 text-sm">Exclusive currency for our marketplace of luxury services</p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-4 p-4 bg-white/5 rounded-lg border border-white/5">
@@ -674,6 +674,11 @@
             initCarousel();
         });
 
+        function packageTierColor(tier) {
+            const colors = { bronze: '#cd7f32', silver: '#9ca3af', gold: '#ee9d2b', platinum: '#a78bfa', diamond: '#60a5fa', test: '#eab308', standard: '#60a5fa' };
+            return colors[tier] || '#ee9d2b';
+        }
+
         // Load packages from API
         async function loadPackages() {
             const grid = document.getElementById('packagesGrid');
@@ -696,9 +701,7 @@
                 
                 grid.innerHTML = packages.map((pkg, index) => {
                     const isPopular = pkg.popular || index === 1; // Middle one or marked popular
-                    const isBestValue = index === packages.length - 1; // Last one (highest)
-                    const bonusPercent = pkg.price > 0 ? Math.round(((pkg.buyingPower - pkg.price) / pkg.price) * 100) : 0;
-                    
+
                     let badgeText = '';
                     let badgeClass = '';
                     if (index === 0) {
@@ -711,7 +714,7 @@
                         badgeText = 'Best Value';
                         badgeClass = 'best-value';
                     }
-                    
+
                     // Get features (handle both array and string)
                     let features = [];
                     if (Array.isArray(pkg.features)) {
@@ -719,21 +722,25 @@
                     } else if (typeof pkg.features === 'string') {
                         try { features = JSON.parse(pkg.features); } catch(e) { features = []; }
                     }
-                    
+
+                    const ratio = pkg.price > 0 ? pkg.buyingPower / pkg.price : 1;
+                    const ratioText = '1 EUR = ' + (Number.isInteger(ratio) ? ratio : ratio.toFixed(2)) + ' KEA€';
+
                     return `
                         <div class="package-card ${isPopular ? 'featured' : ''}">
                             <div class="package-badge ${badgeClass}">${badgeText}</div>
-                            <div class="mb-6">
+                            <div class="text-center mb-4">
+                                <span class="material-symbols-outlined text-5xl" style="color: ${packageTierColor(pkg.tier)}">${pkg.icon || 'card_membership'}</span>
+                            </div>
+                            <div class="mb-6 text-center">
                                 <h3 class="text-4xl font-serif text-white mb-2">${pkg.name}</h3>
                                 <p class="text-slate-500 text-sm">${pkg.description || ''}</p>
                             </div>
-                            <div class="mb-4">
-                                <span class="text-4xl font-bold text-white">€${pkg.price.toLocaleString()}</span>
-                            </div>
                             <div class="buying-power-highlight">
-                                <p class="text-sm text-slate-400 mb-1">Kea Euros</p>
-                                <p class="text-3xl font-bold text-emerald-400">€${pkg.buyingPower.toLocaleString()}</p>
-                                <p class="text-xs text-emerald-400/80 mt-1">+${bonusPercent}% bonus</p>
+                                <p class="text-sm text-slate-400 mb-1">You receive</p>
+                                <p class="text-4xl font-bold text-primary">€${pkg.buyingPower.toLocaleString()}</p>
+                                <p class="text-sm text-white font-semibold mt-1">in Kea€ Credit</p>
+                                <p class="text-xs text-slate-500 mt-2">${ratioText}</p>
                             </div>
                             <div class="flex-1 space-y-3 mb-8">
                                 ${features.slice(0, 6).map(f => `

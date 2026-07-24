@@ -100,6 +100,72 @@ const Marketplace = {
                 this.render(btn.dataset.serviceCategory);
             });
         });
+
+        document.getElementById('addPricingOptionBtn')?.addEventListener('click', () => this.addPricingOptionRow());
+
+        const rows = document.getElementById('pricingOptionsRows');
+        if (rows) {
+            rows.addEventListener('input', () => this.updatePricingPreview());
+            rows.addEventListener('click', (e) => {
+                const btn = e.target.closest('.remove-pricing-option-btn');
+                if (!btn) return;
+                if (rows.querySelectorAll('.pricing-option-row').length <= 1) return;
+                btn.closest('.pricing-option-row').remove();
+                this.updatePricingPreview();
+            });
+        }
+    },
+
+    renderPricingOptionRow(option) {
+        const row = document.createElement('div');
+        row.className = 'pricing-option-row grid grid-cols-[1fr,auto,auto] gap-3 items-center';
+        row.innerHTML = `
+            <input type="text" class="pricing-option-label w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none" placeholder="e.g. 40 minutes">
+            <input type="number" class="pricing-option-price w-28 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none" placeholder="Price" min="0" step="0.01">
+            <button type="button" class="remove-pricing-option-btn w-9 h-9 flex items-center justify-center rounded-lg bg-red-900/40 text-red-400 hover:bg-red-900/60">
+                <span class="material-symbols-outlined text-lg">remove</span>
+            </button>
+        `;
+        row.querySelector('.pricing-option-label').value = option.label || '';
+        row.querySelector('.pricing-option-price').value = option.price ?? '';
+        return row;
+    },
+
+    renderPricingOptionRows(options) {
+        const container = document.getElementById('pricingOptionsRows');
+        if (!container) return;
+        container.innerHTML = '';
+        (options.length ? options : [{ label: '', price: '' }]).forEach(opt => {
+            container.appendChild(this.renderPricingOptionRow(opt));
+        });
+        this.updatePricingPreview();
+    },
+
+    addPricingOptionRow() {
+        const container = document.getElementById('pricingOptionsRows');
+        if (!container) return;
+        container.appendChild(this.renderPricingOptionRow({ label: '', price: '' }));
+        this.updatePricingPreview();
+    },
+
+    readPricingOptionRows() {
+        return Array.from(document.querySelectorAll('#pricingOptionsRows .pricing-option-row')).map(row => ({
+            label: row.querySelector('.pricing-option-label').value.trim(),
+            price: parseFloat(row.querySelector('.pricing-option-price').value)
+        }));
+    },
+
+    updatePricingPreview() {
+        const preview = document.getElementById('pricingOptionsPreview');
+        if (!preview) return;
+        const options = this.readPricingOptionRows().filter(o => !isNaN(o.price));
+        if (!options.length) {
+            preview.innerHTML = '<span class="text-gray-600 text-sm">No pricing set yet</span>';
+            return;
+        }
+        preview.innerHTML = options.map(o =>
+            `<span class="px-3 py-1.5 rounded-lg bg-gray-900 border border-gray-700 text-sm text-white">${o.label ? Utils.escapeHtml ? Utils.escapeHtml(o.label) + ' ' : o.label + ' ' : ''}€${o.price}</span>`
+        ).join('');
     },
 
     async load() {
@@ -128,7 +194,14 @@ const Marketplace = {
             return;
         }
 
-        grid.innerHTML = list.map(s => `
+        grid.innerHTML = list.map(s => {
+            let options = s.pricing_options;
+            if (typeof options === 'string') {
+                try { options = JSON.parse(options); } catch (e) { options = []; }
+            }
+            const hasMultipleOptions = Array.isArray(options) && options.length > 1;
+
+            return `
             <div class="glass rounded-xl overflow-hidden group">
                 <div class="relative" style="aspect-ratio: 3/1;">
                     ${s.image_url
@@ -142,7 +215,7 @@ const Marketplace = {
                     <h4 class="font-semibold mb-1">${s.name}</h4>
                     <p class="text-gray-400 text-sm mb-3 line-clamp-2">${s.short_description || ''}</p>
                     <div class="flex items-center justify-between">
-                        <span class="text-primary font-bold">${Utils.formatCurrency(s.price)}${s.price_note ? `<span class="text-gray-500 text-xs">/${s.price_note}</span>` : ''}</span>
+                        <span class="text-primary font-bold">${hasMultipleOptions ? 'From ' : ''}${Utils.formatCurrency(s.price)}${!hasMultipleOptions && s.price_note ? `<span class="text-gray-500 text-xs">/${s.price_note}</span>` : ''}</span>
                         <div class="flex gap-2">
                             <button onclick="Marketplace.edit('${s.id}')" class="text-primary hover:text-primary-light"><span class="material-symbols-outlined text-lg">edit</span></button>
                             <button onclick="Marketplace.delete('${s.id}')" class="text-red-400 hover:text-red-300"><span class="material-symbols-outlined text-lg">delete</span></button>
@@ -150,7 +223,8 @@ const Marketplace = {
                     </div>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
     },
 
     openModal(service = null) {
@@ -162,13 +236,21 @@ const Marketplace = {
         document.getElementById('serviceDescription').value = service?.description || '';
         document.getElementById('serviceCategory').value = service?.category || '';
         document.getElementById('serviceLocation').value = service?.location || '';
-        document.getElementById('servicePrice').value = service?.price || '';
-        document.getElementById('servicePriceNote').value = service?.price_note || '';
         document.getElementById('serviceMaxQuantity').value = service?.max_quantity || 10;
         document.getElementById('serviceActive').checked = service?.is_active ?? true;
         document.getElementById('serviceFeatures').value = Array.isArray(service?.features) ? service.features.join(', ') : '';
         document.getElementById('serviceImageUrl').value = service?.image_url || '';
-        
+
+        // Pricing options
+        let pricingOptions = service?.pricing_options;
+        if (typeof pricingOptions === 'string') {
+            try { pricingOptions = JSON.parse(pricingOptions); } catch (e) { pricingOptions = []; }
+        }
+        if (!Array.isArray(pricingOptions) || !pricingOptions.length) {
+            pricingOptions = service ? [{ label: service.price_note || '', price: service.price ?? '' }] : [{ label: '', price: '' }];
+        }
+        this.renderPricingOptionRows(pricingOptions);
+
         // Booking fields
         document.getElementById('serviceBookingType').value = service?.booking_type || 'none';
         document.getElementById('serviceSlotsPerDay').value = service?.slots_per_day || 1;
@@ -212,6 +294,15 @@ const Marketplace = {
     async save(e) {
         e.preventDefault();
 
+        const pricingOptions = this.readPricingOptionRows().filter(o => !isNaN(o.price) && o.price >= 0);
+        if (!pricingOptions.length) {
+            Utils.showToast('Add at least one pricing option', 'error');
+            return;
+        }
+        const cheapest = pricingOptions.reduce((min, o) => o.price < min.price ? o : min, pricingOptions[0]);
+        document.getElementById('servicePrice').value = cheapest.price;
+        document.getElementById('servicePriceNote').value = pricingOptions.length > 1 ? '' : (cheapest.label || '');
+
         const featuresVal = document.getElementById('serviceFeatures').value;
         const data = {
             name: document.getElementById('serviceName').value,
@@ -221,6 +312,7 @@ const Marketplace = {
             location: document.getElementById('serviceLocation').value,
             price: parseFloat(document.getElementById('servicePrice').value),
             price_note: document.getElementById('servicePriceNote').value,
+            pricing_options: JSON.stringify(pricingOptions),
             max_quantity: parseInt(document.getElementById('serviceMaxQuantity').value) || 10,
             is_active: document.getElementById('serviceActive').checked,
             features: featuresVal ? JSON.stringify(featuresVal.split(',').map(f => f.trim())) : '[]',

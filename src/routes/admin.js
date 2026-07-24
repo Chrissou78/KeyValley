@@ -410,16 +410,16 @@ router.get('/services', requireAdminAuth, async (req, res) => {
 
 router.post('/services', requireAdminAuth, async (req, res) => {
     try {
-        const { name, short_description, description, category, price, price_note, image_url, location, features, is_active, max_quantity, booking_type, slots_per_day, booking_start_time, booking_end_time, slot_duration_minutes, available_days } = req.body;
-        
+        const { name, short_description, description, category, price, price_note, pricing_options, image_url, location, features, is_active, max_quantity, booking_type, slots_per_day, booking_start_time, booking_end_time, slot_duration_minutes, available_days } = req.body;
+
         console.log('📦 Creating service with image_url:', image_url);
-        
+
         const result = await db.pool.query(`
-            INSERT INTO marketplace_services 
-            (name, short_description, description, category, price, price_note, image_url, location, features, is_active, max_quantity, booking_type, slots_per_day, booking_start_time, booking_end_time, slot_duration_minutes, available_days)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+            INSERT INTO marketplace_services
+            (name, short_description, description, category, price, price_note, pricing_options, image_url, location, features, is_active, max_quantity, booking_type, slots_per_day, booking_start_time, booking_end_time, slot_duration_minutes, available_days)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
             RETURNING *
-        `, [name, short_description, description, category, price, price_note, image_url, location, features, is_active ?? true, max_quantity ?? 10, booking_type || 'none', slots_per_day || 1, booking_start_time || '09:00', booking_end_time || '18:00', slot_duration_minutes || 60, available_days || '1,2,3,4,5,6,0']);
+        `, [name, short_description, description, category, price, price_note, pricing_options || '[]', image_url, location, features, is_active ?? true, max_quantity ?? 10, booking_type || 'none', slots_per_day || 1, booking_start_time || '09:00', booking_end_time || '18:00', slot_duration_minutes || 60, available_days || '1,2,3,4,5,6,0']);
         
         console.log('✅ Service created:', result.rows[0].name, 'image:', result.rows[0].image_url);
         
@@ -433,20 +433,20 @@ router.post('/services', requireAdminAuth, async (req, res) => {
 router.put('/services/:id', requireAdminAuth, async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, short_description, description, category, price, price_note, image_url, location, features, is_active, max_quantity, booking_type, slots_per_day, booking_start_time, booking_end_time, slot_duration_minutes, available_days } = req.body;
-        
+        const { name, short_description, description, category, price, price_note, pricing_options, image_url, location, features, is_active, max_quantity, booking_type, slots_per_day, booking_start_time, booking_end_time, slot_duration_minutes, available_days } = req.body;
+
         console.log('📦 Updating service', id, 'with image_url:', image_url);
-        
+
         const result = await db.pool.query(`
             UPDATE marketplace_services SET
                 name = $1, short_description = $2, description = $3, category = $4,
-                price = $5, price_note = $6, image_url = $7, location = $8,
-                features = $9, is_active = $10, max_quantity = $11, 
-                booking_type = $12, slots_per_day = $13, booking_start_time = $14,
-                booking_end_time = $15, slot_duration_minutes = $16, available_days = $17,
+                price = $5, price_note = $6, pricing_options = $7, image_url = $8, location = $9,
+                features = $10, is_active = $11, max_quantity = $12,
+                booking_type = $13, slots_per_day = $14, booking_start_time = $15,
+                booking_end_time = $16, slot_duration_minutes = $17, available_days = $18,
                 updated_at = NOW()
-            WHERE id = $18 RETURNING *
-        `, [name, short_description, description, category, price, price_note, image_url, location, features, is_active, max_quantity, booking_type || 'none', slots_per_day || 1, booking_start_time || '09:00', booking_end_time || '18:00', slot_duration_minutes || 60, available_days || '1,2,3,4,5,6,0', id]);
+            WHERE id = $19 RETURNING *
+        `, [name, short_description, description, category, price, price_note, pricing_options || '[]', image_url, location, features, is_active, max_quantity, booking_type || 'none', slots_per_day || 1, booking_start_time || '09:00', booking_end_time || '18:00', slot_duration_minutes || 60, available_days || '1,2,3,4,5,6,0', id]);
         
         if (result.rows.length === 0) {
             return res.status(404).json({ success: false, error: 'Service not found' });
