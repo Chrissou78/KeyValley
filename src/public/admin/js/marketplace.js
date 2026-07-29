@@ -10,18 +10,26 @@ const Marketplace = {
     },
 
     setupBookingTypeToggle() {
-        const bookingType = document.getElementById('serviceBookingType');
-        const timeSlotSettings = document.getElementById('timeSlotSettings');
-        
-        if (bookingType && timeSlotSettings) {
-            bookingType.addEventListener('change', () => {
-                if (bookingType.value === 'time_slots') {
-                    timeSlotSettings.classList.remove('hidden');
-                } else {
-                    timeSlotSettings.classList.add('hidden');
-                }
-            });
-        }
+        const enabled = document.getElementById('serviceBookingEnabled');
+        const fields = document.getElementById('bookingSettingsFields');
+        const unit = document.getElementById('serviceDurationUnit');
+
+        const updateVisibility = () => {
+            if (!enabled || !fields) return;
+            fields.classList.toggle('hidden', !enabled.checked);
+        };
+
+        const updateUnitLabels = () => {
+            if (!unit) return;
+            const isHours = unit.value === 'hours';
+            document.getElementById('serviceMinDurationLabel').textContent = isHours ? 'Minimum Duration (hours)' : 'Minimum Duration (nights)';
+            document.getElementById('serviceStartTimeLabel').textContent = isHours ? 'Available From' : 'Check-in Time';
+            document.getElementById('serviceEndTimeLabel').textContent = isHours ? 'Available Until' : 'Check-out Time';
+        };
+
+        enabled?.addEventListener('change', updateVisibility);
+        unit?.addEventListener('change', updateUnitLabels);
+        this._updateBookingUnitLabels = updateUnitLabels;
     },
 
     setupImageUpload() {
@@ -118,16 +126,18 @@ const Marketplace = {
 
     renderPricingOptionRow(option) {
         const row = document.createElement('div');
-        row.className = 'pricing-option-row grid grid-cols-[1fr,auto,auto] gap-3 items-center';
+        row.className = 'pricing-option-row grid grid-cols-[1fr,auto,auto,auto] gap-3 items-center';
         row.innerHTML = `
             <input type="text" class="pricing-option-label w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none" placeholder="e.g. 40 minutes">
             <input type="number" class="pricing-option-price w-28 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none" placeholder="Price" min="0" step="0.01">
+            <input type="number" class="pricing-option-duration w-28 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:border-primary focus:outline-none" placeholder="Optional" min="1" step="1">
             <button type="button" class="remove-pricing-option-btn w-9 h-9 flex items-center justify-center rounded-lg bg-red-900/40 text-red-400 hover:bg-red-900/60">
                 <span class="material-symbols-outlined text-lg">remove</span>
             </button>
         `;
         row.querySelector('.pricing-option-label').value = option.label || '';
         row.querySelector('.pricing-option-price').value = option.price ?? '';
+        row.querySelector('.pricing-option-duration').value = option.durationMinutes || '';
         return row;
     },
 
@@ -149,10 +159,14 @@ const Marketplace = {
     },
 
     readPricingOptionRows() {
-        return Array.from(document.querySelectorAll('#pricingOptionsRows .pricing-option-row')).map(row => ({
-            label: row.querySelector('.pricing-option-label').value.trim(),
-            price: parseFloat(row.querySelector('.pricing-option-price').value)
-        }));
+        return Array.from(document.querySelectorAll('#pricingOptionsRows .pricing-option-row')).map(row => {
+            const durationVal = parseInt(row.querySelector('.pricing-option-duration').value, 10);
+            return {
+                label: row.querySelector('.pricing-option-label').value.trim(),
+                price: parseFloat(row.querySelector('.pricing-option-price').value),
+                durationMinutes: isNaN(durationVal) ? null : durationVal
+            };
+        });
     },
 
     updatePricingPreview() {
@@ -163,9 +177,11 @@ const Marketplace = {
             preview.innerHTML = '<span class="text-white text-sm">No pricing set yet</span>';
             return;
         }
-        preview.innerHTML = options.map(o =>
-            `<span class="px-3 py-1.5 rounded-lg bg-gray-900 border border-gray-700 text-sm text-white">${o.label ? Utils.escapeHtml ? Utils.escapeHtml(o.label) + ' ' : o.label + ' ' : ''}€${o.price}</span>`
-        ).join('');
+        preview.innerHTML = options.map(o => {
+            const label = o.label ? (Utils.escapeHtml ? Utils.escapeHtml(o.label) : o.label) + ' ' : '';
+            const duration = o.durationMinutes ? ` <span class="text-gray-500">(${o.durationMinutes} min)</span>` : '';
+            return `<span class="px-3 py-1.5 rounded-lg bg-gray-900 border border-gray-700 text-sm text-white">${label}€${o.price}${duration}</span>`;
+        }).join('');
     },
 
     async load() {
@@ -252,20 +268,17 @@ const Marketplace = {
         this.renderPricingOptionRows(pricingOptions);
 
         // Booking fields
-        document.getElementById('serviceBookingType').value = service?.booking_type || 'none';
+        const bookingEnabled = !!service?.booking_type && service.booking_type !== 'none';
+        document.getElementById('serviceBookingEnabled').checked = bookingEnabled;
+        document.getElementById('serviceDurationUnit').value = service?.duration_unit || 'days';
+        document.getElementById('serviceMinDuration').value = service?.min_duration || 1;
         document.getElementById('serviceSlotsPerDay').value = service?.slots_per_day || 1;
         document.getElementById('serviceStartTime').value = service?.booking_start_time || '09:00';
         document.getElementById('serviceEndTime').value = service?.booking_end_time || '18:00';
-        document.getElementById('serviceSlotDuration').value = service?.slot_duration_minutes || 60;
         document.getElementById('serviceAvailableDays').value = service?.available_days || '1,2,3,4,5,6,0';
-        
-        // Toggle time slot settings visibility
-        const timeSlotSettings = document.getElementById('timeSlotSettings');
-        if (service?.booking_type === 'time_slots') {
-            timeSlotSettings?.classList.remove('hidden');
-        } else {
-            timeSlotSettings?.classList.add('hidden');
-        }
+
+        document.getElementById('bookingSettingsFields')?.classList.toggle('hidden', !bookingEnabled);
+        this._updateBookingUnitLabels?.();
 
         const previewImg = document.getElementById('imagePreviewImg');
         const placeholder = document.getElementById('imagePlaceholder');
@@ -318,11 +331,15 @@ const Marketplace = {
             features: featuresVal ? JSON.stringify(featuresVal.split(',').map(f => f.trim())) : '[]',
             image_url: document.getElementById('serviceImageUrl').value,
             // Booking fields
-            booking_type: document.getElementById('serviceBookingType').value,
+            booking_type: (() => {
+                if (!document.getElementById('serviceBookingEnabled').checked) return 'none';
+                return document.getElementById('serviceDurationUnit').value === 'hours' ? 'time_slots' : 'daily';
+            })(),
+            duration_unit: document.getElementById('serviceDurationUnit').value,
+            min_duration: parseInt(document.getElementById('serviceMinDuration').value) || 1,
             slots_per_day: parseInt(document.getElementById('serviceSlotsPerDay').value) || 1,
             booking_start_time: document.getElementById('serviceStartTime').value,
             booking_end_time: document.getElementById('serviceEndTime').value,
-            slot_duration_minutes: parseInt(document.getElementById('serviceSlotDuration').value) || 60,
             available_days: document.getElementById('serviceAvailableDays').value
         };
 

@@ -150,10 +150,17 @@ async function initDb() {
             )
         `);
 
-        // marketplace_services is created outside this file (production-only table);
-        // guard this alter so a missing table doesn't block the rest of boot
+        // marketplace_services / service_bookings are created outside this file (production-only tables);
+        // guard these alters so a missing table doesn't block the rest of boot
         try {
             await client.query(`ALTER TABLE marketplace_services ADD COLUMN IF NOT EXISTS pricing_options JSONB DEFAULT '[]'::jsonb`);
+            await client.query(`ALTER TABLE marketplace_services ADD COLUMN IF NOT EXISTS duration_unit VARCHAR(10) DEFAULT 'days'`);
+            await client.query(`ALTER TABLE marketplace_services ADD COLUMN IF NOT EXISTS min_duration INTEGER DEFAULT 1`);
+        } catch (e) {
+            // Table might not exist in this environment yet
+        }
+        try {
+            await client.query(`ALTER TABLE service_bookings ADD COLUMN IF NOT EXISTS booking_end_date DATE`);
         } catch (e) {
             // Table might not exist in this environment yet
         }
