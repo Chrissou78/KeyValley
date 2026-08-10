@@ -46,29 +46,39 @@ const Marketplace = {
                 return;
             }
 
-            if (file.size > 5 * 1024 * 1024) {
-                Utils.showToast('Image must be less than 5MB', 'error');
+            if (file.size > 4 * 1024 * 1024) {
+                Utils.showToast('Image must be less than 4MB', 'error');
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const previewImg = document.getElementById('imagePreviewImg');
-                const placeholder = document.getElementById('imagePlaceholder');
-                if (previewImg && placeholder) {
-                    previewImg.src = ev.target.result;
+            const previewImg = document.getElementById('imagePreviewImg');
+            const placeholder = document.getElementById('imagePlaceholder');
+            const urlField = document.getElementById('serviceImageUrl');
+            const previousImageUrl = urlField.value;
+
+            const showPreview = (src) => {
+                if (!previewImg || !placeholder) return;
+                if (src) {
+                    previewImg.src = src;
                     previewImg.classList.remove('hidden');
                     placeholder.classList.add('hidden');
+                } else {
+                    previewImg.src = '';
+                    previewImg.classList.add('hidden');
+                    placeholder.classList.remove('hidden');
                 }
             };
+
+            // Instant feedback from the local file while the upload is in flight
+            const reader = new FileReader();
+            reader.onload = (ev) => showPreview(ev.target.result);
             reader.readAsDataURL(file);
 
             const formData = new FormData();
             formData.append('image', file);
-            
-            const oldImageUrl = document.getElementById('serviceImageUrl').value;
-            if (oldImageUrl) {
-                formData.append('oldImageUrl', oldImageUrl);
+
+            if (previousImageUrl) {
+                formData.append('oldImageUrl', previousImageUrl);
             }
 
             Utils.showToast('Uploading...', 'success');
@@ -82,14 +92,21 @@ const Marketplace = {
                 const data = await res.json();
 
                 if (data.success) {
-                    document.getElementById('serviceImageUrl').value = data.imageUrl;
+                    urlField.value = data.imageUrl;
+                    // Preview the stored copy, not the local file, so a failed
+                    // server-side save is visible straight away
+                    showPreview(data.imageUrl);
                     Utils.showToast('Image uploaded!', 'success');
                     console.log('Image URL:', data.imageUrl);
                 } else {
+                    showPreview(previousImageUrl);
+                    e.target.value = '';
                     Utils.showToast('Upload failed: ' + data.error, 'error');
                 }
             } catch (err) {
                 console.error('Upload error:', err);
+                showPreview(previousImageUrl);
+                e.target.value = '';
                 Utils.showToast('Upload failed', 'error');
             }
         });

@@ -9,34 +9,61 @@ const { requireAdminAuth, requireSuperAdmin } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const imageStore = require('../services/image-store');
 
-// Create upload folder if it doesn't exist
-const uploadDir = path.join(__dirname, '../public/images/services');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Images uploaded through the admin are stored in Postgres by imageStore: the
+// deployed filesystem is read-only and per-instance, so writing them to disk only
+// ever worked on the machine that ran the upload. This directory still holds the
+// images committed to the repo, which are served straight off disk.
+const legacyImageDir = path.join(__dirname, '../public/images/services');
 
-// Configure image upload
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, uploadDir),
-    filename: (req, file, cb) => {
-        const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`;
-        cb(null, uniqueName);
-    }
-});
+// Vercel rejects request bodies over ~4.5MB before they reach the function, so
+// cap below that to fail with a readable message instead of a platform error.
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 
 const upload = multer({
-    storage,
-    limits: { fileSize: 5 * 1024 * 1024 },
+    storage: multer.memoryStorage(),
+    limits: { fileSize: MAX_IMAGE_BYTES, files: 1 },
     fileFilter: (req, file, cb) => {
-        const allowed = /jpeg|jpg|png|webp/;
-        if (allowed.test(path.extname(file.originalname).toLowerCase()) && allowed.test(file.mimetype)) {
+        if (imageStore.isSupportedMimeType(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error('Only images allowed'));
+            cb(new Error('Only JPG, PNG and WebP images are allowed'));
         }
     }
 });
+
+// Turn multer failures into the { success, error } shape the admin UI reads,
+// instead of letting them fall through to the generic 500 handler.
+function uploadServiceImage(req, res, next) {
+    upload.single('image')(req, res, (err) => {
+        if (!err) return next();
+
+        const error = err.code === 'LIMIT_FILE_SIZE'
+            ? 'Image must be less than 4MB'
+            : (err.message || 'Upload failed');
+
+        console.error('Upload rejected:', error);
+        res.status(400).json({ success: false, error });
+    });
+}
+
+// Best-effort cleanup of an image committed to the repo; a no-op in production
+// where the filesystem is read-only.
+function removeLegacyImageFile(fileName) {
+    const defaultImages = ['villa.jpg', 'yacht.jpg', 'chef.jpg', 'spa.jpg', 'transfer.jpg', 'wine.jpg', 'helicopter.jpg', 'training.jpg', 'dinner.jpg', 'scuba.jpg', 'meal.png'];
+    if (defaultImages.includes(fileName)) return;
+
+    try {
+        const filePath = path.join(legacyImageDir, fileName);
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log('🗑️ Deleted image file:', fileName);
+        }
+    } catch (error) {
+        console.error('Failed to delete image file:', error.message);
+    }
+}
 
 // ==========================================
 // HEALTH CHECK ENDPOINT
@@ -491,18 +518,11 @@ router.delete('/services/:id', requireAdminAuth, async (req, res) => {
         // Hard delete
         await db.pool.query('DELETE FROM marketplace_services WHERE id = $1', [id]);
         
-        // Delete image file if exists
-        if (imageUrl && imageUrl.startsWith('/images/services/')) {
-            const fileName = imageUrl.replace('/images/services/', '');
-            const defaultImages = ['villa.jpg', 'yacht.jpg', 'chef.jpg', 'spa.jpg', 'transfer.jpg', 'wine.jpg', 'helicopter.jpg', 'training.jpg', 'dinner.jpg', 'scuba.jpg', 'meal.png'];
-            
-            if (!defaultImages.includes(fileName)) {
-                const filePath = path.join(__dirname, '../public/images/services', fileName);
-                if (fs.existsSync(filePath)) {
-                    fs.unlinkSync(filePath);
-                    console.log('🗑️ Deleted image:', fileName);
-                }
-            }
+        // Delete the stored image if this service owned one
+        const fileName = imageStore.filenameFromUrl(imageUrl);
+        if (fileName) {
+            await imageStore.remove(fileName);
+            removeLegacyImageFile(fileName);
         }
         
         res.json({ success: true });
@@ -931,32 +951,28 @@ router.put('/settings', requireAdminAuth, async (req, res) => {
 // IMAGE UPLOAD
 // ==========================================
 
-router.post('/upload/service-image', requireAdminAuth, upload.single('image'), (req, res) => {
+router.post('/upload/service-image', requireAdminAuth, uploadServiceImage, async (req, res) => {
     console.log('📸 Upload request received');
     if (!req.file) {
         return res.status(400).json({ success: false, error: 'No image uploaded' });
     }
-    
-    // Delete old image if provided
-    const oldImageUrl = req.body.oldImageUrl;
-    if (oldImageUrl && oldImageUrl.startsWith('/images/services/')) {
-        const oldFileName = oldImageUrl.replace('/images/services/', '');
-        const oldFilePath = path.join(uploadDir, oldFileName);
-        
-        // Don't delete the default images
-        const defaultImages = ['villa.jpg', 'yacht.jpg', 'chef.jpg', 'spa.jpg', 'transfer.jpg', 'wine.jpg', 'helicopter.jpg', 'training.jpg', 'dinner.jpg', 'scuba.jpg'];
-        
-        if (!defaultImages.includes(oldFileName) && fs.existsSync(oldFilePath)) {
-            fs.unlink(oldFilePath, (err) => {
-                if (err) console.error('Failed to delete old image:', err);
-                else console.log('🗑️ Deleted old image:', oldFileName);
-            });
+
+    try {
+        const { imageUrl } = await imageStore.save(req.file.buffer, req.file.mimetype);
+
+        // Replace the previous image only once the new one is safely stored
+        const oldFileName = imageStore.filenameFromUrl(req.body.oldImageUrl);
+        if (oldFileName) {
+            await imageStore.remove(oldFileName);
+            removeLegacyImageFile(oldFileName);
         }
+
+        console.log('✅ Image stored:', imageUrl, `(${req.file.size} bytes)`);
+        res.json({ success: true, imageUrl });
+    } catch (error) {
+        console.error('Store image error:', error);
+        res.status(500).json({ success: false, error: 'Could not store image on the server' });
     }
-    
-    const imageUrl = `/images/services/${req.file.filename}`;
-    console.log('✅ Image uploaded:', imageUrl);
-    res.json({ success: true, imageUrl });
 });
 
 // ==========================================

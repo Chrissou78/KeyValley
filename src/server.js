@@ -39,6 +39,12 @@ const publicPath = path.join(__dirname, 'public');
 
 // These routes serve static files directly, before any other middleware
 app.use('/images', express.static(path.join(publicPath, 'images')));
+
+// Admin-uploaded service images live in Postgres (the deployed filesystem is
+// read-only), so anything not found on disk above is looked up there.
+const serviceImageRoutes = require('./routes/service-images');
+app.use('/images/services', serviceImageRoutes);
+
 app.use('/fonts', express.static(path.join(publicPath, 'fonts')));
 app.use('/css', express.static(path.join(publicPath, 'css')));
 app.use('/js', express.static(path.join(publicPath, 'js')));
