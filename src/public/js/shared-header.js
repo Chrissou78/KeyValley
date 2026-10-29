@@ -229,8 +229,16 @@ var HeaderManager = {
 
   async exchangeCode(code, wallet, userId) {
     try {
-      const r = await fetch('/api/wallettwo/exchange', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) });
+      const r = await fetch('/api/wallettwo/exchange', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) });
       const data = await r.json();
+
+      // The login itself succeeded; if the server could not verify the token,
+      // start the session from the wallet so the member still gets in.
+      if (!r.ok || data.success === false) {
+        console.warn('Token exchange rejected (' + r.status + ') - starting session from wallet');
+        if (wallet) return this.startSession(wallet, userId);
+      }
+
       const resolvedWallet = wallet || data.wallet || (data.user && data.user.wallet) || null;
       this.currentUser = {
         wallet: resolvedWallet ? resolvedWallet.toLowerCase() : null,

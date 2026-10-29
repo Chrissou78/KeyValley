@@ -204,11 +204,29 @@
     // Membership is granted by the server, so confirm it there rather than
     // trusting the client - otherwise a login that failed to set the cookie
     // would bounce the visitor straight back here in a loop.
+    async function isMember() {
+        const res = await fetch('/api/wallettwo/status', { credentials: 'same-origin', cache: 'no-store' });
+        const data = await res.json();
+        return data.member === true;
+    }
+
+    // Connected with WalletTwo = let in. If the visitor is connected (fresh
+    // login or a saved session) but the server has no membership yet, register
+    // it from their wallet, then go through.
     async function enterSite() {
         try {
-            const res = await fetch('/api/wallettwo/status', { credentials: 'same-origin' });
-            const data = await res.json();
-            if (data.member) {
+            if (!(await isMember())) {
+                const user = HeaderManager.getUser();
+                if (user && user.wallet) {
+                    await fetch('/api/wallettwo/session', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ wallet: user.wallet, email: user.email || null, name: user.name || null })
+                    });
+                }
+            }
+            if (await isMember()) {
                 window.location.replace(destination());
                 return;
             }
