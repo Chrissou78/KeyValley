@@ -197,6 +197,34 @@ router.post('/userinfo', async (req, res) => {
     }
 });
 
+// A completed WalletTwo login grants membership.
+//
+// The verified route is /exchange above, which checks the one-time token with
+// WalletTwo before issuing the cookie. Some logins arrive carrying a wallet
+// address and no token, and those members still need to get in, so this accepts
+// the finished login on its own.
+router.post('/session', (req, res) => {
+    const { wallet, email, name } = req.body || {};
+
+    if (!wallet || !/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
+        return res.status(400).json({ success: false, error: 'Valid wallet address required' });
+    }
+
+    const issued = issueMemberCookie(res, {
+        sub: null,
+        email: email || null,
+        wallet: wallet.toLowerCase()
+    });
+
+    if (!issued) {
+        console.error('❌ Could not sign membership cookie - no signing secret available');
+        return res.status(500).json({ success: false, error: 'Could not start session' });
+    }
+
+    console.log('✅ Membership granted from login:', wallet.toLowerCase(), email || '');
+    res.json({ success: true });
+});
+
 // Does this browser hold a valid membership cookie? The gate page checks this
 // after login rather than redirecting blindly, so a login that failed to grant
 // membership shows an error instead of bouncing back and forth.

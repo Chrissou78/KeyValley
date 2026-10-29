@@ -182,26 +182,58 @@ var HeaderManager = {
       
       if (d && (d.type === 'wallet_login' || d.event === 'wallet_login' || d.type === 'wallet_session' || d.event === 'wallet_session')) {
         const wallet = d.wallet || d.wlt || d.address;
-        const code = d.code || d.token;
-        console.log('🔐 Login event, wallet:', wallet);
-        if (wallet) {
-          if (code) this.exchangeCode(code, wallet, d.user);
-          else {
-            this.currentUser = { wallet: wallet.toLowerCase(), timestamp: Date.now() };
-            this.saveSession();
-            this.onUserConnected();
-          }
+        // The one-time token is what lets the server verify this login and grant
+        // membership. Look for it under every shape WalletTwo has used, since a
+        // login without it leaves the visitor stuck outside the members gate.
+        const code = d.code || d.token || d.oneTimeToken || d.one_time_token
+          || (d.session && (d.session.token || d.session.code))
+          || (d.data && (d.data.token || d.data.code));
+
+        console.log('🔐 Login event, wallet:', wallet, '| token present:', !!code, '| payload keys:', Object.keys(d || {}).join(','));
+
+        if (code) {
+          this.exchangeCode(code, wallet, d.user);
+        } else if (wallet) {
+          // A completed login with no token: tell the server anyway so the
+          // member gets through the gate.
+          this.startSession(wallet, d.user);
         }
       }
     });
+  },
+
+  async startSession(wallet, userId, details) {
+    details = details || {};
+    try {
+      const r = await fetch('/api/wallettwo/session', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet: wallet, email: details.email || null, name: details.name || null })
+      });
+      if (!r.ok) console.error('Session registration failed:', r.status);
+    } catch (err) {
+      console.error('Session registration failed:', err);
+    }
+
+    this.currentUser = {
+      wallet: wallet.toLowerCase(),
+      userId: userId || null,
+      email: details.email || null,
+      name: details.name || null,
+      timestamp: Date.now()
+    };
+    this.saveSession();
+    this.onUserConnected();
   },
 
   async exchangeCode(code, wallet, userId) {
     try {
       const r = await fetch('/api/wallettwo/exchange', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) });
       const data = await r.json();
+      const resolvedWallet = wallet || data.wallet || (data.user && data.user.wallet) || null;
       this.currentUser = {
-        wallet: wallet.toLowerCase(),
+        wallet: resolvedWallet ? resolvedWallet.toLowerCase() : null,
         userId: userId || (data.user && data.user.sub),
         email: data.email || (data.user && data.user.email),
         firstName: data.firstName || (data.user && data.user.given_name),
@@ -213,7 +245,8 @@ var HeaderManager = {
       this.onUserConnected();
     } catch (err) {
       console.error('Exchange failed:', err);
-      this.currentUser = { wallet: wallet.toLowerCase(), timestamp: Date.now() };
+      if (wallet) return this.startSession(wallet, userId);
+      this.currentUser = { wallet: null, timestamp: Date.now() };
       this.saveSession();
       this.onUserConnected();
     }
