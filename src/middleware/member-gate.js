@@ -42,13 +42,29 @@ const OPEN_PREFIXES = [
     '/privacy'
 ];
 
-const OPEN_EXACT = ['/favicon.ico', '/robots.txt', '/site.webmanifest'];
+// The home page stays public so the site keeps its search ranking and link
+// previews. Everything it links on to (marketplace, packages, profile) is still
+// gated, so visitors can look through the window but not walk in.
+const OPEN_EXACT = ['/', '/index.html', '/favicon.ico', '/robots.txt', '/site.webmanifest'];
 
 function isOpenPath(pathname) {
     if (OPEN_EXACT.includes(pathname)) return true;
     return OPEN_PREFIXES.some(prefix =>
         prefix.endsWith('/') ? pathname.startsWith(prefix) : pathname === prefix || pathname.startsWith(prefix + '/')
     );
+}
+
+// Mark the cookie Secure whenever the request actually arrived over HTTPS.
+// Reading it from the request rather than NODE_ENV means the flag is right on
+// the VPS, on Vercel and on plain-HTTP localhost with nothing to configure.
+function isHttps(req) {
+    if (!req) return false;
+    if (req.secure) return true;
+    const forwarded = req.headers && req.headers['x-forwarded-proto'];
+    if (typeof forwarded === 'string') {
+        return forwarded.split(',')[0].trim() === 'https';
+    }
+    return false;
 }
 
 function issueMemberCookie(res, member) {
@@ -67,7 +83,7 @@ function issueMemberCookie(res, member) {
     res.cookie(COOKIE_NAME, value, {
         httpOnly: true,
         sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production' || !!process.env.VERCEL,
+        secure: isHttps(res.req),
         maxAge: MAX_AGE_MS,
         path: '/'
     });
