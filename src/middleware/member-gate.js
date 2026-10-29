@@ -8,6 +8,12 @@
 // which is what makes this an actual gate rather than a decoration.
 
 const crypto = require('crypto');
+const path = require('path');
+
+// Served in place at / so the site's front door IS the members page, rather
+// than a public page that bounces somewhere else.
+const GATE_PAGE = path.join(__dirname, '../public/welcome/index.html');
+const ROOT_PATHS = ['/', '/index.html'];
 
 const COOKIE_NAME = 'kv_member';
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -42,10 +48,7 @@ const OPEN_PREFIXES = [
     '/privacy'
 ];
 
-// The home page stays public so the site keeps its search ranking and link
-// previews. Everything it links on to (marketplace, packages, profile) is still
-// gated, so visitors can look through the window but not walk in.
-const OPEN_EXACT = ['/', '/index.html', '/favicon.ico', '/robots.txt', '/site.webmanifest'];
+const OPEN_EXACT = ['/favicon.ico', '/robots.txt', '/site.webmanifest'];
 
 function isOpenPath(pathname) {
     if (OPEN_EXACT.includes(pathname)) return true;
@@ -124,11 +127,33 @@ function isMember(req) {
 function memberGate(req, res, next) {
     if (req.method !== 'GET' && req.method !== 'HEAD') return next();
     if (isOpenPath(req.path)) return next();
+
+    // The response for a gated path depends on the membership cookie, so no
+    // shared cache may reuse one visitor's copy for another.
+    res.set('Vary', 'Cookie');
+    res.set('Cache-Control', 'no-store, private');
+
     if (isMember(req)) return next();
 
     // A browser navigation gets sent to the gate. Anything else asking for a
     // gated path - curl, fetch, a scraper - is refused outright: these send
     // "Accept: */*", so keying only on text/html would hand them the page.
+    // At the root, render the gate in place: a visitor typing kea-valley.com
+    // should land on the members page itself, with the address bar unchanged.
+    // This is served to every client, crawlers and link-preview bots included -
+    // the door is meant to be seen, and there is nothing behind it to leak.
+    if (ROOT_PATHS.includes(req.path)) {
+        return res.sendFile(GATE_PAGE, err => {
+            if (err) {
+                console.error('Failed to serve gate page:', err.message);
+                res.redirect(302, '/welcome');
+            }
+        });
+    }
+
+    // Past the door it is members only. A browser navigation is redirected to
+    // the gate; anything else - curl, fetch, a scraper - is refused, since those
+    // send "Accept: */*" and keying only on text/html would hand them the page.
     const accepts = req.headers.accept || '';
     const isNavigation = accepts.includes('text/html') || req.headers['sec-fetch-mode'] === 'navigate';
 
