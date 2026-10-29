@@ -126,10 +126,15 @@ function memberGate(req, res, next) {
     if (isOpenPath(req.path)) return next();
     if (isMember(req)) return next();
 
-    // Only intercept page navigations; a missed asset should 404 as usual
-    // rather than redirect and confuse the browser.
+    // A browser navigation gets sent to the gate. Anything else asking for a
+    // gated path - curl, fetch, a scraper - is refused outright: these send
+    // "Accept: */*", so keying only on text/html would hand them the page.
     const accepts = req.headers.accept || '';
-    if (!accepts.includes('text/html')) return next();
+    const isNavigation = accepts.includes('text/html') || req.headers['sec-fetch-mode'] === 'navigate';
+
+    if (!isNavigation) {
+        return res.status(403).json({ error: 'Members only', gate: '/welcome' });
+    }
 
     const next_ = encodeURIComponent(req.originalUrl || req.path);
     return res.redirect(302, `/welcome?next=${next_}`);
