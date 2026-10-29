@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<!-- VERSION: 2026-10-29 - Members gate. Entry point for non-members; enforced by middleware/member-gate.js -->
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+    <meta name="description" content="KEA Valley - A private members club for luxury experiences on Kea Island. Sign in or register to enter."/>
+    <meta name="robots" content="noindex"/>
+    <title>Kea Valley | Members Only</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png"/>
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ee9d2b",
+                        "primary-light": "#fbdea6",
+                        "background-dark": "#0a0a0a",
+                        "surface": "#121212",
+                    },
+                    fontFamily: {
+                        "sans": ["Manrope", "sans-serif"],
+                        "serif": ["Playfair Display", "serif"],
+                    },
+                },
+            },
+        }
+    </script>
+
+    <!-- Shared Header Script - provides HeaderManager (WalletTwo auth) -->
+    <script src="/js/shared-header.js"></script>
+
+    <style>
+        body { font-family: 'Manrope', sans-serif; }
+        h1, h2, h3, .font-serif { font-family: 'Playfair Display', serif; }
+
+        .gate-bg {
+            background-image: url('/images/kea-heights-hero.webp');
+            background-size: cover;
+            background-position: center;
+            transform: scale(1.05);
+            animation: drift 24s ease-out forwards;
+        }
+        @keyframes drift { to { transform: scale(1); } }
+
+        /* Desktop: darken the left edge so the headline stays readable.
+           Mobile overrides this below, where the layout is stacked. */
+        .gate-shade {
+            background:
+                linear-gradient(90deg, rgba(10,10,10,.88) 0%, rgba(10,10,10,.55) 45%, rgba(10,10,10,.25) 70%, rgba(10,10,10,.6) 100%),
+                linear-gradient(180deg, rgba(0,0,0,.45) 0%, transparent 30%, transparent 60%, #0a0a0a 100%);
+        }
+
+        .door { backdrop-filter: blur(18px) saturate(1.1); -webkit-backdrop-filter: blur(18px) saturate(1.1); }
+
+        .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 0 22px rgba(238,157,43,.35); }
+
+        .wallet-iframe-container { width: 100%; height: 420px; border-radius: 12px; overflow: hidden; background: #fff; }
+        .wallet-iframe { width: 100%; height: 100%; border: 0; }
+
+        @media (max-width: 900px) {
+            .gate-shade {
+                background: linear-gradient(180deg, rgba(10,10,10,.55) 0%, rgba(10,10,10,.5) 40%, rgba(10,10,10,.92) 75%, #0a0a0a 100%);
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .gate-bg { animation: none; transform: none; }
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-white antialiased overflow-x-hidden">
+
+<div class="relative isolate min-h-screen grid grid-rows-[auto_1fr_auto] overflow-hidden">
+    <div class="gate-bg absolute inset-0 -z-20" role="img" aria-label="Kea Valley at dusk"></div>
+    <div class="gate-shade absolute inset-0 -z-10"></div>
+
+    <!-- Header -->
+    <header class="flex items-center justify-between px-6 sm:px-10 lg:px-16 pt-7 sm:pt-8">
+        <a class="flex items-center gap-3 text-white no-underline" href="/welcome">
+            <img src="/images/logo.png" alt="Kea Valley" class="h-9 sm:h-11 w-auto"/>
+        </a>
+        <button type="button" data-open="login"
+                class="text-[11px] font-bold tracking-[.16em] uppercase text-primary border border-primary/40 rounded-sm px-4 py-2.5 hover:bg-primary hover:text-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-primary-light">
+            Sign in
+        </button>
+    </header>
+
+    <!-- Main -->
+    <main class="grid grid-cols-1 lg:grid-cols-[auto_minmax(0,1fr)] gap-6 lg:gap-16 items-center px-6 sm:px-10 lg:px-16 py-7 lg:py-14">
+        <section>
+            <div class="flex items-center gap-4 mb-4 lg:mb-7">
+                <span class="block h-px w-7 lg:w-12 bg-primary"></span>
+                <b class="text-primary text-[11px] lg:text-xs font-bold tracking-[.3em] lg:tracking-[.4em] uppercase">Private Members Club</b>
+                <span class="block h-px w-7 lg:w-12 bg-primary"></span>
+            </div>
+            <h1 class="font-serif italic font-medium leading-[.92] tracking-[-.02em] mb-4 lg:mb-7 text-[clamp(56px,11vw,184px)]">
+                The Art<span class="block not-italic font-normal">of Living</span>
+            </h1>
+            <p class="text-base lg:text-xl font-light leading-relaxed max-w-[30em] text-white/90">
+                Exclusive access to luxury experiences, premium services, and extraordinary moments on Kea Island.
+            </p>
+        </section>
+
+        <!-- The door -->
+        <aside class="door w-full lg:max-w-[440px] lg:justify-self-center bg-surface/70 border border-white/10 rounded-xl lg:rounded-2xl p-5 lg:p-8" aria-labelledby="door-title">
+            <div class="hidden lg:grid w-11 h-11 rounded-full border border-primary/45 place-items-center mb-5 text-primary">
+                <span class="material-symbols-outlined text-[20px]">lock</span>
+            </div>
+            <h2 id="door-title" class="font-serif font-medium text-[22px] lg:text-3xl leading-tight mb-1 lg:mb-2.5">Members only</h2>
+            <p class="text-[13px] lg:text-[15px] leading-relaxed text-white/70 mb-4 lg:mb-7">Sign in or register to enter Kea Valley.</p>
+
+            <button type="button" data-open="register"
+                    class="btn-gold flex w-full justify-center items-center py-3.5 lg:py-4 px-5 rounded-sm bg-primary text-background-dark font-bold text-[11px] lg:text-xs tracking-[.16em] uppercase transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-primary-light">
+                Become a member
+            </button>
+            <button type="button" data-open="login"
+                    class="flex w-full justify-center items-center py-3.5 lg:py-4 px-5 mt-2.5 lg:mt-3 rounded-sm bg-transparent text-white border border-white/30 font-bold text-[11px] lg:text-xs tracking-[.16em] uppercase hover:bg-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-primary-light">
+                Sign in
+            </button>
+
+            <ul class="hidden lg:grid gap-4 mt-7 pt-6 border-t border-white/10 list-none">
+                <li class="grid grid-cols-[20px_1fr] gap-3.5 items-start">
+                    <span class="material-symbols-outlined text-primary text-[18px] mt-0.5">verified</span>
+                    <div><strong class="block text-sm font-semibold">Verified Partners</strong><small class="block text-[13px] text-white/55 leading-snug mt-0.5">Hand-picked luxury providers</small></div>
+                </li>
+                <li class="grid grid-cols-[20px_1fr] gap-3.5 items-start">
+                    <span class="material-symbols-outlined text-primary text-[18px] mt-0.5">euro</span>
+                    <div><strong class="block text-sm font-semibold">Kea Euro Credit</strong><small class="block text-[13px] text-white/55 leading-snug mt-0.5">Exclusive currency for our marketplace of luxury services</small></div>
+                </li>
+                <li class="grid grid-cols-[20px_1fr] gap-3.5 items-start">
+                    <span class="material-symbols-outlined text-primary text-[18px] mt-0.5">redeem</span>
+                    <div><strong class="block text-sm font-semibold">Digital Vouchers</strong><small class="block text-[13px] text-white/55 leading-snug mt-0.5">Instant delivery to your account</small></div>
+                </li>
+            </ul>
+        </aside>
+    </main>
+
+    <!-- Footer -->
+    <footer class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-3 lg:gap-6 px-6 sm:px-10 lg:px-16 pb-6 lg:pb-8">
+        <blockquote class="font-serif italic font-light text-[15px] lg:text-lg text-white/75 max-w-[34em]">
+            &ldquo;Live a Life That You Don&rsquo;t Want to Take a Holiday From&rdquo;
+            <cite class="block font-sans not-italic text-[11px] lg:text-xs text-white mt-1 lg:mt-2">&mdash; Dr. Julie Meyer MBE</cite>
+        </blockquote>
+        <nav class="flex gap-5 text-[10px] lg:text-[10.5px] tracking-[.2em] uppercase font-bold">
+            <a href="/privacy" class="text-white/60 hover:text-primary no-underline">Privacy Policy</a>
+            <a href="/terms" class="text-white/60 hover:text-primary no-underline">Terms</a>
+        </nav>
+    </footer>
+</div>
+
+<!-- Login modal - ids match shared-header.js so HeaderManager drives the WalletTwo iframe -->
+<div id="loginModal" class="fixed inset-0 z-[80] hidden">
+    <div class="absolute inset-0 bg-black/75 backdrop-blur-sm" onclick="HeaderManager.closeLoginModal()"></div>
+    <div class="absolute inset-4 flex items-center justify-center">
+        <div class="bg-surface border border-white/10 rounded-2xl w-full max-w-md overflow-hidden">
+            <div class="p-6 border-b border-white/5 flex items-center justify-between">
+                <h2 id="authTitle" class="text-xl font-serif text-white">Login to Kea Valley</h2>
+                <button onclick="HeaderManager.closeLoginModal()" class="text-white hover:text-primary transition-colors" aria-label="Close">
+                    <span class="material-symbols-outlined text-2xl">close</span>
+                </button>
+            </div>
+            <div class="p-6">
+                <p id="authCopy" class="text-white/75 text-sm mb-5 leading-relaxed">Login to your account to access exclusive member benefits.</p>
+                <p id="authError" class="hidden text-sm mb-5 leading-relaxed text-red-400"></p>
+                <div class="wallet-iframe-container">
+                    <iframe id="loginWalletIframe" src="" class="wallet-iframe" allow="clipboard-write"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const COPY = {
+        login: ['Login to Kea Valley', 'Login to your account to access exclusive member benefits.'],
+        register: ['Join Kea Valley', 'Create your account to become a member of the Kea Valley Private Members Club.']
+    };
+
+    const titleEl = document.getElementById('authTitle');
+    const copyEl = document.getElementById('authCopy');
+    const errorEl = document.getElementById('authError');
+
+    // Only ever send members to a path on this site - never to a URL someone
+    // could plant in the query string.
+    function destination() {
+        const raw = new URLSearchParams(location.search).get('next') || '/';
+        if (!raw.startsWith('/') || raw.startsWith('//')) return '/';
+        if (raw.startsWith('/welcome')) return '/';
+        return raw;
+    }
+
+    function showError(message) {
+        errorEl.textContent = message;
+        errorEl.classList.remove('hidden');
+    }
+
+    // Membership is granted by the server, so confirm it there rather than
+    // trusting the client - otherwise a login that failed to set the cookie
+    // would bounce the visitor straight back here in a loop.
+    async function enterSite() {
+        try {
+            const res = await fetch('/api/wallettwo/status', { credentials: 'same-origin' });
+            const data = await res.json();
+            if (data.member) {
+                window.location.replace(destination());
+                return;
+            }
+            showError('We could not confirm your membership. Please try signing in again.');
+        } catch (e) {
+            showError('Something went wrong confirming your membership. Please try again.');
+        }
+    }
+
+    document.querySelectorAll('[data-open]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const copy = COPY[btn.dataset.open];
+            titleEl.textContent = copy[0];
+            copyEl.textContent = copy[1];
+            errorEl.classList.add('hidden');
+            HeaderManager.showLoginModal();
+        });
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') HeaderManager.closeLoginModal();
+    });
+
+    // HeaderManager handles the WalletTwo handshake and token exchange; the
+    // exchange response is what sets the membership cookie. Hook its success
+    // callback to move the visitor into the site.
+    document.addEventListener('DOMContentLoaded', function () {
+        const connected = HeaderManager.onUserConnected.bind(HeaderManager);
+        HeaderManager.onUserConnected = function () {
+            connected();
+            enterSite();
+        };
+    });
+
+    // Already a member? Don't make them look at the door.
+    fetch('/api/wallettwo/status', { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { if (d.member) window.location.replace(destination()); })
+        .catch(function () {});
+})();
+</script>
+</body>
+</html>

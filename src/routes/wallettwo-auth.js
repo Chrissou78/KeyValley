@@ -5,6 +5,7 @@ const router = express.Router();
 const WALLETTWO_API_KEY = process.env.WALLETTWO_API_KEY;
 const WALLETTWO_COMPANY_ID = process.env.WALLETTWO_COMPANY_ID;
 const BASE_URL = 'https://api.wallettwo.com';
+const { issueMemberCookie, clearMemberCookie, readMember } = require('../middleware/member-gate');
 
 // Exchange authorization code/token for access token and user info
 router.post('/exchange', async (req, res) => {
@@ -66,6 +67,7 @@ router.post('/exchange', async (req, res) => {
         if (!userInfoResponse.ok || !userInfo.user) {
             console.error('❌ Get session failed:', userInfo);
             // Still return token even if user info fails
+            issueMemberCookie(res, { sub: null, email: null, wallet: null });
             return res.json({
                 success: true,
                 access_token: accessToken,
@@ -76,6 +78,9 @@ router.post('/exchange', async (req, res) => {
 
         const user = userInfo.user;
         console.log('✅ Got user info - email:', user.email);
+
+        // Verified by WalletTwo: the only place membership is granted
+        issueMemberCookie(res, { sub: user.sub, email: user.email, wallet: user.wallet });
 
         // Return success with all user data
         res.json({
@@ -109,6 +114,8 @@ async function handleLegacyFlow(accessToken, res) {
         });
         
         const userInfo = await userInfoResponse.json();
+
+        issueMemberCookie(res, { sub: userInfo.sub, email: userInfo.email, wallet: userInfo.wallet });
         
         res.json({
             success: true,
@@ -188,6 +195,20 @@ router.post('/userinfo', async (req, res) => {
         console.error('UserInfo error:', error);
         res.status(500).json({ success: false, error: 'Failed to get user info' });
     }
+});
+
+// Does this browser hold a valid membership cookie? The gate page checks this
+// after login rather than redirecting blindly, so a login that failed to grant
+// membership shows an error instead of bouncing back and forth.
+router.get('/status', (req, res) => {
+    const member = readMember(req);
+    res.json({ member: !!member, email: member ? member.email : null });
+});
+
+// Leaving the club: drop the gate cookie so the next page view returns to /welcome
+router.post('/logout', (req, res) => {
+    clearMemberCookie(res);
+    res.json({ success: true });
 });
 
 module.exports = router;

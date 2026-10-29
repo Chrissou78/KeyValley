@@ -11,6 +11,16 @@ router.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
+// Members gate - entry point for anyone without a membership cookie.
+// Served explicitly so /welcome does not take a trailing-slash redirect.
+router.get('/welcome', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/welcome/index.html'));
+});
+
+router.get('/welcome/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/welcome/index.html'));
+});
+
 // Claim pages
 router.get('/claim', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/claim/index.html'));

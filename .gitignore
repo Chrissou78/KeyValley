@@ -89,6 +89,7 @@ coverage/
 test-results/
 junit.xml
 .claude
+.impeccable/
 
 # ===========================================
 # Misc

@@ -233,6 +233,15 @@ var HeaderManager = {
       iframe.src = `${this.CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true&auto_accept=true&companyId=${this.CONFIG.WALLETTWO_COMPANY_ID}`;
     }
     this.showDisconnectedState();
+
+    // Drop the membership cookie too, otherwise a "logged out" visitor keeps
+    // walking straight past the members gate.
+    fetch('/api/wallettwo/logout', { method: 'POST', credentials: 'same-origin' })
+      .catch(function () {})
+      .then(function () {
+        // Give the WalletTwo logout iframe a moment before leaving the page
+        setTimeout(function () { window.location.href = '/welcome'; }, 300);
+      });
   },
 
   buildWalletTwoUrl(action, extra) {

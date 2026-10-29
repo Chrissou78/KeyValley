@@ -49,6 +49,17 @@ app.use('/fonts', express.static(path.join(publicPath, 'fonts')));
 app.use('/css', express.static(path.join(publicPath, 'css')));
 app.use('/js', express.static(path.join(publicPath, 'js')));
 
+// ========================================
+// MEMBERSHIP GATE
+// ========================================
+// Must sit above the page static mounts below: those serve index.html directly,
+// so a gate placed after them would never see the request. Cookie parsing moves
+// up here because the gate reads the membership cookie.
+app.use(cookieParser());
+
+const { memberGate } = require('./middleware/member-gate');
+app.use(memberGate);
+
 // REMOVED marketplace routes from here - moved below
 
 // Admin static files
@@ -90,8 +101,7 @@ app.use(cors({
     credentials: true
 }));
 
-// Cookie parser
-app.use(cookieParser());
+// Cookie parser runs above, with the membership gate
 
 // Stripe webhook needs raw body - must be before JSON parser
 const stripeRoutes = require('./routes/stripe');
