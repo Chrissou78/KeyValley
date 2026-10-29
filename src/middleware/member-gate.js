@@ -18,15 +18,42 @@ const ROOT_PATHS = ['/', '/index.html'];
 const COOKIE_NAME = 'kv_member';
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-// Prefer a dedicated secret; fall back to an existing one so the gate works
-// without new configuration on the server.
-function secret() {
-    const value = process.env.MEMBER_GATE_SECRET || process.env.WALLETTWO_API_KEY;
-    if (!value) {
-        console.warn('⚠️  No MEMBER_GATE_SECRET or WALLETTWO_API_KEY set — member gate cannot sign cookies');
-        return null;
+// Signing secret for the membership cookie. An env var wins if one is set;
+// otherwise a random secret is generated once and kept in the database, so the
+// gate needs no server configuration and stays stable across restarts, deploys
+// and multiple instances.
+let cachedSecret = process.env.MEMBER_GATE_SECRET || null;
+let secretPromise = null;
+
+function ensureSecret() {
+    if (cachedSecret) return Promise.resolve(cachedSecret);
+    if (!secretPromise) {
+        const db = require('../db-postgres');
+        secretPromise = (async () => {
+            await db.pool.query(`
+                CREATE TABLE IF NOT EXISTS app_secrets (
+                    name VARCHAR(100) PRIMARY KEY,
+                    value TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT NOW()
+                )
+            `);
+            await db.pool.query(
+                `INSERT INTO app_secrets (name, value) VALUES ('member_gate', $1) ON CONFLICT (name) DO NOTHING`,
+                [crypto.randomBytes(48).toString('base64url')]
+            );
+            const result = await db.pool.query(`SELECT value FROM app_secrets WHERE name = 'member_gate'`);
+            cachedSecret = result.rows[0].value;
+            return cachedSecret;
+        })().catch(error => {
+            secretPromise = null; // retry on the next request
+            throw error;
+        });
     }
-    return value;
+    return secretPromise;
+}
+
+function secret() {
+    return cachedSecret;
 }
 
 function sign(data) {
@@ -124,7 +151,15 @@ function isMember(req) {
     return readMember(req) !== null;
 }
 
-function memberGate(req, res, next) {
+async function memberGate(req, res, next) {
+    // Load the signing secret before anything downstream needs it - including
+    // the login routes, which issue the cookie.
+    try {
+        await ensureSecret();
+    } catch (error) {
+        console.error('❌ Member gate could not load its signing secret:', error.message);
+    }
+
     if (req.method !== 'GET' && req.method !== 'HEAD') return next();
     if (isOpenPath(req.path)) return next();
 
@@ -167,6 +202,7 @@ function memberGate(req, res, next) {
 
 module.exports = {
     COOKIE_NAME,
+    ensureSecret,
     memberGate,
     issueMemberCookie,
     clearMemberCookie,
