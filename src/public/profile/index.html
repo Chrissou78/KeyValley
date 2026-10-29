@@ -2248,16 +2248,10 @@
             if (isDisconnecting) return;
             isDisconnecting = true;
             acceptMessages = false;
-            
-            localStorage.removeItem("wallettwo_token");
-            localStorage.removeItem(CONFIG.STORAGE_KEY);
-            localStorage.removeItem('keavalley_profile');
-            localStorage.removeItem('userEmail');
-            sessionStorage.clear();
-            
-            const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?auto_accept=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/')}`;
-            
-            window.location.href = logoutUrl;
+
+            // Same logout as every other page: ends the WalletTwo session, clears
+            // local state and the membership cookie, returns to the members page.
+            HeaderManager.disconnect();
         }
 
         // ============================================

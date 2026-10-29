@@ -1149,9 +1149,10 @@
         
         updateHeaderUI(null, 0);
         updateBuyButton();
-        
-        const logoutUrl = `${CONFIG.WALLETTWO_ORIGIN}/action/logout?auto_accept=true&companyId=${CONFIG.WALLETTWO_COMPANY_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/package/')}`;
-        window.location.href = logoutUrl;
+
+        // Same logout as every other page: ends the WalletTwo session, clears
+        // local state and the membership cookie, returns to the members page.
+        HeaderManager.disconnect();
     }
 
     // ============================================

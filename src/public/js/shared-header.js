@@ -182,21 +182,17 @@ var HeaderManager = {
       
       if (d && (d.type === 'wallet_login' || d.event === 'wallet_login' || d.type === 'wallet_session' || d.event === 'wallet_session')) {
         const wallet = d.wallet || d.wlt || d.address;
-        // The one-time token is what lets the server verify this login and grant
-        // membership. Look for it under every shape WalletTwo has used, since a
-        // login without it leaves the visitor stuck outside the members gate.
-        const code = d.code || d.token || d.oneTimeToken || d.one_time_token
-          || (d.session && (d.session.token || d.session.code))
-          || (d.data && (d.data.token || d.data.code));
+        const code = d.code || d.token;
+        console.log('🔐 Login event, wallet:', wallet);
 
-        console.log('🔐 Login event, wallet:', wallet, '| token present:', !!code, '| payload keys:', Object.keys(d || {}).join(','));
+        // Only a login the user started counts. WalletTwo iframes elsewhere -
+        // the logout one included - can announce a session in the background,
+        // and acting on that logs the member straight back in.
+        if (!this.loginOpen) return;
 
-        if (code) {
-          this.exchangeCode(code, wallet, d.user);
-        } else if (wallet) {
-          // A completed login with no token: tell the server anyway so the
-          // member gets through the gate.
-          this.startSession(wallet, d.user);
+        if (wallet) {
+          if (code) this.exchangeCode(code, wallet, d.user);
+          else this.startSession(wallet, d.user);
         }
       }
     });
@@ -239,9 +235,8 @@ var HeaderManager = {
         if (wallet) return this.startSession(wallet, userId);
       }
 
-      const resolvedWallet = wallet || data.wallet || (data.user && data.user.wallet) || null;
       this.currentUser = {
-        wallet: resolvedWallet ? resolvedWallet.toLowerCase() : null,
+        wallet: wallet.toLowerCase(),
         userId: userId || (data.user && data.user.sub),
         email: data.email || (data.user && data.user.email),
         firstName: data.firstName || (data.user && data.user.given_name),
@@ -253,10 +248,7 @@ var HeaderManager = {
       this.onUserConnected();
     } catch (err) {
       console.error('Exchange failed:', err);
-      if (wallet) return this.startSession(wallet, userId);
-      this.currentUser = { wallet: null, timestamp: Date.now() };
-      this.saveSession();
-      this.onUserConnected();
+      this.startSession(wallet, userId);
     }
   },
 
@@ -264,25 +256,60 @@ var HeaderManager = {
     if (this.currentUser) localStorage.setItem(this.CONFIG.STORAGE_KEY, JSON.stringify(this.currentUser));
   },
 
+  // One logout for every page, done the way Zai does it: end the WalletTwo
+  // session in an off-screen iframe (display:none stops it running in Safari),
+  // wait for WalletTwo to confirm with wallet_logout, then clear every local
+  // trace and the membership cookie and return to the members page.
   disconnect() {
+    if (this.loggingOut) return;
+    this.loggingOut = true;
+    this.loginOpen = false;
     console.log('🔌 Disconnecting...');
+
     this.currentUser = null;
     this.userBalance = 0;
-    localStorage.removeItem(this.CONFIG.STORAGE_KEY);
-    const iframe = document.getElementById('walletTwoLogoutIframe') || document.getElementById('logoutIframe') || document.getElementById('logout-iframe');
-    if (iframe && this.CONFIG.WALLETTWO_COMPANY_ID) {
-      iframe.src = `${this.CONFIG.WALLETTWO_ORIGIN}/action/logout?iframe=true&auto_accept=true&companyId=${this.CONFIG.WALLETTWO_COMPANY_ID}`;
-    }
+    this.clearLocalSession();
     this.showDisconnectedState();
 
-    // Drop the membership cookie too, otherwise a "logged out" visitor keeps
-    // walking straight past the members gate.
-    fetch('/api/wallettwo/logout', { method: 'POST', credentials: 'same-origin' })
-      .catch(function () {})
-      .then(function () {
-        // Give the WalletTwo logout iframe a moment before leaving the page
-        setTimeout(function () { window.location.href = '/welcome'; }, 300);
-      });
+    const origin = this.CONFIG.WALLETTWO_ORIGIN;
+    const companyId = this.CONFIG.WALLETTWO_COMPANY_ID;
+
+    const walletTwoDone = new Promise(resolve => {
+      if (!companyId) return resolve();
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:400px;height:600px;opacity:0;pointer-events:none;';
+      iframe.src = `${origin}/auth/login?action=logout&iframe=true&auto_accept=true&companyId=${companyId}&_t=${Date.now()}`;
+
+      const finish = () => {
+        clearTimeout(timer);
+        window.removeEventListener('message', onMessage);
+        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        resolve();
+      };
+      const onMessage = (event) => {
+        if (event.origin !== origin) return;
+        if (event.data && (event.data.type === 'wallet_logout' || event.data.event === 'wallet_logout')) finish();
+      };
+      const timer = setTimeout(finish, 6000);
+
+      window.addEventListener('message', onMessage);
+      document.body.appendChild(iframe);
+    });
+
+    const cookieCleared = fetch('/api/wallettwo/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
+
+    Promise.all([walletTwoDone, cookieCleared]).then(() => {
+      this.clearLocalSession();
+      window.location.href = '/';
+    });
+  },
+
+  clearLocalSession() {
+    ['keavalley_profile', 'wallettwo_token', 'userEmail'].forEach(k => localStorage.removeItem(k));
+    Object.keys(localStorage)
+      .filter(k => k.includes('wallettwo') || k.includes('wallet_two'))
+      .forEach(k => localStorage.removeItem(k));
+    sessionStorage.clear();
   },
 
   buildWalletTwoUrl(action, extra) {
@@ -299,11 +326,13 @@ var HeaderManager = {
     if (!modal) { window.location.href = '/profile'; return; }
     const iframe = document.getElementById('loginWalletIframe') || document.getElementById('login-wallet-iframe') || modal.querySelector('iframe');
     if (iframe && this.CONFIG.WALLETTWO_COMPANY_ID) iframe.src = this.buildWalletTwoUrl('auth');
+    this.loginOpen = true;
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   },
 
   closeLoginModal() {
+    this.loginOpen = false;
     const modal = document.getElementById('loginModal') || document.getElementById('login-modal');
     if (modal) { modal.classList.add('hidden'); document.body.style.overflow = ''; }
   },
